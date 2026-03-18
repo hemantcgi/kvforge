@@ -147,6 +147,141 @@ Dashboard shows:
 
 ---
 
+## Using SmartQdrant with an Existing Qdrant Instance
+
+SmartQdrant is a **middleware addon** — it does not modify Qdrant. It uses the standard `qdrant-client` to read and write extra payload fields on your existing points. Your Qdrant instance, collections, REST API, and built-in dashboard all continue to work unchanged.
+
+```
+┌─────────────────────────────────────┐
+│         Your Application            │
+└──────────────┬──────────────────────┘
+               │
+┌──────────────▼──────────────────────┐
+│         SmartQdrant Layer           │
+│  kv_inference.py / confidence_gate  │
+│  lora_trainer / access_tracker      │
+│  monitoring_dashboard (:8080)       │
+└──────────────┬──────────────────────┘
+               │  standard qdrant-client
+┌──────────────▼──────────────────────┐
+│   Your Existing Qdrant (unchanged)  │
+│   REST :6333 / dashboard :6333/dashboard │
+└─────────────────────────────────────┘
+```
+
+### Step 1 — Point the config at your existing collection
+
+Create a config file for your collection:
+
+```bash
+cp datasource_template.json my_existing.json
+```
+
+Edit `my_existing.json` to match your setup:
+
+```json
+{
+  "qdrant_host": "your-qdrant-host",
+  "qdrant_port": 6333,
+  "collection": "your-existing-collection",
+  "embed_model": "BAAI/bge-small-en-v1.5",
+  "llm_model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+  "top_k": 5,
+  "checkpoint_dir": "lora_checkpoints/my_existing/",
+  "version_file": "my_existing_version.json",
+  "replay_db": "my_existing_replay.db"
+}
+```
+
+> The `embed_model` must match the model used to embed your existing vectors (same dimensionality).
+
+### Step 2 — Backfill KV tensors on existing points (GPU required)
+
+SmartQdrant stores a `kv_cache` tensor in each point's payload. Run this once to compute them for all existing chunks:
+
+```bash
+# Backfill all points that have no kv_cache yet
+python3 kv_indexer.py --config my_existing.json compute-kv
+
+# Or backfill only a specific source file
+python3 kv_indexer.py --config my_existing.json compute-kv --source-file mydoc.pdf
+```
+
+This reads each point's `text` field, runs it through the LLM forward pass, and writes the `kv_cache` + `kv_version` payload fields back to Qdrant. Your vectors and other payload fields are untouched.
+
+### Step 3 — Run LoRA training on your data
+
+```bash
+python3 lora_trainer.py --config my_existing.json
+```
+
+### Step 4 — Evaluate and activate Phase 2
+
+```bash
+python3 prs_evaluator.py --config my_existing.json --faqs your_faqs.json
+```
+
+If PRS ≥ 0.75, activate Phase 2 manually:
+
+```bash
+python3 -c "
+import json, version as ver
+with open('my_existing.json') as f: cfg = json.load(f)
+ver.init(cfg)
+ver.activate_phase_2()
+print('Phase 2 active:', ver.get_phase())
+"
+```
+
+### Step 5 — Route queries through SmartQdrant
+
+Replace your direct Qdrant search calls with:
+
+```python
+import json, sys
+sys.path.insert(0, '/path/to/smartqdrant')
+import kv_background, kv_inference
+
+with open('my_existing.json') as f:
+    cfg = json.load(f)
+
+kv_background.start(cfg)   # start background workers (call once)
+
+answer = kv_inference.answer_with_retrieval("Your question", cfg)
+print(answer)
+```
+
+### Step 6 — Start the monitoring dashboard
+
+```bash
+python3 monitoring_dashboard.py --config my_existing.json
+# Open http://localhost:8080
+```
+
+### What SmartQdrant adds to your existing points
+
+When backfilling, these fields are written to each point's payload:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `kv_cache` | string (base64) | Mean-pooled KV tensor for this chunk |
+| `kv_version` | int | LoRA version used to compute the cache |
+| `access_count` | int | Query hit count (updated at runtime) |
+| `last_accessed_ts` | int | Unix timestamp of last access |
+| `avg_retrieval_rank` | float | Average rank when retrieved |
+| `parametric_hit_count` | int | Times answered from weights (Phase 3) |
+| `tier` | string | hot / warm / cold / frozen |
+
+All other fields in your existing payload are preserved.
+
+### Requirements for existing collections
+
+- Points must have a `text` field containing the chunk text (used for KV computation and text-in-context fallback)
+- Points must have a `page` field (int) for source tracking — add it if missing
+- Vector dimension must match `embed_model` output (384 for `BAAI/bge-small-en-v1.5`)
+
+---
+
 ## Running Tests
 
 All 31 tests run locally without a GPU:
