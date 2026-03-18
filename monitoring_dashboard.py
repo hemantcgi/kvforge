@@ -24,15 +24,33 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
 import version as ver
-import model_loader
-import kv_background
-import kv_inference
 from qdrant_client import QdrantClient
 
 app = FastAPI(title="RAG Intelligence Dashboard")
 _cfg: dict = {}
 _qdrant_client: QdrantClient | None = None
 _query_executor = ThreadPoolExecutor(max_workers=2)
+
+# Heavy modules (torch/transformers) loaded once at startup in main thread
+# so worker threads never race on the lazy-import lock.
+_model_loader = None
+_kv_background = None
+_kv_inference = None
+
+
+@app.on_event("startup")
+def _preload_inference_modules() -> None:
+    """Import GPU modules in the main thread at startup to avoid thread-safety issues."""
+    global _model_loader, _kv_background, _kv_inference
+    try:
+        import model_loader as _ml
+        import kv_background as _kb
+        import kv_inference as _ki
+        _model_loader = _ml
+        _kv_background = _kb
+        _kv_inference = _ki
+    except Exception as e:
+        print(f"[dashboard] inference modules unavailable: {e}", flush=True)
 
 # Config file path — overridden by --config CLI arg at startup (no annotation so global works)
 _config_path = "my_config.json"
@@ -142,11 +160,13 @@ class QueryRequest(BaseModel):
 
 def _answer_smartqdrant(query: str, cfg: dict) -> dict:
     t0 = time.time()
+    if _model_loader is None or _kv_inference is None:
+        return {"answer": "SmartQdrant inference modules not available (GPU required)", "latency_ms": 0}
     try:
         ver.init(cfg)
-        model_loader.init(cfg)
-        kv_background.start(cfg)
-        answer = kv_inference.answer_with_retrieval(query, cfg)
+        _model_loader.init(cfg)
+        _kv_background.start(cfg)
+        answer = _kv_inference.answer_with_retrieval(query, cfg)
     except Exception as e:
         answer = f"Error: {e}"
     return {"answer": answer, "latency_ms": int((time.time() - t0) * 1000)}
