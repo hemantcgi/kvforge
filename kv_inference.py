@@ -104,29 +104,39 @@ def generate_with_kv(query: str, chunks: list[dict],
 
 def generate_text_in_context(query: str, chunks: list[dict],
                                model, tokenizer) -> str:
-    """Fallback path: include chunk text in prompt (same quality as ollama_answer.py)."""
-    context = "\n\n".join(
-        f"[score: {c['score']}, page {c['page']}]\n{c['text']}"
+    """Fallback path: include chunk text in prompt."""
+    context = "\n\n---\n\n".join(
+        f"[page {c['page']}, score {c['score']}]\n{c['text']}"
         for c in chunks
     )
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user",   "content": f"Context:\n\n{context}\n\nQuestion: {query}"},
-    ]
-    text = tokenizer.apply_chat_template(
-        messages, tokenize=False, add_generation_prompt=True
+    # Direct instruction prompt — avoids chat-template tokens that confuse the
+    # model when used without the exact fine-tuning format.
+    prompt = (
+        f"Using only the context below, answer the question in 2-4 sentences. "
+        f"Cite page numbers.\n\n"
+        f"Context:\n{context}\n\n"
+        f"Question: {query}\n\n"
+        f"Answer:"
     )
-    inputs = tokenizer(text, return_tensors="pt").to(model.device)
+    inputs = tokenizer(
+        prompt,
+        return_tensors="pt",
+        truncation=True,
+        max_length=1600,
+    ).to(model.device)
     with torch.no_grad():
         output = model.generate(
             **inputs,
-            max_new_tokens=512,
-            do_sample=False,
-            repetition_penalty=1.3,
+            max_new_tokens=256,
+            do_sample=True,
+            temperature=0.7,
+            top_p=0.9,
+            repetition_penalty=1.2,
             no_repeat_ngram_size=4,
+            pad_token_id=tokenizer.eos_token_id,
         )
     return tokenizer.decode(output[0][inputs["input_ids"].shape[1]:],
-                             skip_special_tokens=True)
+                             skip_special_tokens=True).strip()
 
 
 def answer_with_retrieval(query: str, cfg: dict) -> str:

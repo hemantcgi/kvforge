@@ -178,11 +178,14 @@ def _answer_smartqdrant(query: str, cfg: dict) -> dict:
         if not hits:
             answer = "No relevant chunks found."
         else:
-            chunks = [{"chunk_id": h.id, "text": h.payload["text"],
+            chunks = [{"chunk_id": h.id,
+                       "text": h.payload["text"][:500],   # truncate to keep prompt short
                        "page": h.payload["page"], "score": round(h.score, 4),
                        "kv_cache": None, "kv_version": None} for h in hits]
-            lora_ckpt = ver.load().get("checkpoint_path")
-            model, tokenizer = _model_loader.load(lora_ckpt)
+            # Use base model (no LoRA) for RAG — the LoRA is fine-tuned for parametric
+            # memorisation and produces incoherent output in text-in-context mode.
+            model, tokenizer = _model_loader.load(None)
+            model = model.half()  # ensure float16 after any prior merge
             for rank, chunk in enumerate(chunks, start=1):
                 _kv_background.record_access(chunk["chunk_id"], rank)
             answer = _kv_inference.generate_text_in_context(query, chunks, model, tokenizer)
