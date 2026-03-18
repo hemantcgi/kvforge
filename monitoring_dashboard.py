@@ -317,8 +317,21 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
         _log(tag, f"Gemini HTTP {resp.status_code}")
         resp.raise_for_status()
         data = resp.json()
-        answer = data["candidates"][0]["content"]["parts"][0]["text"]
-        _log(tag, f"generation done ({len(answer)} chars)")
+        candidates = data.get("candidates", [])
+        if not candidates:
+            # Gemini returns no candidates on safety blocks or quota issues
+            block_reason = data.get("promptFeedback", {}).get("blockReason", "unknown")
+            _log(tag, f"Gemini returned 0 candidates — blockReason={block_reason}, raw={str(data)[:300]}")
+            answer = f"Gemini returned no answer (blockReason: {block_reason})"
+        else:
+            parts = candidates[0].get("content", {}).get("parts", [])
+            if not parts:
+                finish = candidates[0].get("finishReason", "unknown")
+                _log(tag, f"Gemini candidate has no parts — finishReason={finish}, raw={str(candidates[0])[:300]}")
+                answer = f"Gemini returned empty content (finishReason: {finish})"
+            else:
+                answer = parts[0].get("text", "")
+                _log(tag, f"generation done ({len(answer)} chars)")
     except Exception as e:
         import traceback
         _log(tag, f"ERROR: {e}\n{traceback.format_exc()}")
