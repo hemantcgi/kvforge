@@ -158,12 +158,14 @@ def _answer_gemini(query: str, cfg: dict) -> dict:
         embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
         client = _QC(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
         q_vec = list(embedder.embed([query]))[0].tolist()
-        hits = client.search(
+        from qdrant_client.models import NamedVector
+        result = client.query_points(
             collection_name=cfg["collection"],
-            query_vector=q_vec,
+            query=q_vec,
             limit=cfg.get("top_k", 5),
-            with_payload=["text", "page"],
+            with_payload=True,
         )
+        hits = result.points
         chunks = [
             {
                 "page": h.payload.get("page", 0),
