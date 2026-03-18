@@ -387,9 +387,84 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .model-info { font-size:0.85em; color:#888; margin:4px 0; }
   .model-info a { color:#7af; text-decoration:none; }
   .model-info a:hover { text-decoration:underline; }
+  /* PRS modal */
+  .help-btn {
+    display:inline-block; width:16px; height:16px; line-height:16px;
+    background:#27a; color:#fff; border-radius:50%; font-size:0.75em;
+    text-align:center; cursor:pointer; margin-left:6px; vertical-align:middle;
+    user-select:none;
+  }
+  .help-btn:hover { background:#39b; }
+  .modal-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,0.7); z-index:1000;
+    align-items:center; justify-content:center;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal-box {
+    background:#1a1a1a; border:1px solid #444; border-radius:6px;
+    padding:24px; max-width:560px; width:90%; position:relative;
+    color:#eee; font-family:monospace; line-height:1.6;
+  }
+  .modal-box h2 { color:#7af; margin:0 0 12px; font-size:1.1em; }
+  .modal-box table { width:100%; margin:10px 0; font-size:0.88em; }
+  .modal-box td, .modal-box th { border:1px solid #333; padding:5px 8px; }
+  .modal-box th { color:#7af; }
+  .modal-close {
+    position:absolute; top:10px; right:14px; cursor:pointer;
+    color:#888; font-size:1.2em;
+  }
+  .modal-close:hover { color:#eee; }
+  .prs-bar-wrap { background:#222; border-radius:4px; height:12px; margin:3px 0 8px; }
+  .prs-bar { height:12px; border-radius:4px; background:#27a; transition:width 0.4s; }
 </style>
 </head>
 <body>
+
+<!-- PRS explanation modal -->
+<div class="modal-overlay" id="prs-modal" onclick="if(event.target===this)closePrsModal()">
+  <div class="modal-box">
+    <span class="modal-close" onclick="closePrsModal()">&#x2715;</span>
+    <h2>Parametric Readiness Score (PRS)</h2>
+    <p>PRS measures how well the fine-tuned LLM has <b>memorised</b> the document knowledge
+    and can answer questions <i>without</i> retrieving chunks. Higher = more reliable
+    parametric memory.</p>
+
+    <p><b>Formula:</b></p>
+    <pre style="background:#111;padding:8px;border-radius:4px;font-size:0.85em">
+PRS = 0.5 × Accuracy
+    + 0.3 × Calibration
+    + 0.2 × Self-Consistency</pre>
+
+    <table>
+      <tr><th>Component</th><th>What it measures</th><th>Weight</th></tr>
+      <tr><td><b>Accuracy</b></td>
+          <td>Fraction of FAQ answers that match the LLM's direct answer
+              (no retrieval, cosine similarity ≥ threshold)</td>
+          <td>50%</td></tr>
+      <tr><td><b>Calibration</b></td>
+          <td>Whether the model's confidence token probabilities
+              match its actual accuracy (low entropy on correct answers)</td>
+          <td>30%</td></tr>
+      <tr><td><b>Self-Consistency</b></td>
+          <td>Mean pairwise cosine similarity of 3 answers sampled
+              at temperature 0.7 — measures how stable the knowledge is</td>
+          <td>20%</td></tr>
+    </table>
+
+    <p><b>Phase thresholds:</b></p>
+    <table>
+      <tr><th>Phase</th><th>Condition</th><th>Behaviour</th></tr>
+      <tr><td>1</td><td>—</td><td>Standard RAG — text-in-context only</td></tr>
+      <tr><td>2</td><td>PRS ≥ 0.75 (one round)</td><td>KV injection enabled</td></tr>
+      <tr><td>3</td><td>PRS ≥ 0.80 (two consecutive rounds)</td>
+          <td>Confidence gate — high-confidence queries answered from weights directly</td></tr>
+    </table>
+
+    <div id="prs-live"></div>
+  </div>
+</div>
+
 <h1>RAG Intelligence Dashboard</h1>
 <div id="root">Loading…</div>
 
@@ -513,8 +588,25 @@ async function load(){
         <td>${c.parametric_hit_count}</td><td>${c.text_preview}</td></tr>`).join('')}
       </table>
     </div>
-    <div class="card"><b>PRS history:</b>
-      ${(ver.prs_history||[]).map(r=>`Round ${r.round}: ${r.prs}`).join(' \u2192 ') || 'No data yet'}
+    <div class="card">
+      <b>PRS history</b>
+      <span class="help-btn" onclick="openPrsModal(${JSON.stringify(ver.prs_history||[])})">?</span>
+      <div style="margin-top:8px">
+      ${(ver.prs_history||[]).length === 0 ? '<span style="color:#666">No data yet — run prs_evaluator.py to generate scores</span>' :
+        (ver.prs_history||[]).map(r => {
+          const pct = Math.round((r.prs||0)*100);
+          const col = pct >= 80 ? '#4d4' : pct >= 75 ? '#fa7' : '#f77';
+          return `<div style="margin:4px 0">
+            <span style="color:#888;font-size:0.85em">Round ${r.round}</span>
+            <span style="color:${col};font-weight:bold;margin:0 8px">${(r.prs||0).toFixed(4)}</span>
+            <div class="prs-bar-wrap" style="display:inline-block;width:160px;vertical-align:middle">
+              <div class="prs-bar" style="width:${pct}%;background:${col}"></div>
+            </div>
+            <span style="color:#666;font-size:0.8em;margin-left:6px">${pct}%</span>
+          </div>`;
+        }).join('')
+      }
+      </div>
     </div>`;
 }
 
@@ -553,6 +645,32 @@ async function runQuery() {
   ).join('');
   document.getElementById('ab-result').style.display = 'block';
 }
+
+function openPrsModal(history) {
+  // Populate live scores inside the modal
+  const live = document.getElementById('prs-live');
+  if (history && history.length > 0) {
+    const latest = history[history.length - 1];
+    const pct = Math.round((latest.prs||0)*100);
+    const col = pct >= 80 ? '#4d4' : pct >= 75 ? '#fa7' : '#f77';
+    const next = pct >= 80 ? 'Phase 3 threshold met \u2714' :
+                 pct >= 75 ? 'Phase 2 threshold met \u2714 — need \u226580% \u00d72 for Phase 3' :
+                 'Below Phase 2 threshold (need \u226575%)';
+    live.innerHTML = `<p style="margin-top:12px"><b>Latest score:</b>
+      <span style="color:${col};font-size:1.1em;font-weight:bold"> ${(latest.prs||0).toFixed(4)}</span>
+      &nbsp;&mdash;&nbsp;<span style="color:${col}">${next}</span></p>`;
+  } else {
+    live.innerHTML = '<p style="color:#666;margin-top:12px">No PRS data yet.</p>';
+  }
+  document.getElementById('prs-modal').classList.add('open');
+}
+
+function closePrsModal() {
+  document.getElementById('prs-modal').classList.remove('open');
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePrsModal(); });
 
 loadConfig();
 load();
