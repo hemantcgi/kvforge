@@ -166,7 +166,26 @@ def _answer_smartqdrant(query: str, cfg: dict) -> dict:
         ver.init(cfg)
         _model_loader.init(cfg)
         _kv_background.start(cfg)
-        answer = _kv_inference.answer_with_retrieval(query, cfg)
+        # Force text-in-context path: KV injection with mean-pooled tensors produces
+        # incoherent output with small models. Text-in-context always works correctly.
+        from fastembed import TextEmbedding
+        from qdrant_client import QdrantClient as _QC
+        from bedrock_rag import _run_search, Config
+        embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
+        client = _QC(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
+        rag_cfg = Config(**{k: cfg[k] for k in Config.__dataclass_fields__ if k in cfg})
+        hits = _run_search(query, embedder, client, rag_cfg)
+        if not hits:
+            answer = "No relevant chunks found."
+        else:
+            chunks = [{"chunk_id": h.id, "text": h.payload["text"],
+                       "page": h.payload["page"], "score": round(h.score, 4),
+                       "kv_cache": None, "kv_version": None} for h in hits]
+            lora_ckpt = ver.load().get("checkpoint_path")
+            model, tokenizer = _model_loader.load(lora_ckpt)
+            for rank, chunk in enumerate(chunks, start=1):
+                _kv_background.record_access(chunk["chunk_id"], rank)
+            answer = _kv_inference.generate_text_in_context(query, chunks, model, tokenizer)
     except Exception as e:
         answer = f"Error: {e}"
     return {"answer": answer, "latency_ms": int((time.time() - t0) * 1000)}
