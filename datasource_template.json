@@ -29,5 +29,8 @@
   "gate_threshold": 0.75,
   "access_flush_seconds": 300,
   "access_flush_queries": 50,
-  "dashboard_port": 8080
+  "dashboard_port": 8080,
+
+  "gemini_api_key": "",
+  "gemini_model": "gemini-2.5-pro-preview"
 }

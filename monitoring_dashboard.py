@@ -2,16 +2,23 @@
 monitoring_dashboard.py — FastAPI dashboard at localhost:8080.
 
 Start: python3 monitoring_dashboard.py
+Or:    python3 monitoring_dashboard.py --config datasource_bedrock.json
 Or:    uvicorn monitoring_dashboard:app --port 8080 --reload
 """
 
+import argparse
+import asyncio
 import json
+import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import httpx
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
+from pydantic import BaseModel
 
 import version as ver
 from qdrant_client import QdrantClient
@@ -19,12 +26,16 @@ from qdrant_client import QdrantClient
 app = FastAPI(title="RAG Intelligence Dashboard")
 _cfg: dict = {}
 _qdrant_client: QdrantClient | None = None
+_query_executor = ThreadPoolExecutor(max_workers=2)
+
+# Config file path — overridden by --config CLI arg at startup
+_config_path: str = "my_config.json"
 
 
 def _load_cfg() -> dict:
     global _cfg
     if not _cfg:
-        with open("my_config.json") as f:
+        with open(_config_path) as f:
             _cfg = json.load(f)
     return _cfg
 
@@ -115,6 +126,103 @@ def get_access_report():
         return json.load(f)
 
 
+# ---------------------------------------------------------------------------
+# A/B Query Comparison
+# ---------------------------------------------------------------------------
+
+class QueryRequest(BaseModel):
+    query: str
+
+
+def _answer_smartqdrant(query: str, cfg: dict) -> dict:
+    t0 = time.time()
+    try:
+        sys.path.insert(0, str(Path(__file__).parent))
+        import kv_background
+        import kv_inference
+        kv_background.start(cfg)
+        answer = kv_inference.answer_with_retrieval(query, cfg)
+    except Exception as e:
+        answer = f"Error: {e}"
+    return {"answer": answer, "latency_ms": int((time.time() - t0) * 1000)}
+
+
+def _answer_gemini(query: str, cfg: dict) -> dict:
+    t0 = time.time()
+    chunks = []
+    try:
+        from fastembed import TextEmbedding
+        from qdrant_client import QdrantClient as _QC
+
+        # 1. embed + search Qdrant
+        embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
+        client = _QC(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
+        q_vec = list(embedder.embed([query]))[0].tolist()
+        hits = client.search(
+            collection_name=cfg["collection"],
+            query_vector=q_vec,
+            limit=cfg.get("top_k", 5),
+            with_payload=["text", "page"],
+        )
+        chunks = [
+            {
+                "page": h.payload.get("page", 0),
+                "score": round(h.score, 4),
+                "text": h.payload.get("text", "")[:300],
+            }
+            for h in hits
+        ]
+
+        # 2. build prompt
+        context = "\n\n".join(
+            f"[page {c['page']}, score {c['score']}]\n{c['text']}" for c in chunks
+        )
+        prompt = (
+            f"Answer the question using ONLY the context below. "
+            f"Cite sources as [page N].\n\nContext:\n{context}\n\nQuestion: {query}"
+        )
+
+        # 3. call Gemini REST API
+        api_key = cfg.get("gemini_api_key", "")
+        model = cfg.get("gemini_model", "gemini-2.5-pro-preview")
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{model}:generateContent?key={api_key}"
+        )
+        resp = httpx.post(
+            url,
+            json={"contents": [{"parts": [{"text": prompt}]}]},
+            timeout=60,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        answer = data["candidates"][0]["content"]["parts"][0]["text"]
+    except Exception as e:
+        answer = f"Error: {e}"
+        chunks = []
+    return {"answer": answer, "latency_ms": int((time.time() - t0) * 1000), "chunks": chunks}
+
+
+@app.post("/api/query")
+async def run_query(req: QueryRequest):
+    cfg = _load_cfg()
+    loop = asyncio.get_event_loop()
+    fut_a = loop.run_in_executor(_query_executor, _answer_smartqdrant, req.query, cfg)
+    fut_b = loop.run_in_executor(_query_executor, _answer_gemini, req.query, cfg)
+    result_a, result_b = await asyncio.gather(fut_a, fut_b)
+    return {
+        "answer_a": result_a["answer"],
+        "latency_a_ms": result_a["latency_ms"],
+        "answer_b": result_b["answer"],
+        "latency_b_ms": result_b["latency_ms"],
+        "chunks_b": result_b.get("chunks", []),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Dashboard HTML
+# ---------------------------------------------------------------------------
+
 DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><title>RAG Intelligence Dashboard</title>
@@ -129,6 +237,38 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <body>
 <h1>RAG Intelligence Dashboard</h1>
 <div id="root">Loading…</div>
+
+<div class="card" id="query-section">
+  <b>Query A/B Comparison</b>
+  <div style="margin:10px 0">
+    <input id="qinput" type="text" placeholder="Ask a question..."
+      style="width:70%;padding:8px;background:#222;color:#eee;border:1px solid #555;font-family:monospace"/>
+    <button onclick="runQuery()"
+      style="padding:8px 16px;background:#27a;color:#fff;border:none;cursor:pointer;font-family:monospace;margin-left:8px">
+      Ask
+    </button>
+  </div>
+  <div id="ab-result" style="display:none">
+    <div style="display:flex;gap:16px;margin-top:12px">
+      <div style="flex:1;border:1px solid #444;padding:12px">
+        <b style="color:#7af">Answer A — SmartQdrant (KV-injected LLM)</b>
+        <div id="latency-a" style="color:#888;font-size:0.85em;margin:4px 0"></div>
+        <pre id="answer-a" style="white-space:pre-wrap;margin:8px 0;color:#eee;font-size:0.9em"></pre>
+      </div>
+      <div style="flex:1;border:1px solid #444;padding:12px">
+        <b style="color:#fa7">Answer B — Gemini RAG</b>
+        <div id="latency-b" style="color:#888;font-size:0.85em;margin:4px 0"></div>
+        <pre id="answer-b" style="white-space:pre-wrap;margin:8px 0;color:#eee;font-size:0.9em"></pre>
+        <details style="margin-top:8px">
+          <summary style="cursor:pointer;color:#888">Retrieved chunks</summary>
+          <div id="chunks-b" style="font-size:0.8em;margin-top:6px"></div>
+        </details>
+      </div>
+    </div>
+  </div>
+  <div id="query-loading" style="display:none;color:#888;margin-top:8px">Running queries (A/B in parallel)…</div>
+</div>
+
 <script>
 async function load(){
   const [stats, ver] = await Promise.all(
@@ -159,6 +299,34 @@ async function load(){
 }
 load();
 setInterval(load, 30000);
+
+async function runQuery() {
+  const q = document.getElementById('qinput').value.trim();
+  if (!q) return;
+  document.getElementById('query-loading').style.display = 'block';
+  document.getElementById('ab-result').style.display = 'none';
+  const res = await fetch('/api/query', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({query: q})
+  }).then(r => r.json());
+  document.getElementById('query-loading').style.display = 'none';
+  document.getElementById('answer-a').textContent = res.answer_a;
+  document.getElementById('latency-a').textContent = `Latency: ${res.latency_a_ms}ms`;
+  document.getElementById('answer-b').textContent = res.answer_b;
+  document.getElementById('latency-b').textContent = `Latency: ${res.latency_b_ms}ms`;
+  document.getElementById('chunks-b').innerHTML = (res.chunks_b||[]).map(c =>
+    `<div style="margin:4px 0;border-top:1px solid #333;padding-top:4px">
+      <span style="color:#888">page ${c.page} \u00b7 score ${c.score}</span><br>${c.text}\u2026</div>`
+  ).join('');
+  document.getElementById('ab-result').style.display = 'block';
+}
+// also allow Enter key to submit
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('qinput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') runQuery();
+  });
+});
 </script></body></html>"""
 
 
@@ -169,5 +337,14 @@ def dashboard():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="RAG Intelligence Dashboard")
+    parser.add_argument(
+        "--config",
+        default="my_config.json",
+        help="Path to JSON config file (default: my_config.json)",
+    )
+    args = parser.parse_args()
+    global _config_path
+    _config_path = args.config
     cfg = _load_cfg()
     uvicorn.run(app, host="0.0.0.0", port=cfg.get("dashboard_port", 8080))
