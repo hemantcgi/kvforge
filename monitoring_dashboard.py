@@ -213,7 +213,8 @@ def _answer_smartqdrant(query: str, cfg: dict, params: QueryRequest) -> dict:
 
         _log(tag, "searching Qdrant…")
         hits = _run_search(query, embedder, client, rag_cfg)
-        _log(tag, f"search done — {len(hits)} hits, top_score={hits[0].score:.4f if hits else 'n/a'}")
+        top_score_a = f"{hits[0].score:.4f}" if hits else "n/a"
+        _log(tag, f"search done — {len(hits)} hits, top_score={top_score_a}")
 
         if not hits:
             answer = "No relevant chunks found."
@@ -268,7 +269,8 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
             with_payload=True,
         )
         hits = result.points
-        _log(tag, f"search done — {len(hits)} hits, top_score={hits[0].score:.4f if hits else 'n/a'}")
+        top_score_b = f"{hits[0].score:.4f}" if hits else "n/a"
+        _log(tag, f"search done — {len(hits)} hits, top_score={top_score_b}")
         chunks = [
             {
                 "page": h.payload.get("page", 0),
