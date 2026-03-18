@@ -14,6 +14,9 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+# Ensure project root is on sys.path before any local imports (do once, not per-thread)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 import httpx
 import uvicorn
 from fastapi import FastAPI
@@ -21,6 +24,9 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
 import version as ver
+import model_loader
+import kv_background
+import kv_inference
 from qdrant_client import QdrantClient
 
 app = FastAPI(title="RAG Intelligence Dashboard")
@@ -137,11 +143,6 @@ class QueryRequest(BaseModel):
 def _answer_smartqdrant(query: str, cfg: dict) -> dict:
     t0 = time.time()
     try:
-        sys.path.insert(0, str(Path(__file__).parent))
-        import version as ver
-        import model_loader
-        import kv_background
-        import kv_inference
         ver.init(cfg)
         model_loader.init(cfg)
         kv_background.start(cfg)
