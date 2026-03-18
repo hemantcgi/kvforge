@@ -28,8 +28,8 @@ _cfg: dict = {}
 _qdrant_client: QdrantClient | None = None
 _query_executor = ThreadPoolExecutor(max_workers=2)
 
-# Config file path — overridden by --config CLI arg at startup
-_config_path: str = "my_config.json"
+# Config file path — overridden by --config CLI arg at startup (no annotation so global works)
+_config_path = "my_config.json"
 
 
 def _load_cfg() -> dict:
@@ -336,7 +336,8 @@ def dashboard():
     return HTMLResponse(DASHBOARD_HTML)
 
 
-if __name__ == "__main__":
+def _main():
+    global _config_path
     parser = argparse.ArgumentParser(description="RAG Intelligence Dashboard")
     parser.add_argument(
         "--config",
@@ -344,7 +345,10 @@ if __name__ == "__main__":
         help="Path to JSON config file (default: my_config.json)",
     )
     args = parser.parse_args()
-    global _config_path
     _config_path = args.config
     cfg = _load_cfg()
     uvicorn.run(app, host="0.0.0.0", port=cfg.get("dashboard_port", 8080))
+
+
+if __name__ == "__main__":
+    _main()
