@@ -1,0 +1,33 @@
+{
+  "qdrant_host": "localhost",
+  "qdrant_port": 6333,
+  "collection": "bedrock-user-guide",
+
+  "embed_model": "BAAI/bge-small-en-v1.5",
+  "embed_batch": 64,
+  "chunk_size": 600,
+  "chunk_overlap": 60,
+  "upsert_batch": 128,
+  "top_k": 5,
+
+  "llm_model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+  "kv_num_layers": 22,
+  "kv_num_heads": 4,
+  "kv_head_dim": 64,
+
+  "lora_rank": 16,
+  "lora_alpha": 32,
+  "lora_target_modules": ["q_proj", "k_proj", "v_proj"],
+  "lora_dropout": 0.05,
+  "lora_epochs": 3,
+  "lora_lr": 0.0002,
+
+  "checkpoint_dir": "lora_checkpoints/bedrock/",
+  "version_file": "bedrock_version.json",
+  "replay_db": "bedrock_replay.db",
+
+  "gate_threshold": 0.75,
+  "access_flush_seconds": 300,
+  "access_flush_queries": 50,
+  "dashboard_port": 8080
+}
