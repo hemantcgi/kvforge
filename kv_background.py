@@ -155,9 +155,9 @@ def _flush_access(cfg: dict, client: QdrantClient) -> None:
 
 
 def _access_worker(cfg: dict) -> None:
-    """Flush on every 50 queries or every 5 min — whichever comes first."""
-    flush_interval = cfg.get("access_flush_seconds", 300)
-    flush_queries = cfg.get("access_flush_queries", 50)
+    """Flush on every 3 queries or every 30 sec — whichever comes first."""
+    flush_interval = cfg.get("access_flush_seconds", 30)
+    flush_queries = cfg.get("access_flush_queries", 3)
     client = QdrantClient(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
     last_flush = time.time()
 
