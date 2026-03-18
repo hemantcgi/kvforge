@@ -186,7 +186,7 @@ def _answer_gemini(query: str, cfg: dict) -> dict:
 
         # 3. call Gemini REST API
         api_key = cfg.get("gemini_api_key", "")
-        model = cfg.get("gemini_model", "gemini-2.5-pro-preview")
+        model = cfg.get("gemini_model", "gemini-2.5-pro")
         url = (
             f"https://generativelanguage.googleapis.com/v1beta/models/"
             f"{model}:generateContent?key={api_key}"
@@ -201,7 +201,7 @@ def _answer_gemini(query: str, cfg: dict) -> dict:
         answer = data["candidates"][0]["content"]["parts"][0]["text"]
     except Exception as e:
         answer = f"Error: {e}"
-        chunks = []
+        # preserve any chunks already retrieved before the error
     return {"answer": answer, "latency_ms": int((time.time() - t0) * 1000), "chunks": chunks}
 
 
