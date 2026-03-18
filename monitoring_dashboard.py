@@ -186,24 +186,35 @@ class QueryRequest(BaseModel):
     b_temperature: float = 1.0
 
 
+def _log(tag: str, msg: str) -> None:
+    print(f"[{tag}] {time.strftime('%H:%M:%S')} {msg}", flush=True)
+
+
 def _answer_smartqdrant(query: str, cfg: dict, params: QueryRequest) -> dict:
     t0 = time.time()
+    tag = "A:SmartQdrant"
+    _log(tag, f"START query={query!r} top_k={params.a_top_k} max_new_tokens={params.a_max_new_tokens} temp={params.a_temperature}")
     if _model_loader is None or _kv_inference is None:
+        _log(tag, "SKIP — inference modules not loaded (GPU required)")
         return {"answer": "SmartQdrant inference modules not available (GPU required)", "latency_ms": 0}
     try:
         ver.init(cfg)
         _model_loader.init(cfg)
         _kv_background.start(cfg)
-        # Force text-in-context path: KV injection with mean-pooled tensors produces
-        # incoherent output with small models. Text-in-context always works correctly.
         from fastembed import TextEmbedding
         from qdrant_client import QdrantClient as _QC
         from bedrock_rag import _run_search, Config
         cfg_a = dict(cfg, top_k=params.a_top_k)
+
+        _log(tag, "embedding query…")
         embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
         client = _QC(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
         rag_cfg = Config(**{k: cfg_a[k] for k in Config.__dataclass_fields__ if k in cfg_a})
+
+        _log(tag, "searching Qdrant…")
         hits = _run_search(query, embedder, client, rag_cfg)
+        _log(tag, f"search done — {len(hits)} hits, top_score={hits[0].score:.4f if hits else 'n/a'}")
+
         if not hits:
             answer = "No relevant chunks found."
         else:
@@ -211,8 +222,10 @@ def _answer_smartqdrant(query: str, cfg: dict, params: QueryRequest) -> dict:
                        "text": h.payload["text"][:500],
                        "page": h.payload["page"], "score": round(h.score, 4),
                        "kv_cache": None, "kv_version": None} for h in hits]
+            _log(tag, "loading model…")
             model, tokenizer = _model_loader.load(None)
             model = model.half()
+            _log(tag, "model ready — recording access + generating…")
             for rank, chunk in enumerate(chunks, start=1):
                 _kv_background.record_access(chunk["chunk_id"], rank)
             answer = _kv_inference.generate_text_in_context(
@@ -222,22 +235,31 @@ def _answer_smartqdrant(query: str, cfg: dict, params: QueryRequest) -> dict:
                 top_p=params.a_top_p,
                 repetition_penalty=params.a_repetition_penalty,
             )
+            _log(tag, f"generation done ({len(answer)} chars)")
     except Exception as e:
+        import traceback
+        _log(tag, f"ERROR: {e}\n{traceback.format_exc()}")
         answer = f"Error: {e}"
-    return {"answer": answer, "latency_ms": int((time.time() - t0) * 1000)}
+    elapsed = int((time.time() - t0) * 1000)
+    _log(tag, f"DONE {elapsed}ms")
+    return {"answer": answer, "latency_ms": elapsed}
 
 
 def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
     t0 = time.time()
+    tag = "B:Gemini"
+    _log(tag, f"START query={query!r} top_k={params.b_top_k} max_tokens={params.b_max_output_tokens} temp={params.b_temperature}")
     chunks = []
     try:
         from fastembed import TextEmbedding
         from qdrant_client import QdrantClient as _QC
 
-        # 1. embed + search Qdrant
+        _log(tag, "embedding query…")
         embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
         client = _QC(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
         q_vec = list(embedder.embed([query]))[0].tolist()
+
+        _log(tag, "searching Qdrant…")
         from qdrant_client.models import NamedVector
         result = client.query_points(
             collection_name=cfg["collection"],
@@ -246,6 +268,7 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
             with_payload=True,
         )
         hits = result.points
+        _log(tag, f"search done — {len(hits)} hits, top_score={hits[0].score:.4f if hits else 'n/a'}")
         chunks = [
             {
                 "page": h.payload.get("page", 0),
@@ -271,6 +294,7 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
             f"https://generativelanguage.googleapis.com/v1beta/models/"
             f"{model}:generateContent?key={api_key}"
         )
+        _log(tag, f"calling Gemini API ({model}, timeout=60s)…")
         resp = httpx.post(
             url,
             json={
@@ -282,17 +306,23 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
             },
             timeout=60,
         )
+        _log(tag, f"Gemini HTTP {resp.status_code}")
         resp.raise_for_status()
         data = resp.json()
         answer = data["candidates"][0]["content"]["parts"][0]["text"]
+        _log(tag, f"generation done ({len(answer)} chars)")
     except Exception as e:
+        import traceback
+        _log(tag, f"ERROR: {e}\n{traceback.format_exc()}")
         answer = f"Error: {e}"
-        # preserve any chunks already retrieved before the error
-    return {"answer": answer, "latency_ms": int((time.time() - t0) * 1000), "chunks": chunks}
+    elapsed = int((time.time() - t0) * 1000)
+    _log(tag, f"DONE {elapsed}ms")
+    return {"answer": answer, "latency_ms": elapsed, "chunks": chunks}
 
 
 @app.post("/api/query")
 async def run_query(req: QueryRequest):
+    _log("query", f"received query={req.query!r}")
     cfg = _load_cfg()
     loop = asyncio.get_event_loop()
     fut_a = loop.run_in_executor(_query_executor, _answer_smartqdrant, req.query, cfg, req)
