@@ -131,8 +131,8 @@ def _flush_access(cfg: dict, client: QdrantClient) -> None:
             if not existing:
                 continue
             payload = existing[0].payload
-            old_count = payload.get("access_count", 0)
-            old_rank_sum = old_count * payload.get("avg_retrieval_rank", 0.0)
+            old_count = payload.get("access_count", 0) or 0
+            old_rank_sum = old_count * (payload.get("avg_retrieval_rank") or 0.0)
             new_count = old_count + delta["count"]
             new_rank_avg = (old_rank_sum + delta["rank_sum"]) / new_count
 
