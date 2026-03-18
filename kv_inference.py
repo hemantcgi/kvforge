@@ -95,6 +95,8 @@ def generate_with_kv(query: str, chunks: list[dict],
             past_key_values=past_kv,
             max_new_tokens=512,
             do_sample=False,
+            repetition_penalty=1.3,
+            no_repeat_ngram_size=4,
         )
     return tokenizer.decode(output[0][inputs["input_ids"].shape[1]:],
                              skip_special_tokens=True)
@@ -116,7 +118,13 @@ def generate_text_in_context(query: str, chunks: list[dict],
     )
     inputs = tokenizer(text, return_tensors="pt").to(model.device)
     with torch.no_grad():
-        output = model.generate(**inputs, max_new_tokens=512, do_sample=False)
+        output = model.generate(
+            **inputs,
+            max_new_tokens=512,
+            do_sample=False,
+            repetition_penalty=1.3,
+            no_repeat_ngram_size=4,
+        )
     return tokenizer.decode(output[0][inputs["input_ids"].shape[1]:],
                              skip_special_tokens=True)
 
