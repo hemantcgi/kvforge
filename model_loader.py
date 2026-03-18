@@ -9,6 +9,16 @@ import os
 from pathlib import Path
 from typing import Optional
 
+# Import heavy GPU modules at module level so they're resolved once in the main
+# thread.  Worker threads that call load() will then reuse the already-imported
+# names without hitting the transformers lazy-import lock.
+try:
+    import torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    _HAS_TORCH = True
+except ImportError:
+    _HAS_TORCH = False
+
 _model = None
 _tokenizer = None
 _current_checkpoint: Optional[str] = None
@@ -42,8 +52,8 @@ def load(lora_checkpoint: Optional[str] = None) -> tuple:
     if _model is not None and lora_checkpoint == _current_checkpoint:
         return _model, _tokenizer
 
-    import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    if not _HAS_TORCH:
+        raise ImportError("torch / transformers not available in this environment")
 
     print(f"🤖 Loading {MODEL_ID} on {DEVICE} …")
     _tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
