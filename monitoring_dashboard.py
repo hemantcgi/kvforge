@@ -40,7 +40,7 @@ _kv_inference = None
 
 @app.on_event("startup")
 def _preload_inference_modules() -> None:
-    """Import GPU modules in the main thread at startup to avoid thread-safety issues."""
+    """Import GPU modules and pre-warm the base model in the main thread at startup."""
     global _model_loader, _kv_background, _kv_inference
     try:
         import model_loader as _ml
@@ -49,6 +49,12 @@ def _preload_inference_modules() -> None:
         _model_loader = _ml
         _kv_background = _kb
         _kv_inference = _ki
+        # Pre-warm: load base model now so the first query hits the cache
+        cfg = _load_cfg()
+        _ml.init(cfg)
+        print("[dashboard] pre-warming base model…", flush=True)
+        _ml.load(None)   # loads + caches base model; subsequent load(None) calls are free
+        print("[dashboard] base model ready", flush=True)
     except Exception as e:
         print(f"[dashboard] inference modules unavailable: {e}", flush=True)
 

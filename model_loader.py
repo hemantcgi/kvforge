@@ -6,6 +6,7 @@ Singleton pattern: call load() once per process; reload() to swap LoRA adapter.
 
 from __future__ import annotations
 import os
+import threading
 from pathlib import Path
 from typing import Optional
 
@@ -22,6 +23,7 @@ except ImportError:
 _model = None
 _tokenizer = None
 _current_checkpoint: Optional[str] = None
+_load_lock = threading.Lock()   # prevents concurrent loads from both racing
 
 MODEL_ID = os.getenv("LLM_MODEL", "meta-llama/Llama-3.2-3B-Instruct")
 
@@ -46,35 +48,41 @@ def init(cfg: dict) -> None:
 def load(lora_checkpoint: Optional[str] = None) -> tuple:
     """
     Load model + tokenizer. If lora_checkpoint is given, apply LoRA adapter.
-    Returns (model, tokenizer). Cached after first call.
+    Returns (model, tokenizer). Cached after first call; thread-safe.
     """
     global _model, _tokenizer, _current_checkpoint
+    # Fast path — no lock needed for reads once loaded
     if _model is not None and lora_checkpoint == _current_checkpoint:
         return _model, _tokenizer
 
-    if not _HAS_TORCH:
-        raise ImportError("torch / transformers not available in this environment")
+    with _load_lock:
+        # Re-check inside lock in case another thread loaded while we waited
+        if _model is not None and lora_checkpoint == _current_checkpoint:
+            return _model, _tokenizer
 
-    print(f"🤖 Loading {MODEL_ID} on {DEVICE} …")
-    _tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
-    if _tokenizer.pad_token is None:
-        _tokenizer.pad_token = _tokenizer.eos_token
+        if not _HAS_TORCH:
+            raise ImportError("torch / transformers not available in this environment")
 
-    _model = AutoModelForCausalLM.from_pretrained(
-        MODEL_ID,
-        torch_dtype=torch.float16,
-        device_map="auto",
-    )
+        print(f"🤖 Loading {MODEL_ID} on {DEVICE} …")
+        _tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+        if _tokenizer.pad_token is None:
+            _tokenizer.pad_token = _tokenizer.eos_token
 
-    if lora_checkpoint and Path(lora_checkpoint).exists():
-        from peft import PeftModel
-        print(f"🔌 Applying LoRA adapter from {lora_checkpoint} …")
-        _model = PeftModel.from_pretrained(_model, lora_checkpoint)
-        _model = _model.merge_and_unload()  # merge for faster inference
+        _model = AutoModelForCausalLM.from_pretrained(
+            MODEL_ID,
+            torch_dtype=torch.float16,
+            device_map="auto",
+        )
 
-    _model.eval()
-    _current_checkpoint = lora_checkpoint
-    return _model, _tokenizer
+        if lora_checkpoint and Path(lora_checkpoint).exists():
+            from peft import PeftModel
+            print(f"🔌 Applying LoRA adapter from {lora_checkpoint} …")
+            _model = PeftModel.from_pretrained(_model, lora_checkpoint)
+            _model = _model.merge_and_unload()  # merge for faster inference
+
+        _model.eval()
+        _current_checkpoint = lora_checkpoint
+        return _model, _tokenizer
 
 
 def reload(lora_checkpoint: Optional[str] = None) -> tuple:
