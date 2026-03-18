@@ -138,8 +138,12 @@ def _answer_smartqdrant(query: str, cfg: dict) -> dict:
     t0 = time.time()
     try:
         sys.path.insert(0, str(Path(__file__).parent))
+        import version as ver
+        import model_loader
         import kv_background
         import kv_inference
+        ver.init(cfg)
+        model_loader.init(cfg)
         kv_background.start(cfg)
         answer = kv_inference.answer_with_retrieval(query, cfg)
     except Exception as e:
