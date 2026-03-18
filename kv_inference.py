@@ -103,7 +103,11 @@ def generate_with_kv(query: str, chunks: list[dict],
 
 
 def generate_text_in_context(query: str, chunks: list[dict],
-                               model, tokenizer) -> str:
+                               model, tokenizer,
+                               max_new_tokens: int = 256,
+                               temperature: float = 0.7,
+                               top_p: float = 0.9,
+                               repetition_penalty: float = 1.2) -> str:
     """Fallback path: include chunk text in prompt."""
     context = "\n\n---\n\n".join(
         f"[page {c['page']}, score {c['score']}]\n{c['text']}"
@@ -127,11 +131,11 @@ def generate_text_in_context(query: str, chunks: list[dict],
     with torch.no_grad():
         output = model.generate(
             **inputs,
-            max_new_tokens=256,
+            max_new_tokens=max_new_tokens,
             do_sample=True,
-            temperature=0.7,
-            top_p=0.9,
-            repetition_penalty=1.2,
+            temperature=temperature,
+            top_p=top_p,
+            repetition_penalty=repetition_penalty,
             no_repeat_ngram_size=4,
             pad_token_id=tokenizer.eos_token_id,
         )
