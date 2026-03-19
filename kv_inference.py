@@ -56,9 +56,7 @@ def get_stale_chunk_ids(chunks: list[dict], current_lora_version: int) -> list[i
 def generate_with_kv(query: str, chunks: list[dict],
                       model, tokenizer, cfg: dict) -> str:
     """Fast path: inject pre-computed KV tensors as past_key_values."""
-    num_layers = cfg["kv_num_layers"]
-    num_kv_heads = cfg["kv_num_heads"]
-    head_dim = cfg["kv_head_dim"]
+    num_layers, num_kv_heads, head_dim = model_loader.get_kv_shape(cfg)
     kv_shape = (num_layers, 2, num_kv_heads, head_dim)
 
     chunk_kvs = [

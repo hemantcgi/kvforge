@@ -97,5 +97,13 @@ def reload(lora_checkpoint: Optional[str] = None) -> tuple:
 
 
 def get_kv_shape(cfg: dict) -> tuple[int, int, int]:
-    """Return (num_layers, num_kv_heads, head_dim) from config."""
+    """Return (num_layers, num_kv_heads, head_dim).
+
+    Looks up the active llm_model in cfg["model_library"] first; falls back to
+    explicit kv_num_layers/kv_num_heads/kv_head_dim fields for backwards compat.
+    """
+    model_id = cfg.get("llm_model", MODEL_ID)
+    entry = cfg.get("model_library", {}).get(model_id)
+    if entry:
+        return entry["kv_num_layers"], entry["kv_num_heads"], entry["kv_head_dim"]
     return cfg["kv_num_layers"], cfg["kv_num_heads"], cfg["kv_head_dim"]

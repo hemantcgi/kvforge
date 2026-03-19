@@ -63,9 +63,7 @@ def record_parametric_hit(chunk_ids: list[int]) -> None:
 
 def _kv_worker(cfg: dict) -> None:
     client = QdrantClient(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
-    num_layers = cfg["kv_num_layers"]
-    num_kv_heads = cfg["kv_num_heads"]
-    head_dim = cfg["kv_head_dim"]
+    num_layers, num_kv_heads, head_dim = model_loader.get_kv_shape(cfg)
 
     # Load model once at startup (model_loader singleton reuses it across calls)
     v = ver.load()
