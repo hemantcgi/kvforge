@@ -565,10 +565,13 @@ async function loadConfig() {
   }
 }
 
+let _prsHistory = [];
+
 async function load(){
   const [stats, ver] = await Promise.all(
     [fetch('/api/stats').then(r=>r.json()), fetch('/api/version').then(r=>r.json())]
   );
+  _prsHistory = ver.prs_history || [];
   const tc = stats.tier_counts;
   document.getElementById('root').innerHTML = `
     <div class="card"><b>Phase:</b> ${ver.phase} &nbsp;|&nbsp;
@@ -590,7 +593,7 @@ async function load(){
     </div>
     <div class="card">
       <b>PRS history</b>
-      <span class="help-btn" onclick="openPrsModal(${JSON.stringify(ver.prs_history||[])})">?</span>
+      <span class="help-btn" onclick="openPrsModal()">?</span>
       <div style="margin-top:8px">
       ${(ver.prs_history||[]).length === 0 ? '<span style="color:#666">No data yet — run prs_evaluator.py to generate scores</span>' :
         (ver.prs_history||[]).map(r => {
@@ -646,7 +649,8 @@ async function runQuery() {
   document.getElementById('ab-result').style.display = 'block';
 }
 
-function openPrsModal(history) {
+function openPrsModal() {
+  const history = _prsHistory;
   // Populate live scores inside the modal
   const live = document.getElementById('prs-live');
   if (history && history.length > 0) {
