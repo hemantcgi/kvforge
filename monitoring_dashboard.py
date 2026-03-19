@@ -180,15 +180,15 @@ def get_access_report():
 
 class QueryRequest(BaseModel):
     query: str
-    # Answer A (TinyLlama) generation params
+    # Answer A (local LLM RAG) generation params
     a_top_k: int = 3
-    a_max_new_tokens: int = 256
+    a_max_new_tokens: int = 128
     a_temperature: float = 0.7
     a_top_p: float = 0.9
     a_repetition_penalty: float = 1.2
     # Answer B (Gemini) params
     b_top_k: int = 5
-    b_max_output_tokens: int = 1024
+    b_max_output_tokens: int = 512
     b_temperature: float = 1.0
 
 
@@ -485,15 +485,15 @@ PRS = 0.5 × Accuracy
     <div id="model-info-a" class="model-info">Loading model info…</div>
     <div id="model-info-b" class="model-info"></div>
 
-    <div class="section-label">Answer A — SmartQdrant (TinyLlama RAG)</div>
+    <div class="section-label" id="label-a">Answer A — SmartQdrant</div>
     <div class="param-grid">
       <div class="param-group">
-        <label>Chunks retrieved (top_k)</label>
+        <label>Context chunks (top_k)</label>
         <input id="a_top_k" type="number" min="1" max="10" value="3"/>
       </div>
       <div class="param-group">
         <label>Max new tokens</label>
-        <input id="a_max_new_tokens" type="number" min="64" max="512" value="256"/>
+        <input id="a_max_new_tokens" type="number" min="64" max="512" value="128"/>
       </div>
       <div class="param-group">
         <label>Temperature</label>
@@ -517,7 +517,7 @@ PRS = 0.5 × Accuracy
       </div>
       <div class="param-group">
         <label>Max output tokens</label>
-        <input id="b_max_output_tokens" type="number" min="128" max="8192" value="1024"/>
+        <input id="b_max_output_tokens" type="number" min="128" max="8192" value="512"/>
       </div>
       <div class="param-group">
         <label>Temperature</label>
@@ -529,7 +529,7 @@ PRS = 0.5 × Accuracy
   <div id="ab-result" style="display:none">
     <div style="display:flex;gap:16px;margin-top:12px">
       <div style="flex:1;border:1px solid #444;padding:12px">
-        <b style="color:#7af">Answer A — SmartQdrant (TinyLlama RAG)</b>
+        <b style="color:#7af" id="header-a">Answer A — SmartQdrant</b>
         <div id="latency-a" style="color:#888;font-size:0.85em;margin:4px 0"></div>
         <pre id="answer-a" style="white-space:pre-wrap;margin:8px 0;color:#eee;font-size:0.9em"></pre>
       </div>
@@ -560,6 +560,10 @@ async function loadConfig() {
     // set default top_k from server config
     document.getElementById('a_top_k').value = Math.min(cfg.top_k, 3);
     document.getElementById('b_top_k').value = cfg.top_k;
+    // update section labels and answer headers with actual model name
+    const shortName = cfg.llm_model.split('/').pop();
+    document.getElementById('label-a').textContent = `Answer A — SmartQdrant (${shortName})`;
+    document.getElementById('header-a').textContent = `Answer A — SmartQdrant (${shortName})`;
   } catch(e) {
     document.getElementById('model-info-a').textContent = 'Could not load config';
   }
