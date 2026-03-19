@@ -24,5 +24,6 @@ venv
 *.pt
 *.pyc
 lora_checkpoints/
-bedrock_version.json
+*_version.json
 access_report.json
+.DS_Store
