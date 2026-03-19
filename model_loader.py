@@ -43,6 +43,9 @@ def init(cfg: dict) -> None:
     """Override MODEL_ID from config. Call once before load()."""
     global MODEL_ID
     MODEL_ID = cfg.get("llm_model", MODEL_ID)
+    token = cfg.get("hf_token")
+    if token:
+        os.environ["HF_TOKEN"] = token
 
 
 def load(lora_checkpoint: Optional[str] = None) -> tuple:
