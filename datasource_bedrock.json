@@ -3,7 +3,8 @@
   "qdrant_port": 6333,
   "collection": "bedrock-user-guide",
 
-  "embed_model": "BAAI/bge-small-en-v1.5",
+  "embed_model": "mixedbread-ai/mxbai-embed-large-v1",
+  "vector_dim": 1024,
   "embed_batch": 64,
   "chunk_size": 600,
   "chunk_overlap": 60,
