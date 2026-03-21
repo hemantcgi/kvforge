@@ -182,7 +182,7 @@ class QueryRequest(BaseModel):
     query: str
     # Answer A (local LLM RAG) generation params
     a_top_k: int = 3
-    a_max_new_tokens: int = 128
+    a_max_new_tokens: int = 1024
     a_temperature: float = 0.7
     a_top_p: float = 0.9
     a_repetition_penalty: float = 1.2
@@ -499,7 +499,7 @@ PRS = 0.5 × Accuracy
       </div>
       <div class="param-group">
         <label>Max new tokens</label>
-        <input id="a_max_new_tokens" type="number" min="64" max="512" value="128"/>
+        <input id="a_max_new_tokens" type="number" min="64" max="2048" value="1024"/>
       </div>
       <div class="param-group">
         <label>Temperature</label>
