@@ -281,7 +281,7 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
             {
                 "page": h.payload.get("page", 0),
                 "score": round(h.score, 4),
-                "text": h.payload.get("text", "")[:300],
+                "text": h.payload.get("text", "")[:2000],
             }
             for h in hits
         ]
