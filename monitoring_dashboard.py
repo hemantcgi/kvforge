@@ -249,7 +249,7 @@ def _answer_smartqdrant(query: str, cfg: dict, params: QueryRequest) -> dict:
         answer = f"Error: {e}"
     elapsed = int((time.time() - t0) * 1000)
     _log(tag, f"DONE {elapsed}ms")
-    return {"answer": answer, "latency_ms": elapsed}
+    return {"answer": answer, "latency_ms": elapsed, "chunks": chunks}
 
 
 def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
@@ -325,9 +325,11 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
             answer = f"Gemini returned no answer (blockReason: {block_reason})"
         else:
             finish = candidates[0].get("finishReason", "unknown")
-            # Filter out thinking parts (thought=True) — only keep response text
+            # Separate thinking parts (thought=True) from response text
             all_parts = candidates[0].get("content", {}).get("parts", []) or []
             text_parts = [p.get("text", "") for p in all_parts if not p.get("thought")]
+            thinking_parts = [p.get("text", "") for p in all_parts if p.get("thought")]
+            thinking = "".join(thinking_parts).strip()
             answer = "".join(text_parts).strip()
             if not answer:
                 _log(tag, f"Gemini candidate has no text parts — finishReason={finish}, raw={str(candidates[0])[:300]}")
@@ -342,9 +344,10 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
         import traceback
         _log(tag, f"ERROR: {e}\n{traceback.format_exc()}")
         answer = f"Error: {e}"
+        thinking = ""
     elapsed = int((time.time() - t0) * 1000)
     _log(tag, f"DONE {elapsed}ms")
-    return {"answer": answer, "latency_ms": elapsed, "chunks": chunks}
+    return {"answer": answer, "latency_ms": elapsed, "chunks": chunks, "thinking": thinking}
 
 
 @app.post("/api/query")
@@ -358,9 +361,11 @@ async def run_query(req: QueryRequest):
     return {
         "answer_a": result_a["answer"],
         "latency_a_ms": result_a["latency_ms"],
+        "chunks_a": result_a.get("chunks", []),
         "answer_b": result_b["answer"],
         "latency_b_ms": result_b["latency_ms"],
         "chunks_b": result_b.get("chunks", []),
+        "thinking_b": result_b.get("thinking", ""),
     }
 
 
@@ -538,11 +543,19 @@ PRS = 0.5 × Accuracy
         <b style="color:#7af" id="header-a">Answer A — SmartQdrant</b>
         <div id="latency-a" style="color:#888;font-size:0.85em;margin:4px 0"></div>
         <pre id="answer-a" style="white-space:pre-wrap;margin:8px 0;color:#eee;font-size:0.9em"></pre>
+        <details style="margin-top:8px">
+          <summary style="cursor:pointer;color:#888">Retrieved context (reasoning)</summary>
+          <div id="chunks-a" style="font-size:0.8em;margin-top:6px"></div>
+        </details>
       </div>
       <div style="flex:1;border:1px solid #444;padding:12px">
         <b style="color:#fa7">Answer B — Gemini RAG</b>
         <div id="latency-b" style="color:#888;font-size:0.85em;margin:4px 0"></div>
         <pre id="answer-b" style="white-space:pre-wrap;margin:8px 0;color:#eee;font-size:0.9em"></pre>
+        <details id="thinking-b-details" style="margin-top:8px;display:none">
+          <summary style="cursor:pointer;color:#adf">Reasoning (thinking tokens)</summary>
+          <pre id="thinking-b" style="white-space:pre-wrap;font-size:0.8em;margin-top:6px;color:#9c9;max-height:400px;overflow-y:auto"></pre>
+        </details>
         <details style="margin-top:8px">
           <summary style="cursor:pointer;color:#888">Retrieved chunks</summary>
           <div id="chunks-b" style="font-size:0.8em;margin-top:6px"></div>
@@ -650,8 +663,20 @@ async function runQuery() {
   document.getElementById('query-loading').style.display = 'none';
   document.getElementById('answer-a').textContent = res.answer_a;
   document.getElementById('latency-a').textContent = `Latency: ${res.latency_a_ms}ms`;
+  document.getElementById('chunks-a').innerHTML = (res.chunks_a||[]).map(c =>
+    `<div style="margin:4px 0;border-top:1px solid #333;padding-top:4px">
+      <span style="color:#888">page ${c.page} \u00b7 score ${c.score}</span><br>${c.text}\u2026</div>`
+  ).join('');
   document.getElementById('answer-b').textContent = res.answer_b;
   document.getElementById('latency-b').textContent = `Latency: ${res.latency_b_ms}ms`;
+  const thinkingB = res.thinking_b || '';
+  const thinkingDetails = document.getElementById('thinking-b-details');
+  if (thinkingB) {
+    document.getElementById('thinking-b').textContent = thinkingB;
+    thinkingDetails.style.display = 'block';
+  } else {
+    thinkingDetails.style.display = 'none';
+  }
   document.getElementById('chunks-b').innerHTML = (res.chunks_b||[]).map(c =>
     `<div style="margin:4px 0;border-top:1px solid #333;padding-top:4px">
       <span style="color:#888">page ${c.page} \u00b7 score ${c.score}</span><br>${c.text}\u2026</div>`
