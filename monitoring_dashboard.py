@@ -311,8 +311,11 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
                     "temperature": params.b_temperature,
                     "maxOutputTokens": params.b_max_output_tokens,
                 },
+                # Disable thinking tokens — they count against maxOutputTokens and
+                # can exhaust the budget before the actual response is produced.
+                "thinkingConfig": {"thinkingBudget": 0},
             },
-            timeout=60,
+            timeout=90,
         )
         _log(tag, f"Gemini HTTP {resp.status_code}")
         resp.raise_for_status()
@@ -324,14 +327,20 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
             _log(tag, f"Gemini returned 0 candidates — blockReason={block_reason}, raw={str(data)[:300]}")
             answer = f"Gemini returned no answer (blockReason: {block_reason})"
         else:
-            parts = candidates[0].get("content", {}).get("parts", [])
-            if not parts:
-                finish = candidates[0].get("finishReason", "unknown")
-                _log(tag, f"Gemini candidate has no parts — finishReason={finish}, raw={str(candidates[0])[:300]}")
+            finish = candidates[0].get("finishReason", "unknown")
+            # Filter out thinking parts (thought=True) — only keep response text
+            all_parts = candidates[0].get("content", {}).get("parts", []) or []
+            text_parts = [p.get("text", "") for p in all_parts if not p.get("thought")]
+            answer = "".join(text_parts).strip()
+            if not answer:
+                _log(tag, f"Gemini candidate has no text parts — finishReason={finish}, raw={str(candidates[0])[:300]}")
                 answer = f"Gemini returned empty content (finishReason: {finish})"
             else:
-                answer = parts[0].get("text", "")
-                _log(tag, f"generation done ({len(answer)} chars)")
+                if finish == "MAX_TOKENS":
+                    _log(tag, f"Gemini hit MAX_TOKENS — partial response ({len(answer)} chars)")
+                    answer += "\n[response truncated — increase Max output tokens]"
+                else:
+                    _log(tag, f"generation done ({len(answer)} chars)")
     except Exception as e:
         import traceback
         _log(tag, f"ERROR: {e}\n{traceback.format_exc()}")
