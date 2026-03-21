@@ -188,7 +188,7 @@ class QueryRequest(BaseModel):
     a_repetition_penalty: float = 1.2
     # Answer B (Gemini) params
     b_top_k: int = 5
-    b_max_output_tokens: int = 8192
+    b_max_output_tokens: int = 1024
     b_temperature: float = 1.0
 
 
@@ -523,7 +523,7 @@ PRS = 0.5 × Accuracy
       </div>
       <div class="param-group">
         <label>Max output tokens</label>
-        <input id="b_max_output_tokens" type="number" min="128" max="65536" value="8192"/>
+        <input id="b_max_output_tokens" type="number" min="128" max="65536" value="1024"/>
       </div>
       <div class="param-group">
         <label>Temperature</label>

@@ -90,7 +90,7 @@ def _parse_args() -> argparse.Namespace:
 
     # Model B params
     p.add_argument("--b-top-k",               type=int,   default=5)
-    p.add_argument("--b-max-output-tokens",   type=int,   default=8192)
+    p.add_argument("--b-max-output-tokens",   type=int,   default=1024)
     p.add_argument("--b-temperature",         type=float, default=1.0)
 
     # Embedder for semantic similarity scoring (separate from the RAG embedder)
