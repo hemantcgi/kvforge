@@ -218,9 +218,11 @@ def _answer_smartqdrant(query: str, cfg: dict, params: QueryRequest) -> dict:
         rag_cfg = Config(**{k: cfg_a[k] for k in Config.__dataclass_fields__ if k in cfg_a})
 
         _log(tag, "searching Qdrant…")
+        t_ret = time.time()
         hits = _run_search(query, embedder, client, rag_cfg)
+        retrieval_ms = int((time.time() - t_ret) * 1000)
         top_score_a = f"{hits[0].score:.4f}" if hits else "n/a"
-        _log(tag, f"search done — {len(hits)} hits, top_score={top_score_a}")
+        _log(tag, f"search done — {len(hits)} hits, top_score={top_score_a}, retrieval={retrieval_ms}ms")
 
         if not hits:
             answer = "No relevant chunks found."
@@ -233,6 +235,7 @@ def _answer_smartqdrant(query: str, cfg: dict, params: QueryRequest) -> dict:
             model, tokenizer = _model_loader.load(None)
             model = model.half()
             _log(tag, "model ready — recording access + generating…")
+            t_gen = time.time()
             for rank, chunk in enumerate(chunks, start=1):
                 _kv_background.record_access(chunk["chunk_id"], rank)
             answer = _kv_inference.generate_text_in_context(
@@ -242,14 +245,18 @@ def _answer_smartqdrant(query: str, cfg: dict, params: QueryRequest) -> dict:
                 top_p=params.a_top_p,
                 repetition_penalty=params.a_repetition_penalty,
             )
-            _log(tag, f"generation done ({len(answer)} chars)")
+            generation_ms = int((time.time() - t_gen) * 1000)
+            _log(tag, f"generation done ({len(answer)} chars, {generation_ms}ms)")
     except Exception as e:
         import traceback
         _log(tag, f"ERROR: {e}\n{traceback.format_exc()}")
         answer = f"Error: {e}"
+        retrieval_ms = 0
+        generation_ms = 0
     elapsed = int((time.time() - t0) * 1000)
     _log(tag, f"DONE {elapsed}ms")
-    return {"answer": answer, "latency_ms": elapsed, "chunks": chunks}
+    return {"answer": answer, "latency_ms": elapsed, "retrieval_ms": retrieval_ms,
+            "generation_ms": generation_ms, "chunks": chunks}
 
 
 def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
@@ -268,15 +275,17 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
 
         _log(tag, "searching Qdrant…")
         from qdrant_client.models import NamedVector
+        t_ret = time.time()
         result = client.query_points(
             collection_name=cfg["collection"],
             query=q_vec,
             limit=params.b_top_k,
             with_payload=True,
         )
+        retrieval_ms = int((time.time() - t_ret) * 1000)
         hits = result.points
         top_score_b = f"{hits[0].score:.4f}" if hits else "n/a"
-        _log(tag, f"search done — {len(hits)} hits, top_score={top_score_b}")
+        _log(tag, f"search done — {len(hits)} hits, top_score={top_score_b}, retrieval={retrieval_ms}ms")
         chunks = [
             {
                 "page": h.payload.get("page", 0),
@@ -302,7 +311,8 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
             f"https://generativelanguage.googleapis.com/v1beta/models/"
             f"{model}:generateContent?key={api_key}"
         )
-        _log(tag, f"calling Gemini API ({model}, timeout=60s)…")
+        _log(tag, f"calling Gemini API ({model}, timeout=90s)…")
+        t_gen = time.time()
         resp = httpx.post(
             url,
             json={
@@ -335,19 +345,23 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
                 _log(tag, f"Gemini candidate has no text parts — finishReason={finish}, raw={str(candidates[0])[:300]}")
                 answer = f"Gemini returned empty content (finishReason: {finish})"
             else:
+                generation_ms = int((time.time() - t_gen) * 1000)
                 if finish == "MAX_TOKENS":
-                    _log(tag, f"Gemini hit MAX_TOKENS — partial response ({len(answer)} chars)")
+                    _log(tag, f"Gemini hit MAX_TOKENS — partial response ({len(answer)} chars, {generation_ms}ms)")
                     answer += "\n[response truncated — increase Max output tokens]"
                 else:
-                    _log(tag, f"generation done ({len(answer)} chars)")
+                    _log(tag, f"generation done ({len(answer)} chars, {generation_ms}ms)")
     except Exception as e:
         import traceback
         _log(tag, f"ERROR: {e}\n{traceback.format_exc()}")
         answer = f"Error: {e}"
         thinking = ""
+        retrieval_ms = 0
+        generation_ms = 0
     elapsed = int((time.time() - t0) * 1000)
     _log(tag, f"DONE {elapsed}ms")
-    return {"answer": answer, "latency_ms": elapsed, "chunks": chunks, "thinking": thinking}
+    return {"answer": answer, "latency_ms": elapsed, "retrieval_ms": retrieval_ms,
+            "generation_ms": generation_ms, "chunks": chunks, "thinking": thinking}
 
 
 @app.post("/api/query")
@@ -361,9 +375,13 @@ async def run_query(req: QueryRequest):
     return {
         "answer_a": result_a["answer"],
         "latency_a_ms": result_a["latency_ms"],
+        "retrieval_a_ms": result_a.get("retrieval_ms", 0),
+        "generation_a_ms": result_a.get("generation_ms", 0),
         "chunks_a": result_a.get("chunks", []),
         "answer_b": result_b["answer"],
         "latency_b_ms": result_b["latency_ms"],
+        "retrieval_b_ms": result_b.get("retrieval_ms", 0),
+        "generation_b_ms": result_b.get("generation_ms", 0),
         "chunks_b": result_b.get("chunks", []),
         "thinking_b": result_b.get("thinking", ""),
     }
@@ -496,12 +514,16 @@ PRS = 0.5 × Accuracy
     <div id="model-info-a" class="model-info">Loading model info…</div>
     <div id="model-info-b" class="model-info"></div>
 
-    <div class="section-label" id="label-a">Answer A — SmartQdrant</div>
+    <div class="section-label">Shared Retrieval Settings</div>
     <div class="param-grid">
       <div class="param-group">
-        <label>Context chunks (top_k)</label>
-        <input id="a_top_k" type="number" min="1" max="10" value="3"/>
+        <label>Context chunks (top_k) — both models</label>
+        <input id="top_k" type="number" min="1" max="10" value="5"/>
       </div>
+    </div>
+
+    <div class="section-label" id="label-a">Answer A — SmartQdrant</div>
+    <div class="param-grid">
       <div class="param-group">
         <label>Max new tokens</label>
         <input id="a_max_new_tokens" type="number" min="64" max="2048" value="1024"/>
@@ -523,10 +545,6 @@ PRS = 0.5 × Accuracy
     <div class="section-label">Answer B — Gemini RAG</div>
     <div class="param-grid">
       <div class="param-group">
-        <label>Chunks retrieved (top_k)</label>
-        <input id="b_top_k" type="number" min="1" max="10" value="5"/>
-      </div>
-      <div class="param-group">
         <label>Max output tokens</label>
         <input id="b_max_output_tokens" type="number" min="128" max="65536" value="1024"/>
       </div>
@@ -541,7 +559,7 @@ PRS = 0.5 × Accuracy
     <div style="display:flex;gap:16px;margin-top:12px">
       <div style="flex:1;border:1px solid #444;padding:12px">
         <b style="color:#7af" id="header-a">Answer A — SmartQdrant</b>
-        <div id="latency-a" style="color:#888;font-size:0.85em;margin:4px 0"></div>
+        <div id="latency-a" style="color:#888;font-size:0.85em;margin:4px 0;font-family:monospace"></div>
         <pre id="answer-a" style="white-space:pre-wrap;margin:8px 0;color:#eee;font-size:0.9em"></pre>
         <details style="margin-top:8px">
           <summary style="cursor:pointer;color:#888">Retrieved context (reasoning)</summary>
@@ -550,7 +568,7 @@ PRS = 0.5 × Accuracy
       </div>
       <div style="flex:1;border:1px solid #444;padding:12px">
         <b style="color:#fa7">Answer B — Gemini RAG</b>
-        <div id="latency-b" style="color:#888;font-size:0.85em;margin:4px 0"></div>
+        <div id="latency-b" style="color:#888;font-size:0.85em;margin:4px 0;font-family:monospace"></div>
         <pre id="answer-b" style="white-space:pre-wrap;margin:8px 0;color:#eee;font-size:0.9em"></pre>
         <details id="thinking-b-details" style="margin-top:8px;display:none">
           <summary style="cursor:pointer;color:#adf">Reasoning (thinking tokens)</summary>
@@ -576,9 +594,8 @@ async function loadConfig() {
       ` &nbsp;|&nbsp; Collection: ${cfg.collection}`;
     document.getElementById('model-info-b').innerHTML =
       `Gemini model: <b style="color:#fa7">${cfg.gemini_model}</b>`;
-    // set default top_k from server config
-    document.getElementById('a_top_k').value = Math.min(cfg.top_k, 3);
-    document.getElementById('b_top_k').value = cfg.top_k;
+    // set default top_k from server config (shared for both models)
+    document.getElementById('top_k').value = cfg.top_k;
     // update section labels and answer headers with actual model name
     const shortName = cfg.llm_model.split('/').pop();
     document.getElementById('label-a').textContent = `Answer A — SmartQdrant (${shortName})`;
@@ -644,14 +661,15 @@ async function runQuery() {
   if (!q) return;
   document.getElementById('query-loading').style.display = 'block';
   document.getElementById('ab-result').style.display = 'none';
+  const topK = getInt('top_k');
   const payload = {
     query: q,
-    a_top_k:               getInt('a_top_k'),
+    a_top_k:               topK,
     a_max_new_tokens:      getInt('a_max_new_tokens'),
     a_temperature:         getNum('a_temperature'),
     a_top_p:               getNum('a_top_p'),
     a_repetition_penalty:  getNum('a_repetition_penalty'),
-    b_top_k:               getInt('b_top_k'),
+    b_top_k:               topK,
     b_max_output_tokens:   getInt('b_max_output_tokens'),
     b_temperature:         getNum('b_temperature'),
   };
@@ -662,13 +680,19 @@ async function runQuery() {
   }).then(r => r.json());
   document.getElementById('query-loading').style.display = 'none';
   document.getElementById('answer-a').textContent = res.answer_a;
-  document.getElementById('latency-a').textContent = `Latency: ${res.latency_a_ms}ms`;
+  document.getElementById('latency-a').innerHTML =
+    `Total: <b>${res.latency_a_ms}ms</b> &nbsp;|&nbsp; ` +
+    `<span style="color:#4af">Retrieval: ${res.retrieval_a_ms}ms</span> &nbsp;|&nbsp; ` +
+    `<span style="color:#fa4">Generation: ${res.generation_a_ms}ms</span>`;
   document.getElementById('chunks-a').innerHTML = (res.chunks_a||[]).map(c =>
     `<div style="margin:4px 0;border-top:1px solid #333;padding-top:4px">
       <span style="color:#888">page ${c.page} \u00b7 score ${c.score}</span><br>${c.text}\u2026</div>`
   ).join('');
   document.getElementById('answer-b').textContent = res.answer_b;
-  document.getElementById('latency-b').textContent = `Latency: ${res.latency_b_ms}ms`;
+  document.getElementById('latency-b').innerHTML =
+    `Total: <b>${res.latency_b_ms}ms</b> &nbsp;|&nbsp; ` +
+    `<span style="color:#4af">Retrieval: ${res.retrieval_b_ms}ms</span> &nbsp;|&nbsp; ` +
+    `<span style="color:#fa4">Generation: ${res.generation_b_ms}ms</span>`;
   const thinkingB = res.thinking_b || '';
   const thinkingDetails = document.getElementById('thinking-b-details');
   if (thinkingB) {
