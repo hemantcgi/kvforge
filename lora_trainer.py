@@ -80,14 +80,16 @@ def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
     training_args = TrainingArguments(
         output_dir=output_dir,
         num_train_epochs=cfg.get("lora_epochs", 3),
-        per_device_train_batch_size=4,
-        gradient_accumulation_steps=4,
+        per_device_train_batch_size=1,
+        gradient_accumulation_steps=16,
         learning_rate=cfg.get("lora_lr", 2e-4),
         fp16=True,
+        gradient_checkpointing=True,
         logging_steps=10,
         save_strategy="no",
         report_to="none",
     )
+    model.gradient_checkpointing_enable()
 
     trainer = Trainer(
         model=model,
