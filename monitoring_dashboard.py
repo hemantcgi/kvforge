@@ -228,25 +228,39 @@ def _answer_smartqdrant(query: str, cfg: dict, params: QueryRequest) -> dict:
             answer = "No relevant chunks found."
         else:
             chunks = [{"chunk_id": h.id,
-                       "text": h.payload["text"][:500],
+                       "text": h.payload["text"],
                        "page": h.payload["page"], "score": round(h.score, 4),
-                       "kv_cache": None, "kv_version": None} for h in hits]
+                       "kv_cache": h.payload.get("kv_cache"),
+                       "kv_version": h.payload.get("kv_version")} for h in hits]
             _log(tag, "loading model…")
-            model, tokenizer = _model_loader.load(None)
+            current_ver = ver.get_lora_version()
+            lora_ckpt = ver.load().get("checkpoint_path")
+            model, tokenizer = _model_loader.load(lora_ckpt)
             model = model.half()
-            _log(tag, "model ready — recording access + generating…")
+
+            # Enqueue stale chunks for background KV recompute
+            stale = _kv_inference.get_stale_chunk_ids(chunks, current_ver)
+            if stale:
+                _kv_background.enqueue_kv_recompute(stale)
+
+            mode = _kv_inference.decide_inference_mode(chunks, current_ver)
+            _log(tag, f"model ready — mode={mode}, recording access + generating…")
             t_gen = time.time()
             for rank, chunk in enumerate(chunks, start=1):
                 _kv_background.record_access(chunk["chunk_id"], rank)
-            answer = _kv_inference.generate_text_in_context(
-                query, chunks, model, tokenizer,
-                max_new_tokens=params.a_max_new_tokens,
-                temperature=params.a_temperature,
-                top_p=params.a_top_p,
-                repetition_penalty=params.a_repetition_penalty,
-            )
+
+            if mode == "kv_injection":
+                answer = _kv_inference.generate_with_kv(query, chunks, model, tokenizer, cfg)
+            else:
+                answer = _kv_inference.generate_text_in_context(
+                    query, chunks, model, tokenizer,
+                    max_new_tokens=params.a_max_new_tokens,
+                    temperature=params.a_temperature,
+                    top_p=params.a_top_p,
+                    repetition_penalty=params.a_repetition_penalty,
+                )
             generation_ms = int((time.time() - t_gen) * 1000)
-            _log(tag, f"generation done ({len(answer)} chars, {generation_ms}ms)")
+            _log(tag, f"generation done mode={mode} ({len(answer)} chars, {generation_ms}ms)")
     except Exception as e:
         import traceback
         _log(tag, f"ERROR: {e}\n{traceback.format_exc()}")
@@ -255,8 +269,10 @@ def _answer_smartqdrant(query: str, cfg: dict, params: QueryRequest) -> dict:
         generation_ms = 0
     elapsed = int((time.time() - t0) * 1000)
     _log(tag, f"DONE {elapsed}ms")
+    # Truncate chunk text for display only (full text was used for inference above)
+    display_chunks = [dict(c, text=c["text"][:500]) for c in chunks]
     return {"answer": answer, "latency_ms": elapsed, "retrieval_ms": retrieval_ms,
-            "generation_ms": generation_ms, "chunks": chunks}
+            "generation_ms": generation_ms, "chunks": display_chunks}
 
 
 def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:

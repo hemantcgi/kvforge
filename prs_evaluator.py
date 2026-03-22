@@ -130,7 +130,7 @@ def main() -> None:
     import argparse
     p = argparse.ArgumentParser()
     p.add_argument("--config", default="my_config.json")
-    p.add_argument("--faqs", default="bedrock_50 faqs.json")
+    p.add_argument("--faqs", default="examples/bedrock_50_faqs.json")
     p.add_argument("--sample", type=int, default=50)
     args = p.parse_args()
 
