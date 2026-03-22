@@ -135,9 +135,11 @@ def cmd_compute_kv(cfg: dict, filter_type: str, filter_value) -> None:
     if filter_type == "null":
         scroll_filter = Filter(must=[IsNullCondition(is_null={"key": "kv_version"})])
     elif filter_type == "stale":
-        scroll_filter = Filter(must=[
-            FieldCondition(key="kv_version",
-                           range=Range(lt=int(filter_value)))
+        # Match chunks where kv_version is null OR kv_version < N
+        # (Qdrant range filters do not match null fields, so we need both conditions)
+        scroll_filter = Filter(should=[
+            IsNullCondition(is_null={"key": "kv_version"}),
+            Filter(must=[FieldCondition(key="kv_version", range=Range(lt=int(filter_value)))]),
         ])
     else:
         scroll_filter = Filter(must=[
