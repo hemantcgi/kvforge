@@ -57,7 +57,7 @@ def format_qa_texts(faqs: list[dict]) -> list[str]:
     for item in faqs:
         q = item["question"].strip()
         a = item["answer"].strip()
-        texts.append(f"Question: {q}\nAnswer: {a}")
+        texts.append(f"{q}\n{a}")
     return texts
 
 
@@ -97,8 +97,10 @@ def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
     model = get_peft_model(model, lora_cfg)
     model.print_trainable_parameters()
 
+    # Use dynamic max_length: 128 for short Q&A pairs, 512 for raw chunks
+    _max_len = 128 if qa_texts else 512
     def tokenize(example):
-        return tokenizer(example["text"], truncation=True, max_length=512,
+        return tokenizer(example["text"], truncation=True, max_length=_max_len,
                          padding="max_length")
 
     dataset = Dataset.from_dict({"text": all_texts})

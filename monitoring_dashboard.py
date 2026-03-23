@@ -26,7 +26,7 @@ from pydantic import BaseModel
 import version as ver
 from qdrant_client import QdrantClient
 
-app = FastAPI(title="RAG Intelligence Dashboard")
+app = FastAPI(title="Smart Qdrant Dashboard")
 _cfg: dict = {}
 _qdrant_client: QdrantClient | None = None
 _query_executor = ThreadPoolExecutor(max_workers=2)
@@ -203,10 +203,66 @@ def _answer_smartqdrant(query: str, cfg: dict, params: QueryRequest) -> dict:
     if _model_loader is None or _kv_inference is None:
         _log(tag, "SKIP — inference modules not loaded (GPU required)")
         return {"answer": "SmartQdrant inference modules not available (GPU required)", "latency_ms": 0}
+    retrieval_ms = 0
+    generation_ms = 0
+    chunks = []
+    mode = "text_in_context"
+    gate_info = {}
     try:
+        import torch
         ver.init(cfg)
         _model_loader.init(cfg)
         _kv_background.start(cfg)
+
+        phase = ver.get_phase()
+        lora_ckpt = ver.load().get("checkpoint_path")
+        model, tokenizer = _model_loader.load(lora_ckpt)
+        model = model.half()
+
+        # ── Phase 3: confidence gate ──────────────────────────────────────
+        if phase >= 3:
+            import confidence_gate as _cg
+            _log(tag, "Phase 3 — running confidence gate…")
+            draft, entropy = _cg._generate_draft(query, model, tokenizer)
+            hedging = _cg.compute_hedging_score(draft)
+            similarity = _cg._query_similarity_to_known_good(query, cfg)
+            threshold = cfg.get("gate_threshold", _cg.DEFAULT_THRESHOLD)
+            decision = _cg.decide_gate(entropy, hedging, similarity, threshold)
+            gate_info = {
+                "entropy": round(entropy, 3),
+                "hedging": round(hedging, 3),
+                "similarity": round(similarity, 3),
+                "decision": decision,
+                "threshold": threshold,
+            }
+            _log(tag, f"Gate: entropy={entropy:.2f} hedging={hedging:.2f} "
+                      f"sim={similarity:.2f} threshold={threshold} -> {decision}")
+
+            if decision == "direct":
+                mode = "parametric"
+                t_gen = time.time()
+                inputs = tokenizer(query, return_tensors="pt").to(model.device)
+                with torch.no_grad():
+                    out = model.generate(
+                        **inputs,
+                        max_new_tokens=params.a_max_new_tokens,
+                        do_sample=False,
+                    )
+                answer = tokenizer.decode(
+                    out[0][inputs["input_ids"].shape[1]:],
+                    skip_special_tokens=True,
+                )
+                generation_ms = int((time.time() - t_gen) * 1000)
+                _cg._log_would_have_retrieved(query, cfg)
+                _log(tag, f"generation done mode=parametric ({len(answer)} chars, {generation_ms}ms)")
+                elapsed = int((time.time() - t0) * 1000)
+                _log(tag, f"DONE {elapsed}ms")
+                return {"answer": answer, "latency_ms": elapsed,
+                        "retrieval_ms": 0, "generation_ms": generation_ms,
+                        "chunks": [], "mode": mode, "gate": gate_info}
+            # decision == "retrieve": fall through to retrieval pipeline below
+
+        # ── Retrieval pipeline (Phase 1/2, or Phase 3 retrieve path) ─────
         from fastembed import TextEmbedding
         from qdrant_client import QdrantClient as _QC
         from bedrock_rag import _run_search, Config
@@ -232,11 +288,7 @@ def _answer_smartqdrant(query: str, cfg: dict, params: QueryRequest) -> dict:
                        "page": h.payload["page"], "score": round(h.score, 4),
                        "kv_cache": h.payload.get("kv_cache"),
                        "kv_version": h.payload.get("kv_version")} for h in hits]
-            _log(tag, "loading model…")
             current_ver = ver.get_lora_version()
-            lora_ckpt = ver.load().get("checkpoint_path")
-            model, tokenizer = _model_loader.load(lora_ckpt)
-            model = model.half()
 
             # Enqueue stale chunks for background KV recompute
             stale = _kv_inference.get_stale_chunk_ids(chunks, current_ver)
@@ -244,7 +296,7 @@ def _answer_smartqdrant(query: str, cfg: dict, params: QueryRequest) -> dict:
                 _kv_background.enqueue_kv_recompute(stale)
 
             mode = _kv_inference.decide_inference_mode(chunks, current_ver)
-            _log(tag, f"model ready — mode={mode}, recording access + generating…")
+            _log(tag, f"mode={mode}, recording access + generating…")
             t_gen = time.time()
             for rank, chunk in enumerate(chunks, start=1):
                 _kv_background.record_access(chunk["chunk_id"], rank)
@@ -269,10 +321,10 @@ def _answer_smartqdrant(query: str, cfg: dict, params: QueryRequest) -> dict:
         generation_ms = 0
     elapsed = int((time.time() - t0) * 1000)
     _log(tag, f"DONE {elapsed}ms")
-    # Truncate chunk text for display only (full text was used for inference above)
     display_chunks = [dict(c, text=c["text"][:500]) for c in chunks]
     return {"answer": answer, "latency_ms": elapsed, "retrieval_ms": retrieval_ms,
-            "generation_ms": generation_ms, "chunks": display_chunks}
+            "generation_ms": generation_ms, "chunks": display_chunks,
+            "mode": mode, "gate": gate_info}
 
 
 def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
@@ -280,6 +332,9 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
     tag = "B:Gemini"
     _log(tag, f"START query={query!r} top_k={params.b_top_k} max_tokens={params.b_max_output_tokens} temp={params.b_temperature}")
     chunks = []
+    retrieval_ms = 0
+    generation_ms = 0
+    thinking = ""
     try:
         from fastembed import TextEmbedding
         from qdrant_client import QdrantClient as _QC
@@ -394,6 +449,8 @@ async def run_query(req: QueryRequest):
         "retrieval_a_ms": result_a.get("retrieval_ms", 0),
         "generation_a_ms": result_a.get("generation_ms", 0),
         "chunks_a": result_a.get("chunks", []),
+        "mode_a": result_a.get("mode", "text_in_context"),
+        "gate_a": result_a.get("gate", {}),
         "answer_b": result_b["answer"],
         "latency_b_ms": result_b["latency_ms"],
         "retrieval_b_ms": result_b.get("retrieval_ms", 0),
@@ -409,7 +466,7 @@ async def run_query(req: QueryRequest):
 
 DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>RAG Intelligence Dashboard</title>
+<head><meta charset="UTF-8"><title>Smart Qdrant Dashboard</title>
 <style>
   body { font-family: monospace; background:#111; color:#eee; padding:20px; }
   h1 { color:#7af; }
@@ -510,7 +567,7 @@ PRS = 0.5 × Accuracy
   </div>
 </div>
 
-<h1>RAG Intelligence Dashboard</h1>
+<h1>Smart Qdrant Dashboard</h1>
 <div id="root">Loading…</div>
 
 <div class="card" id="query-section">
@@ -576,6 +633,7 @@ PRS = 0.5 × Accuracy
       <div style="flex:1;border:1px solid #444;padding:12px">
         <b style="color:#7af" id="header-a">Answer A — SmartQdrant</b>
         <div id="latency-a" style="color:#888;font-size:0.85em;margin:4px 0;font-family:monospace"></div>
+        <div id="mode-a" style="font-size:0.85em;margin:4px 0"></div>
         <pre id="answer-a" style="white-space:pre-wrap;margin:8px 0;color:#eee;font-size:0.9em"></pre>
         <details style="margin-top:8px">
           <summary style="cursor:pointer;color:#888">Retrieved context (reasoning)</summary>
@@ -700,6 +758,16 @@ async function runQuery() {
     `Total: <b>${res.latency_a_ms}ms</b> &nbsp;|&nbsp; ` +
     `<span style="color:#4af">Retrieval: ${res.retrieval_a_ms}ms</span> &nbsp;|&nbsp; ` +
     `<span style="color:#fa4">Generation: ${res.generation_a_ms}ms</span>`;
+  // Mode badge + gate info
+  const modeA = res.mode_a || 'text_in_context';
+  const modeColors = {parametric: '#4f4', kv_injection: '#4af', text_in_context: '#fa4'};
+  const modeLabels = {parametric: 'Parametric (no retrieval)', kv_injection: 'KV Injection', text_in_context: 'Text-in-Context RAG'};
+  let modeHtml = `<span style="color:${modeColors[modeA]||'#aaa'};font-weight:bold">\u25cf ${modeLabels[modeA]||modeA}</span>`;
+  const gate = res.gate_a || {};
+  if (gate.decision) {
+    modeHtml += ` &nbsp;<span style="color:#888;font-size:0.85em">[gate: entropy=${gate.entropy} hedging=${gate.hedging} sim=${gate.similarity} \u2192 <b>${gate.decision}</b>]</span>`;
+  }
+  document.getElementById('mode-a').innerHTML = modeHtml;
   document.getElementById('chunks-a').innerHTML = (res.chunks_a||[]).map(c =>
     `<div style="margin:4px 0;border-top:1px solid #333;padding-top:4px">
       <span style="color:#888">page ${c.page} \u00b7 score ${c.score}</span><br>${c.text}\u2026</div>`
@@ -771,7 +839,7 @@ def dashboard():
 
 def _main():
     global _config_path
-    parser = argparse.ArgumentParser(description="RAG Intelligence Dashboard")
+    parser = argparse.ArgumentParser(description="Smart Qdrant Dashboard")
     parser.add_argument(
         "--config",
         default="my_config.json",

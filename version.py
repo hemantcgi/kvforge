@@ -86,9 +86,9 @@ def append_prs(round_num: int, prs: float) -> None:
     if prs >= 0.75 and data["phase"] < 2:
         data["phase"] = 2
         print("✅ Phase 2 activated — KV injection enabled")
-    # Phase 3: PRS >= 0.80 for 2 consecutive rounds
+    # Phase 3: PRS >= 0.75 for 2 consecutive rounds
     if (len(history) >= 2
-            and all(r["prs"] >= 0.80 for r in history[-2:])
+            and all(r["prs"] >= 0.75 for r in history[-2:])
             and data["phase"] < 3):
         data["phase"] = 3
         print("✅ Phase 3 activated — confidence gate now live")
