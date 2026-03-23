@@ -219,50 +219,31 @@ def _answer_smartqdrant(query: str, cfg: dict, params: QueryRequest) -> dict:
         model, tokenizer = _model_loader.load(lora_ckpt)
         model = model.half()
 
-        # ── Phase 3: confidence gate ──────────────────────────────────────
+        # ── Phase 3: answer directly from fine-tuned weights, no retrieval ─
         if phase >= 3:
-            import confidence_gate as _cg
-            _log(tag, "Phase 3 — running confidence gate…")
-            draft, entropy = _cg._generate_draft(query, model, tokenizer)
-            hedging = _cg.compute_hedging_score(draft)
-            similarity = _cg._query_similarity_to_known_good(query, cfg)
-            threshold = cfg.get("gate_threshold", _cg.DEFAULT_THRESHOLD)
-            decision = _cg.decide_gate(entropy, hedging, similarity, threshold)
-            gate_info = {
-                "entropy": round(entropy, 3),
-                "hedging": round(hedging, 3),
-                "similarity": round(similarity, 3),
-                "decision": decision,
-                "threshold": threshold,
-            }
-            _log(tag, f"Gate: entropy={entropy:.2f} hedging={hedging:.2f} "
-                      f"sim={similarity:.2f} threshold={threshold} -> {decision}")
-
-            if decision == "direct":
-                mode = "parametric"
-                t_gen = time.time()
-                inputs = tokenizer(query, return_tensors="pt").to(model.device)
-                with torch.no_grad():
-                    out = model.generate(
-                        **inputs,
-                        max_new_tokens=params.a_max_new_tokens,
-                        do_sample=False,
-                    )
-                answer = tokenizer.decode(
-                    out[0][inputs["input_ids"].shape[1]:],
-                    skip_special_tokens=True,
+            mode = "parametric"
+            _log(tag, "Phase 3 — answering from fine-tuned weights (no retrieval)…")
+            t_gen = time.time()
+            inputs = tokenizer(query, return_tensors="pt").to(model.device)
+            with torch.no_grad():
+                out = model.generate(
+                    **inputs,
+                    max_new_tokens=params.a_max_new_tokens,
+                    do_sample=False,
                 )
-                generation_ms = int((time.time() - t_gen) * 1000)
-                _cg._log_would_have_retrieved(query, cfg)
-                _log(tag, f"generation done mode=parametric ({len(answer)} chars, {generation_ms}ms)")
-                elapsed = int((time.time() - t0) * 1000)
-                _log(tag, f"DONE {elapsed}ms")
-                return {"answer": answer, "latency_ms": elapsed,
-                        "retrieval_ms": 0, "generation_ms": generation_ms,
-                        "chunks": [], "mode": mode, "gate": gate_info}
-            # decision == "retrieve": fall through to retrieval pipeline below
+            answer = tokenizer.decode(
+                out[0][inputs["input_ids"].shape[1]:],
+                skip_special_tokens=True,
+            )
+            generation_ms = int((time.time() - t_gen) * 1000)
+            _log(tag, f"generation done mode=parametric ({len(answer)} chars, {generation_ms}ms)")
+            elapsed = int((time.time() - t0) * 1000)
+            _log(tag, f"DONE {elapsed}ms")
+            return {"answer": answer, "latency_ms": elapsed,
+                    "retrieval_ms": 0, "generation_ms": generation_ms,
+                    "chunks": [], "mode": mode, "gate": {}}
 
-        # ── Retrieval pipeline (Phase 1/2, or Phase 3 retrieve path) ─────
+        # ── Phase 1/2: retrieval pipeline ────────────────────────────────
         from fastembed import TextEmbedding
         from qdrant_client import QdrantClient as _QC
         from bedrock_rag import _run_search, Config
