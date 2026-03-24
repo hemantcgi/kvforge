@@ -1,35 +1,28 @@
 {
+  "_comment": "SmartQdrant datasource configuration. All fields with defaults are optional.",
+
+  "collection": "my-corpus",
+  "vector_store": "qdrant",
+  "_vector_store_options": ["qdrant", "chroma"],
   "qdrant_host": "localhost",
   "qdrant_port": 6333,
-  "collection": "my-datasource",
 
-  "embed_model": "mixedbread-ai/mxbai-embed-large-v1",
-  "vector_dim": 1024,
+  "loader": "pdf",
+  "_loader_options": ["pdf", "markdown", "jsonl", "html", "directory"],
+  "chunk_size": 600,
+  "chunk_overlap": 60,
   "embed_batch": 64,
-  "chunk_size": 512,
-  "chunk_overlap": 64,
-  "upsert_batch": 100,
+  "upsert_batch": 128,
   "top_k": 5,
+  "jsonl_text_key": "text",
+
+  "embedder_backend": "fastembed",
+  "_embedder_options": ["fastembed", "sentence_transformers", "openai"],
+  "embed_model": "BAAI/bge-small-en-v1.5",
+  "vector_dim": 384,
 
   "llm_model": "meta-llama/Llama-3.2-3B-Instruct",
-
-  "model_library": {
-    "TinyLlama/TinyLlama-1.1B-Chat-v1.0": {
-      "kv_num_layers": 22, "kv_num_heads": 4, "kv_head_dim": 64
-    },
-    "meta-llama/Llama-3.2-3B-Instruct": {
-      "kv_num_layers": 28, "kv_num_heads": 8, "kv_head_dim": 128
-    },
-    "meta-llama/Llama-3.1-8B-Instruct": {
-      "kv_num_layers": 32, "kv_num_heads": 8, "kv_head_dim": 128
-    },
-    "Qwen/Qwen2.5-7B-Instruct": {
-      "kv_num_layers": 28, "kv_num_heads": 4, "kv_head_dim": 128
-    },
-    "mistralai/Mistral-7B-Instruct-v0.3": {
-      "kv_num_layers": 32, "kv_num_heads": 8, "kv_head_dim": 128
-    }
-  },
+  "model_library": {},
 
   "lora_rank": 16,
   "lora_alpha": 32,
@@ -38,15 +31,18 @@
   "lora_epochs": 3,
   "lora_lr": 0.0002,
 
-  "checkpoint_dir": "lora_checkpoints/my-datasource/",
-  "version_file": "my_datasource_version.json",
-  "replay_db": "my_datasource_replay.db",
+  "checkpoint_dir": "lora_checkpoints/my-corpus/",
+  "version_file": "my-corpus_version.json",
+  "replay_db": "my-corpus_replay.db",
 
   "gate_threshold": 0.75,
+  "prs_threshold": 0.75,
+  "prs_weights": {"accuracy": 0.5, "calibration": 0.3, "consistency": 0.2},
+
+  "faq_question_key": "question",
+  "faq_answer_key": "answer",
+
   "access_flush_seconds": 300,
   "access_flush_queries": 50,
-  "dashboard_port": 8080,
-
-  "gemini_api_key": "",
-  "gemini_model": "gemini-3.1-pro-preview"
+  "dashboard_port": 8080
 }
