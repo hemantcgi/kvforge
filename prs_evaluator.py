@@ -76,6 +76,22 @@ def _self_consistency(query: str, pipe_sample, embedder, n: int = 3) -> float:
     return float(np.mean(sims)) if sims else 1.0
 
 
+_DEFAULT_PRS_WEIGHTS = {"accuracy": 0.5, "calibration": 0.3, "consistency": 0.2}
+
+
+def _compute_prs(accuracy_ratios: list, calibrations: list, consistencies: list,
+                 weights: dict | None) -> float:
+    """Compute weighted PRS from component score lists."""
+    import numpy as np
+    w = weights or _DEFAULT_PRS_WEIGHTS
+    return float(np.clip(
+        w.get("accuracy", 0.5) * np.mean(accuracy_ratios)
+        + w.get("calibration", 0.3) * np.mean(calibrations)
+        + w.get("consistency", 0.2) * np.mean(consistencies),
+        0.0, 1.0
+    ))
+
+
 def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) -> float:
     """
     Compute PRS on a sample of FAQs.
@@ -122,9 +138,8 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
         calibrations.append(1.0 - abs(self_conf - param_sim))
         consistencies.append(_self_consistency(q, pipe_sample, embedder))
 
-    prs = (0.5 * np.mean(accuracy_ratios)
-           + 0.3 * np.mean(calibrations)
-           + 0.2 * np.mean(consistencies))
+    weights = cfg.get("prs_weights", None)
+    prs = _compute_prs(accuracy_ratios, calibrations, consistencies, weights)
 
     # Populate known_good_queries: queries where accuracy_ratio >= 0.85
     # Stored as pre-computed embeddings for use by confidence_gate._query_similarity
@@ -136,7 +151,7 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
         data["known_good_queries"] = good_embs
         ver.save(data)
 
-    return float(np.clip(prs, 0.0, 1.0))
+    return prs
 
 
 def main() -> None:

@@ -30,3 +30,21 @@ def test_missing_key_raises_clear_error():
     faq = {"q": "What?", "a": "This."}
     with pytest.raises(KeyError, match="FAQ missing key 'question'"):
         _extract_qa(faq, q_key="question", a_key="answer")
+
+
+def test_prs_weights_fully_accuracy():
+    from prs_evaluator import _compute_prs
+    prs = _compute_prs(
+        accuracy_ratios=[1.0, 1.0],
+        calibrations=[0.0, 0.0],
+        consistencies=[0.0, 0.0],
+        weights={"accuracy": 1.0, "calibration": 0.0, "consistency": 0.0}
+    )
+    assert abs(prs - 1.0) < 0.001
+
+
+def test_prs_uses_default_weights_when_none():
+    from prs_evaluator import _compute_prs
+    prs = _compute_prs([0.8], [0.9], [0.7], weights=None)
+    expected = 0.5 * 0.8 + 0.3 * 0.9 + 0.2 * 0.7
+    assert abs(prs - expected) < 0.001

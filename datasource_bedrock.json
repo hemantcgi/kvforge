@@ -43,6 +43,8 @@
   "replay_db": "bedrock_replay.db",
 
   "gate_threshold": 0.75,
+  "prs_threshold": 0.75,
+  "prs_weights": {"accuracy": 0.5, "calibration": 0.3, "consistency": 0.2},
   "access_flush_seconds": 300,
   "access_flush_queries": 50,
   "dashboard_port": 8080
