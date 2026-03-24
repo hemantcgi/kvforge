@@ -52,6 +52,7 @@ class Config:
     embed_batch:   int = 64
     upsert_batch:  int = 128
     top_k:         int = 5
+    loader:        str = "pdf"
 
 
 def _load_config(args: argparse.Namespace) -> Config:
@@ -318,8 +319,18 @@ def cmd_index(pdf_path: Path, cfg: Config) -> None:
     log(f"⚙️  Config: collection={cfg.collection}, host={cfg.qdrant_host}:{cfg.qdrant_port}, "
         f"model={cfg.embed_model}, chunk={cfg.chunk_size}/{cfg.chunk_overlap}")
 
-    pages = read_pdf(pdf_path)
-    chunks = chunk_pages(pages, cfg.chunk_size, cfg.chunk_overlap)
+    from ingestion.registry import get_loader
+    loader = get_loader(vars(cfg))
+    docs = loader.load(str(pdf_path))
+    # Convert to internal chunk format for backwards compatibility
+    chunks = [
+        {
+            "chunk_id": d["metadata"]["chunk_id"],
+            "page": d["metadata"].get("page", 0),
+            "text": d["text"],
+        }
+        for d in docs
+    ]
     log(f"✂️  Created {len(chunks)} chunks (size≈{cfg.chunk_size} words, overlap={cfg.chunk_overlap})")
 
     log(f"\n🤖 Loading embedding model '{cfg.embed_model}' …")

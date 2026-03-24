@@ -107,3 +107,38 @@ def test_registry_returns_correct_loader():
     assert isinstance(get_loader({"loader": "markdown"}), MarkdownLoader)
     assert isinstance(get_loader({"loader": "jsonl"}), JSONLLoader)
     assert isinstance(get_loader({}), PDFLoader)  # default is pdf
+
+
+def test_bedrock_rag_cmd_index_uses_loader(tmp_path):
+    """bedrock_rag.cmd_index wires through the DocumentLoader registry."""
+    from unittest.mock import patch, MagicMock
+    import sys
+
+    # Create a minimal fake PDF
+    fake_pdf = tmp_path / "test.pdf"
+    fake_pdf.write_bytes(b"fake")
+
+    with patch("ingestion.pdf_loader.PdfReader") as mock_reader, \
+         patch("bedrock_rag.TextEmbedding") as mock_emb_cls, \
+         patch("bedrock_rag.QdrantClient") as mock_qdrant:
+
+        mock_page = MagicMock()
+        mock_page.extract_text.return_value = " ".join(["word"] * 50)
+        mock_reader.return_value.pages = [mock_page]
+
+        import numpy as np
+        mock_emb_instance = MagicMock()
+        mock_emb_instance.embed.return_value = iter([np.array([0.1] * 384)])
+        mock_emb_cls.return_value = mock_emb_instance
+
+        mock_client = MagicMock()
+        mock_client.collection_exists.return_value = False
+        mock_qdrant.return_value = mock_client
+
+        from bedrock_rag import Config, cmd_index
+        cfg = Config(embed_model="BAAI/bge-small-en-v1.5", vector_dim=384,
+                     collection="test-col", loader="pdf")
+        cmd_index(fake_pdf, cfg)
+
+        # Confirm Qdrant upsert was called (means loader → embed → index worked)
+        assert mock_client.upsert.called
