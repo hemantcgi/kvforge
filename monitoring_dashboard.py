@@ -159,7 +159,7 @@ def get_config():
         "llm_model_url": hf_base + llm_model,
         "embed_model": embed_model,
         "embed_model_url": hf_base + embed_model,
-        "gemini_model": cfg.get("gemini_model", "gemini-2.5-pro"),
+        "gemini_model": cfg.get("gemini_model", "gemini-3.1-pro-preview"),
         "top_k": cfg.get("top_k", 5),
         "collection": cfg.get("collection", ""),
     }
@@ -181,7 +181,7 @@ def get_access_report():
 class QueryRequest(BaseModel):
     query: str
     # Answer A (local LLM RAG) generation params
-    a_top_k: int = 3
+    a_top_k: int = 5
     a_max_new_tokens: int = 256
     a_temperature: float = 0.7
     a_top_p: float = 0.9
@@ -365,7 +365,7 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
 
         # 3. call Gemini REST API
         api_key = cfg.get("gemini_api_key", "")
-        model = cfg.get("gemini_model", "gemini-2.5-pro")
+        model = cfg.get("gemini_model", "gemini-3.1-pro-preview")
         url = (
             f"https://generativelanguage.googleapis.com/v1beta/models/"
             f"{model}:generateContent?key={api_key}"
