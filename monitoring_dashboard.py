@@ -182,7 +182,7 @@ class QueryRequest(BaseModel):
     query: str
     # Answer A (local LLM RAG) generation params
     a_top_k: int = 3
-    a_max_new_tokens: int = 1024
+    a_max_new_tokens: int = 256
     a_temperature: float = 0.7
     a_top_p: float = 0.9
     a_repetition_penalty: float = 1.2
@@ -224,12 +224,19 @@ def _answer_smartqdrant(query: str, cfg: dict, params: QueryRequest) -> dict:
             mode = "parametric"
             _log(tag, "Phase 3 — answering from fine-tuned weights (no retrieval)…")
             t_gen = time.time()
-            inputs = tokenizer(query, return_tensors="pt").to(model.device)
+            # Apply Llama instruction chat template so model stops cleanly at <|eot_id|>
+            messages = [{"role": "user", "content": query}]
+            prompt = tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
+            )
+            inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
             with torch.no_grad():
                 out = model.generate(
                     **inputs,
                     max_new_tokens=params.a_max_new_tokens,
                     do_sample=False,
+                    eos_token_id=tokenizer.eos_token_id,
+                    pad_token_id=tokenizer.eos_token_id,
                 )
             answer = tokenizer.decode(
                 out[0][inputs["input_ids"].shape[1]:],
@@ -580,7 +587,7 @@ PRS = 0.5 × Accuracy
     <div class="param-grid">
       <div class="param-group">
         <label>Max new tokens</label>
-        <input id="a_max_new_tokens" type="number" min="64" max="2048" value="1024"/>
+        <input id="a_max_new_tokens" type="number" min="64" max="2048" value="256"/>
       </div>
       <div class="param-group">
         <label>Temperature</label>
