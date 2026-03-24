@@ -27,6 +27,15 @@ CONFIDENCE_PROMPT_SUFFIX = (
 )
 
 
+def _extract_qa(faq: dict, q_key: str = "question", a_key: str = "answer") -> tuple[str, str]:
+    """Extract question and answer using configurable key names."""
+    if q_key not in faq:
+        raise KeyError(f"FAQ missing key '{q_key}'. Available keys: {list(faq.keys())}")
+    if a_key not in faq:
+        raise KeyError(f"FAQ missing key '{a_key}'. Available keys: {list(faq.keys())}")
+    return faq[q_key], faq[a_key]
+
+
 def _embed(texts: list[str], model_name: str) -> np.ndarray:
     embedder = TextEmbedding(model_name=model_name, show_download_progress=False)
     return np.array(list(embedder.embed(texts)))
@@ -94,8 +103,11 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
 
     accuracy_ratios, calibrations, consistencies = [], [], []
 
+    q_key = cfg.get("faq_question_key", "question")
+    a_key = cfg.get("faq_answer_key", "answer")
+
     for faq in faqs:
-        q, gt = faq["question"], faq["answer"]
+        q, gt = _extract_qa(faq, q_key=q_key, a_key=a_key)
         param_ans = _generate_parametric(q, pipe_gen)
         if has_sp3:
             rag_ans = answer_with_retrieval(q, cfg)
@@ -116,7 +128,8 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
 
     # Populate known_good_queries: queries where accuracy_ratio >= 0.85
     # Stored as pre-computed embeddings for use by confidence_gate._query_similarity
-    good_queries = [faqs[i]["question"] for i, r in enumerate(accuracy_ratios) if r >= 0.85]
+    good_queries = [faqs[i].get(q_key, faqs[i].get("question", ""))
+                    for i, r in enumerate(accuracy_ratios) if r >= 0.85]
     if good_queries:
         good_embs = [e.astype(float).tolist() for e in embedder.embed(good_queries)]
         data = ver.load()
