@@ -86,10 +86,14 @@ def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
     lora_ckpt = ver.load().get("checkpoint_path")
     model, tokenizer = model_loader.reload(lora_ckpt)
 
+    import model_loader as _ml
+    lora_target_modules = cfg.get("lora_target_modules", ["q_proj", "k_proj", "v_proj"])
+    lora_target_modules = _ml.detect_lora_targets(model, lora_target_modules)
+
     lora_cfg = LoraConfig(
         r=cfg.get("lora_rank", 16),
         lora_alpha=cfg.get("lora_alpha", 32),
-        target_modules=cfg.get("lora_target_modules", ["q_proj", "k_proj", "v_proj"]),
+        target_modules=lora_target_modules,
         lora_dropout=cfg.get("lora_dropout", 0.05),
         bias="none",
         task_type=TaskType.CAUSAL_LM,

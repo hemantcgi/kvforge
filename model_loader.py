@@ -99,14 +99,60 @@ def reload(lora_checkpoint: Optional[str] = None) -> tuple:
     return load(lora_checkpoint)
 
 
+def _kv_shape_from_hf_config(hf_cfg) -> tuple[int, int, int]:
+    """Extract (num_layers, num_kv_heads, head_dim) from a HuggingFace model config."""
+    num_layers = hf_cfg.num_hidden_layers
+    num_kv_heads = hf_cfg.num_key_value_heads
+    if hasattr(hf_cfg, "head_dim") and hf_cfg.head_dim is not None:
+        head_dim = hf_cfg.head_dim
+    else:
+        head_dim = hf_cfg.hidden_size // hf_cfg.num_attention_heads
+    return num_layers, num_kv_heads, head_dim
+
+
+def detect_lora_targets(model, configured_targets: list[str]) -> list[str]:
+    """Verify that configured LoRA target module names exist in the model.
+
+    Returns configured_targets if all are found. If none match, issues a warning
+    listing the actual module names so the user can correct their config.
+    """
+    import warnings
+    module_names = {name.split(".")[-1] for name, _ in model.named_modules()}
+    matched = [t for t in configured_targets if t in module_names]
+    if not matched:
+        all_linear = sorted(
+            {name.split(".")[-1] for name, mod in model.named_modules()
+             if hasattr(mod, "weight") and len(getattr(getattr(mod, "weight", None), "shape", []) or []) == 2}
+        )
+        warnings.warn(
+            f"None of the configured lora_target_modules {configured_targets} were found "
+            f"in the model. Available linear layer names: {all_linear[:10]}. "
+            f"Check 'lora_target_modules' in your datasource config.",
+            UserWarning, stacklevel=2
+        )
+        return configured_targets  # return as-is; let peft raise a clear error
+    return matched
+
+
 def get_kv_shape(cfg: dict) -> tuple[int, int, int]:
     """Return (num_layers, num_kv_heads, head_dim).
 
-    Looks up the active llm_model in cfg["model_library"] first; falls back to
-    explicit kv_num_layers/kv_num_heads/kv_head_dim fields for backwards compat.
+    Priority:
+      1. cfg['model_library'] registry entry (explicit override, backwards compat)
+      2. Auto-discovery from loaded model's HF config
+      3. Explicit cfg['kv_num_layers'] / 'kv_num_heads' / 'kv_head_dim' (legacy)
     """
     model_id = cfg.get("llm_model", MODEL_ID)
     entry = cfg.get("model_library", {}).get(model_id)
     if entry:
         return entry["kv_num_layers"], entry["kv_num_heads"], entry["kv_head_dim"]
+
+    # Auto-discover from loaded model's config
+    if _model is not None and hasattr(_model, "config"):
+        try:
+            return _kv_shape_from_hf_config(_model.config)
+        except AttributeError:
+            pass
+
+    # Legacy explicit fields
     return cfg["kv_num_layers"], cfg["kv_num_heads"], cfg["kv_head_dim"]
