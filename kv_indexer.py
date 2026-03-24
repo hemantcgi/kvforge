@@ -17,8 +17,6 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from qdrant_client import QdrantClient
-from qdrant_client.models import PointStruct
 
 sys.path.insert(0, str(Path(__file__).parent))
 import model_loader
@@ -26,6 +24,8 @@ import kv_utils
 import version as ver
 from bedrock_rag import chunk_pages, read_pdf, embed_chunks
 from fastembed import TextEmbedding
+from vectorstore.base import Point
+from vectorstore.registry import get_store
 
 
 def compute_kv_for_chunk(
@@ -78,7 +78,7 @@ def build_payload(
 
 
 def cmd_index(pdf_path: Path, cfg: dict) -> None:
-    client = QdrantClient(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
+    store = get_store(cfg)
     num_layers, num_kv_heads, head_dim = model_loader.get_kv_shape(cfg)
 
     # 1. Chunk + embed (reuse bedrock_rag pipeline)
@@ -107,54 +107,50 @@ def cmd_index(pdf_path: Path, cfg: dict) -> None:
             source_file=pdf_path.name,
             kv_array=kv_arr,
         )
-        points.append(PointStruct(id=chunk["chunk_id"], vector=vec, payload=payload))
+        points.append(Point(id=chunk["chunk_id"], vector=vec, payload=payload))
         if (i + 1) % 50 == 0:
             print(f"  {i+1}/{len(chunks)}", end="\r", flush=True)
 
     # batch upsert
     for start in range(0, len(points), cfg["upsert_batch"]):
-        client.upsert(
-            collection_name=cfg["collection"],
-            points=points[start:start + cfg["upsert_batch"]],
-        )
+        store.upsert(cfg["collection"], points[start:start + cfg["upsert_batch"]])
     print(f"\nIndexed {len(points)} chunks with KV (kv_version=null)")
 
 
 def cmd_compute_kv(cfg: dict, filter_type: str, filter_value) -> None:
     """Recompute KV for chunks matching the given filter."""
-    from qdrant_client.models import Filter, FieldCondition, IsNullCondition, Range
-
-    client = QdrantClient(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
+    store = get_store(cfg)
     num_layers, num_kv_heads, head_dim = model_loader.get_kv_shape(cfg)
 
     lora_ckpt = ver.load().get("checkpoint_path")
     current_ver = ver.get_lora_version()
     model, tokenizer = model_loader.load(lora_ckpt)
 
-    # Scroll through matching chunks
-    if filter_type == "null":
-        scroll_filter = Filter(must=[IsNullCondition(is_null={"key": "kv_version"})])
-    elif filter_type == "stale":
-        # Match chunks where kv_version is null OR kv_version < N
-        # (Qdrant range filters do not match null fields, so we need both conditions)
-        scroll_filter = Filter(should=[
-            IsNullCondition(is_null={"key": "kv_version"}),
-            Filter(must=[FieldCondition(key="kv_version", range=Range(lt=int(filter_value)))]),
-        ])
-    else:
-        scroll_filter = Filter(must=[
-            FieldCondition(key="source_file", match={"value": filter_value})
-        ])
+    # Build scroll_filter for Qdrant (passed through store.scroll as scroll_filter kwarg)
+    scroll_filter = None
+    if cfg.get("vector_store", "qdrant") == "qdrant":
+        from qdrant_client.models import Filter, FieldCondition, IsNullCondition, Range
+        if filter_type == "null":
+            scroll_filter = Filter(must=[IsNullCondition(is_null={"key": "kv_version"})])
+        elif filter_type == "stale":
+            scroll_filter = Filter(should=[
+                IsNullCondition(is_null={"key": "kv_version"}),
+                Filter(must=[FieldCondition(key="kv_version", range=Range(lt=int(filter_value)))]),
+            ])
+        else:
+            scroll_filter = Filter(must=[
+                FieldCondition(key="source_file", match={"value": filter_value})
+            ])
 
     offset = None
     updated = 0
     while True:
-        results, offset = client.scroll(
-            collection_name=cfg["collection"],
-            scroll_filter=scroll_filter,
+        results, offset = store.scroll(
+            cfg["collection"],
             limit=50,
             with_payload=True,
             offset=offset,
+            scroll_filter=scroll_filter,
         )
         if not results:
             break
@@ -163,11 +159,10 @@ def cmd_compute_kv(cfg: dict, filter_type: str, filter_value) -> None:
                 point.payload["text"], model, tokenizer,
                 num_layers, num_kv_heads, head_dim
             )
-            client.set_payload(
-                collection_name=cfg["collection"],
-                payload={"kv_cache": kv_utils.serialize_kv(kv_arr),
-                         "kv_version": current_ver},
-                points=[point.id],
+            store.set_payload(
+                cfg["collection"],
+                point.id,
+                {"kv_cache": kv_utils.serialize_kv(kv_arr), "kv_version": current_ver},
             )
             updated += 1
         if offset is None:

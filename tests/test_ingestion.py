@@ -120,7 +120,7 @@ def test_bedrock_rag_cmd_index_uses_loader(tmp_path):
 
     with patch("ingestion.pdf_loader.PdfReader") as mock_reader, \
          patch("bedrock_rag.TextEmbedding") as mock_emb_cls, \
-         patch("bedrock_rag.QdrantClient") as mock_qdrant:
+         patch("vectorstore.qdrant_store.QdrantClient") as mock_qdrant:
 
         mock_page = MagicMock()
         mock_page.extract_text.return_value = " ".join(["word"] * 50)
@@ -140,5 +140,5 @@ def test_bedrock_rag_cmd_index_uses_loader(tmp_path):
                      collection="test-col", loader="pdf")
         cmd_index(fake_pdf, cfg)
 
-        # Confirm Qdrant upsert was called (means loader → embed → index worked)
+        # Confirm upsert was called (means loader → embed → index worked)
         assert mock_client.upsert.called

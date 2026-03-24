@@ -34,8 +34,9 @@ from pathlib import Path
 
 from fastembed import TextEmbedding
 from pypdf import PdfReader
-from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, PointStruct, VectorParams
+
+from vectorstore.base import Point
+from vectorstore.registry import get_store
 
 
 # ── Configuration dataclass ────────────────────────────────────────────────────
@@ -53,6 +54,7 @@ class Config:
     upsert_batch:  int = 128
     top_k:         int = 5
     loader:        str = "pdf"
+    vector_store:  str = "qdrant"
 
 
 def _load_config(args: argparse.Namespace) -> Config:
@@ -194,34 +196,31 @@ def validate_embed_dim(embedder, cfg) -> None:
 def index_chunks(
     chunks: list[dict],
     vectors: list[list[float]],
-    client: QdrantClient,
+    store,
     cfg: Config,
 ) -> None:
-    """Upsert embedded chunks into Qdrant."""
-    if client.collection_exists(cfg.collection):
+    """Upsert embedded chunks into the vector store."""
+    if store.collection_exists(cfg.collection):
         log(f"🗑️  Deleting existing collection '{cfg.collection}'")
-        client.delete_collection(cfg.collection)
+        store.delete_collection(cfg.collection)
 
     log(f"📦 Creating collection '{cfg.collection}' (dim={cfg.vector_dim}, Cosine)")
-    client.create_collection(
-        collection_name=cfg.collection,
-        vectors_config=VectorParams(size=cfg.vector_dim, distance=Distance.COSINE),
-    )
+    store.create_collection(cfg.collection, cfg.vector_dim)
 
     total = len(chunks)
-    log(f"⬆️  Upserting {total} points to Qdrant …")
+    log(f"⬆️  Upserting {total} points …")
     for start in range(0, total, cfg.upsert_batch):
         batch_chunks = chunks[start : start + cfg.upsert_batch]
         batch_vecs   = vectors[start : start + cfg.upsert_batch]
         points = [
-            PointStruct(
+            Point(
                 id=c["chunk_id"],
                 vector=v,
                 payload={"page": c["page"], "text": c["text"]},
             )
             for c, v in zip(batch_chunks, batch_vecs)
         ]
-        client.upsert(collection_name=cfg.collection, points=points)
+        store.upsert(cfg.collection, points)
         progress(min(start + cfg.upsert_batch, total), total, "Upsert ")
 
     log(f"✅ Indexing complete — {total} vectors stored in '{cfg.collection}'")
@@ -232,18 +231,12 @@ def index_chunks(
 def _run_search(
     question: str,
     embedder: TextEmbedding,
-    client: QdrantClient,
+    store,
     cfg: Config,
 ) -> list:
-    """Embed question and return raw Qdrant scored results."""
+    """Embed question and return scored results from the vector store."""
     q_vector = next(iter(embedder.embed([question]))).tolist()
-    response = client.query_points(
-        collection_name=cfg.collection,
-        query=q_vector,
-        limit=cfg.top_k,
-        with_payload=True,
-    )
-    return response.points
+    return store.query(cfg.collection, q_vector, cfg.top_k)
 
 
 def _emit_json(question: str, results: list) -> None:
@@ -262,14 +255,14 @@ def _emit_json(question: str, results: list) -> None:
     print(json.dumps(payload, ensure_ascii=False), flush=True)
 
 
-def query(question: str, embedder: TextEmbedding, client: QdrantClient, cfg: Config) -> None:
-    """Embed the question, search Qdrant, and print the top-k results."""
+def query(question: str, embedder: TextEmbedding, store, cfg: Config) -> None:
+    """Embed the question, search vector store, and print the top-k results."""
     sep = "─" * 70
     log(f"\n{sep}")
     log(f"❓ Query: {question}")
     log(sep)
 
-    results = _run_search(question, embedder, client, cfg)
+    results = _run_search(question, embedder, store, cfg)
 
     if not results:
         log("⚠️  No results found.")
@@ -337,11 +330,11 @@ def cmd_index(pdf_path: Path, cfg: Config) -> None:
     embedder = TextEmbedding(model_name=cfg.embed_model, show_download_progress=False)
     validate_embed_dim(embedder, cfg)
 
-    log(f"🔗 Connecting to Qdrant at {cfg.qdrant_host}:{cfg.qdrant_port}")
-    client = QdrantClient(host=cfg.qdrant_host, port=cfg.qdrant_port)
+    store = get_store(vars(cfg))
+    log(f"🔗 Connecting to vector store ({cfg.vector_store}) …")
 
     vectors = embed_chunks(chunks, embedder, cfg.embed_batch)
-    index_chunks(chunks, vectors, client, cfg)
+    index_chunks(chunks, vectors, store, cfg)
 
 
 def cmd_search(question: str, cfg: Config) -> None:
@@ -356,18 +349,18 @@ def cmd_search(question: str, cfg: Config) -> None:
     info(f"🤖 Loading embedding model '{cfg.embed_model}' …")
     embedder = TextEmbedding(model_name=cfg.embed_model, show_download_progress=False)
 
-    info(f"🔗 Connecting to Qdrant at {cfg.qdrant_host}:{cfg.qdrant_port}")
-    client = QdrantClient(host=cfg.qdrant_host, port=cfg.qdrant_port)
+    store = get_store(vars(cfg))
+    info(f"🔗 Connecting to vector store ({cfg.vector_store}) …")
 
-    if not client.collection_exists(cfg.collection):
+    if not store.collection_exists(cfg.collection):
         log(f"❌ Collection '{cfg.collection}' not found. Run 'index' first.")
         sys.exit(1)
 
     if piped:
-        results = _run_search(question, embedder, client, cfg)
+        results = _run_search(question, embedder, store, cfg)
         _emit_json(question, results)
     else:
-        query(question, embedder, client, cfg)
+        query(question, embedder, store, cfg)
 
 
 # ── Argument parser ────────────────────────────────────────────────────────────

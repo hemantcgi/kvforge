@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 import kv_utils
 import model_loader
 import version as ver
-from qdrant_client import QdrantClient
+from vectorstore.registry import get_store
 
 _kv_queue: queue.Queue = queue.Queue()
 _access_buffer: dict[int, dict] = {}
@@ -62,7 +62,7 @@ def record_parametric_hit(chunk_ids: list[int]) -> None:
 # ── KV recompute worker ───────────────────────────────────────────────────
 
 def _kv_worker(cfg: dict) -> None:
-    client = QdrantClient(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
+    client = get_store(cfg)
     num_layers, num_kv_heads, head_dim = model_loader.get_kv_shape(cfg)
 
     # Load model once at startup (model_loader singleton reuses it across calls)
@@ -81,11 +81,12 @@ def _kv_worker(cfg: dict) -> None:
                 _cached_lora_version = current_ver
 
             results, _ = client.scroll(
-                collection_name=cfg["collection"],
-                ids=[chunk_id],
-                with_payload=True,
+                cfg["collection"],
                 limit=1,
+                with_payload=True,
             )
+            # Filter for the specific chunk_id
+            results = [r for r in results if r.id == chunk_id]
             if not results:
                 continue
             text = results[0].payload.get("text", "")
@@ -94,10 +95,9 @@ def _kv_worker(cfg: dict) -> None:
                 text, model, tokenizer, num_layers, num_kv_heads, head_dim
             )
             client.set_payload(
-                collection_name=cfg["collection"],
-                payload={"kv_cache": kv_utils.serialize_kv(kv_arr),
-                         "kv_version": current_ver},
-                points=[chunk_id],
+                cfg["collection"],
+                chunk_id,
+                {"kv_cache": kv_utils.serialize_kv(kv_arr), "kv_version": current_ver},
             )
         except Exception as e:
             print(f"[kv_background] KV recompute error for chunk {chunk_id}: {e}",
@@ -108,7 +108,7 @@ def _kv_worker(cfg: dict) -> None:
 
 # ── Access flush worker ───────────────────────────────────────────────────
 
-def _flush_access(cfg: dict, client: QdrantClient) -> None:
+def _flush_access(cfg: dict, store) -> None:
     global _query_count
     with _access_lock:
         if not _access_buffer:
@@ -121,14 +121,21 @@ def _flush_access(cfg: dict, client: QdrantClient) -> None:
     current_ts = int(time.time())
     for chunk_id, delta in snapshot.items():
         try:
-            existing = client.retrieve(
-                collection_name=cfg["collection"],
-                ids=[chunk_id],
-                with_payload=True,
-            )
-            if not existing:
-                continue
-            payload = existing[0].payload
+            # Retrieve existing payload; use scroll with ID filter (Qdrant) or native_client
+            if hasattr(store, "native_client"):
+                existing = store.native_client.retrieve(
+                    collection_name=cfg["collection"],
+                    ids=[chunk_id],
+                    with_payload=True,
+                )
+                payload = existing[0].payload if existing else {}
+            else:
+                results, _ = store.scroll(cfg["collection"], limit=100, with_payload=True)
+                match = [r for r in results if r.id == chunk_id]
+                if not match:
+                    continue
+                payload = match[0].payload
+
             old_count = payload.get("access_count", 0) or 0
             old_rank_sum = old_count * (payload.get("avg_retrieval_rank") or 0.0)
             new_count = old_count + delta["count"]
@@ -143,11 +150,7 @@ def _flush_access(cfg: dict, client: QdrantClient) -> None:
                 updates["parametric_hit_count"] = (
                     payload.get("parametric_hit_count", 0) + delta["parametric_hits"]
                 )
-            client.set_payload(
-                collection_name=cfg["collection"],
-                payload=updates,
-                points=[chunk_id],
-            )
+            store.set_payload(cfg["collection"], chunk_id, updates)
         except Exception as e:
             print(f"[kv_background] Access flush error for {chunk_id}: {e}", flush=True)
 
@@ -156,7 +159,7 @@ def _access_worker(cfg: dict) -> None:
     """Flush on every 3 queries or every 30 sec — whichever comes first."""
     flush_interval = cfg.get("access_flush_seconds", 30)
     flush_queries = cfg.get("access_flush_queries", 3)
-    client = QdrantClient(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
+    store = get_store(cfg)
     last_flush = time.time()
 
     while True:
@@ -165,7 +168,7 @@ def _access_worker(cfg: dict) -> None:
             qc = _query_count
         elapsed = time.time() - last_flush
         if qc >= flush_queries or elapsed >= flush_interval:
-            _flush_access(cfg, client)
+            _flush_access(cfg, store)
             last_flush = time.time()
 
 

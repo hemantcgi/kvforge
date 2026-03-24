@@ -24,11 +24,11 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
 import version as ver
-from qdrant_client import QdrantClient
+from vectorstore.registry import get_store
 
 app = FastAPI(title="Smart Qdrant Dashboard")
 _cfg: dict = {}
-_qdrant_client: QdrantClient | None = None
+_vector_store = None
 _query_executor = ThreadPoolExecutor(max_workers=2)
 
 # Heavy modules (torch/transformers) loaded once at startup in main thread
@@ -70,13 +70,12 @@ def _load_cfg() -> dict:
     return _cfg
 
 
-def _get_client() -> QdrantClient:
-    """Return a shared QdrantClient, creating it once from config."""
-    global _qdrant_client
-    if _qdrant_client is None:
-        cfg = _load_cfg()
-        _qdrant_client = QdrantClient(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
-    return _qdrant_client
+def _get_store():
+    """Return a shared VectorStore, creating it once from config."""
+    global _vector_store
+    if _vector_store is None:
+        _vector_store = get_store(_load_cfg())
+    return _vector_store
 
 
 @app.get("/api/health")
@@ -94,19 +93,18 @@ def get_stats():
     cfg = _load_cfg()
     v = ver.load()
 
-    # Qdrant tier counts — paginate to handle >5000 chunks
-    client = _get_client()
+    # Vector store tier counts — paginate to handle >5000 chunks
+    store = _get_store()
     tier_counts = {"hot": 0, "warm": 0, "cold": 0, "frozen": 0}
     top_chunks = []
     try:
         all_results = []
         offset = None
         while True:
-            batch, offset = client.scroll(
-                collection_name=cfg["collection"],
+            batch, offset = store.scroll(
+                cfg["collection"],
                 limit=500,
-                with_payload=["tier", "access_count", "page",
-                               "parametric_hit_count", "text"],
+                with_payload=True,
                 offset=offset,
             )
             all_results.extend(batch)

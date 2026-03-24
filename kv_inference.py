@@ -21,7 +21,7 @@ import model_loader
 import version as ver
 from bedrock_rag import _run_search, Config
 from fastembed import TextEmbedding
-from qdrant_client import QdrantClient
+from vectorstore.registry import get_store
 
 
 SYSTEM_PROMPT = (
@@ -148,12 +148,12 @@ def answer_with_retrieval(query: str, cfg: dict) -> str:
     """
     embedder = TextEmbedding(model_name=cfg["embed_model"],
                               show_download_progress=False)
-    client = QdrantClient(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
+    store = get_store(cfg)
 
     # Build Config from cfg dict — use only keys that Config expects
     rag_cfg = Config(**{k: cfg[k] for k in Config.__dataclass_fields__ if k in cfg})
 
-    hits = _run_search(query, embedder, client, rag_cfg)
+    hits = _run_search(query, embedder, store, rag_cfg)
     if not hits:
         return ""
 
