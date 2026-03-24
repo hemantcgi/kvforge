@@ -11,7 +11,7 @@ Config precedence: CLI flags > --config JSON file > built-in defaults.
 
 Config JSON keys (all optional):
   {
-    "collection":    "bedrock-user-guide",
+    "collection":    "my-collection",
     "qdrant_host":   "localhost",
     "qdrant_port":   6333,
     "embed_model":   "BAAI/bge-small-en-v1.5",
@@ -42,7 +42,7 @@ from qdrant_client.models import Distance, PointStruct, VectorParams
 
 @dataclass
 class Config:
-    collection:    str = "bedrock-user-guide"
+    collection:    str = "my-collection"
     qdrant_host:   str = "localhost"
     qdrant_port:   int = 6333
     embed_model:   str = "BAAI/bge-small-en-v1.5"
@@ -174,6 +174,18 @@ def embed_chunks(
     elapsed = time.time() - t0
     log(f"   → Done in {elapsed:.1f}s  ({total / elapsed:.1f} chunks/s)")
     return all_vectors
+
+
+def validate_embed_dim(embedder, cfg) -> None:
+    """Fail fast if embedder output dim doesn't match cfg.vector_dim."""
+    test_vec = next(iter(embedder.embed(["dimension check"])))
+    actual = len(test_vec)
+    if actual != cfg.vector_dim:
+        raise ValueError(
+            f"Embedding model '{cfg.embed_model}' produces {actual}-dim vectors "
+            f"but config declares vector_dim={cfg.vector_dim}. "
+            f"Update vector_dim in your datasource config."
+        )
 
 
 # ── Qdrant Indexing ────────────────────────────────────────────────────────────
@@ -312,6 +324,7 @@ def cmd_index(pdf_path: Path, cfg: Config) -> None:
 
     log(f"\n🤖 Loading embedding model '{cfg.embed_model}' …")
     embedder = TextEmbedding(model_name=cfg.embed_model, show_download_progress=False)
+    validate_embed_dim(embedder, cfg)
 
     log(f"🔗 Connecting to Qdrant at {cfg.qdrant_host}:{cfg.qdrant_port}")
     client = QdrantClient(host=cfg.qdrant_host, port=cfg.qdrant_port)
