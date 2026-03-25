@@ -76,11 +76,23 @@ pip install chromadb
 
 #### Step 2 — Create a datasource config pointing to ChromaDB
 
+Run `init` to scaffold a new config file:
+
 ```bash
 python smartqdrant.py init --name my-corpus
 ```
 
-Open `datasource_my-corpus.json` and change two fields:
+This creates **`datasource_my-corpus.json`** in your current directory with default Qdrant settings. Open that file and make the following changes — set `vector_store` to `"chroma"` and add `chroma_persist_dir`:
+
+Two fields require changes from the Qdrant defaults, and one new field must be added:
+
+| Field | Default (Qdrant) | Change to (ChromaDB) | Notes |
+|-------|-----------------|----------------------|-------|
+| `vector_store` | `"qdrant"` | `"chroma"` | Selects the ChromaDB backend |
+| `qdrant_host` / `qdrant_port` | present | remove or leave | Ignored when `vector_store` is `"chroma"` |
+| `chroma_persist_dir` | not present | **add** `".chroma/my-corpus"` | Directory where ChromaDB writes its SQLite + parquet files |
+
+Complete `datasource_my-corpus.json` after editing:
 
 ```json
 {
@@ -292,26 +304,53 @@ class PineconeStore:
         return self._index.describe_index_stats().total_vector_count
 ```
 
-Register in `vectorstore/registry.py` (add before the final `raise`):
+**Register in `vectorstore/registry.py`:**
+
+Open `vectorstore/registry.py` and add an `elif` block for Pinecone before the final `raise ValueError`. The complete file should look like this:
 
 ```python
-if backend == "pinecone":
-    from vectorstore.pinecone_store import PineconeStore
-    return PineconeStore(
-        api_key=cfg["pinecone_api_key"],
-        index_name=cfg.get("pinecone_index_name", cfg["collection"]),
+# vectorstore/registry.py
+def get_store(cfg: dict):
+    backend = cfg.get("vector_store", "qdrant")
+    if backend == "qdrant":
+        from vectorstore.qdrant_store import QdrantStore
+        return QdrantStore(
+            host=cfg.get("qdrant_host", "localhost"),
+            port=cfg.get("qdrant_port", 6333),
+        )
+    if backend == "chroma":
+        from vectorstore.chroma_store import ChromaStore
+        return ChromaStore(persist_dir=cfg.get("chroma_persist_dir", ".chroma"))
+    elif backend == "pinecone":          # ← add this block
+        from vectorstore.pinecone_store import PineconeStore
+        return PineconeStore(
+            api_key=cfg["pinecone_api_key"],
+            index_name=cfg.get("pinecone_index_name", cfg["collection"]),
+        )
+    raise ValueError(
+        f"Unknown vector_store '{backend}'. Choose: qdrant, chroma, pinecone"
     )
 ```
 
-Datasource config:
+**Datasource config** — run `python smartqdrant.py init --name my-corpus` to create `datasource_my-corpus.json`, then edit it to add the Pinecone fields. The minimum required changes:
 
 ```json
 {
+  "collection":          "my-corpus",
   "vector_store":        "pinecone",
   "pinecone_api_key":    "pcsk_...",
   "pinecone_index_name": "my-corpus",
-  "collection":          "my-corpus",
-  "vector_dim":          384
+  "vector_dim":          384,
+
+  "embed_model":         "BAAI/bge-small-en-v1.5",
+  "embedder_backend":    "fastembed",
+  "llm_model":           "meta-llama/Llama-3.2-3B-Instruct",
+  "chunk_size":          600,
+  "chunk_overlap":       60,
+  "top_k":               5,
+  "checkpoint_dir":      "lora_checkpoints/my-corpus/",
+  "version_file":        "my-corpus_version.json",
+  "replay_db":           "my-corpus_replay.db"
 }
 ```
 
@@ -399,15 +438,54 @@ class WeaviateStore:
         return col.aggregate.over_all(total_count=True).total_count
 ```
 
-Register in `vectorstore/registry.py`:
+**Register in `vectorstore/registry.py`:**
+
+Open `vectorstore/registry.py` and add a Weaviate `elif` block. Add it after the last existing backend and before the `raise ValueError`:
 
 ```python
-if backend == "weaviate":
-    from vectorstore.weaviate_store import WeaviateStore
-    return WeaviateStore(
-        url=cfg.get("weaviate_url", "http://localhost:8080"),
-        api_key=cfg.get("weaviate_api_key"),
+# vectorstore/registry.py
+def get_store(cfg: dict):
+    backend = cfg.get("vector_store", "qdrant")
+    if backend == "qdrant":
+        from vectorstore.qdrant_store import QdrantStore
+        return QdrantStore(
+            host=cfg.get("qdrant_host", "localhost"),
+            port=cfg.get("qdrant_port", 6333),
+        )
+    if backend == "chroma":
+        from vectorstore.chroma_store import ChromaStore
+        return ChromaStore(persist_dir=cfg.get("chroma_persist_dir", ".chroma"))
+    elif backend == "weaviate":          # ← add this block
+        from vectorstore.weaviate_store import WeaviateStore
+        return WeaviateStore(
+            url=cfg.get("weaviate_url", "http://localhost:8080"),
+            api_key=cfg.get("weaviate_api_key"),
+        )
+    raise ValueError(
+        f"Unknown vector_store '{backend}'. Choose: qdrant, chroma, weaviate"
     )
+```
+
+**Datasource config** — run `python smartqdrant.py init --name my-corpus` to create `datasource_my-corpus.json`, then add/change these fields:
+
+```json
+{
+  "collection":       "my-corpus",
+  "vector_store":     "weaviate",
+  "weaviate_url":     "http://localhost:8080",
+  "weaviate_api_key": "",
+
+  "embed_model":      "BAAI/bge-small-en-v1.5",
+  "embedder_backend": "fastembed",
+  "vector_dim":       384,
+  "llm_model":        "meta-llama/Llama-3.2-3B-Instruct",
+  "chunk_size":       600,
+  "chunk_overlap":    60,
+  "top_k":            5,
+  "checkpoint_dir":   "lora_checkpoints/my-corpus/",
+  "version_file":     "my-corpus_version.json",
+  "replay_db":        "my-corpus_replay.db"
+}
 ```
 
 #### Checklist for any new backend
@@ -423,21 +501,11 @@ if backend == "weaviate":
 
 pgvector adds vector similarity search to PostgreSQL. If you are already running Postgres, this is the lowest-friction path to adding vector search — no extra Docker container, no new service.
 
-#### Step 1 — Install dependencies
+#### Step 1a — Start PostgreSQL with pgvector
 
-```bash
-# PostgreSQL client + pgvector extension
-pip install psycopg2-binary pgvector sqlalchemy
-```
+If you already have PostgreSQL 13+ running, skip ahead to Step 1b.
 
-You also need PostgreSQL 13+ running and the `pgvector` extension enabled:
-
-```sql
--- run once in your database (requires superuser or extension privilege)
-CREATE EXTENSION IF NOT EXISTS vector;
-```
-
-If you are not already running PostgreSQL, the easiest way is Docker:
+To start a new instance using Docker:
 
 ```bash
 docker run -d \
@@ -448,16 +516,37 @@ docker run -d \
   pgvector/pgvector:pg16
 ```
 
-Then enable the extension:
+Wait a few seconds for the container to start, then verify it is running:
+
+```bash
+docker ps | grep pgvector
+```
+
+#### Step 1b — Enable the pgvector extension
+
+Run this once per database. The `pgvector/pgvector:pg16` Docker image ships with the extension pre-installed — you just need to activate it:
 
 ```bash
 docker exec -it pgvector psql -U postgres -d smartqdrant \
   -c "CREATE EXTENSION IF NOT EXISTS vector;"
 ```
 
+If you are using an existing PostgreSQL server (not Docker), connect to your target database and run:
+
+```sql
+-- Requires superuser or the CREATE privilege on the database
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+#### Step 1c — Install Python dependencies
+
+```bash
+pip install psycopg2-binary pgvector
+```
+
 #### Step 2 — Create the backend file
 
-Create `vectorstore/pgvector_store.py` in the repo:
+Create a new file at `vectorstore/pgvector_store.py` in the SmartQdrant repository root:
 
 ```python
 # vectorstore/pgvector_store.py
@@ -580,21 +669,48 @@ class PgvectorStore:
 
 #### Step 3 — Register in the factory
 
-Add the following to `vectorstore/registry.py` (the `get_store` function):
+Open `vectorstore/registry.py` and add a `pgvector` elif block. The complete file should look like this after editing:
 
 ```python
-elif backend == "pgvector":
-    from vectorstore.pgvector_store import PgvectorStore
-    return PgvectorStore(dsn=cfg["pgvector_dsn"])
+# vectorstore/registry.py
+def get_store(cfg: dict):
+    backend = cfg.get("vector_store", "qdrant")
+    if backend == "qdrant":
+        from vectorstore.qdrant_store import QdrantStore
+        return QdrantStore(
+            host=cfg.get("qdrant_host", "localhost"),
+            port=cfg.get("qdrant_port", 6333),
+        )
+    if backend == "chroma":
+        from vectorstore.chroma_store import ChromaStore
+        return ChromaStore(persist_dir=cfg.get("chroma_persist_dir", ".chroma"))
+    elif backend == "pgvector":          # ← add this block
+        from vectorstore.pgvector_store import PgvectorStore
+        return PgvectorStore(dsn=cfg["pgvector_dsn"])
+    raise ValueError(
+        f"Unknown vector_store '{backend}'. Choose: qdrant, chroma, pgvector"
+    )
 ```
 
 #### Step 4 — Create a datasource config
+
+Run `init` to create `datasource_my-corpus.json`:
 
 ```bash
 python smartqdrant.py init --name my-corpus
 ```
 
-Edit `datasource_my-corpus.json`:
+This generates a default Qdrant config. Open **`datasource_my-corpus.json`** and make these changes:
+
+| Field | Action | Value |
+|-------|--------|-------|
+| `vector_store` | change from `"qdrant"` | `"pgvector"` |
+| `pgvector_dsn` | **add** (not in default) | `"postgresql://postgres:secret@localhost:5432/smartqdrant"` |
+| `qdrant_host`, `qdrant_port` | leave or remove | Ignored when using pgvector |
+
+The DSN format is: `postgresql://[user]:[password]@[host]:[port]/[database]`
+
+Complete `datasource_my-corpus.json` after editing:
 
 ```json
 {
@@ -823,14 +939,39 @@ class FAISSStore:
 
 #### Step 3 — Register in the factory
 
+Open `vectorstore/registry.py` and add a `faiss` elif block. The complete file after editing:
+
 ```python
-# in vectorstore/registry.py — get_store() function
-elif backend == "faiss":
-    from vectorstore.faiss_store import FAISSStore
-    return FAISSStore(persist_dir=cfg.get("faiss_persist_dir", ".faiss"))
+# vectorstore/registry.py
+def get_store(cfg: dict):
+    backend = cfg.get("vector_store", "qdrant")
+    if backend == "qdrant":
+        from vectorstore.qdrant_store import QdrantStore
+        return QdrantStore(
+            host=cfg.get("qdrant_host", "localhost"),
+            port=cfg.get("qdrant_port", 6333),
+        )
+    if backend == "chroma":
+        from vectorstore.chroma_store import ChromaStore
+        return ChromaStore(persist_dir=cfg.get("chroma_persist_dir", ".chroma"))
+    elif backend == "faiss":             # ← add this block
+        from vectorstore.faiss_store import FAISSStore
+        return FAISSStore(persist_dir=cfg.get("faiss_persist_dir", ".faiss"))
+    raise ValueError(
+        f"Unknown vector_store '{backend}'. Choose: qdrant, chroma, faiss"
+    )
 ```
 
 #### Step 4 — Create a datasource config
+
+Run `python smartqdrant.py init --name my-corpus` to create **`datasource_my-corpus.json`**. Then open it and make the following changes:
+
+| Field | Action | Value |
+|-------|--------|-------|
+| `vector_store` | change | `"faiss"` |
+| `faiss_persist_dir` | **add** (not in default) | `".faiss/my-corpus"` |
+
+Complete config after editing:
 
 ```json
 {
@@ -1026,20 +1167,44 @@ class MilvusStore:
 
 #### Step 3 — Register in the factory
 
+Open `vectorstore/registry.py` and add a `milvus` elif block. The complete file after editing:
+
 ```python
-# in vectorstore/registry.py — get_store() function
-elif backend == "milvus":
-    from vectorstore.milvus_store import MilvusStore
-    return MilvusStore(
-        uri=cfg.get("milvus_uri", "http://localhost:19530"),
-        token=cfg.get("milvus_token", ""),
-        db_name=cfg.get("milvus_db", "default"),
+# vectorstore/registry.py
+def get_store(cfg: dict):
+    backend = cfg.get("vector_store", "qdrant")
+    if backend == "qdrant":
+        from vectorstore.qdrant_store import QdrantStore
+        return QdrantStore(
+            host=cfg.get("qdrant_host", "localhost"),
+            port=cfg.get("qdrant_port", 6333),
+        )
+    if backend == "chroma":
+        from vectorstore.chroma_store import ChromaStore
+        return ChromaStore(persist_dir=cfg.get("chroma_persist_dir", ".chroma"))
+    elif backend == "milvus":            # ← add this block
+        from vectorstore.milvus_store import MilvusStore
+        return MilvusStore(
+            uri=cfg.get("milvus_uri", "http://localhost:19530"),
+            token=cfg.get("milvus_token", ""),
+            db_name=cfg.get("milvus_db", "default"),
+        )
+    raise ValueError(
+        f"Unknown vector_store '{backend}'. Choose: qdrant, chroma, milvus"
     )
 ```
 
 #### Step 4 — Create a datasource config
 
-**Local Milvus:**
+Run `python smartqdrant.py init --name my-corpus` to create **`datasource_my-corpus.json`**. Then open it and make changes per your deployment:
+
+| Field | Action | Value |
+|-------|--------|-------|
+| `vector_store` | change | `"milvus"` |
+| `milvus_uri` | **add** | `"http://localhost:19530"` (local) or Zilliz Cloud endpoint |
+| `milvus_token` | **add** | `""` (local) or Zilliz API key |
+
+**Local Milvus — complete config:**
 
 ```json
 {
@@ -1060,7 +1225,7 @@ elif backend == "milvus":
 }
 ```
 
-**Zilliz Cloud:**
+**Zilliz Cloud — complete config** (find your endpoint and API key in the Zilliz Cloud console under **Clusters → Connect**):
 
 ```json
 {
@@ -1068,7 +1233,17 @@ elif backend == "milvus":
   "vector_store":  "milvus",
   "milvus_uri":    "https://in03-xxxx.api.gcp-us-west1.zillizcloud.com",
   "milvus_token":  "your-zilliz-api-key",
-  ...
+
+  "embed_model":   "BAAI/bge-small-en-v1.5",
+  "embedder_backend":"fastembed",
+  "vector_dim":    384,
+  "llm_model":     "meta-llama/Llama-3.2-3B-Instruct",
+  "top_k":         5,
+  "chunk_size":    600,
+  "chunk_overlap": 60,
+  "checkpoint_dir":"lora_checkpoints/my-corpus/",
+  "version_file":  "my-corpus_version.json",
+  "replay_db":     "my-corpus_replay.db"
 }
 ```
 
@@ -1223,14 +1398,39 @@ class LanceDBStore:
 
 #### Step 3 — Register in the factory
 
+Open `vectorstore/registry.py` and add a `lancedb` elif block. The complete file after editing:
+
 ```python
-# in vectorstore/registry.py
-elif backend == "lancedb":
-    from vectorstore.lancedb_store import LanceDBStore
-    return LanceDBStore(uri=cfg.get("lancedb_uri", ".lancedb"))
+# vectorstore/registry.py
+def get_store(cfg: dict):
+    backend = cfg.get("vector_store", "qdrant")
+    if backend == "qdrant":
+        from vectorstore.qdrant_store import QdrantStore
+        return QdrantStore(
+            host=cfg.get("qdrant_host", "localhost"),
+            port=cfg.get("qdrant_port", 6333),
+        )
+    if backend == "chroma":
+        from vectorstore.chroma_store import ChromaStore
+        return ChromaStore(persist_dir=cfg.get("chroma_persist_dir", ".chroma"))
+    elif backend == "lancedb":           # ← add this block
+        from vectorstore.lancedb_store import LanceDBStore
+        return LanceDBStore(uri=cfg.get("lancedb_uri", ".lancedb"))
+    raise ValueError(
+        f"Unknown vector_store '{backend}'. Choose: qdrant, chroma, lancedb"
+    )
 ```
 
 #### Step 4 — Create a datasource config
+
+Run `python smartqdrant.py init --name my-corpus` to create **`datasource_my-corpus.json`**. Then open it and make the following changes:
+
+| Field | Action | Value |
+|-------|--------|-------|
+| `vector_store` | change | `"lancedb"` |
+| `lancedb_uri` | **add** (not in default) | `".lancedb/my-corpus"` |
+
+Complete config after editing:
 
 ```json
 {
@@ -1434,19 +1634,46 @@ class RedisStore:
 
 #### Step 3 — Register in the factory
 
+Open `vectorstore/registry.py` and add a `redis` elif block. The complete file after editing:
+
 ```python
-# in vectorstore/registry.py
-elif backend == "redis":
-    from vectorstore.redis_store import RedisStore
-    return RedisStore(
-        host=cfg.get("redis_host", "localhost"),
-        port=cfg.get("redis_port", 6379),
-        password=cfg.get("redis_password", ""),
-        db=cfg.get("redis_db", 0),
+# vectorstore/registry.py
+def get_store(cfg: dict):
+    backend = cfg.get("vector_store", "qdrant")
+    if backend == "qdrant":
+        from vectorstore.qdrant_store import QdrantStore
+        return QdrantStore(
+            host=cfg.get("qdrant_host", "localhost"),
+            port=cfg.get("qdrant_port", 6333),
+        )
+    if backend == "chroma":
+        from vectorstore.chroma_store import ChromaStore
+        return ChromaStore(persist_dir=cfg.get("chroma_persist_dir", ".chroma"))
+    elif backend == "redis":             # ← add this block
+        from vectorstore.redis_store import RedisStore
+        return RedisStore(
+            host=cfg.get("redis_host", "localhost"),
+            port=cfg.get("redis_port", 6379),
+            password=cfg.get("redis_password", ""),
+            db=cfg.get("redis_db", 0),
+        )
+    raise ValueError(
+        f"Unknown vector_store '{backend}'. Choose: qdrant, chroma, redis"
     )
 ```
 
 #### Step 4 — Create a datasource config
+
+Run `python smartqdrant.py init --name my-corpus` to create **`datasource_my-corpus.json`**. Then open it and make the following changes:
+
+| Field | Action | Value |
+|-------|--------|-------|
+| `vector_store` | change | `"redis"` |
+| `redis_host` | **add** | `"localhost"` |
+| `redis_port` | **add** | `6379` |
+| `redis_password` | **add** | `""` (empty for local) |
+
+Complete config after editing:
 
 ```json
 {
@@ -1654,20 +1881,45 @@ class ElasticStore:
 
 #### Step 3 — Register in the factory
 
+Open `vectorstore/registry.py` and add an `elasticsearch`/`opensearch` elif block. The complete file after editing:
+
 ```python
-# in vectorstore/registry.py
-elif backend in ("elasticsearch", "opensearch"):
-    from vectorstore.elastic_store import ElasticStore
-    return ElasticStore(
-        hosts=cfg.get("elastic_hosts", ["http://localhost:9200"]),
-        api_key=cfg.get("elastic_api_key", ""),
-        backend=backend,
+# vectorstore/registry.py
+def get_store(cfg: dict):
+    backend = cfg.get("vector_store", "qdrant")
+    if backend == "qdrant":
+        from vectorstore.qdrant_store import QdrantStore
+        return QdrantStore(
+            host=cfg.get("qdrant_host", "localhost"),
+            port=cfg.get("qdrant_port", 6333),
+        )
+    if backend == "chroma":
+        from vectorstore.chroma_store import ChromaStore
+        return ChromaStore(persist_dir=cfg.get("chroma_persist_dir", ".chroma"))
+    elif backend in ("elasticsearch", "opensearch"):   # ← add this block
+        from vectorstore.elastic_store import ElasticStore
+        return ElasticStore(
+            hosts=cfg.get("elastic_hosts", ["http://localhost:9200"]),
+            api_key=cfg.get("elastic_api_key", ""),
+            backend=backend,
+        )
+    raise ValueError(
+        f"Unknown vector_store '{backend}'. "
+        f"Choose: qdrant, chroma, elasticsearch, opensearch"
     )
 ```
 
 #### Step 4 — Create a datasource config
 
-**Elasticsearch:**
+Run `python smartqdrant.py init --name my-corpus` to create **`datasource_my-corpus.json`**. Then open it and make the following changes:
+
+| Field | Action | Value |
+|-------|--------|-------|
+| `vector_store` | change | `"elasticsearch"` or `"opensearch"` |
+| `elastic_hosts` | **add** | `["http://localhost:9200"]` |
+| `elastic_api_key` | **add** | `""` (empty for local without auth) |
+
+**Elasticsearch — complete config:**
 
 ```json
 {
@@ -1689,7 +1941,27 @@ elif backend in ("elasticsearch", "opensearch"):
 }
 ```
 
-**OpenSearch:** same but `"vector_store": "opensearch"` and `"elastic_hosts": ["http://localhost:9200"]`.
+**OpenSearch — complete config** (only two fields differ from the Elasticsearch config above):
+
+```json
+{
+  "collection":       "my-corpus",
+  "vector_store":     "opensearch",
+  "elastic_hosts":    ["http://localhost:9200"],
+  "elastic_api_key":  "",
+
+  "embed_model":      "BAAI/bge-small-en-v1.5",
+  "embedder_backend": "fastembed",
+  "vector_dim":       384,
+  "llm_model":        "meta-llama/Llama-3.2-3B-Instruct",
+  "top_k":            5,
+  "chunk_size":       600,
+  "chunk_overlap":    60,
+  "checkpoint_dir":   "lora_checkpoints/my-corpus/",
+  "version_file":     "my-corpus_version.json",
+  "replay_db":        "my-corpus_replay.db"
+}
+```
 
 #### Step 5 — Index and search
 
@@ -1744,19 +2016,31 @@ Pass your API key: `"elastic_api_key": "base64encodedkey"`. For local dev, disab
 
 MongoDB Atlas Vector Search adds vector similarity to your existing MongoDB collections. If you already store your source documents in MongoDB, this eliminates a separate vector DB entirely.
 
-#### Step 1 — Prerequisites
+> **Important:** MongoDB Atlas Vector Search requires an Atlas cluster (M10 or higher, or serverless). It does **not** work with a self-hosted `mongod` instance. Local MongoDB does not support `$vectorSearch`.
 
-- A MongoDB Atlas cluster (M10 or higher, or serverless) — [cloud.mongodb.com](https://cloud.mongodb.com)
-- A **Vector Search Index** created in Atlas UI (or via Atlas CLI)
-- The `pymongo` driver
+#### Step 1 — Prerequisites (complete these before writing any code)
 
-```bash
-pip install pymongo
-```
+1. **Create a MongoDB Atlas account** at [cloud.mongodb.com](https://cloud.mongodb.com) if you do not have one.
+2. **Create a cluster**: In Atlas, click **Build a Database** → select **M10** (or higher) or **Serverless**.
+3. **Get your connection string**: In Atlas, go to your cluster → **Connect** → **Drivers** → select Python → copy the connection string. It looks like:
+   ```
+   mongodb+srv://myuser:mypassword@cluster0.xxxxx.mongodb.net/
+   ```
+4. **Whitelist your IP**: In Atlas, go to **Network Access** → **Add IP Address** → add your current IP (or `0.0.0.0/0` for development).
+5. **Install the Python driver**:
+   ```bash
+   pip install pymongo
+   ```
 
 #### Step 2 — Create the Vector Search Index in Atlas
 
-In Atlas UI: **Database → Collection → Search Indexes → Create Search Index → JSON Editor**
+**This step must be completed before running `smartqdrant.py index`.** The index cannot be created by SmartQdrant — it must be created in the Atlas UI.
+
+In the Atlas UI:
+1. Click your cluster → **Browse Collections**
+2. Select (or create) your database and collection
+3. Click the **Search Indexes** tab → **Create Search Index**
+4. Select **JSON Editor** and paste:
 
 ```json
 {
@@ -1771,11 +2055,14 @@ In Atlas UI: **Database → Collection → Search Indexes → Create Search Inde
 }
 ```
 
-Name the index `vector_index`. This must be done once per collection.
+5. Set **Index Name** to `vector_index`
+6. Click **Create Search Index** and wait for status to show **Active** (1–2 minutes)
+
+> If your `vector_dim` is not 384, change `numDimensions` to match your `vector_dim` value.
 
 #### Step 3 — Create the backend file
 
-Create `vectorstore/mongodb_store.py`:
+Create a new file at `vectorstore/mongodb_store.py` in the SmartQdrant repository root:
 
 ```python
 # vectorstore/mongodb_store.py
@@ -1875,17 +2162,43 @@ class MongoDBStore:
 
 #### Step 4 — Register in the factory
 
+Open `vectorstore/registry.py` and add a `mongodb` elif block. The complete file after editing:
+
 ```python
-# in vectorstore/registry.py
-elif backend == "mongodb":
-    from vectorstore.mongodb_store import MongoDBStore
-    return MongoDBStore(
-        uri=cfg["mongodb_uri"],
-        database=cfg.get("mongodb_database", "smartqdrant"),
+# vectorstore/registry.py
+def get_store(cfg: dict):
+    backend = cfg.get("vector_store", "qdrant")
+    if backend == "qdrant":
+        from vectorstore.qdrant_store import QdrantStore
+        return QdrantStore(
+            host=cfg.get("qdrant_host", "localhost"),
+            port=cfg.get("qdrant_port", 6333),
+        )
+    if backend == "chroma":
+        from vectorstore.chroma_store import ChromaStore
+        return ChromaStore(persist_dir=cfg.get("chroma_persist_dir", ".chroma"))
+    elif backend == "mongodb":           # ← add this block
+        from vectorstore.mongodb_store import MongoDBStore
+        return MongoDBStore(
+            uri=cfg["mongodb_uri"],
+            database=cfg.get("mongodb_database", "smartqdrant"),
+        )
+    raise ValueError(
+        f"Unknown vector_store '{backend}'. Choose: qdrant, chroma, mongodb"
     )
 ```
 
 #### Step 5 — Create a datasource config
+
+Run `python smartqdrant.py init --name my-corpus` to create **`datasource_my-corpus.json`**. Then open it and make the following changes:
+
+| Field | Action | Value |
+|-------|--------|-------|
+| `vector_store` | change | `"mongodb"` |
+| `mongodb_uri` | **add** | your Atlas connection string (from Step 1 prerequisite) |
+| `mongodb_database` | **add** | `"smartqdrant"` (or any database name) |
+
+Complete config after editing:
 
 ```json
 {
