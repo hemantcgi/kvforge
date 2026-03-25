@@ -14,7 +14,7 @@ from typing import Optional
 
 import torch
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import kv_utils
 import pipeline.kv_background as kv_background
 import model_loader
