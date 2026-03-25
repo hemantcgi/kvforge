@@ -859,10 +859,13 @@ def _main():
         default="my_config.json",
         help="Path to JSON config file (default: my_config.json)",
     )
+    parser.add_argument("--port", type=int, default=None,
+                        help="Dashboard port (overrides config dashboard_port)")
     args = parser.parse_args()
     _config_path = args.config
     cfg = _load_cfg()
-    uvicorn.run(app, host="0.0.0.0", port=cfg.get("dashboard_port", 8080))
+    port = args.port if args.port is not None else cfg.get("dashboard_port", 8080)
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
 
 if __name__ == "__main__":
