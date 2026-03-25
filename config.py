@@ -8,7 +8,13 @@ class DatasourceConfig(BaseModel):
     # Vector store connection
     qdrant_host: str = "localhost"
     qdrant_port: int = 6333
-    vector_store: Literal["qdrant", "chroma"] = "qdrant"
+    vector_store: Literal["qdrant", "chroma", "faiss"] = "qdrant"
+
+    # ChromaDB (in-process)
+    chroma_persist_dir: str = ".chroma"
+
+    # FAISS (in-process)
+    faiss_persist_dir: str = ".faiss"
 
     # Collection & ingestion
     collection: str
