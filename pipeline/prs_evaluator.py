@@ -27,7 +27,7 @@ from pathlib import Path
 import numpy as np
 from fastembed import TextEmbedding
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 import version as ver
 import model_loader
 # kv_inference is imported lazily inside evaluate() — SP3 may not exist yet

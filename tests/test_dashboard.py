@@ -24,7 +24,7 @@ def test_health_returns_ok():
 
 def test_version_returns_phase():
     client = _make_client()
-    with patch("monitoring_dashboard.ver.load", return_value={"phase": 1,
+    with patch("pipeline.monitoring_dashboard.ver.load", return_value={"phase": 1,
                "current_lora_version": 0, "prs_history": [], "known_good_queries": []}):
         r = client.get("/api/version")
         assert r.status_code == 200

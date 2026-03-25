@@ -29,7 +29,7 @@ import torch
 from datasets import Dataset
 from transformers import TrainingArguments, Trainer, DataCollatorForLanguageModeling
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 import model_loader
 import version as ver
 from replay_buffer import ReplayBuffer

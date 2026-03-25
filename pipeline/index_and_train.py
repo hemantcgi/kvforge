@@ -60,7 +60,7 @@ def main() -> None:
     with open(args.config) as _f:
         _cfg = json.load(_f)
 
-    sys.path.insert(0, str(Path(__file__).parent))
+    sys.path.insert(0, str(Path(__file__).parent.parent))
     import version as _ver
     _ver.init(_cfg)
     current_ver = _ver.get_lora_version()

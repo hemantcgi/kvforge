@@ -28,7 +28,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 # Ensure project root is on sys.path before any local imports (do once, not per-thread)
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import httpx
 import uvicorn
