@@ -90,6 +90,75 @@ All three protocols are Python `runtime_checkable` `Protocol` classes — add a 
 
 ---
 
+## Project Structure
+
+```
+smartqdrant/
+├── smartqdrant.py          # Main CLI: init / index / search
+├── ask.py                  # Query CLI: ask a question
+├── config.py               # DatasourceConfig Pydantic model
+├── kv_utils.py             # KV tensor ops
+├── model_loader.py         # Thread-safe LLM singleton
+├── version.py              # Phase state (version.json)
+├── confidence_gate.py      # Phase 3 entropy/hedging gate
+├── replay_buffer.py        # SQLite weighted training sampler
+├── access_tracker.py       # Tier classification (hot/warm/cold/frozen)
+│
+├── pipeline/               # Orchestration scripts
+│   ├── kv_indexer.py       # Chunk + embed + KV computation
+│   ├── kv_inference.py     # Phase 1/2/3 query inference
+│   ├── kv_background.py    # Background KV healing daemon
+│   ├── lora_trainer.py     # LoRA fine-tuning
+│   ├── prs_evaluator.py    # PRS evaluation
+│   ├── monitoring_dashboard.py  # FastAPI monitoring server
+│   └── index_and_train.py  # Full pipeline orchestrator
+│
+├── embeddings/             # Pluggable embedder backends
+├── ingestion/              # Pluggable document loaders
+├── vectorstore/            # Pluggable vector store backends
+├── tools/                  # Utility scripts
+├── scripts/                # Shell wrappers for all pipeline tools
+├── examples/               # End-to-end use-case examples
+│   ├── usecase1_customer_support/   # Qdrant + Bitext dataset
+│   ├── usecase2_pubmedqa/           # ChromaDB + PubMedQA dataset
+│   └── usecase3_squad/              # FAISS + SQuAD v2 dataset
+├── tests/                  # SmartQdrant test suite
+│   └── qdrant_internal/    # Upstream Qdrant tests (not SmartQdrant)
+└── docs/                   # Documentation
+    ├── faq/                # FAQ topic pages
+    ├── guides/             # Quickstart, architecture, troubleshooting
+    └── api/                # API reference
+```
+
+## Scripts
+
+Shell wrappers for every pipeline tool are in `scripts/`. See [`scripts/README.md`](scripts/README.md) for the full catalog.
+
+**Most common commands:**
+
+```bash
+# Index documents
+./scripts/index.sh datasource_my-corpus.json ./my-docs/
+
+# Ask a question
+./scripts/ask.sh datasource_my-corpus.json "What is the return policy?"
+
+# Full Phase 1→2→3 pipeline (GPU required)
+./scripts/run_pipeline.sh datasource_my-corpus.json ./my-docs/ my-corpus_faqs.json
+```
+
+## Documentation
+
+| Resource | Description |
+|----------|-------------|
+| [`docs/guides/quickstart.md`](docs/guides/quickstart.md) | Get started in 5 minutes |
+| [`docs/guides/architecture.md`](docs/guides/architecture.md) | 3-phase pipeline deep-dive |
+| [`docs/guides/adding-backends.md`](docs/guides/adding-backends.md) | Add a new vector store, embedder, or loader |
+| [`docs/guides/troubleshooting.md`](docs/guides/troubleshooting.md) | Common errors and fixes |
+| [`docs/api/index.md`](docs/api/index.md) | API reference index |
+| [`docs/api/config.md`](docs/api/config.md) | All `DatasourceConfig` fields |
+| [`FAQ.md`](FAQ.md) | How-to answers by topic |
+
 ## Getting Started
 
 ### Prerequisites
@@ -175,7 +244,7 @@ python tools/generate_faqs.py \
 ### 7. Run the full training pipeline (GPU required)
 
 ```bash
-python index_and_train.py my_document.pdf \
+python pipeline/index_and_train.py my_document.pdf \
   --config datasource_my-corpus.json \
   --faqs my-corpus_faqs.json
 ```
@@ -192,7 +261,8 @@ This runs in sequence:
 
 ```python
 import json
-import kv_background, kv_inference
+import pipeline.kv_background as kv_background
+import pipeline.kv_inference as kv_inference
 
 with open("datasource_my-corpus.json") as f:
     cfg = json.load(f)
@@ -205,7 +275,7 @@ print(answer)
 ### 9. Monitor
 
 ```bash
-python monitoring_dashboard.py --config datasource_my-corpus.json
+python pipeline/monitoring_dashboard.py --config datasource_my-corpus.json
 # Open http://localhost:8080
 ```
 
@@ -262,21 +332,20 @@ Supported values:
 | File | Responsibility |
 |------|----------------|
 | `smartqdrant.py` | CLI: `init` / `index` / `search` |
-| `bedrock_rag.py` | Standalone index + search CLI (legacy, wraps abstractions) |
-| `kv_indexer.py` | Extended indexer: chunk + embed + KV compute + upsert |
-| `kv_inference.py` | Query-time: KV inject or text fallback + stale-chunk healing |
-| `kv_background.py` | Daemon threads: KV recompute queue + access tracker flush |
 | `kv_utils.py` | KV tensor ops: mean_pool, serialize, deserialize, stack |
 | `model_loader.py` | Singleton LLM + LoRA loader; KV shape auto-discovery |
-| `lora_trainer.py` | LoRA fine-tuning with tier-weighted replay buffer |
-| `prs_evaluator.py` | Parametric Readiness Score: accuracy + calibration + consistency |
 | `confidence_gate.py` | Phase 3: entropy + hedging + query-similarity gate |
 | `access_tracker.py` | Thread-safe hit counter; tier classification |
-| `monitoring_dashboard.py` | FastAPI live dashboard at `:8080` |
-| `index_and_train.py` | Orchestrator: index → train → KV refresh → PRS → phase advance |
 | `version.py` | Atomic `version.json` I/O; phase transitions |
 | `replay_buffer.py` | SQLite-backed tier-weighted chunk sampler |
 | `config.py` | Pydantic `DatasourceConfig` — validated config model |
+| `pipeline/kv_indexer.py` | Extended indexer: chunk + embed + KV compute + upsert |
+| `pipeline/kv_inference.py` | Query-time: KV inject or text fallback + stale-chunk healing |
+| `pipeline/kv_background.py` | Daemon threads: KV recompute queue + access tracker flush |
+| `pipeline/lora_trainer.py` | LoRA fine-tuning with tier-weighted replay buffer |
+| `pipeline/prs_evaluator.py` | Parametric Readiness Score: accuracy + calibration + consistency |
+| `pipeline/monitoring_dashboard.py` | FastAPI live dashboard at `:8080` |
+| `pipeline/index_and_train.py` | Orchestrator: index → train → KV refresh → PRS → phase advance |
 | `ingestion/` | DocumentLoader protocol + PDF/Markdown/JSONL/HTML/Directory backends |
 | `embeddings/` | Embedder protocol + FastEmbed/SentenceTransformers/OpenAI backends |
 | `vectorstore/` | VectorStore protocol + QdrantStore/ChromaStore backends |
@@ -400,12 +469,12 @@ source venv/bin/activate
 python -m pytest tests/ -v --override-ini="addopts="
 
 # Run the full pipeline
-python index_and_train.py my_document.pdf \
+python pipeline/index_and_train.py my_document.pdf \
   --config datasource_my-corpus.json \
   --faqs my-corpus_faqs.json
 
 # Start dashboard in background
-nohup python monitoring_dashboard.py \
+nohup python pipeline/monitoring_dashboard.py \
   --config datasource_my-corpus.json &
 ```
 

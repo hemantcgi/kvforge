@@ -1,0 +1,3 @@
+[pdoc]
+output-directory = "docs/api/generated"
+docformat = "google"
