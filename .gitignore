@@ -27,3 +27,8 @@ lora_checkpoints/
 *_version.json
 access_report.json
 .DS_Store
+.superpowers/
+ab_eval_results.json
+ab_eval_viewer.html
+gen_viewer.py
+ANALYSIS_GENERALIZATION.md
