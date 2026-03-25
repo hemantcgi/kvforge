@@ -43,16 +43,16 @@ HuggingFace SQuAD v2
   smartqdrant.py index ──────────────► FAISS (.faiss/squad-qa/)
         │                               (IndexFlatIP, L2-normalised)
         ▼
-  kv_indexer.py compute-kv ◄─── scroll (in-memory scan)
+  pipeline/kv_indexer.py compute-kv ◄─── scroll (in-memory scan)
         │
         ▼ KV tensors stored in .meta.pkl payload
-  lora_trainer.py ──── faqs.json ──► LoRA checkpoint
+  pipeline/lora_trainer.py ──── faqs.json ──► LoRA checkpoint
         │
         ▼
-  kv_indexer.py compute-kv (re-run)
+  pipeline/kv_indexer.py compute-kv (re-run)
         │
         ▼
-  prs_evaluator.py ──────────────────► PRS score
+  pipeline/prs_evaluator.py ──────────────────► PRS score
 ```
 
 ## Prerequisites

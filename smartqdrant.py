@@ -89,7 +89,7 @@ def cmd_init(args) -> None:
     print(f"Next steps:")
     print(f"  1. Index your source:  python smartqdrant.py index --config {config_path} --source <path>")
     print(f"  2. Generate FAQs:      python tools/generate_faqs.py --config {config_path} --output {name}_faqs.json")
-    print(f"  3. Train:              python index_and_train.py --config {config_path} --source <path> --faqs {name}_faqs.json")
+    print(f"  3. Train:              python -m pipeline.index_and_train --config {config_path} --source <path> --faqs {name}_faqs.json")
 
 
 def cmd_index(args) -> None:

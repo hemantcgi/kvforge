@@ -37,19 +37,19 @@ HuggingFace PubMedQA
   smartqdrant.py index ──────────────► ChromaDB (.chroma/pubmedqa/)
         │                                        │
         ▼                                        │
-  kv_indexer.py compute-kv ◄─── scroll all ─────┘
+  pipeline/kv_indexer.py compute-kv ◄─── scroll all ─────┘
         │                           chunks
         ▼ KV tensors stored in ChromaDB payload
-  lora_trainer.py ──── faqs.json ──► LoRA checkpoint
+  pipeline/lora_trainer.py ──── faqs.json ──► LoRA checkpoint
         │
         ▼
-  kv_indexer.py compute-kv (re-run)
+  pipeline/kv_indexer.py compute-kv (re-run)
         │
         ▼
-  prs_evaluator.py ──────────────────► PRS score
+  pipeline/prs_evaluator.py ──────────────────► PRS score
         │
         ▼
-  ask.py / monitoring_dashboard.py
+  ask.py / pipeline/monitoring_dashboard.py
 ```
 
 > **ChromaDB scroll note**: `compute-kv` uses full collection scan (no

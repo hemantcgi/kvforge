@@ -2,8 +2,8 @@
 index_and_train.py — Orchestrator: for each new document, run SP1 → SP2 → KV refresh.
 
 Usage:
-  python3 index_and_train.py new_document.pdf
-  python3 index_and_train.py new_document.pdf --config my_config.json --skip-prs
+  python3 -m pipeline.index_and_train new_document.pdf
+  python3 -m pipeline.index_and_train new_document.pdf --config my_config.json --skip-prs
 """
 
 import argparse

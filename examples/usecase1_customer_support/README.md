@@ -28,22 +28,22 @@ HuggingFace Dataset
   smartqdrant.py index ──────────────► Qdrant (localhost:6333)
         │                                      │
         ▼                                      │
-  kv_indexer.py compute-kv ◄─── read chunks ──┘
+  pipeline/kv_indexer.py compute-kv ◄─── read chunks ──┘
         │                                      │
         ▼ KV tensors                           │ stored back
   ──────────────────────────────────────────────┘
         │
         ▼
-  lora_trainer.py ──── FAQs ──────────► LoRA checkpoint
+  pipeline/lora_trainer.py ──── FAQs ──────────► LoRA checkpoint
         │
         ▼
-  kv_indexer.py compute-kv (re-run with updated weights)
+  pipeline/kv_indexer.py compute-kv (re-run with updated weights)
         │
         ▼
-  prs_evaluator.py ──────────────────► PRS score (target ≥ 0.75)
+  pipeline/prs_evaluator.py ──────────────────► PRS score (target ≥ 0.75)
         │
         ▼
-  ask.py / monitoring_dashboard.py
+  ask.py / pipeline/monitoring_dashboard.py
 ```
 
 ## Prerequisites
