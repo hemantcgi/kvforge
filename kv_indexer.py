@@ -1,12 +1,21 @@
-"""
-kv_indexer.py — Extended indexer: chunk + embed + compute KV tensors.
+"""Extended indexing pipeline: chunk, embed, and compute KV tensors per document.
 
-Commands:
-  index      <pdf>       — full index (embed + KV compute + upsert)
-  compute-kv             — recompute KV for filtered chunks (no re-embed)
-    --filter kv_version=null
-    --stale-version N    — heal all chunks with kv_version < N
-    --source-file FILE
+Extends the basic indexing pipeline with LLM KV-cache computation so that each
+stored chunk carries a pre-computed ``kv_cache`` payload field.
+
+Commands
+--------
+``index <pdf>``
+    Full pipeline: load PDF → chunk → embed → compute KV tensors → upsert.
+``compute-kv``
+    Recompute KV tensors for filtered chunks (skips re-embedding).
+    Useful after a LoRA training round to bring stale chunks up to date.
+
+    Options:
+
+    * ``--filter kv_version=null`` — process only un-cached chunks.
+    * ``--stale-version N`` — heal all chunks with ``kv_version < N``.
+    * ``--source-file FILE`` — restrict to a specific source document.
 """
 
 import argparse
@@ -36,9 +45,26 @@ def compute_kv_for_chunk(
     num_kv_heads: int,
     head_dim: int,
 ) -> np.ndarray:
-    """
-    Run a single chunk through the LLM forward pass and return mean-pooled KV.
-    Output shape: [num_layers, 2, num_kv_heads, head_dim] float16
+    """Run a single text chunk through the LLM and return its mean-pooled KV array.
+
+    Tokenises *text* (truncated to 512 tokens), runs a forward pass with
+    ``use_cache=True``, then calls ``kv_utils.mean_pool_kv`` to compress the
+    per-token KV tensors into a fixed-size float16 array.
+
+    Args:
+        text: Plain-text content of the chunk.
+        model: Loaded HuggingFace causal LM.
+        tokenizer: Corresponding tokenizer.
+        num_layers: Expected number of transformer layers (used for shape assertion).
+        num_kv_heads: Expected number of KV attention heads.
+        head_dim: Expected head dimensionality.
+
+    Returns:
+        Float16 numpy array of shape ``[num_layers, 2, num_kv_heads, head_dim]``.
+
+    Raises:
+        AssertionError: If the produced KV shape does not match the expected
+            dimensions.
     """
     inputs = tokenizer(
         text, return_tensors="pt", truncation=True, max_length=512
@@ -61,7 +87,22 @@ def build_payload(
     kv_array: np.ndarray,
     indexed_at: int | None = None,
 ) -> dict:
-    """Construct the full Qdrant payload for a new chunk."""
+    """Construct the full vector store payload dict for a newly indexed chunk.
+
+    Initialises all tracking fields (access counts, tier, etc.) to their
+    default zero-state values.
+
+    Args:
+        text: Chunk text content.
+        page: Source page number (1-indexed).
+        source_file: Filename (not full path) of the source document.
+        kv_array: Pre-computed KV array from ``compute_kv_for_chunk``.
+        indexed_at: Unix timestamp to record as the indexing time.  Defaults
+            to the current time if ``None``.
+
+    Returns:
+        Dict suitable for use as a ``Point.payload`` argument.
+    """
     return {
         "text": text,
         "page": page,
@@ -78,6 +119,19 @@ def build_payload(
 
 
 def cmd_index(pdf_path: Path, cfg: dict) -> None:
+    """Run the full index pipeline for a single PDF file.
+
+    Steps:
+
+    1. Read and chunk the PDF using the ``bedrock_rag`` pipeline.
+    2. Embed all chunks with the configured embedding model.
+    3. Load the LLM and compute mean-pooled KV tensors for every chunk.
+    4. Upsert the resulting ``Point`` objects to the vector store in batches.
+
+    Args:
+        pdf_path: Path to the PDF file to index.
+        cfg: Datasource configuration dict.
+    """
     store = get_store(cfg)
     num_layers, num_kv_heads, head_dim = model_loader.get_kv_shape(cfg)
 
@@ -118,7 +172,22 @@ def cmd_index(pdf_path: Path, cfg: dict) -> None:
 
 
 def cmd_compute_kv(cfg: dict, filter_type: str, filter_value) -> None:
-    """Recompute KV for chunks matching the given filter."""
+    """Recompute KV tensors for chunks that match the specified filter.
+
+    Scrolls through the collection with the appropriate Qdrant filter and
+    calls ``compute_kv_for_chunk`` for each matching point, then updates its
+    ``kv_cache`` and ``kv_version`` payload fields in-place.
+
+    Args:
+        cfg: Datasource configuration dict.
+        filter_type: One of:
+
+            * ``'null'`` — select chunks where ``kv_version`` is null.
+            * ``'stale'`` — select chunks where ``kv_version < filter_value``.
+            * ``'source'`` — select chunks with ``source_file == filter_value``.
+        filter_value: Numeric version threshold (for ``'stale'``) or source
+            filename string (for ``'source'``); ignored for ``'null'``.
+    """
     store = get_store(cfg)
     num_layers, num_kv_heads, head_dim = model_loader.get_kv_shape(cfg)
 

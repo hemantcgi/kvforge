@@ -1,11 +1,18 @@
-"""
-replay_buffer.py — SQLite-backed replay buffer for LoRA training.
+"""SQLite-backed replay buffer for experience replay during LoRA fine-tuning.
 
-Tier weights for sampling:
-  hot    → 8
-  warm   → 4
-  cold   → 2
-  frozen → 1
+Stores document chunks with tier labels and provides weighted-random sampling
+so that frequently accessed (hot) chunks are more likely to appear in each
+training batch.  This prevents catastrophic forgetting of well-learned content.
+
+Tier sampling weights:
+
+* ``hot``    → 8  (most recently and frequently accessed)
+* ``warm``   → 4
+* ``cold``   → 2
+* ``frozen`` → 1  (never retrieved)
+
+The SQLite database is safe for multi-threaded access via the
+``check_same_thread=False`` flag.
 """
 
 import random
@@ -17,6 +24,20 @@ DEFAULT_DB = str(Path(__file__).parent / "replay_buffer.db")
 
 
 class ReplayBuffer:
+    """Weighted-random replay buffer persisted in a SQLite database.
+
+    Chunks are stored with a ``tier`` label (``hot``, ``warm``, ``cold``, or
+    ``frozen``).  Sampling is weighted by tier so that high-priority chunks
+    appear more often during LoRA training.
+
+    Args:
+        db_path: Path to the SQLite database file.  Created automatically if
+            it does not exist.
+
+    Attributes:
+        TIER_WEIGHTS: Module-level dict mapping tier names to sampling weights.
+    """
+
     def __init__(self, db_path: str = DEFAULT_DB):
         self._con = sqlite3.connect(db_path, check_same_thread=False)
         self._con.execute("""
@@ -38,17 +59,44 @@ class ReplayBuffer:
         self.evict_to_cap(max_size)
 
     def update_tier(self, chunk_id: int, tier: str) -> None:
+        """Update the tier label for a single chunk.
+
+        Args:
+            chunk_id: Identifier of the chunk to update.
+            tier: New tier label — one of ``'hot'``, ``'warm'``, ``'cold'``,
+                ``'frozen'``.
+        """
         self._con.execute("UPDATE chunks SET tier=? WHERE chunk_id=?",
                           (tier, chunk_id))
         self._con.commit()
 
     def update_tiers_bulk(self, updates: list[tuple[int, str]]) -> None:
-        """updates: list of (chunk_id, tier)"""
+        """Batch-update tier labels for multiple chunks in a single transaction.
+
+        Args:
+            updates: List of ``(chunk_id, tier)`` tuples.
+        """
         self._con.executemany("UPDATE chunks SET tier=? WHERE chunk_id=?",
                               [(t, cid) for cid, t in updates])
         self._con.commit()
 
     def sample(self, n: int, weight_by_tier: bool = True) -> list[dict]:
+        """Draw up to *n* chunks from the buffer with optional tier weighting.
+
+        When *weight_by_tier* is ``True``, chunks are drawn using
+        ``random.choices`` with weights proportional to their tier (see
+        ``TIER_WEIGHTS``), then deduplicated while preserving the approximate
+        distribution.
+
+        Args:
+            n: Maximum number of chunks to return.
+            weight_by_tier: If ``True`` (default), sample proportional to tier
+                weight.  If ``False``, sample uniformly at random.
+
+        Returns:
+            List of dicts with keys ``chunk_id``, ``text``, and ``tier``.
+            May be shorter than *n* if the buffer has fewer than *n* entries.
+        """
         rows = self._con.execute(
             "SELECT chunk_id, text, tier FROM chunks"
         ).fetchall()
@@ -78,6 +126,7 @@ class ReplayBuffer:
         return result
 
     def count(self) -> int:
+        """Return the total number of chunks currently stored in the buffer."""
         return self._con.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
 
     def evict_to_cap(self, max_size: int = 5000) -> int:

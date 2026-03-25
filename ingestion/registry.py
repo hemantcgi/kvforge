@@ -1,10 +1,33 @@
-"""ingestion/registry.py — Factory for DocumentLoader implementations."""
+"""Factory that instantiates the configured DocumentLoader backend.
+
+Provides a single ``get_loader`` entry-point used by indexing pipelines so
+that the rest of the codebase stays format-agnostic.
+"""
 
 
 def get_loader(cfg: dict):
     """Return the appropriate DocumentLoader for the given config.
 
-    Dispatches on cfg['loader'] (default: 'pdf').
+    Dispatches on ``cfg['loader']`` (default: ``'pdf'``).  Additional keys
+    in *cfg* are forwarded to the loader constructor where applicable (e.g.
+    ``chunk_size``, ``chunk_overlap``, ``jsonl_text_key``).
+
+    Args:
+        cfg: Datasource configuration dictionary.  Relevant keys:
+
+            * ``loader`` — one of ``pdf``, ``markdown``, ``jsonl``, ``html``,
+              ``directory``.
+            * ``chunk_size`` — word-count target per chunk (default 600).
+            * ``chunk_overlap`` — word overlap between consecutive chunks
+              (default 60).
+            * ``jsonl_text_key`` — field name for the text in each JSONL object
+              (default ``'text'``).
+
+    Returns:
+        A ``DocumentLoader``-protocol-compatible instance.
+
+    Raises:
+        ValueError: If ``cfg['loader']`` is not a recognised loader name.
     """
     name = cfg.get("loader", "pdf")
     chunk_size = cfg.get("chunk_size", 600)

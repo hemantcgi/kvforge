@@ -1,14 +1,47 @@
-"""ingestion/html_loader.py — Load HTML files, strip tags, split by section."""
+"""HTML document loader that strips tags and splits content into sections.
+
+Uses BeautifulSoup4 to parse HTML.  Install with ``pip install beautifulsoup4``.
+Sections are delimited by block-level heading tags (``h1``, ``h2``, ``h3``).
+"""
 from pathlib import Path
 
 
 class HTMLLoader:
-    """Strip HTML tags and return text content as chunks."""
+    """Load an HTML file, strip markup, and split the text into heading-delimited sections.
+
+    Block-level elements (``p``, ``h1``–``h4``, ``li``, ``td``) are extracted
+    in document order.  A new section is started whenever an ``h1``, ``h2``,
+    or ``h3`` tag is encountered.
+
+    Args:
+        min_chunk_words: Sections with fewer words than this threshold are
+            discarded.
+
+    Raises:
+        ImportError: If ``beautifulsoup4`` is not installed.
+    """
 
     def __init__(self, min_chunk_words: int = 10):
         self.min_chunk_words = min_chunk_words
 
     def load(self, source: str) -> list[dict]:
+        """Parse an HTML file and return each section as a document dict.
+
+        Args:
+            source: Path to the HTML file.
+
+        Returns:
+            List of dicts with the shape::
+
+                {
+                    "text": str,
+                    "metadata": {
+                        "source": str,    # filename (not full path)
+                        "section": int,   # 0-indexed section number
+                        "chunk_id": int   # same as section index
+                    }
+                }
+        """
         try:
             from bs4 import BeautifulSoup
         except ImportError:

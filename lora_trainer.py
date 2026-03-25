@@ -1,12 +1,21 @@
-"""
-lora_trainer.py — Fine-tune Llama 3.2 3B on document chunks or Q&A pairs.
+"""LoRA fine-tuning pipeline for Llama 3.2 3B on document chunks or Q&A pairs.
 
-Usage:
-  # Raw-chunk mode (document continuation)
-  python3 lora_trainer.py --source-file "Amazon Bedrock Dataset.pdf"
+Supports two training modes:
 
-  # Q&A instruction mode (recommended for PRS improvement)
-  python3 lora_trainer.py --faqs examples/bedrock_50_faqs.json
+* **Raw-chunk mode** (``--source-file``) — trains on document continuation
+  text extracted from Qdrant.  Good for the first LoRA round when no FAQs
+  are available yet.
+* **Q&A instruction mode** (``--faqs``) — trains on instruction-style
+  ``"Q: ... A: ..."`` examples.  Recommended for PRS improvement because it
+  aligns the model output format with the evaluation queries.
+
+In both modes a small fraction of chunks from the replay buffer is added as
+regularisation to prevent catastrophic forgetting.
+
+Usage::
+
+    python3 lora_trainer.py --source-file "Amazon Bedrock Dataset.pdf"
+    python3 lora_trainer.py --faqs examples/bedrock_50_faqs.json
 """
 
 import argparse
@@ -30,7 +39,19 @@ from qdrant_client.models import Filter, FieldCondition, MatchValue
 
 def fetch_chunks_for_source(client: QdrantClient, collection: str,
                               source_file: str) -> list[dict]:
-    """Retrieve all chunks belonging to a given source_file from Qdrant."""
+    """Retrieve all chunks that belong to *source_file* from Qdrant.
+
+    Paginates through the collection using scroll until all matching points
+    have been fetched.
+
+    Args:
+        client: Connected ``QdrantClient`` instance.
+        collection: Name of the Qdrant collection to query.
+        source_file: Value of the ``source_file`` payload field to filter on.
+
+    Returns:
+        List of dicts with keys ``chunk_id``, ``text``, and ``tier``.
+    """
     chunks, offset = [], None
     while True:
         results, offset = client.scroll(
@@ -52,7 +73,18 @@ def fetch_chunks_for_source(client: QdrantClient, collection: str,
 
 
 def format_qa_texts(faqs: list[dict]) -> list[str]:
-    """Format Q&A pairs as instruction-style training examples."""
+    """Convert FAQ dicts into plain instruction-style training strings.
+
+    Each string has the form ``"<question>\\n<answer>"``, which matches the
+    prompt format used by the PRS evaluator so that the model learns to
+    answer in the expected style.
+
+    Args:
+        faqs: List of dicts, each with ``'question'`` and ``'answer'`` keys.
+
+    Returns:
+        List of formatted training strings, one per FAQ item.
+    """
     texts = []
     for item in faqs:
         q = item["question"].strip()
@@ -63,11 +95,27 @@ def format_qa_texts(faqs: list[dict]) -> list[str]:
 
 def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
           output_dir: str, qa_texts: list[str] | None = None) -> None:
-    """Run LoRA fine-tuning.
+    """Run LoRA fine-tuning and save the adapter to *output_dir*.
 
-    If qa_texts is provided, trains on Q&A pairs (instruction mode) with
-    a small replay of raw chunks for regularization.  Otherwise trains on
-    raw document chunks (continuation mode).
+    Builds a PEFT ``LoraConfig`` from *cfg*, applies it to the base model,
+    tokenises all training examples, and runs a ``Trainer`` loop.  The
+    adapter weights and tokenizer are saved to *output_dir* on completion.
+
+    If *qa_texts* is provided (instruction mode), the training set is the
+    Q&A strings plus a small sample of raw chunks from *replay_chunks* for
+    regularisation.  Otherwise (chunk mode), the training set is
+    *new_chunks* + *replay_chunks*.
+
+    Args:
+        cfg: Datasource configuration dict.  Uses ``lora_rank``,
+            ``lora_alpha``, ``lora_target_modules``, ``lora_dropout``,
+            ``lora_epochs``, and ``lora_lr``.
+        new_chunks: Newly indexed chunks (used in raw-chunk mode).
+        replay_chunks: Chunks sampled from the replay buffer for
+            regularisation.
+        output_dir: Directory where the trained LoRA adapter is saved.
+        qa_texts: Pre-formatted Q&A training strings for instruction mode.
+            If ``None``, raw-chunk (continuation) mode is used.
     """
     from peft import LoraConfig, TaskType, get_peft_model  # lazy import
 

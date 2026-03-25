@@ -1,4 +1,9 @@
-"""ingestion/directory_loader.py — Recursively load all supported docs in a dir."""
+"""Directory loader that recursively ingests all supported document types.
+
+Dispatches to the appropriate per-format loader based on file extension.
+Supported extensions: ``.pdf``, ``.md``, ``.markdown``, ``.jsonl``,
+``.html``, ``.htm``.
+"""
 from pathlib import Path
 
 
@@ -13,13 +18,34 @@ EXTENSION_MAP = {
 
 
 class DirectoryLoader:
-    """Walk a directory and load all supported document types."""
+    """Walk a directory tree and load all supported document types.
+
+    Dispatches each file to the appropriate ``DocumentLoader`` implementation
+    based on its extension.  Files with unsupported extensions are silently
+    skipped.
+
+    Args:
+        recursive: If ``True`` (default), descend into sub-directories using a
+            ``**/*`` glob.  If ``False``, only files directly inside *source*
+            are processed.
+        **loader_kwargs: Additional keyword arguments forwarded to each
+            per-format loader (e.g. ``chunk_size``, ``chunk_overlap``).
+    """
 
     def __init__(self, recursive: bool = True, **loader_kwargs):
         self.recursive = recursive
         self.loader_kwargs = loader_kwargs
 
     def load(self, source: str) -> list[dict]:
+        """Load all supported documents from *source* directory.
+
+        Args:
+            source: Path to the root directory to scan.
+
+        Returns:
+            Concatenated list of document dicts from all supported files,
+            ordered by file path (sorted alphabetically).
+        """
         from ingestion.registry import get_loader
         path = Path(source)
         pattern = "**/*" if self.recursive else "*"

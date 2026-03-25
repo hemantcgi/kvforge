@@ -1,4 +1,8 @@
-"""vectorstore/registry.py — Factory for VectorStore implementations."""
+"""Factory that instantiates the configured VectorStore backend.
+
+Provides a single ``get_store`` entry-point used throughout SmartQdrant so
+that higher-level code stays backend-agnostic.
+"""
 
 
 def get_store(cfg: dict):
@@ -6,11 +10,25 @@ def get_store(cfg: dict):
 
     Dispatches on ``cfg['vector_store']`` (default: ``'qdrant'``).
 
-    Supported backends
-    ------------------
-    ``qdrant``  — Qdrant server (Docker or cloud).  Requires ``qdrant-client``.
-    ``chroma``  — ChromaDB in-process persistent store.  Requires ``chromadb``.
-    ``faiss``   — FAISS flat index persisted to disk.  Requires ``faiss-cpu``.
+    Supported backends:
+
+    * ``qdrant`` — Qdrant server (Docker or cloud).  Requires ``qdrant-client``.
+      Uses ``cfg['qdrant_host']`` (default ``'localhost'``) and
+      ``cfg['qdrant_port']`` (default ``6333``).
+    * ``chroma`` — ChromaDB in-process persistent store.  Requires ``chromadb``.
+      Uses ``cfg['chroma_persist_dir']`` (default ``'.chroma'``).
+    * ``faiss``  — FAISS flat index persisted to disk.  Requires ``faiss-cpu``.
+      Uses ``cfg['faiss_persist_dir']`` (default ``'.faiss'``).
+
+    Args:
+        cfg: Datasource configuration dictionary (or a ``DatasourceConfig``
+            instance coerced to dict).
+
+    Returns:
+        A ``VectorStore``-protocol-compatible instance for the selected backend.
+
+    Raises:
+        ValueError: If ``cfg['vector_store']`` is not one of the supported values.
     """
     backend = cfg.get("vector_store", "qdrant")
 

@@ -1,11 +1,15 @@
-"""
-kv_utils.py — KV tensor utilities shared by SP1, SP2, SP3.
+"""KV-cache tensor utilities shared by the indexing and inference pipelines.
 
-Operations:
-  mean_pool_kv   — compress past_key_values (per-token) → fixed-size array
-  serialize_kv   — numpy float16 array → base64 string (for Qdrant payload)
-  deserialize_kv — base64 string → numpy float16 array
-  stack_past_key_values — list of chunk KV arrays → HuggingFace past_key_values
+Provides helpers to compress, serialise, deserialise, and reassemble the
+HuggingFace ``past_key_values`` KV cache so it can be stored in a vector
+store payload and later injected back into the model during inference.
+
+Key functions:
+
+* ``mean_pool_kv``        — compress per-token KV tensors → fixed-size array
+* ``serialize_kv``        — numpy float16 array → base64 string (for payload storage)
+* ``deserialize_kv``      — base64 string → numpy float16 array
+* ``stack_past_key_values`` — list of chunk KV arrays → HuggingFace cache object
 """
 
 import base64
@@ -53,12 +57,32 @@ def mean_pool_kv(past_key_values) -> np.ndarray:
 
 
 def serialize_kv(arr: np.ndarray) -> str:
-    """Float16 numpy array → base64 string for Qdrant payload storage."""
+    """Serialise a float16 numpy KV array to a base64 ASCII string.
+
+    The array is cast to ``float16`` before encoding to halve storage size.
+    The result is safe to store in JSON-based payload fields.
+
+    Args:
+        arr: KV array of shape ``[num_layers, 2, num_kv_heads, head_dim]``
+            (or any shape compatible with float16 storage).
+
+    Returns:
+        Base64-encoded ASCII string representing the raw bytes of the array.
+    """
     return base64.b64encode(arr.astype(np.float16).tobytes()).decode("ascii")
 
 
 def deserialize_kv(b64: str, shape: tuple) -> np.ndarray:
-    """Base64 string → float16 numpy array with given shape."""
+    """Deserialise a base64 ASCII string back to a float16 numpy array.
+
+    Args:
+        b64: Base64-encoded string produced by ``serialize_kv``.
+        shape: Expected array shape, e.g.
+            ``(num_layers, 2, num_kv_heads, head_dim)``.
+
+    Returns:
+        A writeable float16 numpy array of the specified shape.
+    """
     raw = base64.b64decode(b64)
     return np.frombuffer(raw, dtype=np.float16).copy().reshape(shape)
 

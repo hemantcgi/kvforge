@@ -1,11 +1,23 @@
-"""
-prs_evaluator.py — Compute Parametric Readiness Score after each LoRA round.
+"""Compute the Parametric Readiness Score (PRS) after each LoRA training round.
 
-PRS = 0.5 * min(accuracy_ratio, 1.0)
-    + 0.3 * calibration_score
-    + 0.2 * self_consistency
+PRS measures how close the fine-tuned model is to being able to answer queries
+reliably from its weights alone (without retrieval).  It is a weighted
+combination of three sub-scores:
 
-Run automatically by index_and_train.py after lora_trainer.py completes.
+.. math::
+
+    PRS = 0.5 \\cdot accuracy\\_ratio
+        + 0.3 \\cdot calibration\\_score
+        + 0.2 \\cdot self\\_consistency
+
+* **accuracy_ratio** — semantic similarity of the parametric answer vs. the
+  RAG answer, normalised by the RAG-vs-ground-truth similarity.
+* **calibration_score** — how well the model's self-reported confidence
+  matches its actual answer quality.
+* **self_consistency** — mean pairwise cosine similarity across *n* stochastic
+  answers to the same question.
+
+Run automatically by ``index_and_train.py`` after ``lora_trainer.py`` completes.
 """
 
 import json
@@ -47,7 +59,15 @@ def _cosine_sim(a: np.ndarray, b: np.ndarray) -> float:
 
 
 def _generate_parametric(query: str, pipe) -> str:
-    """Answer directly from model weights — no retrieved context."""
+    """Generate an answer to *query* from model weights with no retrieved context.
+
+    Args:
+        query: The question string.
+        pipe: A HuggingFace ``text-generation`` pipeline.
+
+    Returns:
+        The generated answer text (prompt prefix stripped).
+    """
     out = pipe(query)
     return out[0]["generated_text"][len(query):].strip()
 
@@ -81,7 +101,22 @@ _DEFAULT_PRS_WEIGHTS = {"accuracy": 0.5, "calibration": 0.3, "consistency": 0.2}
 
 def _compute_prs(accuracy_ratios: list, calibrations: list, consistencies: list,
                  weights: dict | None) -> float:
-    """Compute weighted PRS from component score lists."""
+    """Compute the weighted PRS from per-question component score lists.
+
+    Args:
+        accuracy_ratios: Per-question accuracy ratio values (list of floats in
+            [0, 1]).
+        calibrations: Per-question calibration scores (list of floats in
+            [0, 1]).
+        consistencies: Per-question self-consistency scores (list of floats in
+            [0, 1]).
+        weights: Dict with keys ``'accuracy'``, ``'calibration'``,
+            ``'consistency'`` mapping to floats that sum to 1.0.
+            Defaults to ``{accuracy: 0.5, calibration: 0.3, consistency: 0.2}``.
+
+    Returns:
+        PRS score clipped to ``[0.0, 1.0]``.
+    """
     import numpy as np
     w = weights or _DEFAULT_PRS_WEIGHTS
     return float(np.clip(
@@ -93,9 +128,27 @@ def _compute_prs(accuracy_ratios: list, calibrations: list, consistencies: list,
 
 
 def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) -> float:
-    """
-    Compute PRS on a sample of FAQs.
-    Returns PRS in [0, 1].
+    """Compute the Parametric Readiness Score on a sample of FAQs.
+
+    For each FAQ:
+
+    1. Generate a parametric answer (no context) and a RAG answer (with
+       retrieval, if ``kv_inference`` is available).
+    2. Embed both answers and the ground-truth answer.
+    3. Compute ``accuracy_ratio``, ``calibration``, and ``self_consistency``.
+
+    After evaluation, queries where ``accuracy_ratio >= 0.85`` are recorded as
+    "known-good" in ``version.json`` for use by the confidence gate.
+
+    Args:
+        faqs: List of FAQ dicts.  Each must have the keys specified by
+            ``cfg['faq_question_key']`` and ``cfg['faq_answer_key']``.
+        cfg: Datasource configuration dict.
+        lora_checkpoint: Path to a LoRA adapter directory to load before
+            evaluation.  ``None`` uses the base model.
+
+    Returns:
+        PRS score in ``[0.0, 1.0]``.
     """
     model, tokenizer = model_loader.load(lora_checkpoint)
     embed_model = cfg.get("embed_model", "BAAI/bge-small-en-v1.5")

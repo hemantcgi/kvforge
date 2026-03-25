@@ -1,10 +1,27 @@
-"""
-kv_background.py — Background worker with two jobs:
-  1. KV recompute queue: heal stale chunks after they are first retrieved
-  2. Access tracker flush: batch-write access counters to Qdrant every 50 queries or 5 min
+"""Long-lived background workers for KV healing and access-counter flushing.
 
-Run as a long-lived process alongside kv_inference.py:
-  python3 kv_background.py &
+Two daemon threads are started via ``start(cfg)``:
+
+1. **KV recompute worker** — pulls chunk IDs from ``_kv_queue`` and
+   recomputes their KV tensor using the current (possibly updated) LoRA model.
+   Automatically reloads the model when a new LoRA version is detected.
+
+2. **Access flush worker** — periodically drains the in-memory
+   ``_access_buffer`` and writes the accumulated access counts, retrieval
+   ranks, and parametric-hit counts back to the vector store.  Flush is
+   triggered when either the query count threshold or the time interval is
+   reached.
+
+Public API (called from inference threads):
+
+* ``enqueue_kv_recompute(chunk_ids)`` — schedule KV recomputation.
+* ``record_access(chunk_id, rank)`` — record a retrieval event (zero latency).
+* ``record_parametric_hit(chunk_ids)`` — record parametric-mode hits.
+* ``start(cfg)`` — start both background threads (idempotent).
+
+Run standalone alongside ``kv_inference.py``::
+
+    python3 kv_background.py &
 """
 
 import json
@@ -30,13 +47,29 @@ _query_lock = threading.Lock()
 # ── Public API (called by kv_inference.py) ────────────────────────────────
 
 def enqueue_kv_recompute(chunk_ids: list[int]) -> None:
-    """Called from inference thread when stale chunks are detected."""
+    """Schedule KV tensor recomputation for the given chunk IDs.
+
+    Puts each ID onto the internal queue consumed by ``_kv_worker``.
+    This call returns immediately and does not block the inference thread.
+
+    Args:
+        chunk_ids: List of chunk identifiers whose KV cache needs refreshing.
+    """
     for cid in chunk_ids:
         _kv_queue.put(cid)
 
 
 def record_access(chunk_id: int, rank: int) -> None:
-    """Called from inference thread — zero latency, in-memory only."""
+    """Record a retrieval event for *chunk_id* at result position *rank*.
+
+    Updates the in-memory ``_access_buffer`` under a lock and increments the
+    global query counter.  No I/O is performed; the buffer is flushed
+    asynchronously by ``_access_worker``.
+
+    Args:
+        chunk_id: Identifier of the retrieved chunk.
+        rank: 1-based position in the retrieval result list.
+    """
     global _query_count
     with _access_lock:
         if chunk_id not in _access_buffer:
@@ -49,7 +82,16 @@ def record_access(chunk_id: int, rank: int) -> None:
 
 
 def record_parametric_hit(chunk_ids: list[int]) -> None:
-    """Called when confidence gate answers without retrieval."""
+    """Record parametric-mode hits for chunks that would have been retrieved.
+
+    Called by the confidence gate after answering a query directly from model
+    weights.  Increments the in-memory ``parametric_hits`` counter for each
+    chunk ID so the access flush worker can persist the metric.
+
+    Args:
+        chunk_ids: List of chunk IDs that would have been retrieved for this
+            query.
+    """
     with _access_lock:
         for cid in chunk_ids:
             if cid not in _access_buffer:
@@ -62,6 +104,15 @@ def record_parametric_hit(chunk_ids: list[int]) -> None:
 # ── KV recompute worker ───────────────────────────────────────────────────
 
 def _kv_worker(cfg: dict) -> None:
+    """Background thread: drain the KV recompute queue and update stale chunks.
+
+    Runs indefinitely.  When a new LoRA version is detected (``version.json``
+    changes), the model is reloaded via ``model_loader.reload`` so that
+    recomputed KV tensors reflect the latest fine-tuned weights.
+
+    Args:
+        cfg: Datasource configuration dict.
+    """
     client = get_store(cfg)
     num_layers, num_kv_heads, head_dim = model_loader.get_kv_shape(cfg)
 
@@ -109,6 +160,17 @@ def _kv_worker(cfg: dict) -> None:
 # ── Access flush worker ───────────────────────────────────────────────────
 
 def _flush_access(cfg: dict, store) -> None:
+    """Write accumulated access metrics from ``_access_buffer`` to the vector store.
+
+    Atomically snapshots and clears the in-memory buffer, then for each chunk
+    retrieves its current payload, merges in the delta counts, and calls
+    ``store.set_payload``.  Errors for individual chunks are logged but do not
+    abort the flush.
+
+    Args:
+        cfg: Datasource configuration dict.
+        store: VectorStore instance to write updated payloads to.
+    """
     global _query_count
     with _access_lock:
         if not _access_buffer:

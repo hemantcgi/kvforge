@@ -1,7 +1,14 @@
-"""
-access_tracker.py — Thread-safe in-memory access counter + tier classifier.
+"""Thread-safe in-memory access counter and tier classifier for document chunks.
 
-Used directly by kv_background.py for the flush loop.
+``AccessTracker`` accumulates retrieval events in memory so that the
+background flush loop (``kv_background.py``) can batch-write them to the
+vector store rather than making one round-trip per query.
+
+``compute_tiers`` classifies a list of chunk metadata dicts into four
+performance tiers based on access frequency and recency.
+
+``generate_report`` produces a JSON summary report for the monitoring
+dashboard.
 """
 
 import json
@@ -21,11 +28,24 @@ class _Counter:
 
 
 class AccessTracker:
+    """Thread-safe in-memory store for chunk access counts and retrieval ranks.
+
+    All mutations are protected by an internal ``threading.Lock``.
+    Call ``snapshot_and_clear`` from the background flush thread to atomically
+    retrieve and reset the accumulated data.
+    """
+
     def __init__(self):
         self._data: dict[int, _Counter] = {}
         self._lock = threading.Lock()
 
     def record(self, chunk_id: int, rank: int) -> None:
+        """Record a retrieval event for *chunk_id* at position *rank*.
+
+        Args:
+            chunk_id: Identifier of the retrieved chunk.
+            rank: 1-based position in the retrieval result list (1 = top hit).
+        """
         with self._lock:
             if chunk_id not in self._data:
                 self._data[chunk_id] = _Counter()
@@ -35,6 +55,15 @@ class AccessTracker:
             c.last_ts = int(time.time())
 
     def record_parametric_hit(self, chunk_ids: list[int]) -> None:
+        """Increment the parametric-hit counter for a list of chunk IDs.
+
+        Called by the confidence gate when a query is answered directly from
+        model weights (no retrieval), but the chunks that *would have* been
+        retrieved are tracked for statistics.
+
+        Args:
+            chunk_ids: List of chunk identifiers to credit with a parametric hit.
+        """
         with self._lock:
             for cid in chunk_ids:
                 if cid not in self._data:
@@ -42,6 +71,13 @@ class AccessTracker:
                 self._data[cid].parametric_hits += 1
 
     def snapshot_and_clear(self) -> dict[int, dict]:
+        """Atomically snapshot and clear all accumulated access data.
+
+        Returns:
+            Dict mapping ``chunk_id`` to a dict with keys ``count``,
+            ``rank_sum``, ``last_ts``, and ``parametric_hits``.
+            The internal buffer is emptied before returning.
+        """
         with self._lock:
             snap = {
                 cid: {"count": c.count, "rank_sum": c.rank_sum,
@@ -52,6 +88,11 @@ class AccessTracker:
         return snap
 
     def query_count(self) -> int:
+        """Return the total number of retrieval events recorded since the last clear.
+
+        Returns:
+            Sum of ``count`` across all tracked chunks.
+        """
         with self._lock:
             return sum(c.count for c in self._data.values())
 
@@ -98,6 +139,18 @@ def compute_tiers(chunks: list[dict]) -> dict[int, str]:
 
 def generate_report(chunks: list[dict], parametric_rate: float,
                      output_path: str = "access_report.json") -> None:
+    """Generate a JSON access report and write it to *output_path*.
+
+    The report contains tier distribution counts, the parametric answer rate,
+    the most-accessed pages, and a sample of frozen chunk IDs.
+
+    Args:
+        chunks: List of chunk metadata dicts (from the vector store payload),
+            each expected to contain ``chunk_id``, ``access_count``,
+            ``last_accessed_ts``, and optionally ``page``.
+        parametric_rate: Fraction of queries answered parametrically in [0, 1].
+        output_path: Destination path for the JSON report file.
+    """
     tiers = compute_tiers(chunks)
     counts = {"hot": 0, "warm": 0, "cold": 0, "frozen": 0}
     frozen_ids = []

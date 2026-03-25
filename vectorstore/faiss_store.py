@@ -1,4 +1,16 @@
-"""vectorstore/faiss_store.py — FAISS in-process vector store backend."""
+"""FAISS-backed implementation of the VectorStore protocol.
+
+Provides an in-process, file-persisted vector store using Facebook's FAISS
+library.  No external server is needed.  Vectors are L2-normalised before
+being added so that inner-product search is equivalent to cosine similarity.
+
+Each collection is backed by two files in *persist_dir*:
+
+* ``<name>.index``    — FAISS binary index (``IndexFlatIP``).
+* ``<name>.meta.pkl`` — Python pickle with ``id_map`` and ``payloads`` dicts.
+
+Requires ``pip install faiss-cpu`` (or ``faiss-gpu``).
+"""
 from __future__ import annotations
 
 import pickle
@@ -83,12 +95,22 @@ class FAISSStore:
         self._save(name)
 
     def collection_exists(self, name: str) -> bool:
+        """Return ``True`` if the collection is loaded in memory or persisted on disk.
+
+        Args:
+            name: Collection name.
+        """
         if name in self._indexes:
             return True
         idx_path, _ = self._paths(name)
         return idx_path.exists()
 
     def delete_collection(self, name: str) -> None:
+        """Delete the collection's index and metadata files, and clear in-memory state.
+
+        Args:
+            name: Collection name to delete.
+        """
         for path in self._paths(name):
             path.unlink(missing_ok=True)
         self._indexes.pop(name, None)
@@ -123,6 +145,21 @@ class FAISSStore:
         top_k: int,
         score_threshold: float | None = None,
     ) -> list[ScoredPoint]:
+        """Return the top-K nearest neighbours to *vector* using inner-product search.
+
+        The query vector is L2-normalised before search so the resulting scores
+        are cosine similarities in the range [0, 1].
+
+        Args:
+            collection: Collection to search.
+            vector: Query embedding vector.
+            top_k: Maximum number of results to return.
+            score_threshold: Optional minimum cosine score; lower-scoring
+                results are excluded.
+
+        Returns:
+            List of ``ScoredPoint`` objects ordered by descending similarity.
+        """
         import faiss
         self._ensure_loaded(collection)
         vec = np.array([vector], dtype="float32")
@@ -185,5 +222,10 @@ class FAISSStore:
         self._save(collection)
 
     def count(self, collection: str) -> int:
+        """Return the total number of vectors stored in *collection*.
+
+        Args:
+            collection: Collection name.
+        """
         self._ensure_loaded(collection)
         return self._indexes[collection].ntotal

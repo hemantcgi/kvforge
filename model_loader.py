@@ -1,7 +1,18 @@
-"""
-model_loader.py — Load Llama 3.2 3B + optional LoRA adapter.
+"""Singleton loader for the Llama 3.2 3B language model with optional LoRA adapters.
 
-Singleton pattern: call load() once per process; reload() to swap LoRA adapter.
+Provides a thread-safe, process-level singleton for the HuggingFace model and
+tokenizer so that GPU memory is allocated only once per process.
+
+Typical usage::
+
+    import model_loader
+    model_loader.init(cfg)         # set model ID and HF token from config
+    model, tokenizer = model_loader.load()           # base model
+    model, tokenizer = model_loader.load(lora_ckpt)  # with LoRA adapter
+    model, tokenizer = model_loader.reload(new_ckpt) # force fresh load
+
+Public API: ``init``, ``load``, ``reload``, ``get_kv_shape``,
+``detect_lora_targets``.
 """
 
 from __future__ import annotations
@@ -29,6 +40,7 @@ MODEL_ID = os.getenv("LLM_MODEL", "meta-llama/Llama-3.2-3B-Instruct")
 
 
 def _get_device() -> str:
+    """Return ``'cuda'`` if a CUDA GPU is available, otherwise ``'cpu'``."""
     try:
         import torch
         return "cuda" if torch.cuda.is_available() else "cpu"
@@ -40,7 +52,13 @@ DEVICE = _get_device()
 
 
 def init(cfg: dict) -> None:
-    """Override MODEL_ID from config. Call once before load()."""
+    """Override the module-level ``MODEL_ID`` from config.  Call once before ``load()``.
+
+    Args:
+        cfg: Datasource configuration dictionary.  Uses ``cfg['llm_model']``
+            to set the model identifier and ``cfg['hf_token']`` to set the
+            ``HF_TOKEN`` environment variable for gated models.
+    """
     global MODEL_ID
     MODEL_ID = cfg.get("llm_model", MODEL_ID)
     token = cfg.get("hf_token")
@@ -49,9 +67,24 @@ def init(cfg: dict) -> None:
 
 
 def load(lora_checkpoint: Optional[str] = None) -> tuple:
-    """
-    Load model + tokenizer. If lora_checkpoint is given, apply LoRA adapter.
-    Returns (model, tokenizer). Cached after first call; thread-safe.
+    """Load (or return the cached) model and tokenizer.
+
+    On the first call the base model is downloaded, moved to the correct
+    device, and optionally merged with a LoRA adapter.  Subsequent calls with
+    the same *lora_checkpoint* value return the cached pair without reloading.
+    Thread-safe via an internal lock.
+
+    Args:
+        lora_checkpoint: Path to a PEFT LoRA adapter directory.  If ``None``
+            or the path does not exist, the base model is returned.
+
+    Returns:
+        A ``(model, tokenizer)`` tuple where *model* is a HuggingFace
+        ``AutoModelForCausalLM`` (in eval mode) and *tokenizer* is an
+        ``AutoTokenizer``.
+
+    Raises:
+        ImportError: If ``torch`` or ``transformers`` are not installed.
     """
     global _model, _tokenizer, _current_checkpoint
     # Fast path — no lock needed for reads once loaded
@@ -89,10 +122,18 @@ def load(lora_checkpoint: Optional[str] = None) -> tuple:
 
 
 def reload(lora_checkpoint: Optional[str] = None) -> tuple:
-    """
-    Force reload from the base MODEL_ID, then apply lora_checkpoint if given.
-    Always starts from the base model (not the previously-merged weights) so
-    that repeated LoRA rounds each apply a fresh adapter without double-merging.
+    """Force a fresh load of the base model, then optionally apply a LoRA adapter.
+
+    Clears the module-level singleton so the next ``load()`` call downloads
+    and initialises the model from scratch.  Use this between LoRA training
+    rounds to avoid double-merging adapters.
+
+    Args:
+        lora_checkpoint: Path to a PEFT LoRA adapter directory to apply after
+            loading the base model.  ``None`` returns the bare base model.
+
+    Returns:
+        A fresh ``(model, tokenizer)`` tuple.
     """
     global _model, _tokenizer, _current_checkpoint
     _model = _tokenizer = _current_checkpoint = None
@@ -135,12 +176,25 @@ def detect_lora_targets(model, configured_targets: list[str]) -> list[str]:
 
 
 def get_kv_shape(cfg: dict) -> tuple[int, int, int]:
-    """Return (num_layers, num_kv_heads, head_dim).
+    """Return ``(num_layers, num_kv_heads, head_dim)`` for KV cache allocation.
 
-    Priority:
-      1. cfg['model_library'] registry entry (explicit override, backwards compat)
-      2. Auto-discovery from loaded model's HF config
-      3. Explicit cfg['kv_num_layers'] / 'kv_num_heads' / 'kv_head_dim' (legacy)
+    Resolution order:
+
+    1. ``cfg['model_library']`` registry entry keyed by the model ID (explicit
+       override; useful for backwards compatibility and untested models).
+    2. Auto-discovery from the loaded model's HuggingFace config object.
+    3. Explicit legacy keys ``cfg['kv_num_layers']``, ``cfg['kv_num_heads']``,
+       ``cfg['kv_head_dim']`` (raises ``KeyError`` if absent).
+
+    Args:
+        cfg: Datasource configuration dictionary.
+
+    Returns:
+        A ``(num_layers, num_kv_heads, head_dim)`` integer triple.
+
+    Raises:
+        KeyError: If the shape cannot be determined from the config or the
+            loaded model and the legacy keys are also absent.
     """
     model_id = cfg.get("llm_model", MODEL_ID)
     entry = cfg.get("model_library", {}).get(model_id)

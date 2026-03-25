@@ -1,9 +1,22 @@
-"""
-monitoring_dashboard.py — FastAPI dashboard at localhost:8080.
+"""FastAPI monitoring dashboard for SmartQdrant.
 
-Start: python3 monitoring_dashboard.py
-Or:    python3 monitoring_dashboard.py --config datasource_bedrock.json
-Or:    uvicorn monitoring_dashboard:app --port 8080 --reload
+Provides a REST API consumed by the bundled HTML dashboard UI.  Key endpoints:
+
+* ``GET /api/health``        — liveness check.
+* ``GET /api/version``       — current LoRA version and phase.
+* ``GET /api/stats``         — tier counts, top accessed chunks, access report.
+* ``GET /api/config``        — display-safe config fields for the UI settings panel.
+* ``POST /api/query``        — A/B query: runs SmartQdrant (Model A) and Gemini
+  (Model B) in parallel and returns both answers with latency metrics.
+
+GPU modules (torch/transformers) are imported and the base model is pre-warmed
+in the startup event so that worker threads never race on the lazy-import lock.
+
+Start the server::
+
+    python3 monitoring_dashboard.py
+    python3 monitoring_dashboard.py --config datasource_bedrock.json
+    uvicorn monitoring_dashboard:app --port 8080 --reload
 """
 
 import argparse
@@ -71,7 +84,12 @@ def _load_cfg() -> dict:
 
 
 def _get_store():
-    """Return a shared VectorStore, creating it once from config."""
+    """Return the module-level VectorStore singleton, creating it on first call.
+
+    Returns:
+        A ``VectorStore``-protocol-compatible instance configured from the
+        loaded datasource config.
+    """
     global _vector_store
     if _vector_store is None:
         _vector_store = get_store(_load_cfg())
@@ -90,6 +108,16 @@ def get_version():
 
 @app.get("/api/stats")
 def get_stats():
+    """Return collection statistics for the dashboard overview panel.
+
+    Paginates through the entire collection to compute tier distribution counts
+    and the top-10 most-accessed chunks.  Also reads ``access_report.json``
+    if it exists.
+
+    Returns:
+        JSON object with keys ``version``, ``tier_counts``, ``top_chunks``,
+        ``access_report``, and ``total_chunks``.
+    """
     cfg = _load_cfg()
     v = ver.load()
 

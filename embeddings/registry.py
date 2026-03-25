@@ -1,10 +1,31 @@
-"""embeddings/registry.py — Factory for Embedder implementations."""
+"""Factory that instantiates the configured Embedder backend.
+
+Provides a single ``get_embedder`` entry-point used by indexing and search
+pipelines so that the rest of the codebase stays backend-agnostic.
+"""
 
 
 def get_embedder(cfg: dict):
     """Return the configured Embedder instance.
 
-    Dispatches on cfg['embedder_backend'] (default: 'fastembed').
+    Dispatches on ``cfg['embedder_backend']`` (default: ``'fastembed'``).
+
+    Args:
+        cfg: Datasource configuration dictionary.  Relevant keys:
+
+            * ``embedder_backend`` — one of ``fastembed``,
+              ``sentence_transformers``, ``openai``.
+            * ``embed_model`` — model name or identifier passed to the backend
+              (default ``'BAAI/bge-small-en-v1.5'``).
+            * ``vector_dim`` — expected embedding dimensionality (default 384).
+            * ``openai_api_key`` — API key for the OpenAI backend (falls back
+              to the ``OPENAI_API_KEY`` environment variable).
+
+    Returns:
+        An ``Embedder``-protocol-compatible instance.
+
+    Raises:
+        ValueError: If ``cfg['embedder_backend']`` is not a recognised value.
     """
     backend = cfg.get("embedder_backend", "fastembed")
     model_name = cfg.get("embed_model", "BAAI/bge-small-en-v1.5")

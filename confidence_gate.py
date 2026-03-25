@@ -1,9 +1,21 @@
-"""
-confidence_gate.py — Phase 3 inference gate.
+"""Phase 3 confidence gate: answer parametrically or fall back to retrieval.
 
-Active when version.json["phase"] >= 3.
-Tries to answer directly from model weights first.
-Falls back to kv_inference.py if confidence is below threshold.
+When the system reaches Phase 3 (``version.json["phase"] >= 3``), every
+incoming query is first evaluated against three confidence signals:
+
+1. **Token entropy** — low entropy during a short draft generation indicates
+   the model is confident in its answer.
+2. **Hedging score** — presence of hedging phrases (``"I think"``,
+   ``"maybe"``, etc.) in the draft indicates uncertainty.
+3. **Query similarity** — cosine similarity to previously seen queries that
+   the model answered accurately.
+
+If the weighted combination exceeds ``gate_threshold`` the query is answered
+directly from the fine-tuned model weights (parametric mode); otherwise the
+full KV-retrieval pipeline is invoked.
+
+If the phase is below 3, all queries are routed to the retrieval pipeline
+unconditionally.
 """
 
 import json
@@ -70,7 +82,15 @@ def decide_gate(
 
 
 def _token_entropy(logits: torch.Tensor) -> float:
-    """Mean token entropy from greedy draft logits."""
+    """Compute mean per-token entropy from a stack of draft generation logits.
+
+    Args:
+        logits: Tensor of shape ``[num_tokens, vocab_size]`` containing the
+            raw (pre-softmax) logits for each generated token.
+
+    Returns:
+        Mean Shannon entropy in nats, averaged across all generated tokens.
+    """
     probs = torch.softmax(logits, dim=-1)
     log_probs = torch.log(probs + 1e-9)
     entropy_per_token = -(probs * log_probs).sum(dim=-1)
@@ -79,9 +99,17 @@ def _token_entropy(logits: torch.Tensor) -> float:
 
 def _generate_draft(query: str, model, tokenizer,
                      max_tokens: int = DRAFT_TOKENS) -> tuple[str, float]:
-    """
-    Generate a short draft answer and compute its token entropy.
-    Returns (draft_text, mean_entropy).
+    """Generate a short draft answer to *query* and compute its mean token entropy.
+
+    Args:
+        query: The user query string.
+        model: Loaded HuggingFace causal language model.
+        tokenizer: Corresponding tokenizer.
+        max_tokens: Maximum number of new tokens to generate for the draft.
+
+    Returns:
+        A ``(draft_text, mean_entropy)`` tuple where *draft_text* is the
+        decoded draft answer and *mean_entropy* is the mean per-token entropy.
     """
     inputs = tokenizer(query, return_tensors="pt").to(model.device)
     with torch.no_grad():
@@ -102,7 +130,19 @@ def _generate_draft(query: str, model, tokenizer,
 
 
 def _query_similarity_to_known_good(query: str, cfg: dict) -> float:
-    """Cosine similarity between query and known-good query embeddings."""
+    """Compute the maximum cosine similarity between *query* and known-good query embeddings.
+
+    Known-good embeddings are pre-computed by ``prs_evaluator.evaluate`` and
+    stored in ``version.json["known_good_queries"]``.
+
+    Args:
+        query: The incoming user query.
+        cfg: Datasource configuration dict; uses ``cfg['embed_model']``.
+
+    Returns:
+        Maximum cosine similarity in [0, 1].  Returns ``0.5`` (neutral) when
+        no known-good queries have been recorded yet.
+    """
     global _embedder
     v = ver.load()
     known_good = v.get("known_good_queries", [])
@@ -126,9 +166,19 @@ def _query_similarity_to_known_good(query: str, cfg: dict) -> float:
 
 
 def answer(query: str, cfg: dict) -> str:
-    """
-    Phase 3 entry point.
-    Returns final answer string (either direct or via kv_inference.answer_with_retrieval).
+    """Phase 3 entry point: route *query* to parametric or retrieval inference.
+
+    If the current phase is below 3, delegates unconditionally to
+    ``kv_inference.answer_with_retrieval``.  In Phase 3, generates a short
+    draft, evaluates the three confidence signals, and either returns a full
+    parametric answer or falls back to retrieval.
+
+    Args:
+        query: The user query string.
+        cfg: Datasource configuration dict.
+
+    Returns:
+        Final answer string.
     """
     if ver.get_phase() < 3:
         from kv_inference import answer_with_retrieval
@@ -162,7 +212,16 @@ def answer(query: str, cfg: dict) -> str:
 
 
 def _log_would_have_retrieved(query: str, cfg: dict) -> None:
-    """Find top-K chunks that would have been retrieved; increment their parametric_hit."""
+    """Record parametric hits for the chunks that would have been retrieved for *query*.
+
+    Called after a successful parametric answer to update the
+    ``parametric_hit_count`` metric on the relevant vector store chunks.
+    Errors are silently swallowed as this is a non-critical bookkeeping step.
+
+    Args:
+        query: The user query that was answered parametrically.
+        cfg: Datasource configuration dict.
+    """
     try:
         from fastembed import TextEmbedding
         from qdrant_client import QdrantClient

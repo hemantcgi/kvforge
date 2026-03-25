@@ -1,17 +1,18 @@
-"""smartqdrant.py — SmartQdrant CLI.
+"""SmartQdrant command-line interface.
+
+Provides subcommands to initialise, index, and search a SmartQdrant datasource.
 
 Commands:
-  init    Create a new datasource config
-  index   Index a source into a collection
-  search  Search a collection
-  train   Run LoRA fine-tuning
-  eval    Compute PRS score
-  faqs    Auto-generate FAQs
 
-Usage:
-  python smartqdrant.py init --name my-corpus
-  python smartqdrant.py index --config datasource_my-corpus.json --source ./docs/
-  python smartqdrant.py search --config datasource_my-corpus.json "my query"
+* ``init``   — scaffold a new datasource config JSON file.
+* ``index``  — load documents, embed them, and upsert into the vector store.
+* ``search`` — embed a query and print the top-K results.
+
+Usage::
+
+    python smartqdrant.py init   --name my-corpus
+    python smartqdrant.py index  --config datasource_my-corpus.json --source ./docs/
+    python smartqdrant.py search --config datasource_my-corpus.json "my query"
 """
 
 import argparse
@@ -22,7 +23,17 @@ from pathlib import Path
 
 
 def cmd_init(args) -> None:
-    """Scaffold a new datasource config interactively."""
+    """Scaffold a new datasource config JSON file with sensible defaults.
+
+    Writes a validated ``DatasourceConfig`` JSON to
+    ``datasource_<name>.json``.  Exits with an error message if the file
+    already exists and ``--force`` is not set.
+
+    Args:
+        args: Parsed argument namespace.  Expected attributes: ``name``,
+            ``loader``, ``embed_model``, ``vector_dim``, ``llm_model``,
+            ``force``.
+    """
     name = args.name
     config_path = f"datasource_{name}.json"
     if Path(config_path).exists() and not args.force:
@@ -82,6 +93,15 @@ def cmd_init(args) -> None:
 
 
 def cmd_index(args) -> None:
+    """Load, embed, and upsert documents from *args.source* into the vector store.
+
+    Deletes and recreates the collection before upserting so that re-indexing
+    always produces a clean state.  Progress is printed to stdout.
+
+    Args:
+        args: Parsed argument namespace.  Expected attributes: ``config``,
+            ``source``.
+    """
     import json as _json
     from ingestion.registry import get_loader
     from embeddings.registry import get_embedder
@@ -118,6 +138,12 @@ def cmd_index(args) -> None:
 
 
 def cmd_search(args) -> None:
+    """Embed *args.query* and print the top-K matching chunks from the collection.
+
+    Args:
+        args: Parsed argument namespace.  Expected attributes: ``config``,
+            ``query``.
+    """
     import json as _json
     from embeddings.registry import get_embedder
     from vectorstore.registry import get_store
