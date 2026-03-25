@@ -39,18 +39,18 @@ def main() -> None:
     py = sys.executable
 
     # ── Step 1: Index (chunk + embed + KV tensors) ─────────────────────────
-    run([py, "kv_indexer.py", "--config", args.config, "index", str(pdf)],
+    run([py, "-m", "pipeline.kv_indexer", "--config", args.config, "index", str(pdf)],
         f"SP1: Index {pdf.name}")
 
     # ── Step 2: LoRA fine-tune ─────────────────────────────────────────────
-    run([py, "lora_trainer.py",
+    run([py, "-m", "pipeline.lora_trainer",
          "--config", args.config,
          "--source-file", pdf.name,
          "--replay-ratio", str(args.replay_ratio)],
         "SP2: LoRA fine-tune")
 
     # ── Step 3: Recompute KV for new chunks with updated weights ───────────
-    run([py, "kv_indexer.py", "--config", args.config,
+    run([py, "-m", "pipeline.kv_indexer", "--config", args.config,
          "compute-kv", "--source-file", pdf.name],
         "SP1: Recompute KV for new chunks with updated weights")
 
@@ -65,13 +65,13 @@ def main() -> None:
     _ver.init(_cfg)
     current_ver = _ver.get_lora_version()
     if current_ver > 0:
-        run([py, "kv_indexer.py", "--config", args.config,
+        run([py, "-m", "pipeline.kv_indexer", "--config", args.config,
              "compute-kv", "--stale-version", str(current_ver)],
             f"SP1: Proactive KV heal for all stale chunks (< v{current_ver})")
 
     # ── Step 5: PRS evaluation ─────────────────────────────────────────────
     if not args.skip_prs:
-        run([py, "prs_evaluator.py",
+        run([py, "-m", "pipeline.prs_evaluator",
              "--config", args.config,
              "--faqs", args.faqs],
             "SP2: PRS evaluation")

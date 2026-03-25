@@ -119,7 +119,7 @@ def test_bedrock_rag_cmd_index_uses_loader(tmp_path):
     fake_pdf.write_bytes(b"fake")
 
     with patch("ingestion.pdf_loader.PdfReader") as mock_reader, \
-         patch("bedrock_rag.TextEmbedding") as mock_emb_cls, \
+         patch("pipeline.bedrock_rag.TextEmbedding") as mock_emb_cls, \
          patch("vectorstore.qdrant_store.QdrantClient") as mock_qdrant:
 
         mock_page = MagicMock()
@@ -135,7 +135,7 @@ def test_bedrock_rag_cmd_index_uses_loader(tmp_path):
         mock_client.collection_exists.return_value = False
         mock_qdrant.return_value = mock_client
 
-        from bedrock_rag import Config, cmd_index
+        from pipeline.bedrock_rag import Config, cmd_index
         cfg = Config(embed_model="BAAI/bge-small-en-v1.5", vector_dim=384,
                      collection="test-col", loader="pdf")
         cmd_index(fake_pdf, cfg)

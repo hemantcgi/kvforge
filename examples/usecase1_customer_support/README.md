@@ -95,22 +95,22 @@ python smartqdrant.py index \
   --source examples/usecase1_customer_support/data/corpus.jsonl
 
 # 2. Compute KV tensors
-python kv_indexer.py \
+python -m pipeline.kv_indexer \
   --config examples/usecase1_customer_support/config.json \
   compute-kv
 
 # 3. Fine-tune LoRA
-python lora_trainer.py \
+python -m pipeline.lora_trainer \
   --config examples/usecase1_customer_support/config.json \
   --faqs examples/usecase1_customer_support/faqs.json
 
 # 4. Recompute KV with updated weights
-python kv_indexer.py \
+python -m pipeline.kv_indexer \
   --config examples/usecase1_customer_support/config.json \
   compute-kv
 
 # 5. Evaluate
-python prs_evaluator.py \
+python -m pipeline.prs_evaluator \
   --config examples/usecase1_customer_support/config.json \
   --faqs examples/usecase1_customer_support/faqs.json \
   --sample 30
@@ -151,7 +151,7 @@ After the full pipeline on a GPU:
 ## Monitoring
 
 ```bash
-python monitoring_dashboard.py \
+python -m pipeline.monitoring_dashboard \
   --config examples/usecase1_customer_support/config.json
 # Open http://localhost:8081
 ```

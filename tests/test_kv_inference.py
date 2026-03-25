@@ -24,21 +24,21 @@ def _fake_chunk(kv_version, chunk_id=1):
 
 def test_all_fresh_uses_kv_path():
     """When all chunks have current kv_version, should call generate_with_kv."""
-    from kv_inference import decide_inference_mode
+    from pipeline.kv_inference import decide_inference_mode
     chunks = [_fake_chunk(kv_version=5, chunk_id=i) for i in range(5)]
     mode = decide_inference_mode(chunks, current_lora_version=5)
     assert mode == "kv_injection"
 
 
 def test_any_stale_uses_text_fallback():
-    from kv_inference import decide_inference_mode
+    from pipeline.kv_inference import decide_inference_mode
     chunks = [_fake_chunk(5), _fake_chunk(None), _fake_chunk(5)]
     mode = decide_inference_mode(chunks, current_lora_version=5)
     assert mode == "text_fallback"
 
 
 def test_stale_chunks_are_queued():
-    from kv_inference import decide_inference_mode, get_stale_chunk_ids
+    from pipeline.kv_inference import decide_inference_mode, get_stale_chunk_ids
     chunks = [_fake_chunk(5), _fake_chunk(None, 2), _fake_chunk(3, 3)]
     stale = get_stale_chunk_ids(chunks, current_lora_version=5)
     assert set(stale) == {2, 3}

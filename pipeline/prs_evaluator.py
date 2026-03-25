@@ -155,7 +155,7 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
 
     # Lazy import — SP3 may not be built yet; graceful degradation
     try:
-        from kv_inference import answer_with_retrieval
+        from pipeline.kv_inference import answer_with_retrieval
         has_sp3 = True
     except ImportError:
         has_sp3 = False

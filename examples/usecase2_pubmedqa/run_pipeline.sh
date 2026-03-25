@@ -44,7 +44,7 @@ python smartqdrant.py index --config "$CONFIG" --source "$CORPUS"
 # ── Step 2: Compute KV tensors ────────────────────────────────────────────────
 echo ""
 echo "[ Step 2 ] Computing KV tensors (requires GPU) …"
-python kv_indexer.py --config "$CONFIG" compute-kv
+python -m pipeline.kv_indexer --config "$CONFIG" compute-kv
 
 # ── Step 3: Use pre-generated FAQs ────────────────────────────────────────────
 echo ""
@@ -61,19 +61,19 @@ fi
 # ── Step 4: Fine-tune LoRA ────────────────────────────────────────────────────
 echo ""
 echo "[ Step 4 ] Fine-tuning LoRA on biomedical Q&A (requires GPU) …"
-python lora_trainer.py \
+python -m pipeline.lora_trainer \
     --config "$CONFIG" \
     --faqs "$FAQS"
 
 # ── Step 5: Recompute KV with updated weights ─────────────────────────────────
 echo ""
 echo "[ Step 5 ] Recomputing KV tensors with updated LoRA weights …"
-python kv_indexer.py --config "$CONFIG" compute-kv
+python -m pipeline.kv_indexer --config "$CONFIG" compute-kv
 
 # ── Step 6: Evaluate PRS ──────────────────────────────────────────────────────
 echo ""
 echo "[ Step 6 ] Evaluating Parametric Readiness Score (PRS) …"
-python prs_evaluator.py \
+python -m pipeline.prs_evaluator \
     --config "$CONFIG" \
     --faqs "$FAQS" \
     --sample 30
@@ -97,5 +97,5 @@ echo "================================================================"
 echo " Pipeline complete!"
 echo " ChromaDB data stored at: examples/usecase2_pubmedqa/.chroma/"
 echo " Start the monitoring dashboard with:"
-echo "   python monitoring_dashboard.py --config $CONFIG"
+echo "   python -m pipeline.monitoring_dashboard --config $CONFIG"
 echo "================================================================"

@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 
 def _make_client():
-    import monitoring_dashboard as md
+    import pipeline.monitoring_dashboard as md
     # Patch _cfg to avoid reading my_config.json
     with patch.object(md, "_cfg", {"qdrant_host": "localhost", "qdrant_port": 6333,
                                     "collection": "test", "dashboard_port": 8080}):

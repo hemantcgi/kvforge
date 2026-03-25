@@ -57,8 +57,8 @@ def _preload_inference_modules() -> None:
     global _model_loader, _kv_background, _kv_inference
     try:
         import model_loader as _ml
-        import kv_background as _kb
-        import kv_inference as _ki
+        import pipeline.kv_background as _kb
+        import pipeline.kv_inference as _ki
         _model_loader = _ml
         _kv_background = _kb
         _kv_inference = _ki
@@ -279,7 +279,7 @@ def _answer_smartqdrant(query: str, cfg: dict, params: QueryRequest) -> dict:
         # ── Phase 1/2: retrieval pipeline ────────────────────────────────
         from fastembed import TextEmbedding
         from qdrant_client import QdrantClient as _QC
-        from bedrock_rag import _run_search, Config
+        from pipeline.bedrock_rag import _run_search, Config
         cfg_a = dict(cfg, top_k=params.a_top_k)
 
         _log(tag, "embedding query…")

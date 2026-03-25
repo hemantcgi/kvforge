@@ -28,7 +28,7 @@ import numpy as np
 import torch
 
 sys.path.insert(0, str(Path(__file__).parent))
-import kv_background
+import pipeline.kv_background as kv_background
 import model_loader
 import version as ver
 
@@ -181,7 +181,7 @@ def answer(query: str, cfg: dict) -> str:
         Final answer string.
     """
     if ver.get_phase() < 3:
-        from kv_inference import answer_with_retrieval
+        from pipeline.kv_inference import answer_with_retrieval
         return answer_with_retrieval(query, cfg)
 
     threshold = cfg.get("gate_threshold", DEFAULT_THRESHOLD)
@@ -207,7 +207,7 @@ def answer(query: str, cfg: dict) -> str:
         _log_would_have_retrieved(query, cfg)
         return result
     else:
-        from kv_inference import answer_with_retrieval
+        from pipeline.kv_inference import answer_with_retrieval
         return answer_with_retrieval(query, cfg)
 
 
@@ -225,7 +225,7 @@ def _log_would_have_retrieved(query: str, cfg: dict) -> None:
     try:
         from fastembed import TextEmbedding
         from qdrant_client import QdrantClient
-        from bedrock_rag import Config, _run_search
+        from pipeline.bedrock_rag import Config, _run_search
         embedder = TextEmbedding(model_name=cfg["embed_model"],
                                   show_download_progress=False)
         client = QdrantClient(host=cfg["qdrant_host"], port=cfg["qdrant_port"])

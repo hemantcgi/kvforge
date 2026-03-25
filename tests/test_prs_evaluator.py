@@ -3,7 +3,7 @@ import pytest
 
 
 def test_standard_schema():
-    from prs_evaluator import _extract_qa
+    from pipeline.prs_evaluator import _extract_qa
     faq = {"question": "What is X?", "answer": "X is Y."}
     q, a = _extract_qa(faq)
     assert q == "What is X?"
@@ -11,7 +11,7 @@ def test_standard_schema():
 
 
 def test_custom_schema_q_a():
-    from prs_evaluator import _extract_qa
+    from pipeline.prs_evaluator import _extract_qa
     faq = {"q": "What is X?", "a": "X is Y."}
     q, a = _extract_qa(faq, q_key="q", a_key="a")
     assert q == "What is X?"
@@ -19,21 +19,21 @@ def test_custom_schema_q_a():
 
 
 def test_custom_schema_query_ground_truth():
-    from prs_evaluator import _extract_qa
+    from pipeline.prs_evaluator import _extract_qa
     faq = {"query": "What is X?", "ground_truth": "X is Y."}
     q, a = _extract_qa(faq, q_key="query", a_key="ground_truth")
     assert q == "What is X?"
 
 
 def test_missing_key_raises_clear_error():
-    from prs_evaluator import _extract_qa
+    from pipeline.prs_evaluator import _extract_qa
     faq = {"q": "What?", "a": "This."}
     with pytest.raises(KeyError, match="FAQ missing key 'question'"):
         _extract_qa(faq, q_key="question", a_key="answer")
 
 
 def test_prs_weights_fully_accuracy():
-    from prs_evaluator import _compute_prs
+    from pipeline.prs_evaluator import _compute_prs
     prs = _compute_prs(
         accuracy_ratios=[1.0, 1.0],
         calibrations=[0.0, 0.0],
@@ -44,7 +44,7 @@ def test_prs_weights_fully_accuracy():
 
 
 def test_prs_uses_default_weights_when_none():
-    from prs_evaluator import _compute_prs
+    from pipeline.prs_evaluator import _compute_prs
     prs = _compute_prs([0.8], [0.9], [0.7], weights=None)
     expected = 0.5 * 0.8 + 0.3 * 0.9 + 0.2 * 0.7
     assert abs(prs - expected) < 0.001

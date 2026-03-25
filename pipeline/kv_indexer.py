@@ -31,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 import model_loader
 import kv_utils
 import version as ver
-from bedrock_rag import chunk_pages, read_pdf, embed_chunks
+from pipeline.bedrock_rag import chunk_pages, read_pdf, embed_chunks
 from fastembed import TextEmbedding
 from vectorstore.base import Point
 from vectorstore.registry import get_store

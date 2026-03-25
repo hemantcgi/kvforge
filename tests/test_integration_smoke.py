@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import version as ver
 import kv_utils
 from replay_buffer import ReplayBuffer
-from kv_inference import decide_inference_mode
+from pipeline.kv_inference import decide_inference_mode
 from confidence_gate import compute_hedging_score, decide_gate
 
 

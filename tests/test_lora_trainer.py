@@ -59,7 +59,7 @@ def test_evict_to_cap(tmp_path):
 def test_fetch_chunks_for_source_filter():
     """fetch_chunks_for_source builds the correct Qdrant filter."""
     from unittest.mock import MagicMock, patch
-    from lora_trainer import fetch_chunks_for_source
+    from pipeline.lora_trainer import fetch_chunks_for_source
 
     mock_client = MagicMock()
     mock_client.scroll.return_value = ([], None)   # empty collection is fine
@@ -76,7 +76,7 @@ def test_main_help():
     """lora_trainer --help exits cleanly."""
     import subprocess, sys
     result = subprocess.run(
-        [sys.executable, "lora_trainer.py", "--help"],
+        [sys.executable, "-m", "pipeline.lora_trainer", "--help"],
         capture_output=True, text=True,
     )
     assert result.returncode == 0

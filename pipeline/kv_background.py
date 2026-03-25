@@ -141,7 +141,7 @@ def _kv_worker(cfg: dict) -> None:
             if not results:
                 continue
             text = results[0].payload.get("text", "")
-            from kv_indexer import compute_kv_for_chunk
+            from pipeline.kv_indexer import compute_kv_for_chunk
             kv_arr = compute_kv_for_chunk(
                 text, model, tokenizer, num_layers, num_kv_heads, head_dim
             )

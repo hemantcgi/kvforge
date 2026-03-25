@@ -40,10 +40,10 @@ def main():
     import torch
     import version as ver
     import model_loader
-    import kv_background
+    import pipeline.kv_background as kv_background
     from fastembed import TextEmbedding
     from qdrant_client import QdrantClient
-    from bedrock_rag import _run_search, Config
+    from pipeline.bedrock_rag import _run_search, Config
 
     ver.init(cfg)
     model_loader.init(cfg)

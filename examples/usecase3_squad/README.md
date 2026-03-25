@@ -98,22 +98,22 @@ python smartqdrant.py index \
   --source examples/usecase3_squad/data/corpus.jsonl
 
 # 2. Compute KV tensors
-python kv_indexer.py \
+python -m pipeline.kv_indexer \
   --config examples/usecase3_squad/config.json \
   compute-kv
 
 # 3. Fine-tune LoRA
-python lora_trainer.py \
+python -m pipeline.lora_trainer \
   --config examples/usecase3_squad/config.json \
   --faqs examples/usecase3_squad/faqs.json
 
 # 4. Recompute KV
-python kv_indexer.py \
+python -m pipeline.kv_indexer \
   --config examples/usecase3_squad/config.json \
   compute-kv
 
 # 5. Evaluate
-python prs_evaluator.py \
+python -m pipeline.prs_evaluator \
   --config examples/usecase3_squad/config.json \
   --faqs examples/usecase3_squad/faqs.json \
   --sample 30
@@ -187,7 +187,7 @@ print(f"Sample payload: {list(meta['payloads'].values())[0]}")
 ## Monitoring
 
 ```bash
-python monitoring_dashboard.py \
+python -m pipeline.monitoring_dashboard \
   --config examples/usecase3_squad/config.json
 # Open http://localhost:8083
 ```

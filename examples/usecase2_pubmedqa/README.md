@@ -95,22 +95,22 @@ python smartqdrant.py index \
   --source examples/usecase2_pubmedqa/data/corpus.jsonl
 
 # 2. Compute KV tensors
-python kv_indexer.py \
+python -m pipeline.kv_indexer \
   --config examples/usecase2_pubmedqa/config.json \
   compute-kv
 
 # 3. Fine-tune LoRA
-python lora_trainer.py \
+python -m pipeline.lora_trainer \
   --config examples/usecase2_pubmedqa/config.json \
   --faqs examples/usecase2_pubmedqa/faqs.json
 
 # 4. Recompute KV
-python kv_indexer.py \
+python -m pipeline.kv_indexer \
   --config examples/usecase2_pubmedqa/config.json \
   compute-kv
 
 # 5. Evaluate
-python prs_evaluator.py \
+python -m pipeline.prs_evaluator \
   --config examples/usecase2_pubmedqa/config.json \
   --faqs examples/usecase2_pubmedqa/faqs.json \
   --sample 30
@@ -156,7 +156,7 @@ print(col.peek(3))
 ## Monitoring
 
 ```bash
-python monitoring_dashboard.py \
+python -m pipeline.monitoring_dashboard \
   --config examples/usecase2_pubmedqa/config.json
 # Open http://localhost:8082
 ```

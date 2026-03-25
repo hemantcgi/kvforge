@@ -31,7 +31,7 @@ def make_mock_model_outputs(num_layers=28, num_kv_heads=8, head_dim=128, seq_len
 
 def test_compute_kv_for_chunk_shape():
     import torch
-    from kv_indexer import compute_kv_for_chunk
+    from pipeline.kv_indexer import compute_kv_for_chunk
 
     # MagicMock supports context-manager protocol natively (__enter__/__exit__)
     # so torch.no_grad() inside compute_kv_for_chunk works without patching.
@@ -55,7 +55,7 @@ def test_compute_kv_for_chunk_shape():
 
 def test_kv_indexer_payload_keys():
     """chunk_to_payload must include kv_cache and kv_version=null."""
-    from kv_indexer import build_payload
+    from pipeline.kv_indexer import build_payload
     fake_kv = np.zeros((4, 2, 2, 8), dtype=np.float16)
     payload = build_payload(
         text="hello world",
