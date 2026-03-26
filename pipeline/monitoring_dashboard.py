@@ -32,17 +32,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import httpx
 import uvicorn
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
 import core.version as ver
 from vectorstore.registry import get_store
-
-app = FastAPI(title="Smart Qdrant Dashboard")
-_cfg: dict = {}
-_vector_store = None
-_query_executor = ThreadPoolExecutor(max_workers=2)
 
 # Heavy modules (torch/transformers) loaded once at startup in main thread
 # so worker threads never race on the lazy-import lock.
@@ -51,8 +47,8 @@ _kv_background = None
 _kv_inference = None
 
 
-@app.on_event("startup")
-def _preload_inference_modules() -> None:
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
     """Import GPU modules and pre-warm the base model in the main thread at startup."""
     global _model_loader, _kv_background, _kv_inference
     try:
@@ -70,6 +66,13 @@ def _preload_inference_modules() -> None:
         print("[dashboard] base model ready", flush=True)
     except Exception as e:
         print(f"[dashboard] inference modules unavailable: {e}", flush=True)
+    yield
+
+
+app = FastAPI(title="Smart Qdrant Dashboard", lifespan=_lifespan)
+_cfg: dict = {}
+_vector_store = None
+_query_executor = ThreadPoolExecutor(max_workers=2)
 
 # Config file path — overridden by --config CLI arg at startup (no annotation so global works)
 _config_path = "my_config.json"
