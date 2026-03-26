@@ -3,7 +3,7 @@ import sys, time
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from access_tracker import compute_tiers, AccessTracker
+from core.access_tracker import compute_tiers, AccessTracker
 
 
 def test_compute_tiers_frozen_first():

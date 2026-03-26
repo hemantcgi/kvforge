@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from kv_utils import mean_pool_kv, serialize_kv, deserialize_kv, stack_past_key_values
+from core.kv_utils import mean_pool_kv, serialize_kv, deserialize_kv, stack_past_key_values
 
 NUM_LAYERS = 4   # use small values for tests
 NUM_KV_HEADS = 2
@@ -48,7 +48,7 @@ def test_serialize_deserialize_roundtrip():
 
 
 def test_stack_past_key_values_shape():
-    from kv_utils import _iter_kv_layers
+    from core.kv_utils import _iter_kv_layers
     chunks_kv = [mean_pool_kv(make_fake_past_key_values()) for _ in range(3)]
     pkv = stack_past_key_values(chunks_kv, num_layers=NUM_LAYERS,
                                  num_kv_heads=NUM_KV_HEADS, head_dim=HEAD_DIM)

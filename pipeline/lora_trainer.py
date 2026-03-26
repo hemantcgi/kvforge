@@ -30,9 +30,9 @@ from datasets import Dataset
 from transformers import TrainingArguments, Trainer, DataCollatorForLanguageModeling
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import model_loader
-import version as ver
-from replay_buffer import ReplayBuffer
+import core.model_loader as model_loader
+import core.version as ver
+from core.replay_buffer import ReplayBuffer
 from qdrant_client import QdrantClient
 from qdrant_client.models import Filter, FieldCondition, MatchValue
 
@@ -134,7 +134,7 @@ def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
     lora_ckpt = ver.load().get("checkpoint_path")
     model, tokenizer = model_loader.reload(lora_ckpt)
 
-    import model_loader as _ml
+    import core.model_loader as _ml
     lora_target_modules = cfg.get("lora_target_modules", ["q_proj", "k_proj", "v_proj"])
     lora_target_modules = _ml.detect_lora_targets(model, lora_target_modules)
 

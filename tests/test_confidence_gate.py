@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from confidence_gate import compute_hedging_score, decide_gate
+from core.confidence_gate import compute_hedging_score, decide_gate
 
 
 def test_hedging_score_high_for_uncertain_text():
@@ -44,9 +44,9 @@ def test_answer_falls_back_to_retrieval_when_phase_lt_3():
 
     cfg = {"embed_model": "BAAI/bge-small-en-v1.5", "gate_threshold": 0.75}
     # Patch ver inside confidence_gate and patch the function at source
-    with patch("confidence_gate.ver") as mock_ver, \
+    with patch("core.confidence_gate.ver") as mock_ver, \
          patch("pipeline.kv_inference.answer_with_retrieval", return_value="fallback answer") as mock_fn:
         mock_ver.get_phase.return_value = 2  # below Phase 3
-        from confidence_gate import answer
+        from core.confidence_gate import answer
         result = answer("what is bedrock?", cfg)
         mock_fn.assert_called_once()

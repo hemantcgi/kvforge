@@ -76,7 +76,7 @@ def cmd_init(args) -> None:
     }
 
     # Validate before writing
-    from config import DatasourceConfig
+    from core.config import DatasourceConfig
     DatasourceConfig(**cfg)  # raises ValidationError if invalid
 
     # Create checkpoint dir

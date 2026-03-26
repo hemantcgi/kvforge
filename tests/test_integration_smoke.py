@@ -13,11 +13,11 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import version as ver
-import kv_utils
-from replay_buffer import ReplayBuffer
+import core.version as ver
+import core.kv_utils as kv_utils
+from core.replay_buffer import ReplayBuffer
 from pipeline.kv_inference import decide_inference_mode
-from confidence_gate import compute_hedging_score, decide_gate
+from core.confidence_gate import compute_hedging_score, decide_gate
 
 
 # ── Test 1: version round-trip ────────────────────────────────────────────

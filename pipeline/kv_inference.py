@@ -15,10 +15,10 @@ from typing import Optional
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import kv_utils
+import core.kv_utils as kv_utils
 import pipeline.kv_background as kv_background
-import model_loader
-import version as ver
+import core.model_loader as model_loader
+import core.version as ver
 from pipeline.bedrock_rag import _run_search, Config
 from fastembed import TextEmbedding
 from vectorstore.registry import get_store

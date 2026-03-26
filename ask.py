@@ -38,8 +38,8 @@ def main():
     print(f"Searching Qdrant for: {args.query!r}", flush=True)
 
     import torch
-    import version as ver
-    import model_loader
+    import core.version as ver
+    import core.model_loader as model_loader
     import pipeline.kv_background as kv_background
     from fastembed import TextEmbedding
     from qdrant_client import QdrantClient

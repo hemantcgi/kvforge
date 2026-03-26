@@ -28,8 +28,8 @@ import numpy as np
 from fastembed import TextEmbedding
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import version as ver
-import model_loader
+import core.version as ver
+import core.model_loader as model_loader
 # kv_inference is imported lazily inside evaluate() — SP3 may not exist yet
 
 

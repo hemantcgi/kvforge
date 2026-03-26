@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def _fake_chunk(kv_version, chunk_id=1):
-    import kv_utils
+    import core.kv_utils as kv_utils
     fake_kv = np.zeros((28, 2, 8, 128), dtype=np.float16)
     return {
         "chunk_id": chunk_id,
@@ -46,7 +46,7 @@ def test_stale_chunks_are_queued():
 
 def test_kv_stacking_produces_correct_past_key_values_shape():
     """stack_past_key_values must produce HuggingFace-compatible past_key_values."""
-    import kv_utils
+    import core.kv_utils as kv_utils
     NUM_LAYERS, NUM_KV_HEADS, HEAD_DIM, N_CHUNKS = 28, 8, 128, 5
     # Simulate 5 fresh chunks
     chunks = [_fake_chunk(kv_version=3, chunk_id=i) for i in range(N_CHUNKS)]

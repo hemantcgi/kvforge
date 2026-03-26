@@ -27,10 +27,10 @@ from typing import Optional
 import numpy as np
 import torch
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import pipeline.kv_background as kv_background
-import model_loader
-import version as ver
+import core.model_loader as model_loader
+import core.version as ver
 
 HEDGING_MARKERS = [
     "i think", "i'm not sure", "i am not sure", "approximately",

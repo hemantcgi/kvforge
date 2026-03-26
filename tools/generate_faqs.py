@@ -96,7 +96,7 @@ def generate(cfg: dict, count: int, output_path: str) -> None:
         count: Target number of FAQs to generate.
         output_path: Destination file path for the JSON output.
     """
-    import model_loader
+    import core.model_loader as model_loader
 
     model_loader.init(cfg)
     model, tokenizer = model_loader.load()

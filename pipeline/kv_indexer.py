@@ -28,9 +28,9 @@ import numpy as np
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import model_loader
-import kv_utils
-import version as ver
+import core.model_loader as model_loader
+import core.kv_utils as kv_utils
+import core.version as ver
 from pipeline.bedrock_rag import chunk_pages, read_pdf, embed_chunks
 from fastembed import TextEmbedding
 from vectorstore.base import Point

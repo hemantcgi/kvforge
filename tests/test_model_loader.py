@@ -19,7 +19,7 @@ def _mock_model_config(num_hidden_layers=28, num_key_value_heads=8,
 
 
 def test_kv_shape_auto_discovery_with_head_dim():
-    from model_loader import _kv_shape_from_hf_config
+    from core.model_loader import _kv_shape_from_hf_config
     hf_cfg = _mock_model_config(num_hidden_layers=28, num_key_value_heads=8, head_dim=128)
     layers, heads, dim = _kv_shape_from_hf_config(hf_cfg)
     assert layers == 28
@@ -28,7 +28,7 @@ def test_kv_shape_auto_discovery_with_head_dim():
 
 
 def test_kv_shape_auto_discovery_without_head_dim():
-    from model_loader import _kv_shape_from_hf_config
+    from core.model_loader import _kv_shape_from_hf_config
     hf_cfg = _mock_model_config(
         num_hidden_layers=32, num_key_value_heads=8,
         hidden_size=4096, num_attention_heads=32, head_dim=None
@@ -40,7 +40,7 @@ def test_kv_shape_auto_discovery_without_head_dim():
 
 
 def test_get_kv_shape_uses_registry_when_available():
-    from model_loader import get_kv_shape
+    from core.model_loader import get_kv_shape
     cfg = {
         "llm_model": "meta-llama/Llama-3.2-3B-Instruct",
         "model_library": {
@@ -54,8 +54,8 @@ def test_get_kv_shape_uses_registry_when_available():
 
 
 def test_get_kv_shape_falls_back_to_auto_when_not_in_registry():
-    from model_loader import get_kv_shape
-    import model_loader
+    from core.model_loader import get_kv_shape
+    import core.model_loader as model_loader
     mock_model = MagicMock()
     mock_model.config.num_hidden_layers = 24
     mock_model.config.num_key_value_heads = 4
@@ -71,7 +71,7 @@ def test_get_kv_shape_falls_back_to_auto_when_not_in_registry():
 
 
 def test_detect_lora_targets_finds_standard_projections():
-    from model_loader import detect_lora_targets
+    from core.model_loader import detect_lora_targets
     mock_model = MagicMock()
     mock_model.named_modules.return_value = [
         ("model.layers.0.self_attn.q_proj", MagicMock()),
@@ -84,7 +84,7 @@ def test_detect_lora_targets_finds_standard_projections():
 
 
 def test_detect_lora_targets_warns_when_none_match():
-    from model_loader import detect_lora_targets
+    from core.model_loader import detect_lora_targets
     mock_model = MagicMock()
     mock_model.named_modules.return_value = [
         ("model.layers.0.self_attn.query_key_value", MagicMock()),

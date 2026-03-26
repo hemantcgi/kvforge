@@ -3,7 +3,7 @@ import pytest
 
 
 def test_config_loads_with_required_fields_and_defaults():
-    from config import DatasourceConfig
+    from core.config import DatasourceConfig
     cfg = DatasourceConfig(
         collection="test-col",
         embed_model="BAAI/bge-small-en-v1.5",
@@ -22,7 +22,7 @@ def test_config_loads_with_required_fields_and_defaults():
 
 
 def test_config_rejects_unknown_loader():
-    from config import DatasourceConfig
+    from core.config import DatasourceConfig
     import pydantic
     with pytest.raises(pydantic.ValidationError):
         DatasourceConfig(
@@ -33,7 +33,7 @@ def test_config_rejects_unknown_loader():
 
 
 def test_load_config_from_json_file(tmp_path):
-    from config import load_config
+    from core.config import load_config
     import json
     cfg_data = {
         "collection": "my-docs",
@@ -52,7 +52,7 @@ def test_load_config_from_json_file(tmp_path):
 
 
 def test_config_model_dump_has_keys_used_by_existing_code():
-    from config import DatasourceConfig
+    from core.config import DatasourceConfig
     cfg = DatasourceConfig(
         collection="x", embed_model="x", vector_dim=1,
         llm_model="x", checkpoint_dir="x", version_file="x",

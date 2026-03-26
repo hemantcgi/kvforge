@@ -32,9 +32,9 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import kv_utils
-import model_loader
-import version as ver
+import core.kv_utils as kv_utils
+import core.model_loader as model_loader
+import core.version as ver
 from vectorstore.registry import get_store
 
 _kv_queue: queue.Queue = queue.Queue()

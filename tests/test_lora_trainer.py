@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from replay_buffer import ReplayBuffer
+from core.replay_buffer import ReplayBuffer
 
 
 def test_add_and_sample(tmp_path):

@@ -36,7 +36,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
-import version as ver
+import core.version as ver
 from vectorstore.registry import get_store
 
 app = FastAPI(title="Smart Qdrant Dashboard")
@@ -56,7 +56,7 @@ def _preload_inference_modules() -> None:
     """Import GPU modules and pre-warm the base model in the main thread at startup."""
     global _model_loader, _kv_background, _kv_inference
     try:
-        import model_loader as _ml
+        import core.model_loader as _ml
         import pipeline.kv_background as _kb
         import pipeline.kv_inference as _ki
         _model_loader = _ml
