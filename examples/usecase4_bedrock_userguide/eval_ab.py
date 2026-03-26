@@ -27,12 +27,12 @@ Usage
   # Point at EC2 dashboard
   python3 examples/usecase4_bedrock_userguide/eval_ab.py \
       --faq examples/usecase4_bedrock_userguide/faqs.json \
-      --dashboard http://100.48.17.48:8084
+      --dashboard http://YOUR_EC2_HOST:8084
 
   # Save results + enable RAGAS with Gemini
   python3 examples/usecase4_bedrock_userguide/eval_ab.py \
       --faq examples/usecase4_bedrock_userguide/faqs.json \
-      --dashboard http://100.48.17.48:8084 \\
+      --dashboard http://YOUR_EC2_HOST:8084 \\
       --out results.json \\
       --gemini-key YOUR_KEY
 
