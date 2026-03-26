@@ -18,8 +18,17 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 UC_DIR="$REPO_ROOT/examples/usecase4_bedrock_userguide"
 CHECKPOINT_DIR="$UC_DIR/lora_checkpoints/v3"
 CONFIG="$UC_DIR/config.json"
+LOG="$UC_DIR/dashboard.log"
 
 cd "$REPO_ROOT"
+
+if ! command -v python &>/dev/null; then
+  echo "Error: python not found in PATH" >&2; exit 1
+fi
+
+if [ ! -f "$CONFIG" ]; then
+  echo "Error: config not found at $CONFIG" >&2; exit 1
+fi
 
 echo "================================================================"
 echo " KVForge — Use Case 4: Bedrock User Guide (fast-path)"
@@ -34,8 +43,14 @@ if [ ! -d "$CHECKPOINT_DIR" ]; then
 fi
 
 echo "Checkpoint found: $CHECKPOINT_DIR"
-echo "Starting dashboard on port 8084 (GPU: ${CUDA_VISIBLE_DEVICES:-unset})..."
 
-exec ~/qdrant/venv/bin/python3 -m pipeline.monitoring_dashboard \
-  --config "$CONFIG" \
-  --port 8084
+PORT=$(python -c "import json; print(json.load(open('$CONFIG')).get('dashboard_port', 8084))")
+
+echo "Starting KVForge dashboard for Use Case 4: Bedrock User Guide"
+echo "  Config  : $CONFIG"
+echo "  Port    : $PORT"
+echo "  Log     : $LOG"
+echo "  URL     : http://localhost:$PORT"
+echo ""
+
+exec python -m pipeline.monitoring_dashboard --config "$CONFIG" --port "$PORT" 2>&1 | tee "$LOG"
