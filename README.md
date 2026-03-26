@@ -96,13 +96,15 @@ All three protocols are Python `runtime_checkable` `Protocol` classes — add a 
 smartqdrant/
 ├── smartqdrant.py          # Main CLI: init / index / search
 ├── ask.py                  # Query CLI: ask a question
-├── config.py               # DatasourceConfig Pydantic model
-├── kv_utils.py             # KV tensor ops
-├── model_loader.py         # Thread-safe LLM singleton
-├── version.py              # Phase state (version.json)
-├── confidence_gate.py      # Phase 3 entropy/hedging gate
-├── replay_buffer.py        # SQLite weighted training sampler
-├── access_tracker.py       # Tier classification (hot/warm/cold/frozen)
+│
+├── core/                   # Library modules (no GPU needed)
+│   ├── config.py           # DatasourceConfig Pydantic model
+│   ├── kv_utils.py         # KV tensor ops
+│   ├── model_loader.py     # Thread-safe LLM singleton
+│   ├── version.py          # Phase state (version.json)
+│   ├── confidence_gate.py  # Phase 3 entropy/hedging gate
+│   ├── replay_buffer.py    # SQLite weighted training sampler
+│   └── access_tracker.py   # Tier classification (hot/warm/cold/frozen)
 │
 ├── pipeline/               # Orchestration scripts
 │   ├── kv_indexer.py       # Chunk + embed + KV computation
@@ -121,7 +123,8 @@ smartqdrant/
 ├── examples/               # End-to-end use-case examples
 │   ├── usecase1_customer_support/   # Qdrant + Bitext dataset
 │   ├── usecase2_pubmedqa/           # ChromaDB + PubMedQA dataset
-│   └── usecase3_squad/              # FAISS + SQuAD v2 dataset
+│   ├── usecase3_squad/              # FAISS + SQuAD v2 dataset
+│   └── usecase4_bedrock_userguide/  # Qdrant + Amazon Bedrock User Guide
 ├── tests/                  # SmartQdrant test suite
 │   └── qdrant_internal/    # Upstream Qdrant tests (not SmartQdrant)
 └── docs/                   # Documentation

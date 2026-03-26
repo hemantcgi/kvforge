@@ -47,14 +47,14 @@ After the LLM reaches `prs_threshold` PRS:
 ## Module Map
 
 ```
-Root utilities (always available, no GPU needed):
-  config.py           DatasourceConfig Pydantic model
-  kv_utils.py         KV tensor serialization / deserialization
-  model_loader.py     Singleton LLM + tokenizer loader
-  version.py          Atomic read/write of version.json state file
-  confidence_gate.py  Phase 3 gate: entropy + hedging + similarity
-  replay_buffer.py    SQLite-backed weighted training sampler
-  access_tracker.py   Thread-safe tier classification (hot/warm/cold/frozen)
+Core package (core/):
+  core/config.py           DatasourceConfig Pydantic model
+  core/kv_utils.py         KV tensor serialization / deserialization
+  core/model_loader.py     Singleton LLM + tokenizer loader
+  core/version.py          Atomic read/write of version.json state file
+  core/confidence_gate.py  Phase 3 gate: entropy + hedging + similarity
+  core/replay_buffer.py    SQLite-backed weighted training sampler
+  core/access_tracker.py   Thread-safe tier classification (hot/warm/cold/frozen)
 
 User-facing CLIs (root):
   smartqdrant.py      init / index / search subcommands

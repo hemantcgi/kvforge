@@ -37,8 +37,7 @@ OUTPUT_DIR="${1:-docs/api/generated}"
 mkdir -p "$OUTPUT_DIR"
 
 python -m pdoc -o "$OUTPUT_DIR" \
-  config kv_utils model_loader version confidence_gate \
-  replay_buffer access_tracker \
+  core \
   pipeline embeddings ingestion vectorstore tools
 
 echo "Documentation written to: $OUTPUT_DIR"

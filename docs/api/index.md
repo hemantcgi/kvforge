@@ -4,13 +4,13 @@
 
 | Module | Location | Purpose |
 |--------|----------|---------|
-| `config` | `config.py` | `DatasourceConfig` Pydantic model — all tunable parameters |
-| `kv_utils` | `kv_utils.py` | KV tensor serialization, mean pooling, cache format conversion |
-| `model_loader` | `model_loader.py` | Thread-safe singleton LLM + tokenizer loader |
-| `version` | `version.py` | Atomic read/write of `version.json` phase state |
-| `confidence_gate` | `confidence_gate.py` | Phase 3 gate: entropy + hedging + similarity scoring |
-| `replay_buffer` | `replay_buffer.py` | SQLite-backed weighted training sampler |
-| `access_tracker` | `access_tracker.py` | Thread-safe tier classification (hot/warm/cold/frozen) |
+| `core.config` | `core/config.py` | `DatasourceConfig` Pydantic model — all tunable parameters |
+| `core.kv_utils` | `core/kv_utils.py` | KV tensor serialization, mean pooling, cache format conversion |
+| `core.model_loader` | `core/model_loader.py` | Thread-safe singleton LLM + tokenizer loader |
+| `core.version` | `core/version.py` | Atomic read/write of `version.json` phase state |
+| `core.confidence_gate` | `core/confidence_gate.py` | Phase 3 gate: entropy + hedging + similarity scoring |
+| `core.replay_buffer` | `core/replay_buffer.py` | SQLite-backed weighted training sampler |
+| `core.access_tracker` | `core/access_tracker.py` | Thread-safe tier classification (hot/warm/cold/frozen) |
 | `pipeline.kv_indexer` | `pipeline/kv_indexer.py` | Chunk + embed + KV tensor computation CLI |
 | `pipeline.kv_inference` | `pipeline/kv_inference.py` | Phase 1/2/3 query-time inference |
 | `pipeline.kv_background` | `pipeline/kv_background.py` | Background KV healing and access flush daemon |
@@ -24,7 +24,7 @@
 
 ## Detail Pages
 
-- [config.md](config.md) — `DatasourceConfig` fields
+- [config.md](config.md) — `core.DatasourceConfig` fields
 - [pipeline.md](pipeline.md) — Pipeline module CLI and API
 - [vectorstore.md](vectorstore.md) — VectorStore protocol and backends
 - [embeddings.md](embeddings.md) — Embedder protocol and backends
