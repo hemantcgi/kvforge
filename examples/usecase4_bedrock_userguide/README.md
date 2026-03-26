@@ -191,7 +191,7 @@ python3 examples/usecase4_bedrock_userguide/eval_ab.py \
 # Against EC2 dashboard + RAGAS evaluation with Gemini judge
 python3 examples/usecase4_bedrock_userguide/eval_ab.py \
     --faq examples/usecase4_bedrock_userguide/faqs.json \
-    --dashboard http://YOUR_EC2_HOST:8084 \
+    --dashboard http://localhost:8084 \
     --ragas --gemini-key YOUR_KEY
 ```
 
