@@ -84,7 +84,7 @@ log "  T+0s   — Launching UC4 on GPU 3 ..."
 "${SSH[@]}" "bash -c '
   source ~/.bashrc
   cd $REMOTE_REPO
-  nohup bash -c \"source ~/.bashrc && cd $REMOTE_REPO && CUDA_VISIBLE_DEVICES=3 bash examples/usecase4_bedrock_userguide/start_uc4_dashboard.sh\" \
+  nohup bash -c \"source ~/.bashrc && source $VENV/bin/activate && cd $REMOTE_REPO && CUDA_VISIBLE_DEVICES=3 bash examples/usecase4_bedrock_userguide/start_uc4_dashboard.sh\" \
     >> $REMOTE_REPO/logs/uc4.log 2>&1 &
   echo \"UC4 worker PID: \$!\"
 '"
@@ -95,7 +95,7 @@ sleep 60
 # T+60s — UC1 on GPU 0 (full pipeline)
 log "  T+60s  — Launching UC1 on GPU 0 ..."
 "${SSH[@]}" "bash -c '
-  nohup bash -c \"source ~/.bashrc && cd $REMOTE_REPO && CUDA_VISIBLE_DEVICES=0 bash examples/usecase1_customer_support/run_pipeline.sh\" \
+  nohup bash -c \"source ~/.bashrc && source $VENV/bin/activate && cd $REMOTE_REPO && CUDA_VISIBLE_DEVICES=0 bash examples/usecase1_customer_support/run_pipeline.sh\" \
     >> $REMOTE_REPO/logs/uc1.log 2>&1 &
   echo \"UC1 worker PID: \$!\"
 '"
@@ -106,7 +106,7 @@ sleep 120
 # T+180s — UC2 on GPU 1 (full pipeline)
 log "  T+180s — Launching UC2 on GPU 1 ..."
 "${SSH[@]}" "bash -c '
-  nohup bash -c \"source ~/.bashrc && cd $REMOTE_REPO && CUDA_VISIBLE_DEVICES=1 bash examples/usecase2_pubmedqa/run_pipeline.sh\" \
+  nohup bash -c \"source ~/.bashrc && source $VENV/bin/activate && cd $REMOTE_REPO && CUDA_VISIBLE_DEVICES=1 bash examples/usecase2_pubmedqa/run_pipeline.sh\" \
     >> $REMOTE_REPO/logs/uc2.log 2>&1 &
   echo \"UC2 worker PID: \$!\"
 '"
@@ -117,7 +117,7 @@ sleep 120
 # T+300s — UC3 on GPU 2 (full pipeline)
 log "  T+300s — Launching UC3 on GPU 2 ..."
 "${SSH[@]}" "bash -c '
-  nohup bash -c \"source ~/.bashrc && cd $REMOTE_REPO && CUDA_VISIBLE_DEVICES=2 bash examples/usecase3_squad/run_pipeline.sh\" \
+  nohup bash -c \"source ~/.bashrc && source $VENV/bin/activate && cd $REMOTE_REPO && CUDA_VISIBLE_DEVICES=2 bash examples/usecase3_squad/run_pipeline.sh\" \
     >> $REMOTE_REPO/logs/uc3.log 2>&1 &
   echo \"UC3 worker PID: \$!\"
 '"
@@ -137,13 +137,13 @@ log "Step 6/7 — Starting dashboards and KVForge portal ..."
   done
   sleep 2
 
-  nohup bash -c \"source ~/.bashrc && cd $REMOTE_REPO && bash examples/usecase1_customer_support/start_dashboard.sh\" \
+  nohup bash -c \"source ~/.bashrc && source $VENV/bin/activate && cd $REMOTE_REPO && bash examples/usecase1_customer_support/start_dashboard.sh\" \
     >> $REMOTE_REPO/logs/dashboard_uc1.log 2>&1 &
 
-  nohup bash -c \"source ~/.bashrc && cd $REMOTE_REPO && bash examples/usecase2_pubmedqa/start_dashboard.sh\" \
+  nohup bash -c \"source ~/.bashrc && source $VENV/bin/activate && cd $REMOTE_REPO && bash examples/usecase2_pubmedqa/start_dashboard.sh\" \
     >> $REMOTE_REPO/logs/dashboard_uc2.log 2>&1 &
 
-  nohup bash -c \"source ~/.bashrc && cd $REMOTE_REPO && bash examples/usecase3_squad/start_dashboard.sh\" \
+  nohup bash -c \"source ~/.bashrc && source $VENV/bin/activate && cd $REMOTE_REPO && bash examples/usecase3_squad/start_dashboard.sh\" \
     >> $REMOTE_REPO/logs/dashboard_uc3.log 2>&1 &
 
   # UC4 dashboard already started in Step 5 via start_uc4_dashboard.sh
