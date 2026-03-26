@@ -161,7 +161,7 @@ def answer_with_retrieval(query: str, cfg: dict) -> str:
         {
             "chunk_id": h.id,
             "text": h.payload["text"],
-            "page": h.payload["page"],
+            "page": h.payload.get("page"),
             "score": round(h.score, 4),
             "kv_cache": h.payload.get("kv_cache"),
             "kv_version": h.payload.get("kv_version"),
