@@ -1,5 +1,5 @@
 {
-  "_comment": "SmartQdrant datasource configuration. All fields with defaults are optional.",
+  "_comment": "KVForge datasource configuration. All fields with defaults are optional.",
 
   "collection": "my-corpus",
   "vector_store": "qdrant",

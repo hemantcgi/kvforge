@@ -1,6 +1,6 @@
 # DatasourceConfig Reference
 
-All configuration is stored in a `datasource_<name>.json` file created by `python smartqdrant.py init`.
+All configuration is stored in a `datasource_<name>.json` file created by `python kvforge.py init`.
 The file is validated by the `DatasourceConfig` Pydantic model on load.
 
 ## Core Fields

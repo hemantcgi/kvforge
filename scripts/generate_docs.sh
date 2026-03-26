@@ -17,7 +17,7 @@
 #
 # Example:
 #   ./scripts/generate_docs.sh
-#   ./scripts/generate_docs.sh /tmp/smartqdrant-docs
+#   ./scripts/generate_docs.sh /tmp/kvforge-docs
 # ============================================================
 set -euo pipefail
 

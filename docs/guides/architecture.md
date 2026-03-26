@@ -1,8 +1,8 @@
-# SmartQdrant Architecture
+# KVForge Architecture
 
 ## Overview
 
-SmartQdrant is a three-phase RAG (Retrieval-Augmented Generation) system that progressively
+KVForge is a three-phase RAG (Retrieval-Augmented Generation) system that progressively
 reduces reliance on retrieval as the LLM learns the corpus through LoRA fine-tuning.
 
 ```
@@ -57,7 +57,7 @@ Core package (core/):
   core/access_tracker.py   Thread-safe tier classification (hot/warm/cold/frozen)
 
 User-facing CLIs (root):
-  smartqdrant.py      init / index / search subcommands
+  kvforge.py      init / index / search subcommands
   ask.py              Single-shot question answering
 
 Pipeline package (pipeline/):

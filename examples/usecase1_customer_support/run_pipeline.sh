@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# run_pipeline.sh — Full SmartQdrant pipeline for Use Case 1: Customer Support + Qdrant
+# run_pipeline.sh — Full KVForge pipeline for Use Case 1: Customer Support + Qdrant
 #
 # Prerequisites
 # -------------
 #   - Docker running with Qdrant:
 #       docker run -d -p 6333:6333 qdrant/qdrant
-#   - Python venv activated with SmartQdrant dependencies
+#   - Python venv activated with KVForge dependencies
 #   - HuggingFace token set (for Llama access):
 #       export HF_TOKEN=hf_...
 #   - GPU recommended for KV computation and LoRA training
@@ -24,7 +24,7 @@ CORPUS="$UC_DIR/data/corpus.jsonl"
 cd "$REPO_ROOT"
 
 echo "================================================================"
-echo " SmartQdrant — Use Case 1: Customer Support Q&A (Qdrant)"
+echo " KVForge — Use Case 1: Customer Support Q&A (Qdrant)"
 echo "================================================================"
 
 # ── Step 0: Download and prepare data ────────────────────────────────────────
@@ -39,7 +39,7 @@ fi
 # ── Step 1: Index corpus into Qdrant ─────────────────────────────────────────
 echo ""
 echo "[ Step 1 ] Indexing corpus into Qdrant …"
-python smartqdrant.py index --config "$CONFIG" --source "$CORPUS"
+python kvforge.py index --config "$CONFIG" --source "$CORPUS"
 
 # ── Step 2: Compute KV tensors for all chunks ─────────────────────────────────
 echo ""

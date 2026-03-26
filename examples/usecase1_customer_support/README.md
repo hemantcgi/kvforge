@@ -1,6 +1,6 @@
 # Use Case 1: Customer Support Q&A with Qdrant
 
-This example demonstrates SmartQdrant on a real customer-support dataset,
+This example demonstrates KVForge on a real customer-support dataset,
 using **Qdrant** as the vector store — the recommended backend for production
 deployments that need efficient KV backfill, horizontal scaling, and remote access.
 
@@ -25,7 +25,7 @@ HuggingFace Dataset
   setup.py (download + format)
         │
         ▼ JSONL corpus
-  smartqdrant.py index ──────────────► Qdrant (localhost:6333)
+  kvforge.py index ──────────────► Qdrant (localhost:6333)
         │                                      │
         ▼                                      │
   pipeline/kv_indexer.py compute-kv ◄─── read chunks ──┘
@@ -90,7 +90,7 @@ Or step by step:
 python examples/usecase1_customer_support/setup.py
 
 # 1. Index into Qdrant
-python smartqdrant.py index \
+python kvforge.py index \
   --config examples/usecase1_customer_support/config.json \
   --source examples/usecase1_customer_support/data/corpus.jsonl
 

@@ -1,6 +1,6 @@
 # Use Case 2: Biomedical Q&A with ChromaDB
 
-This example demonstrates SmartQdrant on the PubMedQA biomedical benchmark,
+This example demonstrates KVForge on the PubMedQA biomedical benchmark,
 using **ChromaDB** as the vector store — no Docker, no external services.
 ChromaDB runs in-process and persists data as SQLite + parquet files on disk.
 
@@ -34,7 +34,7 @@ HuggingFace PubMedQA
   setup.py (download + flatten paragraphs)
         │
         ▼ JSONL corpus
-  smartqdrant.py index ──────────────► ChromaDB (.chroma/pubmedqa/)
+  kvforge.py index ──────────────► ChromaDB (.chroma/pubmedqa/)
         │                                        │
         ▼                                        │
   pipeline/kv_indexer.py compute-kv ◄─── scroll all ─────┘
@@ -90,7 +90,7 @@ Or step by step:
 python examples/usecase2_pubmedqa/setup.py
 
 # 1. Index into ChromaDB
-python smartqdrant.py index \
+python kvforge.py index \
   --config examples/usecase2_pubmedqa/config.json \
   --source examples/usecase2_pubmedqa/data/corpus.jsonl
 

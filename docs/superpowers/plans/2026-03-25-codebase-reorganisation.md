@@ -1,8 +1,8 @@
-# SmartQdrant Codebase Reorganisation Implementation Plan
+# KVForge Codebase Reorganisation Implementation Plan
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Reorganise the SmartQdrant repo by moving 9 pipeline scripts into a `pipeline/` package, isolating Qdrant-internal tests, adding documented shell wrappers in `scripts/`, and writing complete project documentation.
+**Goal:** Reorganise the KVForge repo by moving 9 pipeline scripts into a `pipeline/` package, isolating Qdrant-internal tests, adding documented shell wrappers in `scripts/`, and writing complete project documentation.
 
 **Architecture:** All 9 pipeline orchestration scripts move from root to `pipeline/`; their import paths are updated in every caller (production files, tests, example scripts). No logic changes anywhere. New `scripts/` directory holds shell wrappers for every runnable Python tool. New `docs/guides/` and `docs/api/` directories hold hand-written documentation.
 
@@ -579,7 +579,7 @@ Create `tests/qdrant_internal/README.md` with the content below. Use the Write t
 
     These test suites are carried over from the upstream [Qdrant](https://github.com/qdrant/qdrant)
     repository. They test Qdrant's internal cluster consensus, TLS configuration, snapshot
-    compatibility, and REST API compliance — **not** SmartQdrant's RAG pipeline.
+    compatibility, and REST API compliance — **not** KVForge's RAG pipeline.
 
     ## Contents
 
@@ -591,8 +591,8 @@ Create `tests/qdrant_internal/README.md` with the content below. Use the Write t
 
     ## Running these tests
 
-    These tests require a running Qdrant cluster and are not part of the SmartQdrant CI suite.
-    Run SmartQdrant-specific tests with:
+    These tests require a running Qdrant cluster and are not part of the KVForge CI suite.
+    Run KVForge-specific tests with:
 
         pytest tests/test_*.py -v
 
@@ -642,7 +642,7 @@ git commit -m "chore: isolate Qdrant-internal tests under tests/qdrant_internal/
 ```bash
 #!/usr/bin/env bash
 # ============================================================
-# ask.sh — Query SmartQdrant from the command line
+# ask.sh — Query KVForge from the command line
 #
 # Usage:
 #   scripts/ask.sh <config.json> "<query>"
@@ -678,7 +678,7 @@ python ask.py --config "$CONFIG" "$QUERY"
 ```bash
 #!/usr/bin/env bash
 # ============================================================
-# dashboard.sh — Start the SmartQdrant monitoring dashboard
+# dashboard.sh — Start the KVForge monitoring dashboard
 #
 # Usage:
 #   scripts/dashboard.sh <config.json> [port]
@@ -743,7 +743,7 @@ if [[ -z "$SOURCE" ]]; then
   echo "Usage: $0 <config.json> <source_path>" >&2; exit 1
 fi
 
-python smartqdrant.py index --config "$CONFIG" --source "$SOURCE"
+python kvforge.py index --config "$CONFIG" --source "$SOURCE"
 ```
 
 - [ ] **Step 4: Create `scripts/compute_kv.sh`**
@@ -942,7 +942,7 @@ python tools/generate_faqs.py --config "$CONFIG" --output "$OUTPUT" --count "$CO
 #
 # Example:
 #   ./scripts/generate_docs.sh
-#   ./scripts/generate_docs.sh /tmp/smartqdrant-docs
+#   ./scripts/generate_docs.sh /tmp/kvforge-docs
 # ============================================================
 set -euo pipefail
 
@@ -974,7 +974,7 @@ echo "Documentation written to: $OUTPUT_DIR"
 ```bash
 #!/usr/bin/env bash
 # ============================================================
-# run_pipeline.sh — Full SmartQdrant Phase 1→2→3 pipeline
+# run_pipeline.sh — Full KVForge Phase 1→2→3 pipeline
 #
 # Runs the complete pipeline for a new corpus:
 #   1. Index documents (embed + upsert to vector store)
@@ -1023,7 +1023,7 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "============================================================"
-echo "SmartQdrant Full Pipeline"
+echo "KVForge Full Pipeline"
 echo "Config:  $CONFIG"
 echo "Source:  $SOURCE"
 echo "FAQs:    $FAQS"
@@ -1031,7 +1031,7 @@ echo "============================================================"
 
 # Step 1: Index documents
 printf "\n[1/6] Indexing documents...\n"
-python smartqdrant.py index --config "$CONFIG" --source "$SOURCE"
+python kvforge.py index --config "$CONFIG" --source "$SOURCE"
 
 # Step 2: Generate FAQs (if file doesn't exist yet)
 if [[ ! -f "$FAQS" ]]; then
@@ -1097,9 +1097,9 @@ Expected: all exit 0 with no output.
 Create `scripts/README.md` with this content:
 
 ```markdown
-# SmartQdrant Scripts
+# KVForge Scripts
 
-Shell wrappers for every SmartQdrant Python tool. All scripts:
+Shell wrappers for every KVForge Python tool. All scripts:
 - Validate that Python is available
 - Validate required arguments before running
 - Use `set -euo pipefail` (fail fast on errors)
@@ -1109,7 +1109,7 @@ Shell wrappers for every SmartQdrant Python tool. All scripts:
 
 | Script | Purpose | Required args |
 |--------|---------|---------------|
-| `ask.sh` | Query SmartQdrant | `config.json` `"query"` |
+| `ask.sh` | Query KVForge | `config.json` `"query"` |
 | `index.sh` | Index documents into vector store | `config.json` `source_path` |
 | `compute_kv.sh` | Compute KV tensors (Phase 1→2) | `config.json` |
 | `train_lora.sh` | LoRA fine-tuning | `config.json` `faqs.json` |
@@ -1124,7 +1124,7 @@ Shell wrappers for every SmartQdrant Python tool. All scripts:
 ### Index and query (no GPU needed)
 
 ```bash
-python smartqdrant.py init --name my-corpus
+python kvforge.py init --name my-corpus
 ./scripts/index.sh datasource_my-corpus.json ./my-docs/
 ./scripts/ask.sh datasource_my-corpus.json "What is my question?"
 ```
@@ -1193,7 +1193,7 @@ git commit -m "feat: add documented shell wrappers for all pipeline tools"
 - [ ] **Step 1: Create `docs/guides/quickstart.md`**
 
 ```markdown
-# SmartQdrant — Quick Start
+# KVForge — Quick Start
 
 Get from zero to a working question-answering system in 5 minutes (retrieval-only, no GPU needed).
 
@@ -1216,7 +1216,7 @@ docker run -p 6333:6333 qdrant/qdrant
 ## 2. Initialise a datasource
 
 ```bash
-python smartqdrant.py init --name my-corpus --loader markdown
+python kvforge.py init --name my-corpus --loader markdown
 ```
 
 This creates `datasource_my-corpus.json` with sensible defaults and a `lora_checkpoints/my-corpus/` directory.
@@ -1226,7 +1226,7 @@ This creates `datasource_my-corpus.json` with sensible defaults and a `lora_chec
 ```bash
 ./scripts/index.sh datasource_my-corpus.json ./my-docs/
 # or equivalently:
-python smartqdrant.py index --config datasource_my-corpus.json --source ./my-docs/
+python kvforge.py index --config datasource_my-corpus.json --source ./my-docs/
 ```
 
 ## 4. Ask a question
@@ -1268,11 +1268,11 @@ See `FAQ.md` → Vector Stores for full setup instructions for each backend.
 - [ ] **Step 2: Create `docs/guides/architecture.md`**
 
 ```markdown
-# SmartQdrant Architecture
+# KVForge Architecture
 
 ## Overview
 
-SmartQdrant is a three-phase RAG (Retrieval-Augmented Generation) system that progressively
+KVForge is a three-phase RAG (Retrieval-Augmented Generation) system that progressively
 reduces reliance on retrieval as the LLM learns the corpus through LoRA fine-tuning.
 
 ```
@@ -1327,7 +1327,7 @@ Root utilities (always available, no GPU needed):
   access_tracker.py   Thread-safe tier classification (hot/warm/cold/frozen)
 
 User-facing CLIs (root):
-  smartqdrant.py      init / index / search subcommands
+  kvforge.py      init / index / search subcommands
   ask.py              Single-shot question answering
 
 Pipeline package (pipeline/):
@@ -1407,7 +1407,7 @@ flowchart TD
 ```markdown
 # Adding New Backends
 
-SmartQdrant uses a protocol + registry pattern for all three pluggable subsystems.
+KVForge uses a protocol + registry pattern for all three pluggable subsystems.
 Adding a new backend is always the same three steps:
 
 1. Implement the protocol in a new file
@@ -1525,7 +1525,7 @@ class MyFormatLoader:
         )
 ```
 
-### Step 3: Add to `smartqdrant.py` init choices
+### Step 3: Add to `kvforge.py` init choices
 
 ```python
     p_init.add_argument("--loader", default="pdf",
@@ -1642,7 +1642,7 @@ KV tensors have not been computed for this chunk yet. Run:
 
 The `pipeline/` package was not found. Run scripts from the repo root:
 ```bash
-cd /path/to/smartqdrant
+cd /path/to/kvforge
 python -m pipeline.kv_indexer ...
 ```
 
@@ -1691,7 +1691,7 @@ export HF_DATASETS_OFFLINE=1
 - [ ] **Step 1: Create `docs/api/index.md`**
 
 ```markdown
-# SmartQdrant API Reference
+# KVForge API Reference
 
 ## Module Overview
 
@@ -1734,7 +1734,7 @@ into `docs/api/generated/` (not committed to git).
 ```markdown
 # DatasourceConfig Reference
 
-All configuration is stored in a `datasource_<name>.json` file created by `python smartqdrant.py init`.
+All configuration is stored in a `datasource_<name>.json` file created by `python kvforge.py init`.
 The file is validated by the `DatasourceConfig` Pydantic model on load.
 
 ## Core Fields
@@ -1917,8 +1917,8 @@ python -m pipeline.monitoring_dashboard --config <cfg.json> [--port 8080]
 | `/stats` | GET | Collection stats (count, phase, PRS) |
 | `/version` | GET | Current phase and LoRA version |
 | `/config` | GET | Active datasource config |
-| `/query` | POST | `{"question": "..."}` — SmartQdrant answer |
-| `/ab_query` | POST | `{"question": "..."}` — SmartQdrant vs Gemini A/B comparison |
+| `/query` | POST | `{"question": "..."}` — KVForge answer |
+| `/ab_query` | POST | `{"question": "..."}` — KVForge vs Gemini A/B comparison |
 
 ---
 
@@ -2198,8 +2198,8 @@ Find the existing "## Getting Started" section and insert a new "## Project Stru
 ## Project Structure
 
 ```
-smartqdrant/
-├── smartqdrant.py          # Main CLI: init / index / search
+kvforge/
+├── kvforge.py          # Main CLI: init / index / search
 ├── ask.py                  # Query CLI: ask a question
 ├── config.py               # DatasourceConfig Pydantic model
 ├── kv_utils.py             # KV tensor ops
@@ -2227,8 +2227,8 @@ smartqdrant/
 │   ├── usecase1_customer_support/   # Qdrant + Bitext dataset
 │   ├── usecase2_pubmedqa/           # ChromaDB + PubMedQA dataset
 │   └── usecase3_squad/              # FAISS + SQuAD v2 dataset
-├── tests/                  # SmartQdrant test suite
-│   └── qdrant_internal/    # Upstream Qdrant tests (not SmartQdrant)
+├── tests/                  # KVForge test suite
+│   └── qdrant_internal/    # Upstream Qdrant tests (not KVForge)
 └── docs/                   # Documentation
     ├── faq/                # FAQ topic pages
     ├── guides/             # Quickstart, architecture, troubleshooting
@@ -2348,5 +2348,5 @@ git commit -m "docs: add pdoc config, update .gitignore and README with new stru
 - [ ] **Step 6: Push to remote**
 
 ```bash
-git push smartqdrant smartqdrant-main
+git push kvforge kvforge-main
 ```

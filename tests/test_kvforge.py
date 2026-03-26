@@ -1,4 +1,4 @@
-"""Tests for smartqdrant.py CLI commands."""
+"""Tests for kvforge.py CLI commands."""
 import json
 import pytest
 from pathlib import Path
@@ -9,7 +9,7 @@ def test_cmd_init_creates_config(tmp_path, monkeypatch):
     """init creates a valid datasource JSON and checkpoint dir."""
     monkeypatch.chdir(tmp_path)
     import argparse
-    from smartqdrant import cmd_init
+    from kvforge import cmd_init
 
     args = argparse.Namespace(
         name="test-corpus",
@@ -34,7 +34,7 @@ def test_cmd_init_refuses_overwrite_without_force(tmp_path, monkeypatch):
     """init refuses to overwrite existing config without --force."""
     monkeypatch.chdir(tmp_path)
     import argparse, sys
-    from smartqdrant import cmd_init
+    from kvforge import cmd_init
 
     args = argparse.Namespace(
         name="myds", loader="pdf", embed_model="BAAI/bge-small-en-v1.5",
@@ -49,7 +49,7 @@ def test_cmd_init_force_overwrites(tmp_path, monkeypatch):
     """init with --force overwrites existing config."""
     monkeypatch.chdir(tmp_path)
     import argparse
-    from smartqdrant import cmd_init
+    from kvforge import cmd_init
 
     args = argparse.Namespace(
         name="myds", loader="markdown", embed_model="BAAI/bge-small-en-v1.5",
@@ -78,7 +78,7 @@ def test_cmd_search_calls_store_query(tmp_path, monkeypatch):
     cfg_path.write_text(json.dumps(cfg))
 
     import argparse
-    from smartqdrant import cmd_search
+    from kvforge import cmd_search
     from vectorstore.base import ScoredPoint
 
     mock_embedder = MagicMock()
@@ -114,7 +114,7 @@ def test_cmd_index_creates_collection_and_upserts(tmp_path, monkeypatch):
     cfg_path.write_text(json.dumps(cfg))
 
     import argparse
-    from smartqdrant import cmd_index
+    from kvforge import cmd_index
 
     mock_loader = MagicMock()
     mock_loader.load.return_value = [

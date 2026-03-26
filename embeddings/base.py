@@ -11,7 +11,7 @@ from typing import Protocol, runtime_checkable
 class Embedder(Protocol):
     """Protocol for objects that convert text into dense float vectors.
 
-    All SmartQdrant embedding backends must implement ``encode`` and expose
+    All KVForge embedding backends must implement ``encode`` and expose
     the ``dim`` property.  The protocol is ``runtime_checkable`` so
     ``isinstance`` checks work at runtime.
     """

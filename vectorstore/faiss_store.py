@@ -24,7 +24,7 @@ from vectorstore.base import Point, ScoredPoint
 
 class FAISSStore:
     """
-    FAISS flat in-process vector store for SmartQdrant.
+    FAISS flat in-process vector store for KVForge.
 
     Vectors are normalised to unit length so inner-product search equals
     cosine similarity.  The index and metadata (ID map + payloads) are

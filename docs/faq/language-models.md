@@ -6,7 +6,7 @@
 
 ### How do I use my own LLM for KV computation?
 
-SmartQdrant uses HuggingFace `AutoModelForCausalLM` for KV computation and LoRA training. Any decoder-only transformer hosted on HuggingFace Hub (or locally) works.
+KVForge uses HuggingFace `AutoModelForCausalLM` for KV computation and LoRA training. Any decoder-only transformer hosted on HuggingFace Hub (or locally) works.
 
 #### Step 1 — Set `llm_model` in your config
 
@@ -28,7 +28,7 @@ Other tested models:
 
 #### Step 2 — Verify KV shape auto-discovery
 
-SmartQdrant reads `num_hidden_layers`, `num_key_value_heads`, and `hidden_size` / `head_dim` from the HuggingFace model config automatically. Verify before running the full pipeline:
+KVForge reads `num_hidden_layers`, `num_key_value_heads`, and `hidden_size` / `head_dim` from the HuggingFace model config automatically. Verify before running the full pipeline:
 
 ```python
 import model_loader
@@ -42,7 +42,7 @@ print(f"KV shape: layers={num_layers}, kv_heads={num_kv_heads}, head_dim={head_d
 
 #### Step 3 — Confirm LoRA target modules
 
-SmartQdrant auto-detects which attention projection module names exist in your model and warns if none of the configured names are found:
+KVForge auto-detects which attention projection module names exist in your model and warns if none of the configured names are found:
 
 ```python
 import model_loader, warnings
@@ -112,7 +112,7 @@ Models like `meta-llama/Llama-3.2-3B-Instruct` require you to:
 }
 ```
 
-SmartQdrant sets `HF_TOKEN` in the environment before calling `from_pretrained()`.
+KVForge sets `HF_TOKEN` in the environment before calling `from_pretrained()`.
 
 > **Security note:** Do not commit `datasource_*.json` files containing tokens to version control. Add `datasource_*.json` to `.gitignore` or use the environment variable approach instead.
 
@@ -216,9 +216,9 @@ The table below shows which operations are CPU-compatible:
 
 | Operation | CPU | GPU | Notes |
 |-----------|:---:|:---:|-------|
-| `smartqdrant.py init` | ✅ | ✅ | Config scaffolding only |
-| `smartqdrant.py index` | ✅ | ✅ | Embedding runs on CPU with FastEmbed |
-| `smartqdrant.py search` | ✅ | ✅ | Embedding + vector search |
+| `kvforge.py init` | ✅ | ✅ | Config scaffolding only |
+| `kvforge.py index` | ✅ | ✅ | Embedding runs on CPU with FastEmbed |
+| `kvforge.py search` | ✅ | ✅ | Embedding + vector search |
 | `python -m pytest tests/` | ✅ | ✅ | All 76 tests mock GPU modules |
 | `monitoring_dashboard.py` | ✅ | ✅ | FastAPI dashboard |
 | `prs_evaluator.py` (evaluation only) | ✅ | ✅ | If using API LLM for generation |
@@ -237,17 +237,17 @@ Expected time: ~15–30 seconds on a modern laptop.
 
 #### Local development workflow without a GPU
 
-1. Use `smartqdrant.py init / index / search` for all ingestion and retrieval work
+1. Use `kvforge.py init / index / search` for all ingestion and retrieval work
 2. Use the dashboard to verify indexing output
 3. When ready to train, push the config and data to a GPU server:
 
 ```bash
 rsync -avz --exclude='venv/' --exclude='__pycache__/' \
   -e "ssh -i your-key.pem" \
-  ./ ubuntu@<gpu-server>:~/smartqdrant/
+  ./ ubuntu@<gpu-server>:~/kvforge/
 
 ssh -i your-key.pem ubuntu@<gpu-server>
-cd ~/smartqdrant
+cd ~/kvforge
 python index_and_train.py document.pdf --config datasource_my-corpus.json --faqs faqs.json
 ```
 

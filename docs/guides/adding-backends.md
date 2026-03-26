@@ -1,6 +1,6 @@
 # Adding New Backends
 
-SmartQdrant uses a protocol + registry pattern for all three pluggable subsystems.
+KVForge uses a protocol + registry pattern for all three pluggable subsystems.
 Adding a new backend is always the same three steps:
 
 1. Implement the protocol in a new file
@@ -118,7 +118,7 @@ class MyFormatLoader:
         )
 ```
 
-### Step 3: Add to `smartqdrant.py` init choices
+### Step 3: Add to `kvforge.py` init choices
 
 ```python
     p_init.add_argument("--loader", default="pdf",

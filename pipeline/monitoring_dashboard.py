@@ -1,4 +1,4 @@
-"""FastAPI monitoring dashboard for SmartQdrant.
+"""FastAPI monitoring dashboard for KVForge.
 
 Provides a REST API consumed by the bundled HTML dashboard UI.  Key endpoints:
 
@@ -6,7 +6,7 @@ Provides a REST API consumed by the bundled HTML dashboard UI.  Key endpoints:
 * ``GET /api/version``       — current LoRA version and phase.
 * ``GET /api/stats``         — tier counts, top accessed chunks, access report.
 * ``GET /api/config``        — display-safe config fields for the UI settings panel.
-* ``POST /api/query``        — A/B query: runs SmartQdrant (Model A) and Gemini
+* ``POST /api/query``        — A/B query: runs KVForge (Model A) and Gemini
   (Model B) in parallel and returns both answers with latency metrics.
 
 GPU modules (torch/transformers) are imported and the base model is pre-warmed
@@ -69,7 +69,7 @@ async def _lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Smart Qdrant Dashboard", lifespan=_lifespan)
+app = FastAPI(title="KVForge Dashboard", lifespan=_lifespan)
 _cfg: dict = {}
 _vector_store = None
 _query_executor = ThreadPoolExecutor(max_workers=2)
@@ -225,13 +225,13 @@ def _log(tag: str, msg: str) -> None:
     print(f"[{tag}] {time.strftime('%H:%M:%S')} {msg}", flush=True)
 
 
-def _answer_smartqdrant(query: str, cfg: dict, params: QueryRequest) -> dict:
+def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
     t0 = time.time()
-    tag = "A:SmartQdrant"
+    tag = "A:KVForge"
     _log(tag, f"START query={query!r} top_k={params.a_top_k} max_new_tokens={params.a_max_new_tokens} temp={params.a_temperature}")
     if _model_loader is None or _kv_inference is None:
         _log(tag, "SKIP — inference modules not loaded (GPU required)")
-        return {"answer": "SmartQdrant inference modules not available (GPU required)", "latency_ms": 0}
+        return {"answer": "KVForge inference modules not available (GPU required)", "latency_ms": 0}
     retrieval_ms = 0
     generation_ms = 0
     chunks = []
@@ -457,7 +457,7 @@ async def run_query(req: QueryRequest):
     _log("query", f"received query={req.query!r}")
     cfg = _load_cfg()
     loop = asyncio.get_event_loop()
-    fut_a = loop.run_in_executor(_query_executor, _answer_smartqdrant, req.query, cfg, req)
+    fut_a = loop.run_in_executor(_query_executor, _answer_kvforge, req.query, cfg, req)
     fut_b = loop.run_in_executor(_query_executor, _answer_gemini, req.query, cfg, req)
     result_a, result_b = await asyncio.gather(fut_a, fut_b)
     return {
@@ -483,7 +483,7 @@ async def run_query(req: QueryRequest):
 
 DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Smart Qdrant Dashboard</title>
+<head><meta charset="UTF-8"><title>KVForge Dashboard</title>
 <style>
   body { font-family: monospace; background:#111; color:#eee; padding:20px; }
   h1 { color:#7af; }
@@ -584,7 +584,7 @@ PRS = 0.5 × Accuracy
   </div>
 </div>
 
-<h1>Smart Qdrant Dashboard</h1>
+<h1>KVForge Dashboard</h1>
 <div id="root">Loading…</div>
 
 <div class="card" id="query-section">
@@ -612,7 +612,7 @@ PRS = 0.5 × Accuracy
       </div>
     </div>
 
-    <div class="section-label" id="label-a">Answer A — SmartQdrant</div>
+    <div class="section-label" id="label-a">Answer A — KVForge</div>
     <div class="param-grid">
       <div class="param-group">
         <label>Max new tokens</label>
@@ -648,7 +648,7 @@ PRS = 0.5 × Accuracy
   <div id="ab-result" style="display:none">
     <div style="display:flex;gap:16px;margin-top:12px">
       <div style="flex:1;border:1px solid #444;padding:12px">
-        <b style="color:#7af" id="header-a">Answer A — SmartQdrant</b>
+        <b style="color:#7af" id="header-a">Answer A — KVForge</b>
         <div id="latency-a" style="color:#888;font-size:0.85em;margin:4px 0;font-family:monospace"></div>
         <div id="mode-a" style="font-size:0.85em;margin:4px 0"></div>
         <pre id="answer-a" style="white-space:pre-wrap;margin:8px 0;color:#eee;font-size:0.9em"></pre>
@@ -689,8 +689,8 @@ async function loadConfig() {
     document.getElementById('top_k').value = cfg.top_k;
     // update section labels and answer headers with actual model name
     const shortName = cfg.llm_model.split('/').pop();
-    document.getElementById('label-a').textContent = `Answer A — SmartQdrant (${shortName})`;
-    document.getElementById('header-a').textContent = `Answer A — SmartQdrant (${shortName})`;
+    document.getElementById('label-a').textContent = `Answer A — KVForge (${shortName})`;
+    document.getElementById('header-a').textContent = `Answer A — KVForge (${shortName})`;
   } catch(e) {
     document.getElementById('model-info-a').textContent = 'Could not load config';
   }
@@ -856,7 +856,7 @@ def dashboard():
 
 def _main():
     global _config_path
-    parser = argparse.ArgumentParser(description="Smart Qdrant Dashboard")
+    parser = argparse.ArgumentParser(description="KVForge Dashboard")
     parser.add_argument(
         "--config",
         default="my_config.json",

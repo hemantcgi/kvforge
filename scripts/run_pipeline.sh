@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================
-# run_pipeline.sh — Full SmartQdrant Phase 1→2→3 pipeline
+# run_pipeline.sh — Full KVForge Phase 1→2→3 pipeline
 #
 # Runs the complete pipeline for a new corpus:
 #   1. Index documents (embed + upsert to vector store)
@@ -49,7 +49,7 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "============================================================"
-echo "SmartQdrant Full Pipeline"
+echo "KVForge Full Pipeline"
 echo "Config:  $CONFIG"
 echo "Source:  $SOURCE"
 echo "FAQs:    $FAQS"
@@ -57,7 +57,7 @@ echo "============================================================"
 
 # Step 1: Index documents
 printf "\n[1/6] Indexing documents...\n"
-python smartqdrant.py index --config "$CONFIG" --source "$SOURCE"
+python kvforge.py index --config "$CONFIG" --source "$SOURCE"
 
 # Step 2: Generate FAQs (if file doesn't exist yet)
 if [[ ! -f "$FAQS" ]]; then

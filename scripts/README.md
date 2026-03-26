@@ -1,6 +1,6 @@
-# SmartQdrant Scripts
+# KVForge Scripts
 
-Shell wrappers for every SmartQdrant Python tool. All scripts:
+Shell wrappers for every KVForge Python tool. All scripts:
 - Validate that Python is available
 - Validate required arguments before running
 - Use `set -euo pipefail` (fail fast on errors)
@@ -10,7 +10,7 @@ Shell wrappers for every SmartQdrant Python tool. All scripts:
 
 | Script | Purpose | Required args |
 |--------|---------|---------------|
-| `ask.sh` | Query SmartQdrant | `config.json` `"query"` |
+| `ask.sh` | Query KVForge | `config.json` `"query"` |
 | `index.sh` | Index documents into vector store | `config.json` `source_path` |
 | `compute_kv.sh` | Compute KV tensors (Phase 1→2) | `config.json` |
 | `train_lora.sh` | LoRA fine-tuning | `config.json` `faqs.json` |
@@ -25,7 +25,7 @@ Shell wrappers for every SmartQdrant Python tool. All scripts:
 ### Index and query (no GPU needed)
 
 ```bash
-python smartqdrant.py init --name my-corpus
+python kvforge.py init --name my-corpus
 ./scripts/index.sh datasource_my-corpus.json ./my-docs/
 ./scripts/ask.sh datasource_my-corpus.json "What is my question?"
 ```

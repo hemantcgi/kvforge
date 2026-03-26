@@ -4,14 +4,14 @@
 
 ---
 
-### How do I use SmartQdrant with ChromaDB instead of Qdrant?
+### How do I use KVForge with ChromaDB instead of Qdrant?
 
 ChromaDB is a lightweight, in-process vector database with no Docker dependency. It is a good choice for local development, laptops, and single-machine deployments where you want to avoid running a separate Qdrant service.
 
 #### Step 1 — Install dependencies
 
 ```bash
-# Core SmartQdrant dependencies
+# Core KVForge dependencies
 pip install fastembed pypdf fastapi uvicorn httpx pydantic pytest
 
 # ChromaDB (replaces qdrant-client for storage)
@@ -25,7 +25,7 @@ pip install chromadb
 Run `init` to scaffold a new config file:
 
 ```bash
-python smartqdrant.py init --name my-corpus
+python kvforge.py init --name my-corpus
 ```
 
 This creates **`datasource_my-corpus.json`** in your current directory with default Qdrant settings. Open that file and make the following changes — set `vector_store` to `"chroma"` and add `chroma_persist_dir`:
@@ -67,12 +67,12 @@ Complete `datasource_my-corpus.json` after editing:
 
 ```bash
 # Index a PDF
-python smartqdrant.py index \
+python kvforge.py index \
   --config datasource_my-corpus.json \
   --source ./my_document.pdf
 
 # Index a directory of markdown files
-python smartqdrant.py index \
+python kvforge.py index \
   --config datasource_my-corpus.json \
   --source ./docs/
 ```
@@ -89,7 +89,7 @@ Indexed 142 points into 'my-corpus'
 #### Step 4 — Search
 
 ```bash
-python smartqdrant.py search \
+python kvforge.py search \
   --config datasource_my-corpus.json \
   "What is the maximum retention period?"
 ```
@@ -158,7 +158,7 @@ Make sure `chroma_persist_dir` in your config matches the path used when indexin
 
 ### How do I add support for Pinecone, Weaviate, or another vector database?
 
-SmartQdrant's `VectorStore` protocol (`vectorstore/base.py`) requires eight methods. Implement all eight in a new file, register it in the factory, and set the backend name in your config. No other files need to change.
+KVForge's `VectorStore` protocol (`vectorstore/base.py`) requires eight methods. Implement all eight in a new file, register it in the factory, and set the backend name in your config. No other files need to change.
 
 #### The VectorStore protocol
 
@@ -278,7 +278,7 @@ def get_store(cfg: dict):
     )
 ```
 
-**Datasource config** — run `python smartqdrant.py init --name my-corpus` to create `datasource_my-corpus.json`, then edit it to add the Pinecone fields. The minimum required changes:
+**Datasource config** — run `python kvforge.py init --name my-corpus` to create `datasource_my-corpus.json`, then edit it to add the Pinecone fields. The minimum required changes:
 
 ```json
 {
@@ -412,7 +412,7 @@ def get_store(cfg: dict):
     )
 ```
 
-**Datasource config** — run `python smartqdrant.py init --name my-corpus` to create `datasource_my-corpus.json`, then add/change these fields:
+**Datasource config** — run `python kvforge.py init --name my-corpus` to create `datasource_my-corpus.json`, then add/change these fields:
 
 ```json
 {
@@ -443,7 +443,7 @@ def get_store(cfg: dict):
 
 ---
 
-### How do I use SmartQdrant with pgvector (PostgreSQL)?
+### How do I use KVForge with pgvector (PostgreSQL)?
 
 pgvector adds vector similarity search to PostgreSQL. If you are already running Postgres, this is the lowest-friction path to adding vector search — no extra Docker container, no new service.
 
@@ -457,7 +457,7 @@ To start a new instance using Docker:
 docker run -d \
   --name pgvector \
   -e POSTGRES_PASSWORD=secret \
-  -e POSTGRES_DB=smartqdrant \
+  -e POSTGRES_DB=kvforge \
   -p 5432:5432 \
   pgvector/pgvector:pg16
 ```
@@ -473,7 +473,7 @@ docker ps | grep pgvector
 Run this once per database. The `pgvector/pgvector:pg16` Docker image ships with the extension pre-installed — you just need to activate it:
 
 ```bash
-docker exec -it pgvector psql -U postgres -d smartqdrant \
+docker exec -it pgvector psql -U postgres -d kvforge \
   -c "CREATE EXTENSION IF NOT EXISTS vector;"
 ```
 
@@ -492,7 +492,7 @@ pip install psycopg2-binary pgvector
 
 #### Step 2 — Create the backend file
 
-Create a new file at `vectorstore/pgvector_store.py` in the SmartQdrant repository root:
+Create a new file at `vectorstore/pgvector_store.py` in the KVForge repository root:
 
 ```python
 # vectorstore/pgvector_store.py
@@ -502,7 +502,7 @@ from vectorstore.base import Point, ScoredPoint
 
 
 class PgvectorStore:
-    """PostgreSQL pgvector backend for SmartQdrant."""
+    """PostgreSQL pgvector backend for KVForge."""
 
     def __init__(self, dsn: str):
         try:
@@ -643,7 +643,7 @@ def get_store(cfg: dict):
 Run `init` to create `datasource_my-corpus.json`:
 
 ```bash
-python smartqdrant.py init --name my-corpus
+python kvforge.py init --name my-corpus
 ```
 
 This generates a default Qdrant config. Open **`datasource_my-corpus.json`** and make these changes:
@@ -651,7 +651,7 @@ This generates a default Qdrant config. Open **`datasource_my-corpus.json`** and
 | Field | Action | Value |
 |-------|--------|-------|
 | `vector_store` | change from `"qdrant"` | `"pgvector"` |
-| `pgvector_dsn` | **add** (not in default) | `"postgresql://postgres:secret@localhost:5432/smartqdrant"` |
+| `pgvector_dsn` | **add** (not in default) | `"postgresql://postgres:secret@localhost:5432/kvforge"` |
 | `qdrant_host`, `qdrant_port` | leave or remove | Ignored when using pgvector |
 
 The DSN format is: `postgresql://[user]:[password]@[host]:[port]/[database]`
@@ -662,7 +662,7 @@ Complete `datasource_my-corpus.json` after editing:
 {
   "collection":      "my-corpus",
   "vector_store":    "pgvector",
-  "pgvector_dsn":    "postgresql://postgres:secret@localhost:5432/smartqdrant",
+  "pgvector_dsn":    "postgresql://postgres:secret@localhost:5432/kvforge",
 
   "embed_model":     "BAAI/bge-small-en-v1.5",
   "embedder_backend":"fastembed",
@@ -682,14 +682,14 @@ Complete `datasource_my-corpus.json` after editing:
 #### Step 5 — Index and search
 
 ```bash
-python smartqdrant.py index --config datasource_my-corpus.json --source ./docs/
-python smartqdrant.py search --config datasource_my-corpus.json "What is the return policy?"
+python kvforge.py index --config datasource_my-corpus.json --source ./docs/
+python kvforge.py search --config datasource_my-corpus.json "What is the return policy?"
 ```
 
 #### Step 6 — Verify the collection in PostgreSQL
 
 ```bash
-docker exec -it pgvector psql -U postgres -d smartqdrant \
+docker exec -it pgvector psql -U postgres -d kvforge \
   -c "SELECT COUNT(*) FROM sq_my_corpus;"
 ```
 
@@ -697,7 +697,7 @@ Or from Python:
 
 ```python
 import psycopg2
-conn = psycopg2.connect("postgresql://postgres:secret@localhost:5432/smartqdrant")
+conn = psycopg2.connect("postgresql://postgres:secret@localhost:5432/kvforge")
 cur = conn.cursor()
 cur.execute("SELECT id, payload->>'text' FROM sq_my_corpus LIMIT 3")
 for row in cur.fetchall():
@@ -732,7 +732,7 @@ Ensure your documents use UTF-8 encoding. Pass `client_encoding='UTF8'` in the D
 
 ---
 
-### How do I use SmartQdrant with FAISS?
+### How do I use KVForge with FAISS?
 
 FAISS (Facebook AI Similarity Search) is an in-process library — no server, no Docker, no network. It stores everything in memory and optionally saves/loads from disk. It is ideal for offline batch workflows, laptop development, and datasets up to a few million vectors.
 
@@ -761,7 +761,7 @@ from vectorstore.base import Point, ScoredPoint
 
 
 class FAISSStore:
-    """FAISS in-process vector store backend for SmartQdrant."""
+    """FAISS in-process vector store backend for KVForge."""
 
     def __init__(self, persist_dir: str = ".faiss"):
         try:
@@ -910,7 +910,7 @@ def get_store(cfg: dict):
 
 #### Step 4 — Create a datasource config
 
-Run `python smartqdrant.py init --name my-corpus` to create **`datasource_my-corpus.json`**. Then open it and make the following changes:
+Run `python kvforge.py init --name my-corpus` to create **`datasource_my-corpus.json`**. Then open it and make the following changes:
 
 | Field | Action | Value |
 |-------|--------|-------|
@@ -943,8 +943,8 @@ Complete config after editing:
 #### Step 5 — Index and search
 
 ```bash
-python smartqdrant.py index --config datasource_my-corpus.json --source ./docs/
-python smartqdrant.py search --config datasource_my-corpus.json "explain the refund process"
+python kvforge.py index --config datasource_my-corpus.json --source ./docs/
+python kvforge.py search --config datasource_my-corpus.json "explain the refund process"
 ```
 
 After indexing, two files are written per collection:
@@ -994,7 +994,7 @@ Each `float32` vector of dimension 384 uses 1.5 KB. 1 million vectors = ~1.5 GB 
 
 ---
 
-### How do I use SmartQdrant with Milvus or Zilliz Cloud?
+### How do I use KVForge with Milvus or Zilliz Cloud?
 
 Milvus is a production-grade, horizontally scalable vector database. Zilliz Cloud is the fully managed version. Both use the same Python SDK (`pymilvus`).
 
@@ -1142,7 +1142,7 @@ def get_store(cfg: dict):
 
 #### Step 4 — Create a datasource config
 
-Run `python smartqdrant.py init --name my-corpus` to create **`datasource_my-corpus.json`**. Then open it and make changes per your deployment:
+Run `python kvforge.py init --name my-corpus` to create **`datasource_my-corpus.json`**. Then open it and make changes per your deployment:
 
 | Field | Action | Value |
 |-------|--------|-------|
@@ -1196,8 +1196,8 @@ Run `python smartqdrant.py init --name my-corpus` to create **`datasource_my-cor
 #### Step 5 — Index and search
 
 ```bash
-python smartqdrant.py index --config datasource_my-corpus.json --source ./docs/
-python smartqdrant.py search --config datasource_my-corpus.json "how do I cancel my subscription"
+python kvforge.py index --config datasource_my-corpus.json --source ./docs/
+python kvforge.py search --config datasource_my-corpus.json "how do I cancel my subscription"
 ```
 
 #### Step 6 — Verify
@@ -1233,7 +1233,7 @@ Milvus is not reachable. Check that the container is running: `docker ps | grep 
 
 ---
 
-### How do I use SmartQdrant with LanceDB?
+### How do I use KVForge with LanceDB?
 
 LanceDB is a serverless, columnar vector database that stores data as Lance files on disk (or S3/GCS). It requires no Docker and is faster than ChromaDB for large datasets due to its columnar format.
 
@@ -1369,7 +1369,7 @@ def get_store(cfg: dict):
 
 #### Step 4 — Create a datasource config
 
-Run `python smartqdrant.py init --name my-corpus` to create **`datasource_my-corpus.json`**. Then open it and make the following changes:
+Run `python kvforge.py init --name my-corpus` to create **`datasource_my-corpus.json`**. Then open it and make the following changes:
 
 | Field | Action | Value |
 |-------|--------|-------|
@@ -1400,8 +1400,8 @@ Complete config after editing:
 #### Step 5 — Index and search
 
 ```bash
-python smartqdrant.py index --config datasource_my-corpus.json --source ./docs/
-python smartqdrant.py search --config datasource_my-corpus.json "what is the warranty period"
+python kvforge.py index --config datasource_my-corpus.json --source ./docs/
+python kvforge.py search --config datasource_my-corpus.json "what is the warranty period"
 ```
 
 #### Step 6 — Verify
@@ -1440,7 +1440,7 @@ Run `index` before `search`. The table is created on first index.
 
 ---
 
-### How do I use SmartQdrant with Redis (RedisSearch)?
+### How do I use KVForge with Redis (RedisSearch)?
 
 Redis with the `RedisSearch` module (included in Redis Stack) supports vector similarity search. If Redis is already in your stack (caching, queues), this adds vector search with no new services.
 
@@ -1475,7 +1475,7 @@ from vectorstore.base import Point, ScoredPoint
 
 
 class RedisStore:
-    """Redis (RedisSearch) vector store backend for SmartQdrant."""
+    """Redis (RedisSearch) vector store backend for KVForge."""
 
     def __init__(self, host: str = "localhost", port: int = 6379,
                  password: str = "", db: int = 0):
@@ -1610,7 +1610,7 @@ def get_store(cfg: dict):
 
 #### Step 4 — Create a datasource config
 
-Run `python smartqdrant.py init --name my-corpus` to create **`datasource_my-corpus.json`**. Then open it and make the following changes:
+Run `python kvforge.py init --name my-corpus` to create **`datasource_my-corpus.json`**. Then open it and make the following changes:
 
 | Field | Action | Value |
 |-------|--------|-------|
@@ -1645,8 +1645,8 @@ Complete config after editing:
 #### Step 5 — Index and search
 
 ```bash
-python smartqdrant.py index --config datasource_my-corpus.json --source ./docs/
-python smartqdrant.py search --config datasource_my-corpus.json "billing cycle question"
+python kvforge.py index --config datasource_my-corpus.json --source ./docs/
+python kvforge.py search --config datasource_my-corpus.json "billing cycle question"
 ```
 
 #### Step 6 — Verify
@@ -1685,7 +1685,7 @@ All vector data lives in RAM. For 1 million 384-dim vectors: ~1.5 GB. Monitor wi
 
 ---
 
-### How do I use SmartQdrant with Elasticsearch or OpenSearch?
+### How do I use KVForge with Elasticsearch or OpenSearch?
 
 Elasticsearch (8.x+) and OpenSearch (2.x+) have built-in dense vector (`knn_vector`) support. If your team already runs an ES/OpenSearch cluster for full-text search, this adds vector similarity with zero new infrastructure.
 
@@ -1857,7 +1857,7 @@ def get_store(cfg: dict):
 
 #### Step 4 — Create a datasource config
 
-Run `python smartqdrant.py init --name my-corpus` to create **`datasource_my-corpus.json`**. Then open it and make the following changes:
+Run `python kvforge.py init --name my-corpus` to create **`datasource_my-corpus.json`**. Then open it and make the following changes:
 
 | Field | Action | Value |
 |-------|--------|-------|
@@ -1912,8 +1912,8 @@ Run `python smartqdrant.py init --name my-corpus` to create **`datasource_my-cor
 #### Step 5 — Index and search
 
 ```bash
-python smartqdrant.py index --config datasource_my-corpus.json --source ./docs/
-python smartqdrant.py search --config datasource_my-corpus.json "SLA definition"
+python kvforge.py index --config datasource_my-corpus.json --source ./docs/
+python kvforge.py search --config datasource_my-corpus.json "SLA definition"
 ```
 
 #### Step 6 — Verify
@@ -1958,7 +1958,7 @@ Pass your API key: `"elastic_api_key": "base64encodedkey"`. For local dev, disab
 
 ---
 
-### How do I use SmartQdrant with MongoDB Atlas Vector Search?
+### How do I use KVForge with MongoDB Atlas Vector Search?
 
 MongoDB Atlas Vector Search adds vector similarity to your existing MongoDB collections. If you already store your source documents in MongoDB, this eliminates a separate vector DB entirely.
 
@@ -1980,7 +1980,7 @@ MongoDB Atlas Vector Search adds vector similarity to your existing MongoDB coll
 
 #### Step 2 — Create the Vector Search Index in Atlas
 
-**This step must be completed before running `smartqdrant.py index`.** The index cannot be created by SmartQdrant — it must be created in the Atlas UI.
+**This step must be completed before running `kvforge.py index`.** The index cannot be created by KVForge — it must be created in the Atlas UI.
 
 In the Atlas UI:
 1. Click your cluster → **Browse Collections**
@@ -2008,7 +2008,7 @@ In the Atlas UI:
 
 #### Step 3 — Create the backend file
 
-Create a new file at `vectorstore/mongodb_store.py` in the SmartQdrant repository root:
+Create a new file at `vectorstore/mongodb_store.py` in the KVForge repository root:
 
 ```python
 # vectorstore/mongodb_store.py
@@ -2018,9 +2018,9 @@ from vectorstore.base import Point, ScoredPoint
 
 
 class MongoDBStore:
-    """MongoDB Atlas Vector Search backend for SmartQdrant."""
+    """MongoDB Atlas Vector Search backend for KVForge."""
 
-    def __init__(self, uri: str, database: str = "smartqdrant"):
+    def __init__(self, uri: str, database: str = "kvforge"):
         try:
             from pymongo import MongoClient
         except ImportError:
@@ -2127,7 +2127,7 @@ def get_store(cfg: dict):
         from vectorstore.mongodb_store import MongoDBStore
         return MongoDBStore(
             uri=cfg["mongodb_uri"],
-            database=cfg.get("mongodb_database", "smartqdrant"),
+            database=cfg.get("mongodb_database", "kvforge"),
         )
     raise ValueError(
         f"Unknown vector_store '{backend}'. Choose: qdrant, chroma, mongodb"
@@ -2136,13 +2136,13 @@ def get_store(cfg: dict):
 
 #### Step 5 — Create a datasource config
 
-Run `python smartqdrant.py init --name my-corpus` to create **`datasource_my-corpus.json`**. Then open it and make the following changes:
+Run `python kvforge.py init --name my-corpus` to create **`datasource_my-corpus.json`**. Then open it and make the following changes:
 
 | Field | Action | Value |
 |-------|--------|-------|
 | `vector_store` | change | `"mongodb"` |
 | `mongodb_uri` | **add** | your Atlas connection string (from Step 1 prerequisite) |
-| `mongodb_database` | **add** | `"smartqdrant"` (or any database name) |
+| `mongodb_database` | **add** | `"kvforge"` (or any database name) |
 
 Complete config after editing:
 
@@ -2151,7 +2151,7 @@ Complete config after editing:
   "collection":        "my-corpus",
   "vector_store":      "mongodb",
   "mongodb_uri":       "mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/",
-  "mongodb_database":  "smartqdrant",
+  "mongodb_database":  "kvforge",
 
   "embed_model":       "BAAI/bge-small-en-v1.5",
   "embedder_backend":  "fastembed",
@@ -2169,8 +2169,8 @@ Complete config after editing:
 #### Step 6 — Index and search
 
 ```bash
-python smartqdrant.py index --config datasource_my-corpus.json --source ./docs/
-python smartqdrant.py search --config datasource_my-corpus.json "data retention policy"
+python kvforge.py index --config datasource_my-corpus.json --source ./docs/
+python kvforge.py search --config datasource_my-corpus.json "data retention policy"
 ```
 
 #### Step 7 — Verify
@@ -2178,7 +2178,7 @@ python smartqdrant.py search --config datasource_my-corpus.json "data retention 
 ```python
 from pymongo import MongoClient
 client = MongoClient("mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/")
-db = client["smartqdrant"]
+db = client["kvforge"]
 col = db["my-corpus"]
 print(f"Documents: {col.estimated_document_count()}")
 print(col.find_one({}, {"_id": 1, "text": 1}))
@@ -2213,7 +2213,7 @@ Increase `numCandidates` in the `$vectorSearch` pipeline stage (currently `top_k
 
 ### Can I use an existing Qdrant collection I already have?
 
-Yes. SmartQdrant is additive — it reads and writes extra payload fields on your existing points without touching your vectors or any of your existing payload fields.
+Yes. KVForge is additive — it reads and writes extra payload fields on your existing points without touching your vectors or any of your existing payload fields.
 
 #### Step 1 — Identify your collection's embedding model and dimension
 
@@ -2232,7 +2232,7 @@ The `size` value is your `vector_dim`.
 #### Step 2 — Create a config for the existing collection
 
 ```bash
-python smartqdrant.py init --name existing --llm-model meta-llama/Llama-3.2-3B-Instruct
+python kvforge.py init --name existing --llm-model meta-llama/Llama-3.2-3B-Instruct
 ```
 
 Edit `datasource_existing.json` to match your existing collection:
@@ -2258,7 +2258,7 @@ Edit `datasource_existing.json` to match your existing collection:
 
 #### Step 3 — Verify that your existing points have a `text` field
 
-SmartQdrant uses `payload["text"]` for text-in-context fallback and KV computation. Check:
+KVForge uses `payload["text"]` for text-in-context fallback and KV computation. Check:
 
 ```python
 from qdrant_client import QdrantClient

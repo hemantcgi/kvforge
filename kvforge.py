@@ -1,6 +1,6 @@
-"""SmartQdrant command-line interface.
+"""KVForge command-line interface.
 
-Provides subcommands to initialise, index, and search a SmartQdrant datasource.
+Provides subcommands to initialise, index, and search a KVForge datasource.
 
 Commands:
 
@@ -10,9 +10,9 @@ Commands:
 
 Usage::
 
-    python smartqdrant.py init   --name my-corpus
-    python smartqdrant.py index  --config datasource_my-corpus.json --source ./docs/
-    python smartqdrant.py search --config datasource_my-corpus.json "my query"
+    python kvforge.py init   --name my-corpus
+    python kvforge.py index  --config datasource_my-corpus.json --source ./docs/
+    python kvforge.py search --config datasource_my-corpus.json "my query"
 """
 
 import argparse
@@ -87,7 +87,7 @@ def cmd_init(args) -> None:
 
     print(f"Created {config_path}")
     print(f"Next steps:")
-    print(f"  1. Index your source:  python smartqdrant.py index --config {config_path} --source <path>")
+    print(f"  1. Index your source:  python kvforge.py index --config {config_path} --source <path>")
     print(f"  2. Generate FAQs:      python tools/generate_faqs.py --config {config_path} --output {name}_faqs.json")
     print(f"  3. Train:              python -m pipeline.index_and_train --config {config_path} --source <path> --faqs {name}_faqs.json")
 
@@ -161,7 +161,7 @@ def cmd_search(args) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(prog="smartqdrant", description="SmartQdrant CLI")
+    parser = argparse.ArgumentParser(prog="kvforge", description="KVForge CLI")
     sub = parser.add_subparsers(dest="command", metavar="COMMAND")
     sub.required = True
 

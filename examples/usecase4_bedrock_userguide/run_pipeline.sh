@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# run_pipeline.sh — Full SmartQdrant pipeline for Use Case 4: Amazon Bedrock User Guide + Qdrant
+# run_pipeline.sh — Full KVForge pipeline for Use Case 4: Amazon Bedrock User Guide + Qdrant
 #
 # Prerequisites
 # -------------
 #   - Docker running with Qdrant:
 #       docker run -d -p 6333:6333 qdrant/qdrant
-#   - Python venv activated with SmartQdrant dependencies
+#   - Python venv activated with KVForge dependencies
 #   - HuggingFace token set (for Llama access):
 #       export HF_TOKEN=hf_...
 #   - GPU recommended for KV computation and LoRA training
@@ -24,7 +24,7 @@ PDF="$UC_DIR/data/amazon-bedrock-user-guide.pdf"
 cd "$REPO_ROOT"
 
 echo "================================================================"
-echo " SmartQdrant — Use Case 4: Amazon Bedrock User Guide (Qdrant)"
+echo " KVForge — Use Case 4: Amazon Bedrock User Guide (Qdrant)"
 echo "================================================================"
 
 # ── Step 0: Verify PDF is present ────────────────────────────────────────────
@@ -40,7 +40,7 @@ echo "  Found: $PDF"
 # ── Step 1: Index the PDF into Qdrant ────────────────────────────────────────
 echo ""
 echo "[ Step 1 ] Indexing Amazon Bedrock User Guide into Qdrant …"
-python smartqdrant.py index --config "$CONFIG" --source "$PDF"
+python kvforge.py index --config "$CONFIG" --source "$PDF"
 
 # ── Step 2: Compute KV tensors for all chunks ─────────────────────────────────
 echo ""

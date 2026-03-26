@@ -1,4 +1,4 @@
-"""Atomic read/write helpers for the SmartQdrant version state file.
+"""Atomic read/write helpers for the KVForge version state file.
 
 The version file (``version.json`` by default) tracks:
 

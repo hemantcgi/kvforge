@@ -1,4 +1,4 @@
-# SmartQdrant — Quick Start
+# KVForge — Quick Start
 
 Get from zero to a working question-answering system in 5 minutes (retrieval-only, no GPU needed).
 
@@ -21,7 +21,7 @@ docker run -p 6333:6333 qdrant/qdrant
 ## 2. Initialise a datasource
 
 ```bash
-python smartqdrant.py init --name my-corpus --loader markdown
+python kvforge.py init --name my-corpus --loader markdown
 ```
 
 This creates `datasource_my-corpus.json` with sensible defaults and a `lora_checkpoints/my-corpus/` directory.
@@ -31,7 +31,7 @@ This creates `datasource_my-corpus.json` with sensible defaults and a `lora_chec
 ```bash
 ./scripts/index.sh datasource_my-corpus.json ./my-docs/
 # or equivalently:
-python smartqdrant.py index --config datasource_my-corpus.json --source ./my-docs/
+python kvforge.py index --config datasource_my-corpus.json --source ./my-docs/
 ```
 
 ## 4. Ask a question

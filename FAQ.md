@@ -1,4 +1,4 @@
-# SmartQdrant — Frequently Asked Questions
+# KVForge — Frequently Asked Questions
 
 This index links to per-section detail pages. Each section page contains all question entries and full answers for that topic.
 
@@ -7,15 +7,15 @@ This index links to per-section detail pages. Each section page contains all que
 ## Table of Contents
 
 **Vector Stores** → [View full section](docs/faq/vector-stores.md)
-- [How do I use SmartQdrant with ChromaDB instead of Qdrant?](docs/faq/vector-stores.md#how-do-i-use-smartqdrant-with-chromadb-instead-of-qdrant)
+- [How do I use KVForge with ChromaDB instead of Qdrant?](docs/faq/vector-stores.md#how-do-i-use-kvforge-with-chromadb-instead-of-qdrant)
 - [How do I add support for Pinecone, Weaviate, or another vector database?](docs/faq/vector-stores.md#how-do-i-add-support-for-pinecone-weaviate-or-another-vector-database)
-- [How do I use SmartQdrant with pgvector (PostgreSQL)?](docs/faq/vector-stores.md#how-do-i-use-smartqdrant-with-pgvector-postgresql)
-- [How do I use SmartQdrant with FAISS?](docs/faq/vector-stores.md#how-do-i-use-smartqdrant-with-faiss)
-- [How do I use SmartQdrant with Milvus or Zilliz Cloud?](docs/faq/vector-stores.md#how-do-i-use-smartqdrant-with-milvus-or-zilliz-cloud)
-- [How do I use SmartQdrant with LanceDB?](docs/faq/vector-stores.md#how-do-i-use-smartqdrant-with-lancedb)
-- [How do I use SmartQdrant with Redis (RedisSearch)?](docs/faq/vector-stores.md#how-do-i-use-smartqdrant-with-redis-redissearch)
-- [How do I use SmartQdrant with Elasticsearch or OpenSearch?](docs/faq/vector-stores.md#how-do-i-use-smartqdrant-with-elasticsearch-or-opensearch)
-- [How do I use SmartQdrant with MongoDB Atlas Vector Search?](docs/faq/vector-stores.md#how-do-i-use-smartqdrant-with-mongodb-atlas-vector-search)
+- [How do I use KVForge with pgvector (PostgreSQL)?](docs/faq/vector-stores.md#how-do-i-use-kvforge-with-pgvector-postgresql)
+- [How do I use KVForge with FAISS?](docs/faq/vector-stores.md#how-do-i-use-kvforge-with-faiss)
+- [How do I use KVForge with Milvus or Zilliz Cloud?](docs/faq/vector-stores.md#how-do-i-use-kvforge-with-milvus-or-zilliz-cloud)
+- [How do I use KVForge with LanceDB?](docs/faq/vector-stores.md#how-do-i-use-kvforge-with-lancedb)
+- [How do I use KVForge with Redis (RedisSearch)?](docs/faq/vector-stores.md#how-do-i-use-kvforge-with-redis-redissearch)
+- [How do I use KVForge with Elasticsearch or OpenSearch?](docs/faq/vector-stores.md#how-do-i-use-kvforge-with-elasticsearch-or-opensearch)
+- [How do I use KVForge with MongoDB Atlas Vector Search?](docs/faq/vector-stores.md#how-do-i-use-kvforge-with-mongodb-atlas-vector-search)
 - [Can I use an existing Qdrant collection I already have?](docs/faq/vector-stores.md#can-i-use-an-existing-qdrant-collection-i-already-have)
 
 **Language Models** → [View full section](docs/faq/language-models.md)
@@ -58,4 +58,4 @@ This index links to per-section detail pages. Each section page contains all que
 
 ---
 
-*Have a question not covered here? Open an issue at [github.com/hemantcgi/smartqdrant/issues](https://github.com/hemantcgi/smartqdrant/issues).*
+*Have a question not covered here? Open an issue at [github.com/hemantcgi/kvforge/issues](https://github.com/hemantcgi/kvforge/issues).*

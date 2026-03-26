@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================
-# dashboard.sh — Start the SmartQdrant monitoring dashboard
+# dashboard.sh — Start the KVForge monitoring dashboard
 #
 # Usage:
 #   scripts/dashboard.sh <config.json> [port]

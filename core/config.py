@@ -1,4 +1,4 @@
-"""Pydantic configuration model for a SmartQdrant datasource.
+"""Pydantic configuration model for a KVForge datasource.
 
 A single ``DatasourceConfig`` object captures every tunable parameter for one
 corpus: which vector store to use, which embedder, which LLM, LoRA hyper-
@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 
 class DatasourceConfig(BaseModel):
-    """All runtime parameters for a single SmartQdrant datasource.
+    """All runtime parameters for a single KVForge datasource.
 
     Fields are grouped by concern below.  Required fields (those with no
     default) must be supplied in the JSON config file.

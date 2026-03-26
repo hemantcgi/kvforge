@@ -1,6 +1,6 @@
-# SmartQdrant
+# KVForge
 
-**SmartQdrant** is a progressive RAG (Retrieval-Augmented Generation) system that pre-computes and stores LLM KV-cache tensors directly in a vector database. Instead of re-encoding retrieved documents at query time, SmartQdrant injects pre-computed key-value tensors into the LLM's attention layers — making inference faster as the system learns which knowledge it can answer from its own weights.
+**KVForge** is a progressive RAG (Retrieval-Augmented Generation) system that pre-computes and stores LLM KV-cache tensors directly in a vector database. Instead of re-encoding retrieved documents at query time, KVForge injects pre-computed key-value tensors into the LLM's attention layers — making inference faster as the system learns which knowledge it can answer from its own weights.
 
 It works with **any dataset, any embedding model, any small language model, and any vector database.**
 
@@ -8,7 +8,7 @@ It works with **any dataset, any embedding model, any small language model, and 
 
 ## Core Idea
 
-Standard RAG re-encodes retrieved chunks on every query. SmartQdrant amortizes that cost:
+Standard RAG re-encodes retrieved chunks on every query. KVForge amortizes that cost:
 
 1. **Index** — chunk your documents, embed them, and compute KV tensors (one LLM forward pass per chunk)
 2. **Store** — save KV tensors alongside vectors in the database as base64-encoded payloads
@@ -64,11 +64,11 @@ flowchart TD
 
 ## Pluggable Architecture
 
-SmartQdrant is designed so every component can be swapped:
+KVForge is designed so every component can be swapped:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      smartqdrant CLI                        │
+│                      kvforge CLI                        │
 │              init / index / search / train / eval           │
 └────────────────────────┬────────────────────────────────────┘
                          │
@@ -93,8 +93,8 @@ All three protocols are Python `runtime_checkable` `Protocol` classes — add a 
 ## Project Structure
 
 ```
-smartqdrant/
-├── smartqdrant.py          # Main CLI: init / index / search
+kvforge/
+├── kvforge.py          # Main CLI: init / index / search
 ├── ask.py                  # Query CLI: ask a question
 │
 ├── core/                   # Library modules (no GPU needed)
@@ -125,8 +125,8 @@ smartqdrant/
 │   ├── usecase2_pubmedqa/           # ChromaDB + PubMedQA dataset
 │   ├── usecase3_squad/              # FAISS + SQuAD v2 dataset
 │   └── usecase4_bedrock_userguide/  # Qdrant + Amazon Bedrock User Guide
-├── tests/                  # SmartQdrant test suite
-│   └── qdrant_internal/    # Upstream Qdrant tests (not SmartQdrant)
+├── tests/                  # KVForge test suite
+│   └── qdrant_internal/    # Upstream Qdrant tests (not KVForge)
 └── docs/                   # Documentation
     ├── faq/                # FAQ topic pages
     ├── guides/             # Quickstart, architecture, troubleshooting
@@ -173,8 +173,8 @@ Shell wrappers for every pipeline tool are in `scripts/`. See [`scripts/README.m
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/hemantcgi/smartqdrant.git
-cd smartqdrant
+git clone https://github.com/hemantcgi/kvforge.git
+cd kvforge
 python -m venv venv
 source venv/bin/activate
 
@@ -196,14 +196,14 @@ docker run -d -p 6333:6333 -p 6334:6334 \
 
 ### 3. Scaffold a new datasource
 
-`smartqdrant.py init` creates a validated config file and the checkpoint directory:
+`kvforge.py init` creates a validated config file and the checkpoint directory:
 
 ```bash
 # PDF corpus, default FastEmbed embedder, Qdrant vector store
-python smartqdrant.py init --name my-corpus
+python kvforge.py init --name my-corpus
 
 # Markdown corpus, custom embedding model
-python smartqdrant.py init \
+python kvforge.py init \
   --name docs-corpus \
   --loader markdown \
   --embed-model BAAI/bge-base-en-v1.5 \
@@ -217,12 +217,12 @@ This creates `datasource_my-corpus.json` and `lora_checkpoints/my-corpus/`.
 
 ```bash
 # Index a single PDF
-python smartqdrant.py index \
+python kvforge.py index \
   --config datasource_my-corpus.json \
   --source ./my_document.pdf
 
 # Index a directory of markdown files
-python smartqdrant.py index \
+python kvforge.py index \
   --config datasource_docs-corpus.json \
   --source ./docs/
 ```
@@ -230,7 +230,7 @@ python smartqdrant.py index \
 ### 5. Search
 
 ```bash
-python smartqdrant.py search \
+python kvforge.py search \
   --config datasource_my-corpus.json \
   "What is the recommended approach for X?"
 ```
@@ -292,7 +292,7 @@ The dashboard shows:
 
 ## Datasource Config Reference
 
-`smartqdrant.py init` creates a config with sensible defaults. All fields:
+`kvforge.py init` creates a config with sensible defaults. All fields:
 
 ```json
 {
@@ -334,7 +334,7 @@ Supported values:
 
 | File | Responsibility |
 |------|----------------|
-| `smartqdrant.py` | CLI: `init` / `index` / `search` |
+| `kvforge.py` | CLI: `init` / `index` / `search` |
 | `kv_utils.py` | KV tensor ops: mean_pool, serialize, deserialize, stack |
 | `model_loader.py` | Singleton LLM + LoRA loader; KV shape auto-discovery |
 | `confidence_gate.py` | Phase 3: entropy + hedging + query-similarity gate |
@@ -413,7 +413,7 @@ Entropy-based confidence gating is related to approaches in Kadavath et al. (202
 
 ## KV Tensor Storage Schema
 
-When indexing, SmartQdrant writes these fields to each point's payload:
+When indexing, KVForge writes these fields to each point's payload:
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -448,7 +448,7 @@ Individual test files:
 | `test_prs_evaluator.py` | PRS weights, FAQ schema flexibility |
 | `test_config.py` | Pydantic config validation |
 | `test_generate_faqs.py` | FAQ Q/A parsing |
-| `test_smartqdrant.py` | CLI init / index / search |
+| `test_kvforge.py` | CLI init / index / search |
 | `test_kv_*.py` | KV tensor ops, inference modes, stale-chunk handling |
 | `test_confidence_gate.py` | Entropy + hedging signal logic |
 | `test_access_tracker.py` | Tier classification, thread-safe counters |
@@ -511,11 +511,11 @@ Multiple document collections can share one Qdrant instance.
 
 [1] Vaswani, A. et al. **"Attention Is All You Need."** NeurIPS 2017.
 [`arXiv:1706.03762`](https://arxiv.org/abs/1706.03762)
-— Foundation of the transformer KV-cache mechanism exploited by SmartQdrant.
+— Foundation of the transformer KV-cache mechanism exploited by KVForge.
 
 [2] Lewis, P. et al. **"Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks."** NeurIPS 2020.
 [`arXiv:2005.11401`](https://arxiv.org/abs/2005.11401)
-— Original RAG paper; SmartQdrant extends this with KV injection and parametric answering.
+— Original RAG paper; KVForge extends this with KV injection and parametric answering.
 
 [3] Hu, E. et al. **"LoRA: Low-Rank Adaptation of Large Language Models."** ICLR 2022.
 [`arXiv:2106.09685`](https://arxiv.org/abs/2106.09685)
@@ -539,7 +539,7 @@ Multiple document collections can share one Qdrant instance.
 
 [8] Gim, I. et al. **"PromptCache: Modular Attention Reuse for Low-Latency Inference."** MLSys 2024.
 [`arXiv:2311.04934`](https://arxiv.org/abs/2311.04934)
-— Closest prior work to SmartQdrant's KV-tensor storage and reuse approach.
+— Closest prior work to KVForge's KV-tensor storage and reuse approach.
 
 [9] **Qdrant vector database.** [`qdrant.tech`](https://qdrant.tech)
 — Vector store used for embedding search and KV payload storage.

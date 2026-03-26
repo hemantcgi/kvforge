@@ -1,4 +1,4 @@
-"""Auto-generate FAQ JSON files from an indexed SmartQdrant corpus.
+"""Auto-generate FAQ JSON files from an indexed KVForge corpus.
 
 Uses the loaded LLM to produce one factual Q&A pair per sampled chunk.
 Generated FAQs can be used directly for LoRA instruction fine-tuning

@@ -1,6 +1,6 @@
 # Use Case 3: General Knowledge Q&A with FAISS
 
-This example demonstrates SmartQdrant on SQuAD v2 (Stanford Question Answering
+This example demonstrates KVForge on SQuAD v2 (Stanford Question Answering
 Dataset), using **FAISS** as the vector store — completely offline, no server,
 no Docker. Everything runs in a single process.
 
@@ -40,7 +40,7 @@ HuggingFace SQuAD v2
   setup.py (deduplicate passages, extract answerable Q&A)
         │
         ▼ JSONL corpus (unique Wikipedia passages)
-  smartqdrant.py index ──────────────► FAISS (.faiss/squad-qa/)
+  kvforge.py index ──────────────► FAISS (.faiss/squad-qa/)
         │                               (IndexFlatIP, L2-normalised)
         ▼
   pipeline/kv_indexer.py compute-kv ◄─── scroll (in-memory scan)
@@ -93,7 +93,7 @@ Or step by step:
 python examples/usecase3_squad/setup.py
 
 # 1. Index into FAISS
-python smartqdrant.py index \
+python kvforge.py index \
   --config examples/usecase3_squad/config.json \
   --source examples/usecase3_squad/data/corpus.jsonl
 

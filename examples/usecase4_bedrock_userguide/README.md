@@ -1,6 +1,6 @@
 # Use Case 4: Amazon Bedrock User Guide with Qdrant
 
-This example demonstrates SmartQdrant on a real technical documentation corpus — the
+This example demonstrates KVForge on a real technical documentation corpus — the
 **Amazon Bedrock User Guide** (PDF, ~500 pages) — using **Qdrant** as the vector store
 and a higher-dimension embedding model (`mxbai-embed-large-v1`, 1024-dim) for better
 retrieval accuracy on dense technical text.
@@ -24,7 +24,7 @@ retrieval accuracy on dense technical text.
 data/amazon-bedrock-user-guide.pdf
         │
         ▼
-  smartqdrant.py index (PDF loader) ──────────► Qdrant (localhost:6333)
+  kvforge.py index (PDF loader) ──────────► Qdrant (localhost:6333)
         │                                               │
         ▼                                               │
   pipeline/kv_indexer.py compute-kv ◄──── read chunks ─┘
@@ -89,7 +89,7 @@ FAQS=examples/usecase4_bedrock_userguide/faqs.json
 PDF=examples/usecase4_bedrock_userguide/data/amazon-bedrock-user-guide.pdf
 
 # 1. Index the PDF
-python smartqdrant.py index --config "$CONFIG" --source "$PDF"
+python kvforge.py index --config "$CONFIG" --source "$PDF"
 
 # 2. Compute KV tensors
 python -m pipeline.kv_indexer --config "$CONFIG" compute-kv
@@ -160,7 +160,7 @@ python ask.py --config "$CONFIG" "How does Amazon Bedrock handle data privacy?"
 python ask.py --config "$CONFIG" "What is the difference between on-demand and provisioned throughput?"
 ```
 
-## A/B Evaluation (SmartQdrant vs Gemini)
+## A/B Evaluation (KVForge vs Gemini)
 
 `eval_ab.py` runs every question in `faqs.json` through the dashboard's `/api/query`
 endpoint, computes metrics against the ground-truth answers, and prints a comparison report.

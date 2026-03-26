@@ -1,14 +1,14 @@
-# SmartQdrant Codebase Reorganisation — Design Spec
+# KVForge Codebase Reorganisation — Design Spec
 
 **Date:** 2026-03-25
-**Branch:** smartqdrant-main
+**Branch:** kvforge-main
 **Approach:** Surgical Reorganization (Approach A)
 
 ---
 
 ## Goal
 
-Reorganise the SmartQdrant repository to achieve three outcomes:
+Reorganise the KVForge repository to achieve three outcomes:
 
 1. **Organised codebase** — pipeline/orchestration scripts separated from user-facing CLIs and utilities; Qdrant-internal tests labelled and isolated; legacy files removed from root.
 2. **Complete project documentation** — hand-written guides + API reference + pdoc auto-generation config.
@@ -22,7 +22,7 @@ All existing tests must pass after every structural change.
 
 - Do not move `embeddings/`, `ingestion/`, `vectorstore/`, or `tools/` — their structure is clean.
 - Do not refactor logic — only move files, update imports, and add docs/scripts.
-- Keep `smartqdrant.py` and `ask.py` at root (they are the primary user entry points).
+- Keep `kvforge.py` and `ask.py` at root (they are the primary user entry points).
 - All tests in `tests/test_*.py` must continue to pass after the migration.
 
 ---
@@ -32,8 +32,8 @@ All existing tests must pass after every structural change.
 ### Target Layout
 
 ```
-smartqdrant/
-├── smartqdrant.py              ← main CLI (stays at root)
+kvforge/
+├── kvforge.py              ← main CLI (stays at root)
 ├── ask.py                      ← query CLI (stays at root)
 ├── config.py                   ← Pydantic DatasourceConfig (stays at root)
 ├── kv_utils.py                 ← KV tensor ops (stays at root)
@@ -75,9 +75,9 @@ smartqdrant/
 │   └── run_pipeline.sh         ← full Phase 1→2→3 orchestration
 │
 ├── tests/
-│   ├── test_*.py               ← SmartQdrant-specific (unchanged except import paths)
+│   ├── test_*.py               ← KVForge-specific (unchanged except import paths)
 │   └── qdrant_internal/        ← MOVED from tests/ root
-│       ├── README.md           ← label: upstream Qdrant tests, not SmartQdrant
+│       ├── README.md           ← label: upstream Qdrant tests, not KVForge
 │       ├── consensus_tests/
 │       ├── e2e_tests/
 │       └── openapi/
@@ -246,7 +246,7 @@ fi
 |--------|-------|---------------|---------------|
 | `ask.sh` | `ask.py` | `CONFIG` `QUERY` | — |
 | `dashboard.sh` | `python -m pipeline.monitoring_dashboard` | `CONFIG` | `PORT` (default 8080) |
-| `index.sh` | `smartqdrant.py index` | `CONFIG` `SOURCE` | — |
+| `index.sh` | `kvforge.py index` | `CONFIG` `SOURCE` | — |
 | `compute_kv.sh` | `python -m pipeline.kv_indexer compute-kv` | `CONFIG` | — |
 | `train_lora.sh` | `python -m pipeline.lora_trainer` | `CONFIG` `FAQS` | — |
 | `evaluate_prs.sh` | `python -m pipeline.prs_evaluator` | `CONFIG` `FAQS` | — |
@@ -266,7 +266,7 @@ A markdown table of every script: description, usage syntax, required args, opti
 
 #### `docs/guides/quickstart.md`
 - Prerequisites (Python 3.10+, GPU optional, Qdrant Docker)
-- Step-by-step: install deps → `smartqdrant.py init` → `scripts/index.sh` → `scripts/ask.sh`
+- Step-by-step: install deps → `kvforge.py init` → `scripts/index.sh` → `scripts/ask.sh`
 - Points to `examples/` for full end-to-end pipelines
 
 #### `docs/guides/architecture.md`
@@ -366,7 +366,7 @@ All tests must pass before proceeding.
 
 ### Step 3 — Move Qdrant-internal tests to `tests/qdrant_internal/`
 
-3a. Create `tests/qdrant_internal/README.md` explaining these are upstream Qdrant tests, not SmartQdrant.
+3a. Create `tests/qdrant_internal/README.md` explaining these are upstream Qdrant tests, not KVForge.
 3b. `git mv tests/consensus_tests tests/qdrant_internal/consensus_tests`
 3c. `git mv tests/e2e_tests tests/qdrant_internal/e2e_tests`
 3d. `git mv tests/openapi tests/qdrant_internal/openapi`

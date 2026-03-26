@@ -1,6 +1,6 @@
 """Qdrant-backed implementation of the VectorStore protocol.
 
-Wraps ``qdrant-client`` to provide the standard SmartQdrant ``VectorStore``
+Wraps ``qdrant-client`` to provide the standard KVForge ``VectorStore``
 interface.  All collections use cosine-distance vectors.  Requires a running
 Qdrant server (Docker or Qdrant Cloud).
 """

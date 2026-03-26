@@ -29,4 +29,4 @@ if [[ -z "$SOURCE" ]]; then
   echo "Usage: $0 <config.json> <source_path>" >&2; exit 1
 fi
 
-python smartqdrant.py index --config "$CONFIG" --source "$SOURCE"
+python kvforge.py index --config "$CONFIG" --source "$SOURCE"

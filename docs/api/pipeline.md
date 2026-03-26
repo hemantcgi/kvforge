@@ -105,8 +105,8 @@ python -m pipeline.monitoring_dashboard --config <cfg.json> [--port 8080]
 | `/stats` | GET | Collection stats (count, phase, PRS) |
 | `/version` | GET | Current phase and LoRA version |
 | `/config` | GET | Active datasource config |
-| `/query` | POST | `{"question": "..."}` — SmartQdrant answer |
-| `/ab_query` | POST | `{"question": "..."}` — SmartQdrant vs Gemini A/B comparison |
+| `/query` | POST | `{"question": "..."}` — KVForge answer |
+| `/ab_query` | POST | `{"question": "..."}` — KVForge vs Gemini A/B comparison |
 
 ---
 

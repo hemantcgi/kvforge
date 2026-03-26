@@ -37,13 +37,13 @@ OpenAI embedding model reference:
 | `text-embedding-3-large` | 3072 | ~$0.13 | Highest quality |
 | `text-embedding-ada-002` | 1536 | ~$0.10 | Legacy; prefer 3-small |
 
-> **Important:** The `vector_dim` in your config must exactly match the model's output. A mismatch causes an error at index time. SmartQdrant validates this with `validate_embed_dim()` before writing any data.
+> **Important:** The `vector_dim` in your config must exactly match the model's output. A mismatch causes an error at index time. KVForge validates this with `validate_embed_dim()` before writing any data.
 
 #### Step 3 — Index and search as normal
 
 ```bash
-python smartqdrant.py index --config datasource_my-corpus.json --source ./docs/
-python smartqdrant.py search --config datasource_my-corpus.json "your query"
+python kvforge.py index --config datasource_my-corpus.json --source ./docs/
+python kvforge.py search --config datasource_my-corpus.json "your query"
 ```
 
 #### Step 4 — Estimate cost before indexing
@@ -89,7 +89,7 @@ test_vec = model.encode(["hello world"])
 print(f"Dimension: {len(test_vec[0])}")   # must match vector_dim in config
 ```
 
-SmartQdrant will raise a `ValueError` at index time if the actual dimension does not match `vector_dim`, so misconfiguration is caught before any data is written.
+KVForge will raise a `ValueError` at index time if the actual dimension does not match `vector_dim`, so misconfiguration is caught before any data is written.
 
 #### Common sentence-transformers models
 

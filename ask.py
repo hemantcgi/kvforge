@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ask.py — Query SmartQdrant from the command line.
+ask.py — Query KVForge from the command line.
 
 Usage:
     python3 ask.py "What is Bedrock?"
@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Query SmartQdrant")
+    parser = argparse.ArgumentParser(description="Query KVForge")
     parser.add_argument("query", help="Question to ask")
     parser.add_argument("--config", default="my_config.json",
                         help="Config file (default: my_config.json)")

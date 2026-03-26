@@ -104,7 +104,7 @@ KV tensors have not been computed for this chunk yet. Run:
 
 The `pipeline/` package was not found. Run scripts from the repo root:
 ```bash
-cd /path/to/smartqdrant
+cd /path/to/kvforge
 python -m pipeline.kv_indexer ...
 ```
 

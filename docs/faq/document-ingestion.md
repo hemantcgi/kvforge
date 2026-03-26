@@ -10,13 +10,13 @@
 
 ```bash
 # No extra dependencies needed for Markdown
-python smartqdrant.py init --name docs --loader markdown
+python kvforge.py init --name docs --loader markdown
 ```
 
 #### Index a single file
 
 ```bash
-python smartqdrant.py index \
+python kvforge.py index \
   --config datasource_docs.json \
   --source ./README.md
 ```
@@ -26,8 +26,8 @@ python smartqdrant.py index \
 Change the loader to `directory` so mixed `.md`/`.pdf`/`.html` files are handled automatically:
 
 ```bash
-python smartqdrant.py init --name docs --loader directory
-python smartqdrant.py index \
+python kvforge.py init --name docs --loader directory
+python kvforge.py index \
   --config datasource_docs.json \
   --source ./docs/
 ```
@@ -41,7 +41,7 @@ Example — given this file:
 ```markdown
 # Installation
 
-Run `pip install smartqdrant` to install.
+Run `pip install kvforge` to install.
 
 ## Configuration
 
@@ -69,7 +69,7 @@ JSONL (JSON Lines) is common for datasets, evaluation sets, and structured knowl
 No extra dependencies required.
 
 ```bash
-python smartqdrant.py init --name knowledge-base --loader jsonl
+python kvforge.py init --name knowledge-base --loader jsonl
 ```
 
 #### Config
@@ -81,7 +81,7 @@ python smartqdrant.py init --name knowledge-base --loader jsonl
 }
 ```
 
-`jsonl_text_key` (default `"text"`) names the field SmartQdrant reads as the chunk text. All other fields in each JSON object are stored in metadata and available in search results via `payload`.
+`jsonl_text_key` (default `"text"`) names the field KVForge reads as the chunk text. All other fields in each JSON object are stored in metadata and available in search results via `payload`.
 
 #### Example JSONL formats
 
@@ -93,7 +93,7 @@ Standard format (default config, `jsonl_text_key: "text"`):
 
 Custom field name (`jsonl_text_key: "content"`):
 ```jsonl
-{"id": "doc-001", "content": "SmartQdrant stores KV tensors in Qdrant payload fields.", "category": "architecture"}
+{"id": "doc-001", "content": "KVForge stores KV tensors in Qdrant payload fields.", "category": "architecture"}
 {"id": "doc-002", "content": "Phase 2 activates after PRS exceeds the configured threshold.", "category": "phases"}
 ```
 
@@ -105,7 +105,7 @@ HuggingFace datasets export format (`jsonl_text_key: "passage"`):
 #### Indexing
 
 ```bash
-python smartqdrant.py index \
+python kvforge.py index \
   --config datasource_knowledge-base.json \
   --source ./my_dataset.jsonl
 ```
@@ -126,13 +126,13 @@ for r in results:
 
 ```bash
 pip install beautifulsoup4
-python smartqdrant.py init --name web-corpus --loader html
+python kvforge.py init --name web-corpus --loader html
 ```
 
 #### Index a single HTML file
 
 ```bash
-python smartqdrant.py index \
+python kvforge.py index \
   --config datasource_web-corpus.json \
   --source ./pages/article.html
 ```
@@ -149,7 +149,7 @@ Script tags, style tags, and all HTML markup are stripped. Only visible text con
 
 #### Downloading pages from the web before indexing
 
-SmartQdrant does not crawl URLs directly. Download HTML first:
+KVForge does not crawl URLs directly. Download HTML first:
 
 ```bash
 # Single page
@@ -178,8 +178,8 @@ EOF
 Then index the downloaded directory:
 
 ```bash
-python smartqdrant.py init --name web-corpus --loader directory
-python smartqdrant.py index \
+python kvforge.py init --name web-corpus --loader directory
+python kvforge.py index \
   --config datasource_web-corpus.json \
   --source ./pages/
 ```
@@ -189,8 +189,8 @@ python smartqdrant.py index \
 ### How do I index an entire directory of mixed file types?
 
 ```bash
-python smartqdrant.py init --name mixed-corpus --loader directory
-python smartqdrant.py index \
+python kvforge.py init --name mixed-corpus --loader directory
+python kvforge.py index \
   --config datasource_mixed-corpus.json \
   --source ./corpus/
 ```

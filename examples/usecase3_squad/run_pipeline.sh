@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# run_pipeline.sh — Full SmartQdrant pipeline for Use Case 3: SQuAD v2 + FAISS
+# run_pipeline.sh — Full KVForge pipeline for Use Case 3: SQuAD v2 + FAISS
 #
 # Prerequisites
 # -------------
 #   - No Docker, no external services — FAISS runs fully in-process
-#   - Python venv activated with SmartQdrant dependencies
+#   - Python venv activated with KVForge dependencies
 #   - HuggingFace token set (for Llama access):
 #       export HF_TOKEN=hf_...
 #   - GPU recommended for KV computation and LoRA training
@@ -24,7 +24,7 @@ CORPUS="$UC_DIR/data/corpus.jsonl"
 cd "$REPO_ROOT"
 
 echo "================================================================"
-echo " SmartQdrant — Use Case 3: General Knowledge Q&A (FAISS)"
+echo " KVForge — Use Case 3: General Knowledge Q&A (FAISS)"
 echo "================================================================"
 
 # ── Step 0: Download and prepare data ────────────────────────────────────────
@@ -39,7 +39,7 @@ fi
 # ── Step 1: Index corpus into FAISS ──────────────────────────────────────────
 echo ""
 echo "[ Step 1 ] Indexing corpus into FAISS (in-process, no server) …"
-python smartqdrant.py index --config "$CONFIG" --source "$CORPUS"
+python kvforge.py index --config "$CONFIG" --source "$CORPUS"
 
 # ── Step 2: Compute KV tensors ────────────────────────────────────────────────
 echo ""

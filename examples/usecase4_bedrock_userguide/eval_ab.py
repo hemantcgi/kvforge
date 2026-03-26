@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-eval_ab.py — A/B evaluation: SmartQdrant (Model A) vs Gemini (Model B).
+eval_ab.py — A/B evaluation: KVForge (Model A) vs Gemini (Model B).
 
-Runs every question in a ground-truth Q&A JSON file through the SmartQdrant
+Runs every question in a ground-truth Q&A JSON file through the KVForge
 dashboard, computes per-record and aggregate metrics, and prints a comparison
 report to the console.
 
@@ -71,13 +71,13 @@ except ImportError:
 
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
-        description="A/B evaluation: SmartQdrant vs Gemini on a ground-truth FAQ dataset",
+        description="A/B evaluation: KVForge vs Gemini on a ground-truth FAQ dataset",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     p.add_argument("--faq",      required=True,
                    help="Path to FAQ JSON: [{question, answer}, …]")
     p.add_argument("--dashboard", default="http://localhost:8084",
-                   help="SmartQdrant dashboard base URL")
+                   help="KVForge dashboard base URL")
     p.add_argument("--out",      default=None,
                    help="Save per-record results to this JSON file")
     p.add_argument("--delay",    type=float, default=1.5,

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================
-# ask.sh — Query SmartQdrant from the command line
+# ask.sh — Query KVForge from the command line
 #
 # Usage:
 #   scripts/ask.sh <config.json> "<query>"

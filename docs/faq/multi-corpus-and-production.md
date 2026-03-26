@@ -34,16 +34,16 @@ project/
 
 ```bash
 # Index each corpus independently
-python smartqdrant.py index --config datasource_legal.json --source ./legal_docs/
-python smartqdrant.py index --config datasource_hr.json    --source ./hr_policies/
+python kvforge.py index --config datasource_legal.json --source ./legal_docs/
+python kvforge.py index --config datasource_hr.json    --source ./hr_policies/
 
 # Train each corpus — these are sequential (one GPU)
 python index_and_train.py dummy.pdf --config datasource_legal.json       --faqs legal_faqs.json --skip-index
 python index_and_train.py dummy.pdf --config datasource_engineering.json --faqs eng_faqs.json   --skip-index
 
 # Query from the right corpus
-python smartqdrant.py search --config datasource_legal.json       "What is the arbitration clause?"
-python smartqdrant.py search --config datasource_engineering.json "How do I configure OAuth?"
+python kvforge.py search --config datasource_legal.json       "What is the arbitration clause?"
+python kvforge.py search --config datasource_engineering.json "How do I configure OAuth?"
 ```
 
 #### Shared base model, separate LoRA adapters
@@ -60,7 +60,7 @@ KV tensors are tied to both the document content and the LoRA adapter version. C
 
 ```bash
 # 1. Index the new documents (adds chunks, no KV yet)
-python smartqdrant.py index --config datasource_my-corpus.json --source ./new_docs/
+python kvforge.py index --config datasource_my-corpus.json --source ./new_docs/
 
 # 2. Compute KV tensors for the new chunks (they have kv_version=null)
 python kv_indexer.py --config datasource_my-corpus.json compute-kv
@@ -72,7 +72,7 @@ There is no partial update — re-index the changed file (which replaces its chu
 
 ```bash
 # Re-index deletes old chunks and creates new ones
-python smartqdrant.py index --config datasource_my-corpus.json --source ./updated_file.pdf
+python kvforge.py index --config datasource_my-corpus.json --source ./updated_file.pdf
 
 # Compute KV for the new chunks
 python kv_indexer.py --config datasource_my-corpus.json compute-kv
@@ -98,7 +98,7 @@ For corpora that are updated frequently (e.g. daily news ingestion), run this af
 ```bash
 #!/bin/bash
 # daily_update.sh
-python smartqdrant.py index --config $CONFIG --source $NEW_DOCS_DIR
+python kvforge.py index --config $CONFIG --source $NEW_DOCS_DIR
 python kv_indexer.py --config $CONFIG compute-kv
 echo "Update complete at $(date)"
 ```
@@ -212,7 +212,7 @@ rm -rf lora_checkpoints/my-corpus/
 rm -rf .chroma/my-corpus/
 
 # 5. Re-index from scratch
-python smartqdrant.py index \
+python kvforge.py index \
   --config datasource_my-corpus.json \
   --source ./my_document.pdf
 ```
@@ -289,7 +289,7 @@ This is supported by `model_loader.py` via the `bitsandbytes` library. Quantized
 | p3.2xlarge | V100 | 16 GB | Llama-3.2-3B | ~$3.06/hr |
 | p4d.24xlarge | 8× A100 | 8×40 GB | 70B models | ~$32.77/hr |
 
-SmartQdrant was benchmarked on `g5.xlarge` with Llama 3.2 3B — this is the recommended starting point.
+KVForge was benchmarked on `g5.xlarge` with Llama 3.2 3B — this is the recommended starting point.
 
 ---
 

@@ -1,6 +1,6 @@
 """Factory that instantiates the configured VectorStore backend.
 
-Provides a single ``get_store`` entry-point used throughout SmartQdrant so
+Provides a single ``get_store`` entry-point used throughout KVForge so
 that higher-level code stays backend-agnostic.
 """
 

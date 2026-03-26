@@ -42,7 +42,7 @@ class ScoredPoint:
 class VectorStore(Protocol):
     """Structural protocol for vector store backends.
 
-    All SmartQdrant backend implementations (``QdrantStore``, ``ChromaStore``,
+    All KVForge backend implementations (``QdrantStore``, ``ChromaStore``,
     ``FAISSStore``) must satisfy this interface.  The protocol is
     ``runtime_checkable``, so ``isinstance(obj, VectorStore)`` works at runtime.
     """

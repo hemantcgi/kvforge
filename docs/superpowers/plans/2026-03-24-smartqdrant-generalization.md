@@ -1,8 +1,8 @@
-# SmartQdrant Generalization Implementation Plan
+# KVForge Generalization Implementation Plan
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make SmartQdrant work with any dataset, embedding model, small language model, and vector database — with no hardcoded Bedrock or Qdrant dependencies.
+**Goal:** Make KVForge work with any dataset, embedding model, small language model, and vector database — with no hardcoded Bedrock or Qdrant dependencies.
 
 **Architecture:** Seven sequential phases, each independently shippable. Phases 1–2 are pure additive changes (no breakage). Phases 3–5 introduce abstraction layers. Phases 6–7 add config validation, CLI, and multi-collection support. Every phase leaves the system fully functional with the existing Bedrock dataset.
 
@@ -43,7 +43,7 @@ tools/
   generate_faqs.py   — Auto-generate FAQs from indexed corpus
 
 config.py            — Pydantic DatasourceConfig model
-smartqdrant.py       — CLI: init / index / search / train / evaluate
+kvforge.py       — CLI: init / index / search / train / evaluate
 
 tests/
   test_ingestion.py
@@ -1534,7 +1534,7 @@ def test_config_as_dict_is_compatible_with_existing_code():
 - [ ] **Step 2: Create `config.py`**
 
 ```python
-"""config.py — Pydantic model for SmartQdrant datasource configuration."""
+"""config.py — Pydantic model for KVForge datasource configuration."""
 import json
 from typing import Literal
 from pydantic import BaseModel, Field
@@ -2036,15 +2036,15 @@ git commit -m "refactor: migrate all pipeline files to VectorStore abstraction; 
 
 ## Chunk 7: Phase 7 — CLI Scaffold + Multi-Collection Server
 
-### Task 16: `smartqdrant.py` — CLI `init` command
+### Task 16: `kvforge.py` — CLI `init` command
 
 **Files:**
-- Create: `smartqdrant.py`
+- Create: `kvforge.py`
 
-- [ ] **Step 1: Create `smartqdrant.py`**
+- [ ] **Step 1: Create `kvforge.py`**
 
 ```python
-"""smartqdrant.py — SmartQdrant CLI.
+"""kvforge.py — KVForge CLI.
 
 Commands:
   init    Create a new datasource config
@@ -2055,9 +2055,9 @@ Commands:
   faqs    Auto-generate FAQs
 
 Usage:
-  python smartqdrant.py init --name my-corpus
-  python smartqdrant.py index --config datasource_my-corpus.json --source ./docs/
-  python smartqdrant.py search --config datasource_my-corpus.json "my query"
+  python kvforge.py init --name my-corpus
+  python kvforge.py index --config datasource_my-corpus.json --source ./docs/
+  python kvforge.py search --config datasource_my-corpus.json "my query"
 """
 
 import argparse
@@ -2122,7 +2122,7 @@ def cmd_init(args) -> None:
 
     print(f"Created {config_path}")
     print(f"Next steps:")
-    print(f"  1. Index your source:  python smartqdrant.py index --config {config_path} --source <path>")
+    print(f"  1. Index your source:  python kvforge.py index --config {config_path} --source <path>")
     print(f"  2. Generate FAQs:      python tools/generate_faqs.py --config {config_path} --output {name}_faqs.json")
     print(f"  3. Train:              python index_and_train.py --config {config_path} --source <path> --faqs {name}_faqs.json")
 
@@ -2181,7 +2181,7 @@ def cmd_search(args) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(prog="smartqdrant", description="SmartQdrant CLI")
+    parser = argparse.ArgumentParser(prog="kvforge", description="KVForge CLI")
     sub = parser.add_subparsers(dest="command", metavar="COMMAND")
     sub.required = True
 
@@ -2223,14 +2223,14 @@ if __name__ == "__main__":
 - [ ] **Step 2: Smoke test with a new corpus**
 
 ```bash
-python smartqdrant.py init --name test-corpus --loader jsonl --vector-dim 384
+python kvforge.py init --name test-corpus --loader jsonl --vector-dim 384
 ```
 Expected: Creates `datasource_test-corpus.json` and `lora_checkpoints/test-corpus/`.
 
 - [ ] **Step 3: Commit**
 ```bash
-git add smartqdrant.py
-git commit -m "feat: add smartqdrant CLI with init/index/search commands"
+git add kvforge.py
+git commit -m "feat: add kvforge CLI with init/index/search commands"
 ```
 
 ---
@@ -2245,7 +2245,7 @@ git commit -m "feat: add smartqdrant CLI with init/index/search commands"
 Replace the entire file contents with a fully-documented template:
 ```json
 {
-  "_comment": "SmartQdrant datasource configuration. All fields with defaults are optional.",
+  "_comment": "KVForge datasource configuration. All fields with defaults are optional.",
 
   "collection": "my-corpus",
   "vector_store": "qdrant",
@@ -2310,6 +2310,6 @@ git commit -m "docs: update datasource_template.json with all generalization fie
 | 4 — Auto-FAQ + PRS | 10–11 | Self-contained FAQ generation; configurable PRS | Low |
 | 5 — Config | 12 | Pydantic validation; clear errors on misconfiguration | Low |
 | 6 — VectorStore | 13–15 | Qdrant + Chroma; all files decoupled | Medium |
-| 7 — CLI | 16–17 | `smartqdrant init/index/search`; new template | Low |
+| 7 — CLI | 16–17 | `kvforge init/index/search`; new template | Low |
 
 **Any phase can be stopped after completion and the system remains fully functional.**
