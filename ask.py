@@ -4,8 +4,8 @@ ask.py — Query SmartQdrant from the command line.
 
 Usage:
     python3 ask.py "What is Bedrock?"
-    python3 ask.py --config datasource_bedrock.json "What is Bedrock?"
-    python3 ask.py --config datasource_bedrock.json --top-k 3 "What is Bedrock?"
+    python3 ask.py --config examples/usecase4_bedrock_userguide/config.json "What is Amazon Bedrock?"
+    python3 ask.py --config examples/usecase4_bedrock_userguide/config.json --top-k 3 "What is Amazon Bedrock?"
 """
 
 import argparse

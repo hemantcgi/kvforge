@@ -1,0 +1,61 @@
+{
+  "_comment": "Use Case 4 — Amazon Bedrock User Guide (PDF) with Qdrant",
+
+  "collection":       "bedrock-user-guide",
+  "vector_store":     "qdrant",
+  "qdrant_host":      "localhost",
+  "qdrant_port":      6333,
+
+  "loader":           "pdf",
+  "chunk_size":       600,
+  "chunk_overlap":    60,
+  "embed_batch":      64,
+  "upsert_batch":     128,
+  "top_k":            5,
+
+  "embed_model":      "mixedbread-ai/mxbai-embed-large-v1",
+  "embedder_backend": "fastembed",
+  "vector_dim":       1024,
+
+  "llm_model":        "meta-llama/Llama-3.2-3B-Instruct",
+
+  "model_library": {
+    "TinyLlama/TinyLlama-1.1B-Chat-v1.0": {
+      "kv_num_layers": 22, "kv_num_heads": 4, "kv_head_dim": 64
+    },
+    "meta-llama/Llama-3.2-3B-Instruct": {
+      "kv_num_layers": 28, "kv_num_heads": 8, "kv_head_dim": 128
+    },
+    "meta-llama/Llama-3.1-8B-Instruct": {
+      "kv_num_layers": 32, "kv_num_heads": 8, "kv_head_dim": 128
+    },
+    "Qwen/Qwen2.5-7B-Instruct": {
+      "kv_num_layers": 28, "kv_num_heads": 4, "kv_head_dim": 128
+    },
+    "mistralai/Mistral-7B-Instruct-v0.3": {
+      "kv_num_layers": 32, "kv_num_heads": 8, "kv_head_dim": 128
+    }
+  },
+
+  "lora_rank":        16,
+  "lora_alpha":       32,
+  "lora_target_modules": ["q_proj", "k_proj", "v_proj"],
+  "lora_dropout":     0.05,
+  "lora_epochs":      3,
+  "lora_lr":          0.0002,
+
+  "checkpoint_dir":   "examples/usecase4_bedrock_userguide/lora_checkpoints/",
+  "version_file":     "examples/usecase4_bedrock_userguide/version.json",
+  "replay_db":        "examples/usecase4_bedrock_userguide/replay.db",
+
+  "gate_threshold":   0.75,
+  "prs_threshold":    0.75,
+  "prs_weights":      {"accuracy": 0.5, "calibration": 0.3, "consistency": 0.2},
+
+  "faq_question_key": "question",
+  "faq_answer_key":   "answer",
+
+  "access_flush_seconds": 300,
+  "access_flush_queries": 50,
+  "dashboard_port":   8084
+}

@@ -2,7 +2,10 @@
   "qdrant_host": "localhost",
   "qdrant_port": 6333,
   "collection": "bedrock-user-guide",
+  "vector_store": "qdrant",
 
+  "loader": "pdf",
+  "embedder_backend": "fastembed",
   "embed_model": "mixedbread-ai/mxbai-embed-large-v1",
   "vector_dim": 1024,
   "embed_batch": 64,
@@ -38,14 +41,17 @@
   "lora_epochs": 3,
   "lora_lr": 0.0002,
 
-  "checkpoint_dir": "lora_checkpoints/bedrock/",
-  "version_file": "bedrock_version.json",
-  "replay_db": "bedrock_replay.db",
+  "checkpoint_dir": "examples/usecase4_bedrock_userguide/lora_checkpoints/",
+  "version_file": "examples/usecase4_bedrock_userguide/version.json",
+  "replay_db": "examples/usecase4_bedrock_userguide/replay.db",
+
+  "faq_question_key": "question",
+  "faq_answer_key": "answer",
 
   "gate_threshold": 0.75,
   "prs_threshold": 0.75,
   "prs_weights": {"accuracy": 0.5, "calibration": 0.3, "consistency": 0.2},
   "access_flush_seconds": 300,
   "access_flush_queries": 50,
-  "dashboard_port": 8080
+  "dashboard_port": 8084
 }

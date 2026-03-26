@@ -15,8 +15,8 @@ in the startup event so that worker threads never race on the lazy-import lock.
 Start the server::
 
     python3 -m pipeline.monitoring_dashboard
-    python3 -m pipeline.monitoring_dashboard --config datasource_bedrock.json
-    uvicorn pipeline.monitoring_dashboard:app --port 8080 --reload
+    python3 -m pipeline.monitoring_dashboard --config examples/usecase4_bedrock_userguide/config.json
+    uvicorn pipeline.monitoring_dashboard:app --port 8084 --reload
 """
 
 import argparse
