@@ -20,21 +20,25 @@ Optional (requires: pip install ragas datasets langchain-google-genai)
 
 Usage
 -----
-  # Basic (calls dashboard at localhost:8080)
-  python3 eval_ab.py --faq bedrock_50_faqs.json
+  # Basic (calls dashboard at localhost:8084)
+  python3 examples/usecase4_bedrock_userguide/eval_ab.py \
+      --faq examples/usecase4_bedrock_userguide/faqs.json
 
   # Point at EC2 dashboard
-  python3 eval_ab.py --faq bedrock_50_faqs.json \\
-      --dashboard http://100.48.17.48:8080
+  python3 examples/usecase4_bedrock_userguide/eval_ab.py \
+      --faq examples/usecase4_bedrock_userguide/faqs.json \
+      --dashboard http://100.48.17.48:8084
 
   # Save results + enable RAGAS with Gemini
-  python3 eval_ab.py --faq bedrock_50_faqs.json \\
-      --dashboard http://100.48.17.48:8080 \\
+  python3 examples/usecase4_bedrock_userguide/eval_ab.py \
+      --faq examples/usecase4_bedrock_userguide/faqs.json \
+      --dashboard http://100.48.17.48:8084 \\
       --out results.json \\
       --gemini-key YOUR_KEY
 
   # Verbose (show full answers per record)
-  python3 eval_ab.py --faq bedrock_50_faqs.json --verbose
+  python3 examples/usecase4_bedrock_userguide/eval_ab.py \
+      --faq examples/usecase4_bedrock_userguide/faqs.json --verbose
 """
 
 from __future__ import annotations
@@ -72,7 +76,7 @@ def _parse_args() -> argparse.Namespace:
     )
     p.add_argument("--faq",      required=True,
                    help="Path to FAQ JSON: [{question, answer}, …]")
-    p.add_argument("--dashboard", default="http://localhost:8080",
+    p.add_argument("--dashboard", default="http://localhost:8084",
                    help="SmartQdrant dashboard base URL")
     p.add_argument("--out",      default=None,
                    help="Save per-record results to this JSON file")

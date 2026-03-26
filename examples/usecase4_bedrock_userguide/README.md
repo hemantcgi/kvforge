@@ -160,6 +160,41 @@ python ask.py --config "$CONFIG" "How does Amazon Bedrock handle data privacy?"
 python ask.py --config "$CONFIG" "What is the difference between on-demand and provisioned throughput?"
 ```
 
+## A/B Evaluation (SmartQdrant vs Gemini)
+
+`eval_ab.py` runs every question in `faqs.json` through the dashboard's `/api/query`
+endpoint, computes metrics against the ground-truth answers, and prints a comparison report.
+
+**Metrics computed:**
+- `semantic_sim` — cosine similarity between answer and ground-truth embeddings (fastembed, CPU)
+- `token_f1` — token-level F1 between predicted and ground-truth answer
+- `latency_ms` — wall-clock latency reported by the dashboard
+- `ragas_similarity` / `ragas_correctness` — optional, requires `--ragas` flag
+
+**Prerequisites:** Start the dashboard first:
+```bash
+python -m pipeline.monitoring_dashboard \
+  --config examples/usecase4_bedrock_userguide/config.json
+```
+
+**Run:**
+```bash
+# Basic — against local dashboard on port 8084
+python3 examples/usecase4_bedrock_userguide/eval_ab.py \
+    --faq examples/usecase4_bedrock_userguide/faqs.json
+
+# Save results to JSON
+python3 examples/usecase4_bedrock_userguide/eval_ab.py \
+    --faq examples/usecase4_bedrock_userguide/faqs.json \
+    --out ab_eval_results.json
+
+# Against EC2 dashboard + RAGAS evaluation with Gemini judge
+python3 examples/usecase4_bedrock_userguide/eval_ab.py \
+    --faq examples/usecase4_bedrock_userguide/faqs.json \
+    --dashboard http://100.48.17.48:8084 \
+    --ragas --gemini-key YOUR_KEY
+```
+
 ## Why Qdrant for Technical Documentation?
 
 - **1024-dim vector support**: Qdrant handles large embedding dimensions efficiently — ChromaDB and FAISS work too, but Qdrant's HNSW index performs best at high dimensions
