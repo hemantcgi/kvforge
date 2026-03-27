@@ -739,8 +739,23 @@ PRS = 0.5 × Accuracy
       </div>
     </div>
 
-    <div class="section-label">Answer B — Gemini RAG</div>
+    <div class="section-label" id="label-b">Answer B — Gemini RAG</div>
     <div class="param-grid">
+      <div class="param-group">
+        <label>Provider</label>
+        <select id="b_provider" style="background:#1a1a1a;color:#eee;border:1px solid #444;padding:4px 6px;font-family:monospace;font-size:0.9em;width:100%;box-sizing:border-box;">
+          <option value="gemini">Gemini</option>
+          <option value="openai">OpenAI</option>
+        </select>
+      </div>
+      <div class="param-group">
+        <label>Model</label>
+        <select id="b_model" style="background:#1a1a1a;color:#eee;border:1px solid #444;padding:4px 6px;font-family:monospace;font-size:0.9em;width:100%;box-sizing:border-box;"></select>
+      </div>
+      <div class="param-group">
+        <label>API Key</label>
+        <input id="b_api_key" type="password" placeholder="Paste API key…"/>
+      </div>
       <div class="param-group">
         <label>Max output tokens</label>
         <input id="b_max_output_tokens" type="number" min="128" max="65536" value="1024"/>
@@ -765,7 +780,7 @@ PRS = 0.5 × Accuracy
         </details>
       </div>
       <div style="flex:1;border:1px solid #444;padding:12px">
-        <b style="color:#fa7">Answer B — Gemini RAG</b>
+        <b style="color:#fa7" id="header-b">Answer B — Gemini RAG</b>
         <div id="latency-b" style="color:#888;font-size:0.85em;margin:4px 0;font-family:monospace"></div>
         <pre id="answer-b" style="white-space:pre-wrap;margin:8px 0;color:#eee;font-size:0.9em"></pre>
         <details id="thinking-b-details" style="margin-top:8px;display:none">
