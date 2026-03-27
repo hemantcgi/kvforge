@@ -202,7 +202,6 @@ def main() -> None:
     ver.init(cfg)
     model_loader.init(cfg)
 
-    client = QdrantClient(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
     rb = ReplayBuffer(db_path=cfg.get("replay_db", "replay_buffer.db"))
 
     qa_texts = None
@@ -216,7 +215,8 @@ def main() -> None:
         replay_chunks = rb.sample(n=n_replay, weight_by_tier=True)
         new_chunks = []
     else:
-        # Raw chunk mode
+        # Raw chunk mode — Qdrant client only needed here
+        client = QdrantClient(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
         new_chunks = fetch_chunks_for_source(client, cfg["collection"], args.source_file)
         if not new_chunks:
             print(f"❌ No chunks found for source_file='{args.source_file}'")
