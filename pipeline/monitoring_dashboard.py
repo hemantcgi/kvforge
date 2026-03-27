@@ -412,8 +412,9 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
         )
 
         # 3. call Gemini REST API
-        api_key = cfg.get("gemini_api_key", "")
-        model = cfg.get("gemini_model", "gemini-3.1-pro-preview")
+        # Use runtime config if set; fall back to config.json values
+        api_key = _model_b_config.get("api_key") or cfg.get("gemini_api_key", "")
+        model = _model_b_config.get("model") or cfg.get("gemini_model", "gemini-3.1-pro-preview")
         url = (
             f"https://generativelanguage.googleapis.com/v1beta/models/"
             f"{model}:generateContent?key={api_key}"
@@ -471,13 +472,99 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
             "generation_ms": generation_ms, "chunks": chunks, "thinking": thinking}
 
 
+def _answer_openai(query: str, cfg: dict, params: QueryRequest) -> dict:
+    t0 = time.time()
+    tag = "B:OpenAI"
+    _log(tag, f"START query={query!r} top_k={params.b_top_k} max_tokens={params.b_max_output_tokens} temp={params.b_temperature}")
+    chunks = []
+    retrieval_ms = 0
+    generation_ms = 0
+    answer = ""
+    try:
+        from fastembed import TextEmbedding
+
+        _log(tag, "embedding query…")
+        embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
+        q_vec = list(embedder.embed([query]))[0].tolist()
+
+        _log(tag, "searching vector store…")
+        store = _get_store()
+        t_ret = time.time()
+        hits = store.query(cfg["collection"], q_vec, top_k=params.b_top_k)
+        retrieval_ms = int((time.time() - t_ret) * 1000)
+        top_score_b = f"{hits[0].score:.4f}" if hits else "n/a"
+        _log(tag, f"search done — {len(hits)} hits, top_score={top_score_b}, retrieval={retrieval_ms}ms")
+        chunks = [
+            {
+                "page": h.payload.get("page", 0),
+                "score": round(h.score, 4),
+                "text": h.payload.get("text", "")[:2000],
+            }
+            for h in hits
+        ]
+
+        # build prompt
+        context = "\n\n".join(
+            f"[page {c['page']}, score {c['score']}]\n{c['text']}" for c in chunks
+        )
+        prompt = (
+            f"Answer the question using ONLY the context below. "
+            f"Cite sources as [page N].\n\nContext:\n{context}\n\nQuestion: {query}"
+        )
+
+        # call OpenAI REST API
+        api_key = _model_b_config.get("api_key") or ""
+        model = _model_b_config.get("model", "gpt-4o")
+        url = "https://api.openai.com/v1/chat/completions"
+        _log(tag, f"calling OpenAI API ({model}, timeout=90s)…")
+        t_gen = time.time()
+        resp = httpx.post(
+            url,
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={
+                "model": model,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": params.b_max_output_tokens,
+                "temperature": params.b_temperature,
+            },
+            timeout=90,
+        )
+        _log(tag, f"OpenAI HTTP {resp.status_code}")
+        resp.raise_for_status()
+        data = resp.json()
+        choices = data.get("choices", [])
+        if not choices:
+            answer = "OpenAI returned no choices"
+        else:
+            finish = choices[0].get("finish_reason", "unknown")
+            answer = choices[0]["message"]["content"].strip()
+            if not answer:
+                answer = f"OpenAI returned empty content (finish_reason: {finish})"
+            else:
+                generation_ms = int((time.time() - t_gen) * 1000)
+                if finish == "length":
+                    answer += "\n[response truncated — increase Max output tokens]"
+    except Exception as e:
+        import traceback
+        _log(tag, f"ERROR: {e}\n{traceback.format_exc()}")
+        answer = f"Error: {e}"
+        retrieval_ms = 0
+        generation_ms = 0
+    elapsed = int((time.time() - t0) * 1000)
+    _log(tag, f"DONE {elapsed}ms")
+    return {"answer": answer, "latency_ms": elapsed, "retrieval_ms": retrieval_ms,
+            "generation_ms": generation_ms, "chunks": chunks, "thinking": ""}
+
+
 @app.post("/api/query")
 async def run_query(req: QueryRequest):
     _log("query", f"received query={req.query!r}")
     cfg = _load_cfg()
     loop = asyncio.get_event_loop()
     fut_a = loop.run_in_executor(_query_executor, _answer_kvforge, req.query, cfg, req)
-    fut_b = loop.run_in_executor(_query_executor, _answer_gemini, req.query, cfg, req)
+    provider = _model_b_config.get("provider", "gemini")
+    fn_b = _answer_openai if provider == "openai" else _answer_gemini
+    fut_b = loop.run_in_executor(_query_executor, fn_b, req.query, cfg, req)
     result_a, result_b = await asyncio.gather(fut_a, fut_b)
     return {
         "answer_a": result_a["answer"],
