@@ -195,7 +195,8 @@ def get_config():
         "llm_model_url": hf_base + llm_model,
         "embed_model": embed_model,
         "embed_model_url": hf_base + embed_model,
-        "gemini_model": cfg.get("gemini_model", "gemini-3.1-pro-preview"),
+        "model_b_provider": _model_b_config.get("provider", "gemini"),
+        "model_b_model": _model_b_config.get("model", "gemini-2.5-pro-preview-03-25"),
         "top_k": cfg.get("top_k", 5),
         "collection": cfg.get("collection", ""),
     }
