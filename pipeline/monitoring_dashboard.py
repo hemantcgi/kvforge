@@ -265,95 +265,168 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
     try:
         import torch
         ver.init(cfg)
-        _model_loader.init(cfg)
         _kv_background.start(cfg)
 
         phase = ver.get_phase()
-        lora_ckpt = ver.load().get("checkpoint_path")
-        model, tokenizer = _model_loader.load(lora_ckpt)
-        # model is already in the correct dtype (fp16 or quantized) — no .half() needed
+        vllm_url = cfg.get("vllm_url")
 
-        # ── Phase 3: answer directly from fine-tuned weights, no retrieval ─
-        if phase >= 3:
-            mode = "parametric"
-            _log(tag, "Phase 3 — answering from fine-tuned weights (no retrieval)…")
-            t_gen = time.time()
-            # Apply Llama instruction chat template so model stops cleanly at <|eot_id|>
-            messages = [{"role": "user", "content": query}]
-            prompt = tokenizer.apply_chat_template(
-                messages, tokenize=False, add_generation_prompt=True
-            )
-            inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-            with torch.no_grad():
-                out = model.generate(
-                    **inputs,
-                    max_new_tokens=params.a_max_new_tokens,
-                    do_sample=False,
-                    eos_token_id=tokenizer.eos_token_id,
-                    pad_token_id=tokenizer.eos_token_id,
+        # ── vLLM path: fast generation via dedicated inference server ──────
+        # When vllm_url is set, all generation (Phase 3 parametric and
+        # Phase 1/2 text-in-context) is routed to the vLLM server.
+        # KV injection (Phase 2) falls back to the local model if vLLM is up;
+        # if the vLLM server is not reachable the local model is used instead.
+        if vllm_url:
+            import core.vllm_client as _vllm
+            vllm_model = cfg.get("vllm_model", cfg.get("llm_model", "default"))
+
+            if phase >= 3:
+                mode = "parametric"
+                _log(tag, f"Phase 3 via vLLM ({vllm_url}, model={vllm_model})…")
+                # Apply Llama chat template client-side so vLLM sees the same
+                # prompt as the local model path.
+                from transformers import AutoTokenizer as _AT
+                _tok = _AT.from_pretrained(cfg["llm_model"])
+                messages = [{"role": "user", "content": query}]
+                prompt = _tok.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=True
                 )
-            answer = tokenizer.decode(
-                out[0][inputs["input_ids"].shape[1]:],
-                skip_special_tokens=True,
-            )
-            generation_ms = int((time.time() - t_gen) * 1000)
-            _log(tag, f"generation done mode=parametric ({len(answer)} chars, {generation_ms}ms)")
-            elapsed = int((time.time() - t0) * 1000)
-            _log(tag, f"DONE {elapsed}ms")
-            return {"answer": answer, "latency_ms": elapsed,
-                    "retrieval_ms": 0, "generation_ms": generation_ms,
-                    "chunks": [], "mode": mode, "gate": {}}
+                t_gen = time.time()
+                answer = _vllm.generate(
+                    prompt,
+                    url=vllm_url,
+                    model=vllm_model,
+                    max_tokens=params.a_max_new_tokens,
+                    temperature=params.a_temperature if params.a_temperature > 0 else 0.0,
+                    stop=["<|eot_id|>", "<|end_of_text|>"],
+                )
+                generation_ms = int((time.time() - t_gen) * 1000)
+                _log(tag, f"generation done mode=parametric via vLLM ({len(answer)} chars, {generation_ms}ms)")
+                elapsed = int((time.time() - t0) * 1000)
+                _log(tag, f"DONE {elapsed}ms")
+                return {"answer": answer, "latency_ms": elapsed,
+                        "retrieval_ms": 0, "generation_ms": generation_ms,
+                        "chunks": [], "mode": mode, "gate": {}}
 
-        # ── Phase 1/2: retrieval pipeline ────────────────────────────────
-        from fastembed import TextEmbedding
-        from qdrant_client import QdrantClient as _QC
-        from pipeline.bedrock_rag import _run_search, Config
-        cfg_a = dict(cfg, top_k=params.a_top_k)
-
-        _log(tag, "embedding query…")
-        embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
-        client = _QC(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
-        rag_cfg = Config(**{k: cfg_a[k] for k in Config.__dataclass_fields__ if k in cfg_a})
-
-        _log(tag, "searching Qdrant…")
-        t_ret = time.time()
-        hits = _run_search(query, embedder, client, rag_cfg)
-        retrieval_ms = int((time.time() - t_ret) * 1000)
-        top_score_a = f"{hits[0].score:.4f}" if hits else "n/a"
-        _log(tag, f"search done — {len(hits)} hits, top_score={top_score_a}, retrieval={retrieval_ms}ms")
-
-        if not hits:
-            answer = "No relevant chunks found."
-        else:
-            chunks = [{"chunk_id": h.id,
-                       "text": h.payload["text"],
-                       "page": h.payload["page"], "score": round(h.score, 4),
-                       "kv_cache": h.payload.get("kv_cache"),
-                       "kv_version": h.payload.get("kv_version")} for h in hits]
-            current_ver = ver.get_lora_version()
-
-            # Enqueue stale chunks for background KV recompute
-            stale = _kv_inference.get_stale_chunk_ids(chunks, current_ver)
-            if stale:
-                _kv_background.enqueue_kv_recompute(stale)
-
-            mode = _kv_inference.decide_inference_mode(chunks, current_ver)
-            _log(tag, f"mode={mode}, recording access + generating…")
-            t_gen = time.time()
-            for rank, chunk in enumerate(chunks, start=1):
-                _kv_background.record_access(chunk["chunk_id"], rank)
-
-            if mode == "kv_injection":
-                answer = _kv_inference.generate_with_kv(query, chunks, model, tokenizer, cfg)
+            # Phase 1/2 with vLLM: retrieve then generate
+            from fastembed import TextEmbedding
+            from vectorstore.registry import get_store as _gs
+            cfg_a = dict(cfg, top_k=params.a_top_k)
+            embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
+            store = _gs(cfg)
+            _log(tag, "embedding query…")
+            q_vec = list(embedder.embed([query]))[0].tolist()
+            t_ret = time.time()
+            hits = store.search(cfg["collection"], q_vec, limit=params.a_top_k, with_payload=True)
+            retrieval_ms = int((time.time() - t_ret) * 1000)
+            _log(tag, f"search done — {len(hits)} hits, retrieval={retrieval_ms}ms")
+            if not hits:
+                answer = "No relevant chunks found."
             else:
-                answer = _kv_inference.generate_text_in_context(
-                    query, chunks, model, tokenizer,
-                    max_new_tokens=params.a_max_new_tokens,
-                    temperature=params.a_temperature,
-                    top_p=params.a_top_p,
-                    repetition_penalty=params.a_repetition_penalty,
+                context = "\n\n---\n\n".join(
+                    f"[page {h.payload.get('page', '?')}, score {h.score:.4f}]\n{h.payload.get('text', '')}"
+                    for h in hits
                 )
-            generation_ms = int((time.time() - t_gen) * 1000)
+                prompt = (
+                    f"Using only the context below, answer the question in 2-4 sentences. "
+                    f"Cite page numbers.\n\nContext:\n{context}\n\n"
+                    f"Question: {query}\n\nAnswer:"
+                )
+                t_gen = time.time()
+                answer = _vllm.generate(
+                    prompt,
+                    url=vllm_url,
+                    model=vllm_model,
+                    max_tokens=params.a_max_new_tokens,
+                    temperature=params.a_temperature,
+                )
+                generation_ms = int((time.time() - t_gen) * 1000)
+                _log(tag, f"generation done mode=text_in_context via vLLM ({len(answer)} chars, {generation_ms}ms)")
+        else:
+            # ── Local HF transformers path (fallback when vLLM not configured) ─
+            _model_loader.init(cfg)
+            lora_ckpt = ver.load().get("checkpoint_path")
+            model, tokenizer = _model_loader.load(lora_ckpt)
+            # model is already in the correct dtype (fp16 or quantized)
+
+            # ── Phase 3: answer directly from fine-tuned weights, no retrieval ─
+            if phase >= 3:
+                mode = "parametric"
+                _log(tag, "Phase 3 — answering from fine-tuned weights (no retrieval)…")
+                t_gen = time.time()
+                messages = [{"role": "user", "content": query}]
+                prompt = tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=True
+                )
+                inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+                with torch.no_grad():
+                    out = model.generate(
+                        **inputs,
+                        max_new_tokens=params.a_max_new_tokens,
+                        do_sample=False,
+                        eos_token_id=tokenizer.eos_token_id,
+                        pad_token_id=tokenizer.eos_token_id,
+                    )
+                answer = tokenizer.decode(
+                    out[0][inputs["input_ids"].shape[1]:],
+                    skip_special_tokens=True,
+                )
+                generation_ms = int((time.time() - t_gen) * 1000)
+                _log(tag, f"generation done mode=parametric ({len(answer)} chars, {generation_ms}ms)")
+                elapsed = int((time.time() - t0) * 1000)
+                _log(tag, f"DONE {elapsed}ms")
+                return {"answer": answer, "latency_ms": elapsed,
+                        "retrieval_ms": 0, "generation_ms": generation_ms,
+                        "chunks": [], "mode": mode, "gate": {}}
+
+            # ── Phase 1/2: retrieval pipeline ────────────────────────────────
+            from fastembed import TextEmbedding
+            from qdrant_client import QdrantClient as _QC
+            from pipeline.bedrock_rag import _run_search, Config
+            cfg_a = dict(cfg, top_k=params.a_top_k)
+
+            _log(tag, "embedding query…")
+            embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
+            client = _QC(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
+            rag_cfg = Config(**{k: cfg_a[k] for k in Config.__dataclass_fields__ if k in cfg_a})
+
+            _log(tag, "searching Qdrant…")
+            t_ret = time.time()
+            hits = _run_search(query, embedder, client, rag_cfg)
+            retrieval_ms = int((time.time() - t_ret) * 1000)
+            top_score_a = f"{hits[0].score:.4f}" if hits else "n/a"
+            _log(tag, f"search done — {len(hits)} hits, top_score={top_score_a}, retrieval={retrieval_ms}ms")
+
+            if not hits:
+                answer = "No relevant chunks found."
+            else:
+                chunks = [{"chunk_id": h.id,
+                           "text": h.payload["text"],
+                           "page": h.payload["page"], "score": round(h.score, 4),
+                           "kv_cache": h.payload.get("kv_cache"),
+                           "kv_version": h.payload.get("kv_version")} for h in hits]
+                current_ver = ver.get_lora_version()
+
+                stale = _kv_inference.get_stale_chunk_ids(chunks, current_ver)
+                if stale:
+                    _kv_background.enqueue_kv_recompute(stale)
+
+                mode = _kv_inference.decide_inference_mode(chunks, current_ver)
+                _log(tag, f"mode={mode}, recording access + generating…")
+                t_gen = time.time()
+                for rank, chunk in enumerate(chunks, start=1):
+                    _kv_background.record_access(chunk["chunk_id"], rank)
+
+                if mode == "kv_injection":
+                    answer = _kv_inference.generate_with_kv(query, chunks, model, tokenizer, cfg)
+                else:
+                    answer = _kv_inference.generate_text_in_context(
+                        query, chunks, model, tokenizer,
+                        max_new_tokens=params.a_max_new_tokens,
+                        temperature=params.a_temperature,
+                        top_p=params.a_top_p,
+                        repetition_penalty=params.a_repetition_penalty,
+                    )
+                generation_ms = int((time.time() - t_gen) * 1000)
             _log(tag, f"generation done mode={mode} ({len(answer)} chars, {generation_ms}ms)")
     except Exception as e:
         import traceback
