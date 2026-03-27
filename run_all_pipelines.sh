@@ -97,6 +97,33 @@ run_pipeline 3 "usecase3_squad"            "Reading Comprehension (SQuAD v2)"
 
 log ""
 log "════════════════════════════════════════"
+log "Pipelines complete. Starting vLLM servers..."
+log "════════════════════════════════════════"
+
+# Start vLLM for each UC (all 4 GPUs, non-blocking)
+start_vllm() {
+  local uc_num="$1"
+  local dir="$2"
+  local logfile="$LOGS/vllm_uc${uc_num}.log"
+  nohup bash "examples/$dir/start_vllm.sh" > "$logfile" 2>&1 &
+  log "vLLM UC${uc_num} started (log: $logfile)"
+}
+
+start_vllm 1 "usecase1_customer_support"
+start_vllm 2 "usecase2_pubmedqa"
+start_vllm 3 "usecase3_squad"
+# UC4 vLLM (requires pre-trained weights at lora_checkpoints/v3/)
+if [ -d "examples/usecase4_bedrock_userguide/lora_checkpoints/v3" ]; then
+  start_vllm 4 "usecase4_bedrock_userguide"
+else
+  log "UC4 vLLM skipped — no checkpoint at examples/usecase4_bedrock_userguide/lora_checkpoints/v3"
+fi
+
+log "Waiting 30s for vLLM servers to initialize before starting dashboards..."
+sleep 30
+
+log ""
+log "════════════════════════════════════════"
 log "All pipelines complete. Starting dashboards..."
 log "════════════════════════════════════════"
 
