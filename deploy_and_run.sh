@@ -124,6 +124,54 @@ log "  T+300s — Launching UC3 on GPU 2 ..."
 
 log "Step 5/7 — All workers launched."
 
+# ─── Step 5b/7 — Start vLLM inference servers for UC1, UC2, UC3 ──────────────
+log "Step 5b/7 — Starting vLLM inference servers (UC1/GPU0:8091, UC2/GPU1:8092, UC3/GPU2:8093) ..."
+log "  (servers will wait up to 30 min for LoRA checkpoints to appear)"
+
+# The outer bash -c '...' keeps the SSH session open just long enough to confirm
+# the background job PID before exiting cleanly — same pattern as Step 5.
+# The checkpoint poll uses a plain shell directory test (no Python quoting hell).
+# start_vllm.sh itself re-checks version.json and lora_checkpoints/ at launch time.
+
+# UC1 vLLM — GPU 0, port 8091
+"${SSH[@]}" "bash -c 'nohup bash -c \"
+  source ~/.bashrc && source $VENV/bin/activate && cd $REMOTE_REPO
+  echo [UC1 vLLM launcher] waiting for checkpoint... >> logs/vllm_uc1.log 2>&1
+  for ((i=0; i<180; i++)); do
+    ls -d examples/usecase1_customer_support/lora_checkpoints/v* >/dev/null 2>&1 && break
+    sleep 10
+  done
+  CUDA_VISIBLE_DEVICES=0 bash examples/usecase1_customer_support/start_vllm.sh
+\" >> $REMOTE_REPO/logs/vllm_uc1.log 2>&1 & echo UC1 vLLM launcher PID: \$!'"
+
+sleep 2
+
+# UC2 vLLM — GPU 1, port 8092
+"${SSH[@]}" "bash -c 'nohup bash -c \"
+  source ~/.bashrc && source $VENV/bin/activate && cd $REMOTE_REPO
+  echo [UC2 vLLM launcher] waiting for checkpoint... >> logs/vllm_uc2.log 2>&1
+  for ((i=0; i<180; i++)); do
+    ls -d examples/usecase2_pubmedqa/lora_checkpoints/v* >/dev/null 2>&1 && break
+    sleep 10
+  done
+  CUDA_VISIBLE_DEVICES=1 bash examples/usecase2_pubmedqa/start_vllm.sh
+\" >> $REMOTE_REPO/logs/vllm_uc2.log 2>&1 & echo UC2 vLLM launcher PID: \$!'"
+
+sleep 2
+
+# UC3 vLLM — GPU 2, port 8093
+"${SSH[@]}" "bash -c 'nohup bash -c \"
+  source ~/.bashrc && source $VENV/bin/activate && cd $REMOTE_REPO
+  echo [UC3 vLLM launcher] waiting for checkpoint... >> logs/vllm_uc3.log 2>&1
+  for ((i=0; i<180; i++)); do
+    ls -d examples/usecase3_squad/lora_checkpoints/v* >/dev/null 2>&1 && break
+    sleep 10
+  done
+  CUDA_VISIBLE_DEVICES=2 bash examples/usecase3_squad/start_vllm.sh
+\" >> $REMOTE_REPO/logs/vllm_uc3.log 2>&1 & echo UC3 vLLM launcher PID: \$!'"
+
+log "Step 5b/7 — vLLM launchers started (will activate once LoRA training completes)"
+
 # ─── Step 6/7 — Start dashboards and portal ──────────────────────────────────
 log "Step 6/7 — Starting dashboards and KVForge portal ..."
 
@@ -169,11 +217,19 @@ cat <<URLS
  UC2 dashboard   : http://$EC2_HOST:8082  (PubMedQA)
  UC3 dashboard   : http://$EC2_HOST:8083  (SQuAD)
  UC4 dashboard   : http://$EC2_HOST:8084  (Bedrock User Guide)
+
+ vLLM servers (start after LoRA training completes):
+   UC1 vLLM : http://$EC2_HOST:8091  (GPU 0)
+   UC2 vLLM : http://$EC2_HOST:8092  (GPU 1)
+   UC3 vLLM : http://$EC2_HOST:8093  (GPU 2)
+   UC4 vLLM : http://$EC2_HOST:8090  (GPU 3)
+
 ════════════════════════════════════════════════════════
 
  Logs on EC2 at ~/kvforge/logs/:
    uc1.log, uc2.log, uc3.log, uc4.log
    dashboard_uc{1,2,3}.log, portal.log
+   vllm_uc1.log, vllm_uc2.log, vllm_uc3.log
 
  Tail a log:  ssh -i $EC2_PEM $EC2_USER@$EC2_HOST 'tail -f ~/kvforge/logs/uc1.log'
 
