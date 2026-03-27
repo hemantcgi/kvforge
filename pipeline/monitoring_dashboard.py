@@ -798,15 +798,59 @@ PRS = 0.5 × Accuracy
 </div>
 
 <script>
+const MODELS_B = {
+  gemini: ['gemini-2.5-pro-preview-03-25','gemini-2.0-flash','gemini-1.5-pro','gemini-1.5-flash'],
+  openai: ['gpt-4.1','gpt-4.1-mini','gpt-4o','gpt-4o-mini'],
+};
+
+function populateModelDropdown(provider) {
+  const sel = document.getElementById('b_model');
+  sel.innerHTML = MODELS_B[provider].map(m => `<option value="${m}">${m}</option>`).join('');
+  const saved = localStorage.getItem(`modelb_${provider}_model`);
+  if (saved && MODELS_B[provider].includes(saved)) sel.value = saved;
+}
+
+function saveAndSyncModelB() {
+  const provider = document.getElementById('b_provider').value;
+  const model = document.getElementById('b_model').value;
+  const apiKey = document.getElementById('b_api_key').value;
+  localStorage.setItem('modelb_provider', provider);
+  localStorage.setItem(`modelb_${provider}_model`, model);
+  localStorage.setItem(`modelb_${provider}_key`, apiKey);
+  fetch('/api/set_model_b_config', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({provider, model, api_key: apiKey}),
+  }).catch(e => console.error('[ModelB config sync failed]', e));
+  const label = provider === 'openai' ? 'OpenAI' : 'Gemini';
+  document.getElementById('label-b').textContent = `Answer B — ${label} RAG`;
+  document.getElementById('header-b').textContent = `Answer B — ${label} (${model})`;
+  document.getElementById('model-info-b').innerHTML =
+    `${label} model: <b style="color:#fa7">${model}</b>`;
+}
+
+document.getElementById('b_provider').addEventListener('change', function() {
+  const provider = this.value;
+  populateModelDropdown(provider);
+  document.getElementById('b_api_key').value = localStorage.getItem(`modelb_${provider}_key`) || '';
+  saveAndSyncModelB();
+});
+document.getElementById('b_model').addEventListener('change', saveAndSyncModelB);
+document.getElementById('b_api_key').addEventListener('change', saveAndSyncModelB);
+
 async function loadConfig() {
+  // Restore Model B config from localStorage (must run before fetch to pre-populate)
+  const savedProvider = localStorage.getItem('modelb_provider') || 'gemini';
+  document.getElementById('b_provider').value = savedProvider;
+  populateModelDropdown(savedProvider);
+  document.getElementById('b_api_key').value = localStorage.getItem(`modelb_${savedProvider}_key`) || '';
+  saveAndSyncModelB();
   try {
     const cfg = await fetch('/api/config').then(r => r.json());
     document.getElementById('model-info-a').innerHTML =
       `LLM: <a href="${cfg.llm_model_url}" target="_blank" rel="noopener">${cfg.llm_model}</a>` +
       ` &nbsp;|&nbsp; Embedder: <a href="${cfg.embed_model_url}" target="_blank" rel="noopener">${cfg.embed_model}</a>` +
       ` &nbsp;|&nbsp; Collection: ${cfg.collection}`;
-    document.getElementById('model-info-b').innerHTML =
-      `Gemini model: <b style="color:#fa7">${cfg.gemini_model}</b>`;
     // set default top_k from server config (shared for both models)
     document.getElementById('top_k').value = cfg.top_k;
     // update section labels and answer headers with actual model name
