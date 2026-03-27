@@ -134,6 +134,14 @@ def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
     lora_ckpt = ver.load().get("checkpoint_path")
     model, tokenizer = model_loader.reload(lora_ckpt)
 
+    # Required for 4-bit/8-bit quantized models: sets requires_grad on LoRA
+    # layers and casts layer norms to float32 for stable training.
+    if cfg.get("quantization") in ("4bit", "8bit"):
+        from peft import prepare_model_for_kbit_training
+        model = prepare_model_for_kbit_training(
+            model, use_gradient_checkpointing=True
+        )
+
     import core.model_loader as _ml
     lora_target_modules = cfg.get("lora_target_modules", ["q_proj", "k_proj", "v_proj"])
     lora_target_modules = _ml.detect_lora_targets(model, lora_target_modules)
@@ -170,7 +178,6 @@ def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
         save_strategy="no",
         report_to="none",
     )
-    model.gradient_checkpointing_enable()
 
     trainer = Trainer(
         model=model,
