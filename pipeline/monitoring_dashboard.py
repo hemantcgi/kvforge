@@ -400,7 +400,7 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
             else:
                 chunks = [{"chunk_id": h.id,
                            "text": h.payload["text"],
-                           "page": h.payload["page"], "score": round(h.score, 4),
+                           "page": h.payload.get("page", 0), "score": round(h.score, 4),
                            "kv_cache": h.payload.get("kv_cache"),
                            "kv_version": h.payload.get("kv_version")} for h in hits]
                 current_ver = ver.get_lora_version()
