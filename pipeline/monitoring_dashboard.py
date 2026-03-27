@@ -374,24 +374,16 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
     thinking = ""
     try:
         from fastembed import TextEmbedding
-        from qdrant_client import QdrantClient as _QC
 
         _log(tag, "embedding query…")
         embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
-        client = _QC(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
         q_vec = list(embedder.embed([query]))[0].tolist()
 
-        _log(tag, "searching Qdrant…")
-        from qdrant_client.models import NamedVector
+        _log(tag, "searching vector store…")
+        store = _get_store()
         t_ret = time.time()
-        result = client.query_points(
-            collection_name=cfg["collection"],
-            query=q_vec,
-            limit=params.b_top_k,
-            with_payload=True,
-        )
+        hits = store.query(cfg["collection"], q_vec, top_k=params.b_top_k)
         retrieval_ms = int((time.time() - t_ret) * 1000)
-        hits = result.points
         top_score_b = f"{hits[0].score:.4f}" if hits else "n/a"
         _log(tag, f"search done — {len(hits)} hits, top_score={top_score_b}, retrieval={retrieval_ms}ms")
         chunks = [
