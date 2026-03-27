@@ -67,15 +67,24 @@ app = FastAPI(title="KVForge Portal", lifespan=_lifespan)
 
 @app.get("/api/status")
 async def get_status():
-    """Check which use-case dashboards are reachable."""
+    """Check which use-case dashboards are reachable and return their phase."""
     results = {}
     async with httpx.AsyncClient(timeout=2.0) as client:
         for uc in USE_CASES:
+            base = f"http://localhost:{uc['port']}"
             try:
-                r = await client.get(f"http://localhost:{uc['port']}/api/health")
-                results[uc["id"]] = "online" if r.status_code == 200 else "error"
+                r = await client.get(f"{base}/api/health")
+                if r.status_code != 200:
+                    results[uc["id"]] = {"status": "error", "phase": None}
+                    continue
+                try:
+                    rv = await client.get(f"{base}/api/version")
+                    phase = rv.json().get("phase") if rv.status_code == 200 else None
+                except Exception:
+                    phase = None
+                results[uc["id"]] = {"status": "online", "phase": phase}
             except Exception:
-                results[uc["id"]] = "offline"
+                results[uc["id"]] = {"status": "offline", "phase": None}
     return results
 
 
@@ -179,6 +188,20 @@ PORTAL_HTML = """<!DOCTYPE html>
   .status-dot.online { background: #22c55e; box-shadow: 0 0 6px #22c55e88; }
   .status-dot.offline { background: #ef4444; }
   .status-dot.error  { background: #f59e0b; }
+  .phase-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 0.72em;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .phase-badge.p1 { background: #1f3a5f; color: #7ab8ff; }
+  .phase-badge.p2 { background: #1f4a2f; color: #7aff9e; }
+  .phase-badge.p3 { background: #3a1f4a; color: #c97aff; }
+  .phase-badge.unknown { background: #2a2a2a; color: #666; }
   .footer {
     text-align: center;
     margin-top: 48px;
@@ -224,7 +247,10 @@ PORTAL_HTML = """<!DOCTYPE html>
      id="{uc['id']}" style="--accent:{uc['color']}">
     <div class="card-header">
       <span class="card-title">{uc['title']}</span>
-      <span class="status-dot" id="dot-{uc['id']}"></span>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="phase-badge unknown" id="phase-{uc['id']}">…</span>
+        <span class="status-dot" id="dot-{uc['id']}"></span>
+      </div>
     </div>
     <div class="card-subtitle">{uc['subtitle']}</div>
     <div class="card-desc">{uc['description']}</div>
@@ -244,13 +270,22 @@ document.querySelectorAll('.card[data-port]').forEach(card => {
   card.target = '_blank';
 });
 
+const PHASE_LABELS = {1: 'Phase 1', 2: 'Phase 2', 3: 'Phase 3'};
+const PHASE_CLASSES = {1: 'p1', 2: 'p2', 3: 'p3'};
+
 async function refreshStatus() {
   try {
     const r = await fetch('/api/status');
     const data = await r.json();
-    for (const [id, status] of Object.entries(data)) {
+    for (const [id, info] of Object.entries(data)) {
       const dot = document.getElementById('dot-' + id);
-      if (dot) { dot.className = 'status-dot ' + status; }
+      if (dot) { dot.className = 'status-dot ' + info.status; }
+      const badge = document.getElementById('phase-' + id);
+      if (badge) {
+        const p = info.phase;
+        badge.textContent = p ? PHASE_LABELS[p] || ('Phase ' + p) : (info.status === 'offline' ? 'offline' : '…');
+        badge.className = 'phase-badge ' + (p ? (PHASE_CLASSES[p] || 'unknown') : 'unknown');
+      }
     }
   } catch(e) {}
 }
