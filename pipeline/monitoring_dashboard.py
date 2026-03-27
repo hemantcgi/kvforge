@@ -26,6 +26,7 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Literal
 
 # Ensure project root is on sys.path before any local imports (do once, not per-thread)
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -45,6 +46,12 @@ from vectorstore.registry import get_store
 _model_loader = None
 _kv_background = None
 _kv_inference = None
+
+_model_b_config: dict = {
+    "provider": "gemini",
+    "model": "gemini-2.5-pro-preview-03-25",  # must match first item in JS MODELS_B["gemini"]
+    "api_key": "",
+}
 
 
 @asynccontextmanager
@@ -219,6 +226,18 @@ class QueryRequest(BaseModel):
     b_top_k: int = 5
     b_max_output_tokens: int = 1024
     b_temperature: float = 1.0
+
+
+class ModelBConfigRequest(BaseModel):
+    provider: Literal["gemini", "openai"]
+    model: str
+    api_key: str
+
+@app.post("/api/set_model_b_config")
+def set_model_b_config(req: ModelBConfigRequest):
+    global _model_b_config
+    _model_b_config = {"provider": req.provider, "model": req.model, "api_key": req.api_key}
+    return {"ok": True}
 
 
 def _log(tag: str, msg: str) -> None:
