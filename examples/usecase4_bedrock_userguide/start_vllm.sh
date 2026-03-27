@@ -32,12 +32,12 @@ if [ ! -d "$LORA_DIR" ]; then
   exit 1
 fi
 
-command -v python &>/dev/null || { echo "ERROR: python not found"; exit 1; }
-python -c "import vllm" 2>/dev/null || { echo "ERROR: vllm not installed (pip install vllm)"; exit 1; }
+command -v python3 &>/dev/null || { echo "ERROR: python3 not found"; exit 1; }
+python3 -c "import vllm" 2>/dev/null || { echo "ERROR: vllm not installed (pip install vllm)"; exit 1; }
 
 echo "[UC4 vLLM] starting on GPU $GPU, port $PORT, model=$MODEL, lora=$LORA_NAME" | tee -a "$LOG"
 
-CUDA_VISIBLE_DEVICES=$GPU python -m vllm.entrypoints.openai.api_server \
+CUDA_VISIBLE_DEVICES=$GPU python3 -m vllm.entrypoints.openai.api_server \
   --model "$MODEL" \
   --enable-lora \
   --lora-modules "${LORA_NAME}=${LORA_DIR}" \
