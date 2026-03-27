@@ -18,6 +18,9 @@
   "vector_dim":           384,
 
   "llm_model":            "meta-llama/Llama-3.2-3B-Instruct",
+  "quantization":         "4bit",
+  "vllm_url":             "http://localhost:8093",
+  "vllm_model":           "uc3",
   "max_new_tokens":       256,
 
   "model_library": {
