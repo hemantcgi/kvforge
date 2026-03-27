@@ -62,7 +62,7 @@ def main():
 
     chunks = [
         {
-            "page": h.payload["page"],
+            "page": h.payload.get("page", 0),
             "score": round(h.score, 4),
             "text": h.payload["text"][:args.chunk_chars],
         }
