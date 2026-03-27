@@ -316,7 +316,7 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
             _log(tag, "embedding query…")
             q_vec = list(embedder.embed([query]))[0].tolist()
             t_ret = time.time()
-            hits = store.search(cfg["collection"], q_vec, limit=params.a_top_k, with_payload=True)
+            hits = store.query(cfg["collection"], q_vec, params.a_top_k)
             retrieval_ms = int((time.time() - t_ret) * 1000)
             _log(tag, f"search done — {len(hits)} hits, retrieval={retrieval_ms}ms")
             if not hits:
@@ -380,18 +380,17 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
 
             # ── Phase 1/2: retrieval pipeline ────────────────────────────────
             from fastembed import TextEmbedding
-            from qdrant_client import QdrantClient as _QC
             from pipeline.bedrock_rag import _run_search, Config
             cfg_a = dict(cfg, top_k=params.a_top_k)
 
             _log(tag, "embedding query…")
             embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
-            client = _QC(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
+            store_b = _gs(cfg_a)
             rag_cfg = Config(**{k: cfg_a[k] for k in Config.__dataclass_fields__ if k in cfg_a})
 
             _log(tag, "searching Qdrant…")
             t_ret = time.time()
-            hits = _run_search(query, embedder, client, rag_cfg)
+            hits = _run_search(query, embedder, store_b, rag_cfg)
             retrieval_ms = int((time.time() - t_ret) * 1000)
             top_score_a = f"{hits[0].score:.4f}" if hits else "n/a"
             _log(tag, f"search done — {len(hits)} hits, top_score={top_score_a}, retrieval={retrieval_ms}ms")
