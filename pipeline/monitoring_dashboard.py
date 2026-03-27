@@ -271,7 +271,7 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
         phase = ver.get_phase()
         lora_ckpt = ver.load().get("checkpoint_path")
         model, tokenizer = _model_loader.load(lora_ckpt)
-        model = model.half()
+        # model is already in the correct dtype (fp16 or quantized) — no .half() needed
 
         # ── Phase 3: answer directly from fine-tuned weights, no retrieval ─
         if phase >= 3:

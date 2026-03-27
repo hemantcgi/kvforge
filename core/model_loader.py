@@ -37,6 +37,10 @@ _current_checkpoint: Optional[str] = None
 _load_lock = threading.Lock()   # prevents concurrent loads from both racing
 
 MODEL_ID = os.getenv("LLM_MODEL", "meta-llama/Llama-3.2-3B-Instruct")
+# Quantization mode: None | "4bit" | "8bit".  Set via cfg["quantization"].
+# 4-bit (NF4) reduces model weight reads from ~6.4 GB to ~1.6 GB, giving
+# ~2-3× decode speedup for memory-bandwidth-bound single-request inference.
+QUANTIZATION: Optional[str] = None
 
 
 def _get_device() -> str:
@@ -52,15 +56,18 @@ DEVICE = _get_device()
 
 
 def init(cfg: dict) -> None:
-    """Override the module-level ``MODEL_ID`` from config.  Call once before ``load()``.
+    """Override the module-level ``MODEL_ID`` and ``QUANTIZATION`` from config.
 
     Args:
         cfg: Datasource configuration dictionary.  Uses ``cfg['llm_model']``
-            to set the model identifier and ``cfg['hf_token']`` to set the
-            ``HF_TOKEN`` environment variable for gated models.
+            to set the model identifier, ``cfg['hf_token']`` to set the
+            ``HF_TOKEN`` environment variable, and ``cfg['quantization']``
+            (``"4bit"`` | ``"8bit"`` | omit for fp16) to enable BitsAndBytes
+            quantization for faster memory-bandwidth-bound inference.
     """
-    global MODEL_ID
+    global MODEL_ID, QUANTIZATION
     MODEL_ID = cfg.get("llm_model", MODEL_ID)
+    QUANTIZATION = cfg.get("quantization", None)
     token = cfg.get("hf_token")
     if token:
         os.environ["HF_TOKEN"] = token
@@ -99,22 +106,47 @@ def load(lora_checkpoint: Optional[str] = None) -> tuple:
         if not _HAS_TORCH:
             raise ImportError("torch / transformers not available in this environment")
 
-        print(f"🤖 Loading {MODEL_ID} on {DEVICE} …")
+        quant_label = f" [{QUANTIZATION}]" if QUANTIZATION else " [fp16]"
+        print(f"🤖 Loading {MODEL_ID} on {DEVICE}{quant_label} …")
         _tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
         if _tokenizer.pad_token is None:
             _tokenizer.pad_token = _tokenizer.eos_token
 
+        # Build quantization config if requested.
+        # 4-bit NF4 reduces model weight reads from ~6.4 GB to ~1.6 GB,
+        # giving ~2-3× decode speedup for batch_size=1 memory-BW-bound inference.
+        # 8-bit halves memory reads for a ~1.5× speedup with higher quality.
+        quant_cfg = None
+        if QUANTIZATION in ("4bit", "8bit"):
+            try:
+                from transformers import BitsAndBytesConfig
+                if QUANTIZATION == "4bit":
+                    quant_cfg = BitsAndBytesConfig(
+                        load_in_4bit=True,
+                        bnb_4bit_quant_type="nf4",
+                        bnb_4bit_compute_dtype=torch.float16,
+                        bnb_4bit_use_double_quant=True,
+                    )
+                else:  # 8bit
+                    quant_cfg = BitsAndBytesConfig(load_in_8bit=True)
+            except ImportError:
+                print("⚠️  bitsandbytes not installed — falling back to fp16")
+
         _model = AutoModelForCausalLM.from_pretrained(
             MODEL_ID,
-            torch_dtype=torch.float16,
+            dtype=torch.float16,
             device_map="auto",
+            quantization_config=quant_cfg,
         )
 
         if lora_checkpoint and Path(lora_checkpoint).exists():
             from peft import PeftModel
             print(f"🔌 Applying LoRA adapter from {lora_checkpoint} …")
             _model = PeftModel.from_pretrained(_model, lora_checkpoint)
-            _model = _model.merge_and_unload()  # merge for faster inference
+            if quant_cfg is None:
+                # Merge LoRA into base weights for faster inference (only safe
+                # for non-quantized models; quantized models run PEFT forward).
+                _model = _model.merge_and_unload()
 
         _model.eval()
         _current_checkpoint = lora_checkpoint
