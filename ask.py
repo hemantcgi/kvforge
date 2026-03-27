@@ -42,7 +42,7 @@ def main():
     import core.model_loader as model_loader
     import pipeline.kv_background as kv_background
     from fastembed import TextEmbedding
-    from qdrant_client import QdrantClient
+    from vectorstore.registry import get_store
     from pipeline.bedrock_rag import _run_search, Config
 
     ver.init(cfg)
@@ -50,10 +50,10 @@ def main():
     kv_background.start(cfg)
 
     embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
-    client = QdrantClient(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
+    store = get_store(cfg)
     rag_cfg = Config(**{k: cfg[k] for k in Config.__dataclass_fields__ if k in cfg})
 
-    hits = _run_search(args.query, embedder, client, rag_cfg)
+    hits = _run_search(args.query, embedder, store, rag_cfg)
     if not hits:
         print("No relevant chunks found.")
         sys.exit(0)
