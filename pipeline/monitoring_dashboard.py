@@ -56,7 +56,7 @@ _model_b_config: dict = {
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
-    """Import GPU modules and pre-warm the base model in the main thread at startup."""
+    """Import GPU modules and pre-warm the model+LoRA in the main thread at startup."""
     global _model_loader, _kv_background, _kv_inference
     try:
         import core.model_loader as _ml
@@ -65,12 +65,17 @@ async def _lifespan(app: FastAPI):
         _model_loader = _ml
         _kv_background = _kb
         _kv_inference = _ki
-        # Pre-warm: load base model now so the first query hits the cache
+        # Pre-warm: load the SAME checkpoint that queries will request so the
+        # first query hits the cache.  Loading only the base model (None) here
+        # causes a cache miss on every query because _answer_kvforge always
+        # calls load(lora_ckpt) where lora_ckpt != None.
         cfg = _load_cfg()
         _ml.init(cfg)
-        print("[dashboard] pre-warming base model…", flush=True)
-        _ml.load(None)   # loads + caches base model; subsequent load(None) calls are free
-        print("[dashboard] base model ready", flush=True)
+        ver.init(cfg)
+        lora_ckpt = ver.load().get("checkpoint_path")
+        print(f"[dashboard] pre-warming model (lora_ckpt={lora_ckpt})…", flush=True)
+        _ml.load(lora_ckpt)
+        print("[dashboard] model ready", flush=True)
     except Exception as e:
         print(f"[dashboard] inference modules unavailable: {e}", flush=True)
     yield
