@@ -175,6 +175,11 @@ KVQ_HTML = """<!DOCTYPE html>
   @keyframes spin { to { transform: rotate(360deg); } }
   #kvq-diagram { min-height: 60px; }
   .refresh-note { color: #484f58; font-size: 0.78em; margin-top: 12px; }
+  .key-row { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; }
+  .key-row input { flex: 1; background: #0d1117; border: 1px solid #30363d; color: #e6edf3; font-family: monospace; font-size: 0.85em; padding: 6px 10px; border-radius: 4px; outline: none; }
+  .key-row input:focus { border-color: #4a9eff; }
+  .key-row button { background: #1f3a5f; border: 1px solid #4a9eff; color: #7ab8ff; font-family: monospace; font-size: 0.85em; padding: 6px 14px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+  .key-row button:hover { background: #2a4f7f; }
 </style>
 </head>
 <body>
@@ -203,7 +208,11 @@ KVQ_HTML = """<!DOCTYPE html>
 
 <div class="panel">
   <h2>How KVQ Works</h2>
-  <div id="kvq-diagram"><span class="spinner"></span> Generating diagram…</div>
+  <div class="key-row">
+    <input id="api-key-input" type="password" placeholder="Anthropic API key (sk-ant-…) — required for diagram generation" />
+    <button onclick="document.getElementById('kvq-diagram').innerHTML='<span class=\\'spinner\\'></span> Generating…'; loadDiagram();">Generate</button>
+  </div>
+  <div id="kvq-diagram"><p style="color:#484f58;font-family:monospace;font-size:0.85em">Enter your Anthropic API key above and click Generate to render the diagram.</p></div>
 </div>
 
 <script>
@@ -233,36 +242,43 @@ function tierBarHtml(tc) {
 }
 
 async function refreshStats() {
-  const rows = await Promise.all(UCS.map(async uc => {
-    try {
-      const r = await fetch(`http://${window.location.hostname}:${uc.port}/api/stats`);
-      if (!r.ok) throw new Error('offline');
-      const d = await r.json();
+  try {
+    const r = await fetch('/api/kvq-stats');
+    if (!r.ok) throw new Error('proxy error');
+    const items = await r.json();
+    const rows = items.map(item => {
+      if (!item.online || !item.data) {
+        return `<tr>
+          <td>${item.title}</td>
+          <td colspan="4" style="color:#6b7280">—</td>
+          <td style="color:#ef4444">offline</td>
+        </tr>`;
+      }
+      const d = item.data;
       const v = d.version || {};
       const prs_hist = v.prs_history || [];
       const prs = prs_hist.length ? prs_hist[prs_hist.length-1].prs : null;
       return `<tr>
-        <td>${uc.title}</td>
+        <td>${item.title}</td>
         <td>${phaseHtml(v.phase)}</td>
         <td>${prsHtml(prs)}</td>
         <td>${tierBarHtml(d.tier_counts)}</td>
         <td>${d.total_chunks ?? '—'}</td>
         <td style="color:#22c55e">online</td>
       </tr>`;
-    } catch {
-      return `<tr>
-        <td>${uc.title}</td>
-        <td colspan="4" style="color:#6b7280">—</td>
-        <td style="color:#ef4444">offline</td>
-      </tr>`;
-    }
-  }));
-  document.getElementById('stats-tbody').innerHTML = rows.join('');
+    });
+    document.getElementById('stats-tbody').innerHTML = rows.join('');
+  } catch {
+    document.getElementById('stats-tbody').innerHTML =
+      '<tr><td colspan="6" style="color:#ef4444;padding:12px">Failed to load stats</td></tr>';
+  }
 }
 
 async function loadDiagram() {
+  const key = document.getElementById('api-key-input').value.trim();
+  const url = key ? `/kvq/diagram?key=${encodeURIComponent(key)}` : '/kvq/diagram';
   try {
-    const r = await fetch('/kvq/diagram');
+    const r = await fetch(url);
     const d = await r.json();
     document.getElementById('kvq-diagram').innerHTML = d.html;
   } catch(e) {
@@ -272,10 +288,28 @@ async function loadDiagram() {
 
 refreshStats();
 setInterval(refreshStats, 10000);
-loadDiagram();
 </script>
 </body>
 </html>"""
+
+
+@app.get("/api/kvq-stats")
+async def kvq_stats():
+    """Server-side proxy: fetch /api/stats from each dashboard and return aggregated data."""
+    results = []
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        for uc in USE_CASES:
+            entry = {"id": uc["id"], "title": uc["subtitle"], "port": uc["port"]}
+            try:
+                r = await client.get(f"http://localhost:{uc['port']}/api/stats")
+                r.raise_for_status()
+                entry["data"] = r.json()
+                entry["online"] = True
+            except Exception:
+                entry["data"] = None
+                entry["online"] = False
+            results.append(entry)
+    return results
 
 
 @app.get("/kvq", response_class=HTMLResponse)
@@ -285,9 +319,9 @@ async def kvq_page():
 
 
 @app.get("/kvq/diagram")
-async def kvq_diagram():
+async def kvq_diagram(key: str = ""):
     """Call Claude API to generate KVQ architecture diagram HTML snippet."""
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    api_key = key.strip() or os.environ.get("ANTHROPIC_API_KEY", "")
     if not api_key or anthropic is None:
         return {"html": "<p style='color:#6b7280;font-family:monospace'>Diagram unavailable — set ANTHROPIC_API_KEY env var</p>"}
     try:
