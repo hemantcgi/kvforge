@@ -49,7 +49,7 @@ _kv_inference = None
 
 _model_b_config: dict = {
     "provider": "gemini",
-    "model": "gemini-2.5-pro-preview-03-25",  # must match first item in JS MODELS_B["gemini"]
+    "model": "gemini-2.0-flash",  # must match first item in JS MODELS_B["gemini"]
     "api_key": "",
 }
 
@@ -201,7 +201,7 @@ def get_config():
         "embed_model": embed_model,
         "embed_model_url": hf_base + embed_model,
         "model_b_provider": _model_b_config.get("provider", "gemini"),
-        "model_b_model": _model_b_config.get("model", "gemini-2.5-pro-preview-03-25"),
+        "model_b_model": _model_b_config.get("model", "gemini-2.0-flash"),
         "top_k": cfg.get("top_k", 5),
         "collection": cfg.get("collection", ""),
     }
@@ -868,7 +868,7 @@ PRS = 0.5 × Accuracy
 
 <script>
 const MODELS_B = {
-  gemini: ['gemini-2.5-pro-preview-03-25','gemini-2.0-flash','gemini-1.5-pro','gemini-1.5-flash'],
+  gemini: ['gemini-2.0-flash','gemini-2.5-pro','gemini-1.5-pro','gemini-1.5-flash'],
   openai: ['gpt-4.1','gpt-4.1-mini','gpt-4o','gpt-4o-mini'],
 };
 
