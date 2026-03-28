@@ -89,3 +89,41 @@ def test_status_prs_null_when_no_history():
 
     data = r.json()
     assert data["uc1"]["prs"] is None
+
+
+def test_ab_eval_unknown_uc():
+    """Unknown uc_id returns 404 with 'Unknown use case' message."""
+    client = _make_portal_client()
+    r = client.get("/ab-eval/uc99")
+    assert r.status_code == 404
+    assert "Unknown use case" in r.text
+
+
+def test_ab_eval_missing_file(tmp_path):
+    """Known uc_id but no viewer file → 404 with generation instructions."""
+    import kvforge_portal as portal
+    original_dir = portal.USE_CASES[0]["ab_eval_dir"]
+    portal.USE_CASES[0]["ab_eval_dir"] = str(tmp_path)  # no HTML file here
+    try:
+        client = _make_portal_client()
+        r = client.get("/ab-eval/uc1")
+        assert r.status_code == 404
+        assert "ab_evaluator" in r.text
+    finally:
+        portal.USE_CASES[0]["ab_eval_dir"] = original_dir
+
+
+def test_ab_eval_serves_html(tmp_path):
+    """Known uc_id with viewer file → 200 HTML response."""
+    import kvforge_portal as portal
+    viewer = tmp_path / "ab_eval_viewer.html"
+    viewer.write_text("<!DOCTYPE html><html><body>Test</body></html>")
+    original_dir = portal.USE_CASES[0]["ab_eval_dir"]
+    portal.USE_CASES[0]["ab_eval_dir"] = str(tmp_path)
+    try:
+        client = _make_portal_client()
+        r = client.get("/ab-eval/uc1")
+        assert r.status_code == 200
+        assert "Test" in r.text
+    finally:
+        portal.USE_CASES[0]["ab_eval_dir"] = original_dir

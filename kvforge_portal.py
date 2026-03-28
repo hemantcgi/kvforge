@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import httpx
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
 
@@ -114,6 +114,31 @@ async def get_status():
             except Exception:
                 results[uc["id"]] = {"status": "offline", "phase": None, "prs": None}
     return results
+
+
+# Build a lookup map for quick uc_id → USE_CASE resolution
+_UC_MAP = {uc["id"]: uc for uc in USE_CASES}
+
+
+@app.get("/ab-eval/{uc_id}", response_class=HTMLResponse)
+async def ab_eval_viewer(uc_id: str):
+    """Serve the per-UC A/B evaluation viewer HTML."""
+    uc = _UC_MAP.get(uc_id)
+    if uc is None:
+        raise HTTPException(status_code=404, detail=f"Unknown use case: {uc_id!r}")
+    viewer = Path(uc["ab_eval_dir"]) / "ab_eval_viewer.html"
+    if not viewer.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"Report not yet generated for {uc_id}. "
+                f"Run: python -m pipeline.ab_evaluator "
+                f"--config {uc['ab_eval_dir']}/config.json "
+                f"--dashboard-url http://localhost:{uc['port']} "
+                f"--gemini-api-key <key>"
+            ),
+        )
+    return HTMLResponse(viewer.read_text())
 
 
 @app.get("/", response_class=HTMLResponse)
