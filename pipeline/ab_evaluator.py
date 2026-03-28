@@ -324,13 +324,34 @@ render();
 def main():
     parser = argparse.ArgumentParser(description="Run per-UC A/B evaluation")
     parser.add_argument("--config", required=True, help="Path to use case config.json")
-    parser.add_argument("--dashboard-url", required=True, help="Running dashboard base URL e.g. http://localhost:8081")
+    parser.add_argument("--dashboard-url", default="", help="Running dashboard base URL e.g. http://localhost:8081")
     parser.add_argument("--gemini-api-key", default="", help="Gemini API key (or set GEMINI_API_KEY env var)")
     parser.add_argument("--max-samples", type=int, default=200, help="Max FAQ questions to evaluate")
+    parser.add_argument("--regen-html", action="store_true",
+                        help="Regenerate ab_eval_viewer.html from existing ab_eval_results.json without re-querying dashboard")
     args = parser.parse_args()
 
-    gemini_key = args.gemini_api_key or os.environ.get("GEMINI_API_KEY", "")
     config_path = Path(args.config)
+    out_dir = config_path.parent
+    json_out = out_dir / "ab_eval_results.json"
+    html_out = out_dir / "ab_eval_viewer.html"
+    uc_name = out_dir.name.replace("_", " ").title()
+
+    if args.regen_html:
+        if not json_out.exists():
+            raise FileNotFoundError(f"{json_out} not found — run eval first")
+        results = json.loads(json_out.read_text())
+        # Backfill prs_score for older result files that predate the field
+        for r in results:
+            r.setdefault("prs_score", None)
+        html_out.write_text(generate_html(results, title=f"A/B Eval — {uc_name}"))
+        print(f"Regenerated {html_out} from {len(results)} existing results")
+        return
+
+    if not args.dashboard_url:
+        parser.error("--dashboard-url is required unless --regen-html is set")
+
+    gemini_key = args.gemini_api_key or os.environ.get("GEMINI_API_KEY", "")
     faqs_path = config_path.parent / "faqs.json"
 
     results = run_eval(
@@ -340,11 +361,6 @@ def main():
         gemini_api_key=gemini_key,
         max_samples=args.max_samples,
     )
-
-    out_dir = config_path.parent
-    json_out = out_dir / "ab_eval_results.json"
-    html_out = out_dir / "ab_eval_viewer.html"
-    uc_name = out_dir.name.replace("_", " ").title()
 
     json_out.write_text(json.dumps(results, indent=2, ensure_ascii=False))
     print(f"Wrote {json_out}")
