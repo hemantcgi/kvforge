@@ -277,11 +277,39 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
         # if the vLLM server is not reachable the local model is used instead.
         if vllm_url:
             import core.vllm_client as _vllm
+            import numpy as _np
             vllm_model = cfg.get("vllm_model", cfg.get("llm_model", "default"))
 
-            if phase >= 3:
+            # ── Per-query PRS gate ────────────────────────────────────────────
+            # Embed the query and find max cosine similarity to known-good
+            # query embeddings stored by prs_evaluator.  If ≥ 0.75 the model
+            # has "mastered" this question → bypass retrieval entirely.
+            per_query_prs = 0.0
+            use_parametric = (phase >= 3)
+
+            if not use_parametric and phase >= 2:
+                version_data = ver.load()
+                known_good = version_data.get("known_good_queries", [])
+                if known_good:
+                    from fastembed import TextEmbedding as _TEprs
+                    _q_emb = list(_TEprs(model_name=cfg["embed_model"],
+                                         show_download_progress=False).embed([query]))[0]
+                    _nq = float(_np.linalg.norm(_q_emb))
+                    if _nq > 1e-9:
+                        sims = [
+                            float(_np.dot(_q_emb, _np.array(kg))
+                                  / (_nq * (float(_np.linalg.norm(_np.array(kg))) + 1e-9)))
+                            for kg in known_good
+                        ]
+                        per_query_prs = max(sims)
+                        if per_query_prs >= 0.75:
+                            use_parametric = True
+                            _log(tag, f"per-query PRS={per_query_prs:.3f} ≥ 0.75 → parametric override (no retrieval)")
+
+            if use_parametric:
                 mode = "parametric"
-                _log(tag, f"Phase 3 via vLLM ({vllm_url}, model={vllm_model})…")
+                if per_query_prs == 0.0:
+                    _log(tag, f"Phase 3 via vLLM ({vllm_url}, model={vllm_model})…")
                 # Apply Llama chat template client-side so vLLM sees the same
                 # prompt as the local model path.
                 from transformers import AutoTokenizer as _AT
@@ -305,7 +333,8 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
                 _log(tag, f"DONE {elapsed}ms")
                 return {"answer": answer, "latency_ms": elapsed,
                         "retrieval_ms": 0, "generation_ms": generation_ms,
-                        "chunks": [], "mode": mode, "gate": {}}
+                        "chunks": [], "mode": mode, "gate": {},
+                        "prs_score": round(per_query_prs, 4)}
 
             # Phase 1/2 with vLLM: retrieve then generate
             from fastembed import TextEmbedding
@@ -438,7 +467,7 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
     display_chunks = [dict(c, text=c["text"][:500]) for c in chunks]
     return {"answer": answer, "latency_ms": elapsed, "retrieval_ms": retrieval_ms,
             "generation_ms": generation_ms, "chunks": display_chunks,
-            "mode": mode, "gate": gate_info}
+            "mode": mode, "gate": gate_info, "prs_score": 0.0}
 
 
 def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
@@ -643,6 +672,7 @@ async def run_query(req: QueryRequest):
         "generation_a_ms": result_a.get("generation_ms", 0),
         "chunks_a": result_a.get("chunks", []),
         "mode_a": result_a.get("mode", "text_in_context"),
+        "prs_score_a": result_a.get("prs_score", 0.0),
         "gate_a": result_a.get("gate", {}),
         "answer_b": result_b["answer"],
         "latency_b_ms": result_b["latency_ms"],

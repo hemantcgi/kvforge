@@ -120,6 +120,7 @@ def run_eval(
                 "answer_a": answer_a,
                 "answer_b": answer_b,
                 "mode_a": data.get("mode_a", ""),
+                "prs_score": round(data.get("prs_score_a", 0.0), 4),
                 "latency_a_ms": data.get("latency_a_ms", 0),
                 "latency_b_ms": data.get("latency_b_ms", 0),
                 "generation_a_ms": data.get("generation_a_ms", 0),
@@ -149,6 +150,20 @@ def generate_html(results: list[dict], title: str) -> str:
     avg_rl_b = sum(r["rouge_l_b"] for r in results) / max(n, 1)
     pct_a = wins_a / max(n, 1) * 100
     pct_b = wins_b / max(n, 1) * 100
+    parametric_rows = [r for r in results if r.get("mode_a") == "parametric"]
+    pct_parametric = len(parametric_rows) / max(n, 1) * 100
+    avg_prs_parametric = (
+        sum(r["prs_score"] for r in parametric_rows) / len(parametric_rows)
+        if parametric_rows else 0.0
+    )
+    avg_lat_parametric = (
+        sum(r["latency_a_ms"] for r in parametric_rows) / len(parametric_rows)
+        if parametric_rows else 0.0
+    )
+    avg_lat_rag = (
+        sum(r["latency_a_ms"] for r in results if r.get("mode_a") != "parametric")
+        / max(n - len(parametric_rows), 1)
+    )
 
     ab_data_js = json.dumps(results, ensure_ascii=False)
 
@@ -197,8 +212,13 @@ def generate_html(results: list[dict], title: str) -> str:
 <div class="stats-grid">
   <div class="stats-card a">
     <h3>Model A — Llama 3.2 3B (Parametric)</h3>
+    <div class="stat-section">PRS Gate (per-query mastery)</div>
+    <div class="stat-row"><span class="stat-label">Parametric (no retrieval)</span><span class="stat-val {'good' if pct_parametric >= 50 else 'ok'}">{len(parametric_rows)} / {n} ({pct_parametric:.1f}%)</span></div>
+    <div class="stat-row"><span class="stat-label">Avg PRS (parametric)</span><span class="stat-val {'good' if avg_prs_parametric >= 0.8 else 'ok'}">{avg_prs_parametric:.4f}</span></div>
     <div class="stat-section">Latency</div>
     <div class="stat-row"><span class="stat-label">Avg End-to-End</span><span class="stat-val">{avg_lat_a:.0f} ms</span></div>
+    <div class="stat-row"><span class="stat-label">Parametric (no retrieval)</span><span class="stat-val info">{avg_lat_parametric:.0f} ms</span></div>
+    <div class="stat-row"><span class="stat-label">RAG (with retrieval)</span><span class="stat-val">{avg_lat_rag:.0f} ms</span></div>
     <div class="stat-section">Accuracy vs Ground Truth</div>
     <div class="stat-row"><span class="stat-label">ROUGE-L F1</span><span class="stat-val {'good' if avg_rl_a >= 0.4 else 'ok'}">{avg_rl_a:.4f}</span></div>
     <div class="stat-row"><span class="stat-label">Semantic Similarity</span><span class="stat-val {'good' if avg_sim_a >= 0.8 else 'ok'}">{avg_sim_a:.4f}</span></div>
@@ -224,6 +244,8 @@ def generate_html(results: list[dict], title: str) -> str:
     <option value="all">All</option>
     <option value="a">Model A wins</option>
     <option value="b">Model B wins</option>
+    <option value="parametric">Parametric only (PRS ≥ 0.75)</option>
+    <option value="rag">RAG only (PRS &lt; 0.75)</option>
   </select>
   <span id="count"></span>
 </div>
@@ -234,6 +256,7 @@ def generate_html(results: list[dict], title: str) -> str:
       <th data-col="ground_truth">Ground Truth</th>
       <th data-col="answer_a">Model A</th>
       <th data-col="answer_b">Model B</th>
+      <th data-col="prs_score" title="Per-query PRS: cosine similarity to known-good queries. ≥0.75 = parametric (no retrieval)">PRS</th>
       <th data-col="sem_sim_a">Sim A</th>
       <th data-col="sem_sim_b">Sim B</th>
       <th data-col="rouge_l_a">RL A</th>
@@ -257,6 +280,8 @@ function render() {{
     if (q && !r.question.toLowerCase().includes(q)) return false;
     if (f === 'a' && r.sem_sim_a < r.sem_sim_b) return false;
     if (f === 'b' && r.sem_sim_b <= r.sem_sim_a) return false;
+    if (f === 'parametric' && r.mode_a !== 'parametric') return false;
+    if (f === 'rag' && r.mode_a === 'parametric') return false;
     return true;
   }});
   rows.sort((a,b) => (a[sortCol] > b[sortCol] ? 1 : -1) * sortDir);
@@ -268,6 +293,7 @@ function render() {{
       <td class="gt">${{trunc(r.ground_truth)}}</td>
       <td class="ans-a">${{trunc(r.answer_a)}}</td>
       <td class="ans-b">${{trunc(r.answer_b)}}</td>
+      <td style="color:${{r.prs_score>=0.75?'#22c55e':r.prs_score>=0.5?'#f59e0b':'#6b7280'}}" title="${{r.mode_a}}">${{r.prs_score!=null?r.prs_score.toFixed(3):'—'}}</td>
       <td class="${{sc(r.sem_sim_a)}}">${{r.sem_sim_a}}</td>
       <td class="${{sc(r.sem_sim_b)}}">${{r.sem_sim_b}}</td>
       <td>${{r.rouge_l_a}}</td>
