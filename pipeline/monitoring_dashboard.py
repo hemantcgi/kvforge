@@ -498,7 +498,6 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
                 "generationConfig": {
                     "temperature": params.b_temperature,
                     "maxOutputTokens": params.b_max_output_tokens,
-                    "thinkingConfig": {"thinkingBudget": 0},
                 },
             },
             timeout=90,
