@@ -224,6 +224,16 @@ def cmd_compute_kv(cfg: dict, filter_type: str, filter_value) -> None:
         if not results:
             break
         for point in results:
+            # For non-Qdrant stores scroll_filter is None, so all chunks are
+            # returned. Apply the equivalent filter client-side.
+            if filter_type == "null" and point.payload.get("kv_version") is not None:
+                continue
+            if filter_type == "stale" and point.payload.get("kv_version") is not None:
+                try:
+                    if int(point.payload["kv_version"]) >= int(filter_value):
+                        continue
+                except (TypeError, ValueError):
+                    pass
             kv_arr = compute_kv_for_chunk(
                 point.payload["text"], model, tokenizer,
                 num_layers, num_kv_heads, head_dim
