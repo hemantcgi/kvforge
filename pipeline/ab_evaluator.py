@@ -152,10 +152,8 @@ def generate_html(results: list[dict], title: str) -> str:
     pct_b = wins_b / max(n, 1) * 100
     parametric_rows = [r for r in results if r.get("mode_a") == "parametric"]
     pct_parametric = len(parametric_rows) / max(n, 1) * 100
-    avg_prs_parametric = (
-        sum(r["prs_score"] for r in parametric_rows) / len(parametric_rows)
-        if parametric_rows else 0.0
-    )
+    _prs_vals = [r["prs_score"] for r in parametric_rows if r.get("prs_score") is not None]
+    avg_prs_parametric = sum(_prs_vals) / len(_prs_vals) if _prs_vals else 0.0
     avg_lat_parametric = (
         sum(r["latency_a_ms"] for r in parametric_rows) / len(parametric_rows)
         if parametric_rows else 0.0
