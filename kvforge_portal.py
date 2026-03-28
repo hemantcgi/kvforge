@@ -433,6 +433,23 @@ PORTAL_HTML = """<!DOCTYPE html>
   .phase-badge.p2 { background: #1f4a2f; color: #7aff9e; }
   .phase-badge.p3 { background: #3a1f4a; color: #c97aff; }
   .phase-badge.unknown { background: #2a2a2a; color: #666; }
+  .card-meta {
+    margin-top: 14px;
+    border-top: 1px solid #21262d;
+    padding-top: 10px;
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 4px 8px;
+    font-size: 0.75em;
+  }
+  .meta-key { color: #6b7280; align-self: center; }
+  .meta-val { color: #8b949e; text-decoration: none; word-break: break-all; }
+  .meta-val:hover { color: #e6edf3; }
+  .meta-val a { color: inherit; text-decoration: none; }
+  .meta-val a:hover { color: #7ab8ff; }
+  .prs-good { color: #22c55e !important; }
+  .prs-amber { color: #f59e0b !important; }
+  .prs-none { color: #6b7280 !important; }
   .footer {
     text-align: center;
     margin-top: 48px;
@@ -475,7 +492,9 @@ PORTAL_HTML = """<!DOCTYPE html>
 <div class="grid" id="grid">
 """ + "".join(f"""
   <a class="card" href="#" data-port="{uc['port']}"
-     id="{uc['id']}" style="--accent:{uc['color']}">
+     id="{uc['id']}" style="--accent:{uc['color']}"
+     data-vectordb-url="{uc['vectordb_url']}"
+     data-uc-id="{uc['id']}">
     <div class="card-header">
       <span class="card-title">{uc['title']}</span>
       <div style="display:flex;align-items:center;gap:6px;">
@@ -485,6 +504,18 @@ PORTAL_HTML = """<!DOCTYPE html>
     </div>
     <div class="card-subtitle">{uc['subtitle']}</div>
     <div class="card-desc">{uc['description']}</div>
+    <div class="card-meta">
+      <span class="meta-key">Vector DB</span>
+      <span class="meta-val"><a href="#" class="vectordb-link" target="_blank" rel="noopener">{uc['vectordb']} ↗</a></span>
+      <span class="meta-key">Embed</span>
+      <span class="meta-val"><a href="https://huggingface.co/{uc['embed_model']}" target="_blank" rel="noopener">{uc['embed_model'].split('/')[-1]} ↗</a></span>
+      <span class="meta-key">LLM</span>
+      <span class="meta-val"><a href="https://huggingface.co/{uc['llm_model']}" target="_blank" rel="noopener">{uc['llm_model'].split('/')[-1]} ↗</a></span>
+      <span class="meta-key">PRS</span>
+      <span class="meta-val prs-none" id="prs-{uc['id']}">—</span>
+      <span class="meta-key">KVQ</span>
+      <span class="meta-val"><a href="/kvq" target="_blank" rel="noopener">Live stats ↗</a></span>
+    </div>
   </a>
 """ for uc in USE_CASES) + """
 </div>
@@ -494,11 +525,20 @@ PORTAL_HTML = """<!DOCTYPE html>
 </div>
 
 <script>
-// Build dashboard links using current hostname (works on any host)
+// Build dashboard and vectordb links using current hostname
 document.querySelectorAll('.card[data-port]').forEach(card => {
   const port = card.dataset.port;
   card.href = `http://${window.location.hostname}:${port}/`;
   card.target = '_blank';
+
+  // Wire vectordb link
+  const vdbUrl = card.dataset.vectordbUrl;
+  const vdbLink = card.querySelector('.vectordb-link');
+  if (vdbLink) {
+    vdbLink.href = vdbUrl === 'qdrant'
+      ? `http://${window.location.hostname}:6333/dashboard`
+      : vdbUrl;
+  }
 });
 
 const PHASE_LABELS = {1: 'Phase 1', 2: 'Phase 2', 3: 'Phase 3'};
@@ -511,11 +551,25 @@ async function refreshStatus() {
     for (const [id, info] of Object.entries(data)) {
       const dot = document.getElementById('dot-' + id);
       if (dot) { dot.className = 'status-dot ' + info.status; }
+
       const badge = document.getElementById('phase-' + id);
       if (badge) {
         const p = info.phase;
         badge.textContent = p ? PHASE_LABELS[p] || ('Phase ' + p) : (info.status === 'offline' ? 'offline' : '…');
         badge.className = 'phase-badge ' + (p ? (PHASE_CLASSES[p] || 'unknown') : 'unknown');
+      }
+
+      const prsEl = document.getElementById('prs-' + id);
+      if (prsEl) {
+        const prs = info.prs;
+        if (prs == null) {
+          prsEl.textContent = '—';
+          prsEl.className = 'meta-val prs-none';
+        } else {
+          const color = prs >= 0.75 ? 'prs-good' : 'prs-amber';
+          prsEl.className = `meta-val ${color}`;
+          prsEl.innerHTML = `<a href="/ab-eval/${id}" target="_blank" rel="noopener">${prs.toFixed(4)} ↗</a>`;
+        }
       }
     }
   } catch(e) {}
