@@ -287,6 +287,14 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
             per_query_prs = 0.0
             use_parametric = (phase >= 3)
 
+            # For Phase 3 seed per_query_prs with the latest global PRS so the
+            # AB eval report shows a meaningful score instead of 0.0.
+            if use_parametric:
+                _v = ver.load()
+                _hist = _v.get("prs_history", [])
+                if _hist:
+                    per_query_prs = float(_hist[-1].get("prs", 0.0))
+
             if not use_parametric and phase >= 2:
                 version_data = ver.load()
                 known_good = version_data.get("known_good_queries", [])
