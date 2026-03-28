@@ -230,7 +230,7 @@ class QueryRequest(BaseModel):
     a_repetition_penalty: float = 1.2
     # Answer B (Gemini) params
     b_top_k: int = 5
-    b_max_output_tokens: int = 1024
+    b_max_output_tokens: int = 4096
     b_temperature: float = 1.0
 
 
@@ -498,6 +498,7 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
                 "generationConfig": {
                     "temperature": params.b_temperature,
                     "maxOutputTokens": params.b_max_output_tokens,
+                    "thinkingConfig": {"thinkingBudget": 0},
                 },
             },
             timeout=90,
@@ -827,7 +828,7 @@ PRS = 0.5 × Accuracy
       </div>
       <div class="param-group">
         <label>Max output tokens</label>
-        <input id="b_max_output_tokens" type="number" min="128" max="65536" value="1024"/>
+        <input id="b_max_output_tokens" type="number" min="128" max="65536" value="4096"/>
       </div>
       <div class="param-group">
         <label>Temperature</label>
