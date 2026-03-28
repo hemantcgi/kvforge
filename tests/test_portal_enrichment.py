@@ -127,3 +127,35 @@ def test_ab_eval_serves_html(tmp_path):
         assert "Test" in r.text
     finally:
         portal.USE_CASES[0]["ab_eval_dir"] = original_dir
+
+
+def test_kvq_page_loads():
+    """GET /kvq returns 200 HTML with spinner element."""
+    client = _make_portal_client()
+    r = client.get("/kvq")
+    assert r.status_code == 200
+    assert "kvq-diagram" in r.text  # spinner/diagram div id
+
+
+def test_kvq_diagram_no_api_key():
+    """GET /kvq/diagram with no API key returns 200 with unavailable message."""
+    import os
+    with patch.dict(os.environ, {"ANTHROPIC_API_KEY": ""}):
+        client = _make_portal_client()
+        r = client.get("/kvq/diagram")
+    assert r.status_code == 200
+    data = r.json()
+    assert "html" in data
+    assert "ANTHROPIC_API_KEY" in data["html"]
+
+
+def test_kvq_diagram_api_error():
+    """GET /kvq/diagram with API error returns 200 with unavailable message (no crash)."""
+    import os
+    with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "fake-key"}):
+        with patch("kvforge_portal.anthropic") as mock_anthropic:
+            mock_anthropic.Anthropic.return_value.messages.create.side_effect = Exception("API error")
+            client = _make_portal_client()
+            r = client.get("/kvq/diagram")
+    assert r.status_code == 200
+    assert "html" in r.json()

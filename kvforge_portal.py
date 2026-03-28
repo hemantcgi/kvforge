@@ -9,6 +9,7 @@ Usage::
 
 import argparse
 import asyncio
+import os
 import sys
 import time
 from pathlib import Path
@@ -20,6 +21,12 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
+
+try:
+    import anthropic as _anthropic_mod
+    anthropic = _anthropic_mod
+except ImportError:
+    anthropic = None
 
 USE_CASES = [
     {
@@ -139,6 +146,177 @@ async def ab_eval_viewer(uc_id: str):
             ),
         )
     return HTMLResponse(viewer.read_text())
+
+
+KVQ_HTML = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KVQ — Live Stats &amp; How It Works</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: monospace; background: #0d1117; color: #e6edf3; padding: 32px 24px; }
+  h1 { color: #7af; font-size: 1.6em; margin-bottom: 8px; }
+  .back { color: #8b949e; font-size: 0.85em; margin-bottom: 32px; display: block; }
+  .back a { color: #4a9eff; text-decoration: none; }
+  h2 { color: #7af; font-size: 1em; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+  .panel { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 24px; margin-bottom: 32px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+  th { padding: 8px 12px; text-align: left; color: #8b949e; border-bottom: 1px solid #30363d; font-weight: normal; text-transform: uppercase; font-size: 0.75em; letter-spacing: 0.5px; }
+  td { padding: 8px 12px; border-bottom: 1px solid #21262d; }
+  .tier-bar { display: flex; height: 16px; border-radius: 3px; overflow: hidden; gap: 1px; min-width: 120px; }
+  .tier-hot { background: #ef4444; } .tier-warm { background: #f59e0b; }
+  .tier-cold { background: #3b82f6; } .tier-frozen { background: #6b7280; }
+  .phase-badge { display: inline-block; padding: 2px 7px; border-radius: 3px; font-size: 0.8em; font-weight: bold; }
+  .p1 { background: #1f3a5f; color: #7ab8ff; } .p2 { background: #1f4a2f; color: #7aff9e; } .p3 { background: #3a1f4a; color: #c97aff; }
+  .prs-good { color: #22c55e; } .prs-amber { color: #f59e0b; } .prs-none { color: #6b7280; }
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #30363d; border-top-color: #7ab8ff; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #kvq-diagram { min-height: 60px; }
+  .refresh-note { color: #484f58; font-size: 0.78em; margin-top: 12px; }
+</style>
+</head>
+<body>
+<h1>⚡ KVQ Live Stats</h1>
+<span class="back"><a href="/">← Back to portal</a></span>
+
+<div class="panel">
+  <h2>KV Cache &amp; Phase Status</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Use Case</th>
+        <th>Phase</th>
+        <th>PRS</th>
+        <th>KV Tiers (hot/warm/cold/frozen)</th>
+        <th>Total Chunks</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="stats-tbody">
+      <tr><td colspan="6" style="color:#6b7280;padding:16px">Loading…</td></tr>
+    </tbody>
+  </table>
+  <div class="refresh-note">Auto-refreshes every 10 s</div>
+</div>
+
+<div class="panel">
+  <h2>How KVQ Works</h2>
+  <div id="kvq-diagram"><span class="spinner"></span> Generating diagram…</div>
+</div>
+
+<script>
+const UCS = """ + str([{"id": uc["id"], "title": uc["subtitle"], "port": uc["port"]} for uc in USE_CASES]).replace("'", '"') + """;
+
+function phaseHtml(p) {
+  if (!p) return '<span style="color:#6b7280">—</span>';
+  const cls = {1:'p1',2:'p2',3:'p3'}[p] || '';
+  return `<span class="phase-badge ${cls}">Phase ${p}</span>`;
+}
+function prsHtml(prs) {
+  if (prs == null) return '<span class="prs-none">—</span>';
+  const cls = prs >= 0.75 ? 'prs-good' : 'prs-amber';
+  return `<span class="${cls}">${prs.toFixed(4)}</span>`;
+}
+function tierBarHtml(tc) {
+  if (!tc) return '<span style="color:#6b7280">—</span>';
+  const total = (tc.hot||0)+(tc.warm||0)+(tc.cold||0)+(tc.frozen||0);
+  if (total === 0) return '<span style="color:#6b7280">empty</span>';
+  const pct = k => ((tc[k]||0)/total*100).toFixed(1);
+  return `<div class="tier-bar" title="hot:${tc.hot} warm:${tc.warm} cold:${tc.cold} frozen:${tc.frozen}">
+    <div class="tier-hot" style="width:${pct('hot')}%" title="hot"></div>
+    <div class="tier-warm" style="width:${pct('warm')}%" title="warm"></div>
+    <div class="tier-cold" style="width:${pct('cold')}%" title="cold"></div>
+    <div class="tier-frozen" style="width:${pct('frozen')}%" title="frozen"></div>
+  </div>`;
+}
+
+async function refreshStats() {
+  const rows = await Promise.all(UCS.map(async uc => {
+    try {
+      const r = await fetch(`http://${window.location.hostname}:${uc.port}/api/stats`);
+      if (!r.ok) throw new Error('offline');
+      const d = await r.json();
+      const v = d.version || {};
+      const prs_hist = v.prs_history || [];
+      const prs = prs_hist.length ? prs_hist[prs_hist.length-1].prs : null;
+      return `<tr>
+        <td>${uc.title}</td>
+        <td>${phaseHtml(v.phase)}</td>
+        <td>${prsHtml(prs)}</td>
+        <td>${tierBarHtml(d.tier_counts)}</td>
+        <td>${d.total_chunks ?? '—'}</td>
+        <td style="color:#22c55e">online</td>
+      </tr>`;
+    } catch {
+      return `<tr>
+        <td>${uc.title}</td>
+        <td colspan="4" style="color:#6b7280">—</td>
+        <td style="color:#ef4444">offline</td>
+      </tr>`;
+    }
+  }));
+  document.getElementById('stats-tbody').innerHTML = rows.join('');
+}
+
+async function loadDiagram() {
+  try {
+    const r = await fetch('/kvq/diagram');
+    const d = await r.json();
+    document.getElementById('kvq-diagram').innerHTML = d.html;
+  } catch(e) {
+    document.getElementById('kvq-diagram').innerHTML = '<p style="color:#6b7280">Diagram unavailable</p>';
+  }
+}
+
+refreshStats();
+setInterval(refreshStats, 10000);
+loadDiagram();
+</script>
+</body>
+</html>"""
+
+
+@app.get("/kvq", response_class=HTMLResponse)
+async def kvq_page():
+    """KVQ live stats page with Claude-generated architecture diagram."""
+    return HTMLResponse(KVQ_HTML)
+
+
+@app.get("/kvq/diagram")
+async def kvq_diagram():
+    """Call Claude API to generate KVQ architecture diagram HTML snippet."""
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key or anthropic is None:
+        return {"html": "<p style='color:#6b7280;font-family:monospace'>Diagram unavailable — set ANTHROPIC_API_KEY env var</p>"}
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        prompt = (
+            "Generate a clear HTML explanation with an inline SVG diagram showing how KVForge's "
+            "3-phase progressive RAG system works:\n\n"
+            "Phase 1 (Standard RAG): Query is embedded → top-K chunks retrieved from vector store "
+            "→ chunks injected as text into LLM context → LLM generates answer. Typical latency ~6000ms.\n\n"
+            "Phase 2 (KV Cache Injection): Same retrieval, but instead of text-in-context, "
+            "pre-computed KV tensors for those chunks are injected directly into the LLM's attention "
+            "layers, skipping re-encoding. Typical latency ~1500ms.\n\n"
+            "Phase 3 (Parametric Gate): If PRS (Parametric Readiness Score) ≥ 0.75, skip retrieval "
+            "entirely and answer from LoRA fine-tuned weights alone. Typical latency ~800ms.\n\n"
+            "Also explain: what KVQ score measures (quality of pre-computed KV cache entries), "
+            "and why pre-computing KV tensors saves memory bandwidth and latency vs re-encoding at query time.\n\n"
+            "Use dark theme colors: background #0d1117, text #e6edf3, accent blue #7ab8ff, "
+            "green #22c55e, purple #c97aff. Return ONLY the HTML snippet (SVG + explanation paragraphs), "
+            "no DOCTYPE, no html/body tags. Use inline styles only."
+        )
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=4096,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        html = message.content[0].text
+        return {"html": html}
+    except Exception as e:
+        return {"html": f"<p style='color:#6b7280;font-family:monospace'>Diagram unavailable — {str(e)[:120]}</p>"}
 
 
 @app.get("/", response_class=HTMLResponse)
