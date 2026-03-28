@@ -29,22 +29,37 @@ USE_CASES = [
         "description": "Bitext customer-support dataset · 2 000 Q&A pairs · Qdrant + bge-small",
         "port": 8081,
         "color": "#4a9eff",
+        "vectordb": "Qdrant",
+        "vectordb_url": "qdrant",
+        "embed_model": "BAAI/bge-small-en-v1.5",
+        "llm_model": "meta-llama/Llama-3.2-3B-Instruct",
+        "ab_eval_dir": "examples/usecase1_customer_support",
     },
     {
         "id": "uc2",
         "title": "Use Case 2",
         "subtitle": "Biomedical Q&A",
-        "description": "PubMedQA dataset · biomedical literature · Qdrant + bge-small",
+        "description": "PubMedQA dataset · biomedical literature · ChromaDB + bge-small",
         "port": 8082,
         "color": "#4aff9e",
+        "vectordb": "ChromaDB",
+        "vectordb_url": "https://www.trychroma.com",
+        "embed_model": "BAAI/bge-small-en-v1.5",
+        "llm_model": "meta-llama/Llama-3.2-3B-Instruct",
+        "ab_eval_dir": "examples/usecase2_pubmedqa",
     },
     {
         "id": "uc3",
         "title": "Use Case 3",
         "subtitle": "Reading Comprehension",
-        "description": "SQuAD v2 dataset · Wikipedia passages · Qdrant + bge-small",
+        "description": "SQuAD v2 dataset · Wikipedia passages · FAISS + bge-small",
         "port": 8083,
         "color": "#ff9e4a",
+        "vectordb": "FAISS",
+        "vectordb_url": "https://faiss.ai",
+        "embed_model": "BAAI/bge-small-en-v1.5",
+        "llm_model": "meta-llama/Llama-3.2-3B-Instruct",
+        "ab_eval_dir": "examples/usecase3_squad",
     },
     {
         "id": "uc4",
@@ -53,6 +68,11 @@ USE_CASES = [
         "description": "AWS Bedrock PDF (~500 pages) · Qdrant + mxbai-embed-large (1024-dim)",
         "port": 8084,
         "color": "#c97aff",
+        "vectordb": "Qdrant",
+        "vectordb_url": "qdrant",
+        "embed_model": "mixedbread-ai/mxbai-embed-large-v1",
+        "llm_model": "meta-llama/Llama-3.2-3B-Instruct",
+        "ab_eval_dir": "examples/usecase4_bedrock_userguide",
     },
 ]
 
@@ -67,7 +87,7 @@ app = FastAPI(title="KVForge Portal", lifespan=_lifespan)
 
 @app.get("/api/status")
 async def get_status():
-    """Check which use-case dashboards are reachable and return their phase."""
+    """Check which use-case dashboards are reachable and return their phase and PRS."""
     results = {}
     async with httpx.AsyncClient(timeout=2.0) as client:
         for uc in USE_CASES:
@@ -75,16 +95,24 @@ async def get_status():
             try:
                 r = await client.get(f"{base}/api/health")
                 if r.status_code != 200:
-                    results[uc["id"]] = {"status": "error", "phase": None}
+                    results[uc["id"]] = {"status": "error", "phase": None, "prs": None}
                     continue
                 try:
                     rv = await client.get(f"{base}/api/version")
-                    phase = rv.json().get("phase") if rv.status_code == 200 else None
+                    if rv.status_code == 200:
+                        vdata = rv.json()
+                        phase = vdata.get("phase")
+                        prs_history = vdata.get("prs_history", [])
+                        prs = prs_history[-1]["prs"] if prs_history else None
+                    else:
+                        phase = None
+                        prs = None
                 except Exception:
                     phase = None
-                results[uc["id"]] = {"status": "online", "phase": phase}
+                    prs = None
+                results[uc["id"]] = {"status": "online", "phase": phase, "prs": prs}
             except Exception:
-                results[uc["id"]] = {"status": "offline", "phase": None}
+                results[uc["id"]] = {"status": "offline", "phase": None, "prs": None}
     return results
 
 
@@ -231,7 +259,7 @@ PORTAL_HTML = """<!DOCTYPE html>
 <header>
   <h1>⚡ KVForge Dashboard</h1>
   <p>Progressive RAG · KV-Cache Injection · LoRA Fine-Tuning · Confidence-Gated Parametric Answering</p>
-  <span class="badge">4 use-case corpora · A10G GPU · Qdrant vector store</span>
+  <span class="badge">4 use-case corpora · A10G GPU · Qdrant · ChromaDB · FAISS</span>
 </header>
 
 <div class="arch">
