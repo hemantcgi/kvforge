@@ -237,6 +237,9 @@ def cmd_compute_kv(cfg: dict, filter_type: str, filter_value) -> None:
         if offset is None:
             break
 
+    # Flush any remaining buffered writes (FAISSStore batches saves).
+    if hasattr(store, "flush"):
+        store.flush()
     print(f"Recomputed KV for {updated} chunks -> kv_version={current_ver}")
 
 

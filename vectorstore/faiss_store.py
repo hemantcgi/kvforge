@@ -38,6 +38,9 @@ class FAISSStore:
             Created automatically on first use.
     """
 
+    # Number of set_payload calls between automatic disk flushes.
+    _SAVE_BATCH_SIZE: int = 50
+
     def __init__(self, persist_dir: str = ".faiss") -> None:
         try:
             import faiss  # noqa: F401
@@ -51,6 +54,7 @@ class FAISSStore:
         self._indexes: dict[str, Any] = {}
         self._payloads: dict[str, dict[str, dict]] = {}
         self._id_map: dict[str, list[str]] = {}
+        self._pending: dict[str, int] = {}  # pending set_payload calls per collection
 
     # ── internal helpers ────────────────────────────────────────────────────
 
@@ -215,11 +219,37 @@ class FAISSStore:
     def set_payload(
         self, collection: str, point_id: int | str, payload: dict
     ) -> None:
-        """Merge *payload* into the existing payload for *point_id*."""
+        """Merge *payload* into the existing payload for *point_id*.
+
+        Writes are batched: the metadata file is flushed to disk every
+        ``_SAVE_BATCH_SIZE`` calls to avoid O(N²) I/O when updating many
+        points in a loop (e.g. bulk KV-tensor computation).  Call
+        ``flush(collection)`` after the loop to ensure the final batch is
+        persisted.
+        """
         self._ensure_loaded(collection)
         sid = str(point_id)
         self._payloads[collection].setdefault(sid, {}).update(payload)
-        self._save(collection)
+        count = self._pending.get(collection, 0) + 1
+        self._pending[collection] = count
+        if count % self._SAVE_BATCH_SIZE == 0:
+            self._save(collection)
+
+    def flush(self, collection: str | None = None) -> None:
+        """Flush any pending payload changes to disk.
+
+        Args:
+            collection: If given, only flush that collection.  If ``None``,
+                flush all collections that have pending changes.
+        """
+        collections = [collection] if collection else list(self._pending.keys())
+        for coll in collections:
+            if self._pending.get(coll, 0) % self._SAVE_BATCH_SIZE != 0:
+                self._save(coll)
+        if collection:
+            self._pending[collection] = 0
+        else:
+            self._pending.clear()
 
     def count(self, collection: str) -> int:
         """Return the total number of vectors stored in *collection*.
