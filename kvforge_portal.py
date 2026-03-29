@@ -276,7 +276,9 @@ async function refreshStats() {
 
 async function loadDiagram() {
   const key = document.getElementById('api-key-input').value.trim();
-  const url = key ? `/kvq/diagram?key=${encodeURIComponent(key)}` : '/kvq/diagram';
+  if (key) localStorage.setItem('kvq_anthropic_key', key);
+  const saved = key || localStorage.getItem('kvq_anthropic_key') || '';
+  const url = saved ? `/kvq/diagram?key=${encodeURIComponent(saved)}` : '/kvq/diagram';
   try {
     const r = await fetch(url);
     const d = await r.json();
@@ -285,6 +287,16 @@ async function loadDiagram() {
     document.getElementById('kvq-diagram').innerHTML = '<p style="color:#6b7280">Diagram unavailable</p>';
   }
 }
+
+// Restore saved key and auto-generate diagram if key is already stored
+(function() {
+  const saved = localStorage.getItem('kvq_anthropic_key');
+  if (saved) {
+    document.getElementById('api-key-input').value = saved;
+    document.getElementById('kvq-diagram').innerHTML = '<span class="spinner"></span> Generating…';
+    loadDiagram();
+  }
+})();
 
 refreshStats();
 setInterval(refreshStats, 10000);
