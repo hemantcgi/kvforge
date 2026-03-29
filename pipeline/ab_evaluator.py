@@ -140,7 +140,9 @@ def run_eval(
 def generate_html(results: list[dict], title: str) -> str:
     """Render a self-contained HTML viewer with results embedded as const AB_DATA."""
     n = len(results)
-    wins_a = sum(1 for r in results if r["sem_sim_a"] >= r["sem_sim_b"])
+    # Win = query where fine-tuned model has mastered the answer (PRS >= 0.75)
+    PRS_THRESHOLD = 0.75
+    wins_a = sum(1 for r in results if (r.get("prs_score") or 0.0) >= PRS_THRESHOLD)
     wins_b = n - wins_a
     avg_lat_a = sum(r["latency_a_ms"] for r in results) / max(n, 1)
     avg_lat_b = sum(r["latency_b_ms"] for r in results) / max(n, 1)
@@ -220,7 +222,7 @@ def generate_html(results: list[dict], title: str) -> str:
     <div class="stat-section">Accuracy vs Ground Truth</div>
     <div class="stat-row"><span class="stat-label">ROUGE-L F1</span><span class="stat-val {'good' if avg_rl_a >= 0.4 else 'ok'}">{avg_rl_a:.4f}</span></div>
     <div class="stat-row"><span class="stat-label">Semantic Similarity</span><span class="stat-val {'good' if avg_sim_a >= 0.8 else 'ok'}">{avg_sim_a:.4f}</span></div>
-    <div class="stat-row"><span class="stat-label">Questions Won</span><span class="stat-val">{wins_a} / {n} ({pct_a:.1f}%)</span></div>
+    <div class="stat-row"><span class="stat-label">Mastered (PRS ≥ 0.75)</span><span class="stat-val {'good' if pct_a >= 75 else 'ok'}">{wins_a} / {n} ({pct_a:.1f}%)</span></div>
   </div>
   <div class="stats-card b">
     <h3>Model B — Gemini 2.0 Flash (RAG)</h3>
@@ -229,12 +231,12 @@ def generate_html(results: list[dict], title: str) -> str:
     <div class="stat-section">Accuracy vs Ground Truth</div>
     <div class="stat-row"><span class="stat-label">ROUGE-L F1</span><span class="stat-val {'good' if avg_rl_b >= 0.4 else 'ok'}">{avg_rl_b:.4f}</span></div>
     <div class="stat-row"><span class="stat-label">Semantic Similarity</span><span class="stat-val {'good' if avg_sim_b >= 0.8 else 'ok'}">{avg_sim_b:.4f}</span></div>
-    <div class="stat-row"><span class="stat-label">Questions Won</span><span class="stat-val">{wins_b} / {n} ({pct_b:.1f}%)</span></div>
+    <div class="stat-row"><span class="stat-label">Needs RAG (PRS &lt; 0.75)</span><span class="stat-val">{wins_b} / {n} ({pct_b:.1f}%)</span></div>
   </div>
 </div>
 <div class="wins-bar">
-  <div class="wins-bar-a" style="width:{pct_a:.1f}%">A {pct_a:.0f}%</div>
-  <div class="wins-bar-b" style="width:{pct_b:.1f}%">B {pct_b:.0f}%</div>
+  <div class="wins-bar-a" style="width:{pct_a:.1f}%">Parametric {pct_a:.0f}%</div>
+  <div class="wins-bar-b" style="width:{pct_b:.1f}%">RAG {pct_b:.0f}%</div>
 </div>
 <div class="controls">
   <input id="search" type="text" placeholder="Search questions…"/>
@@ -284,7 +286,7 @@ function render() {{
   }});
   rows.sort((a,b) => (a[sortCol] > b[sortCol] ? 1 : -1) * sortDir);
   document.getElementById('count').textContent = rows.length + ' rows';
-  const winner = r => r.sem_sim_a >= r.sem_sim_b ? 'winner-a' : 'winner-b';
+  const winner = r => (r.prs_score != null && r.prs_score >= 0.75) ? 'winner-a' : 'winner-b';
   document.getElementById('tbody').innerHTML = rows.map(r => `
     <tr class="${{winner(r)}}">
       <td class="q">${{trunc(r.question)}}</td>
