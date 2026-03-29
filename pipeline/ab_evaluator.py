@@ -114,13 +114,21 @@ def run_eval(
             sem_sim_a = _cosine(np.array(vecs[0]), np.array(vecs[2]))
             sem_sim_b = _cosine(np.array(vecs[1]), np.array(vecs[2]))
 
+            # Per-query PRS: use the gateway score if it fired (> 0), otherwise
+            # fall back to a quality ratio — how well model A answered relative to
+            # the Gemini reference.  This gives an honest per-query mastery signal
+            # even when the parametric gate didn't trigger (e.g. Phase 2 RAG queries).
+            gate_prs = data.get("prs_score_a", 0.0) or 0.0
+            quality_prs = min(sem_sim_a / max(sem_sim_b, 1e-9), 1.0)
+            prs_score = gate_prs if gate_prs > 0.0 else quality_prs
+
             results.append({
                 "question": question,
                 "ground_truth": ground_truth,
                 "answer_a": answer_a,
                 "answer_b": answer_b,
                 "mode_a": data.get("mode_a", ""),
-                "prs_score": round(data.get("prs_score_a", 0.0), 4),
+                "prs_score": round(prs_score, 4),
                 "latency_a_ms": data.get("latency_a_ms", 0),
                 "latency_b_ms": data.get("latency_b_ms", 0),
                 "generation_a_ms": data.get("generation_a_ms", 0),
