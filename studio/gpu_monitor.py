@@ -1,8 +1,11 @@
 # studio/gpu_monitor.py
 """GPU availability monitor: parses nvidia-smi and detects vLLM processes."""
 
+import os
 import re
+import signal
 import subprocess
+import time
 from typing import Optional
 
 
@@ -13,6 +16,8 @@ def _run_nvidia_smi() -> str:
          "--format=csv,noheader,nounits"],
         capture_output=True, text=True, timeout=10
     )
+    if result.returncode != 0:
+        raise RuntimeError(f"nvidia-smi failed: {result.stderr.strip()}")
     return result.stdout.strip()
 
 
@@ -82,8 +87,12 @@ def find_vllm_processes(ps_output: str) -> list[dict]:
 def get_gpu_status() -> dict:
     try:
         smi_out = _run_nvidia_smi()
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+    except FileNotFoundError:
         return {"error": "nvidia-smi not found", "gpus": [], "has_free_gpu": False}
+    except subprocess.TimeoutExpired:
+        return {"error": "nvidia-smi timed out", "gpus": [], "has_free_gpu": False}
+    except RuntimeError as e:
+        return {"error": str(e), "gpus": [], "has_free_gpu": False}
 
     gpus   = parse_nvidia_smi(smi_out)
     ps_out = _run_ps()
@@ -107,7 +116,6 @@ def get_gpu_status() -> dict:
 
 def stop_vllm_process(port: int, timeout: int = 10) -> bool:
     """Send SIGTERM to the vLLM process on the given port. Returns True on success."""
-    import signal, os, time
     ps_out = _run_ps()
     procs = find_vllm_processes(ps_out)
     target = next((p for p in procs if p["port"] == port), None)
@@ -123,3 +131,5 @@ def stop_vllm_process(port: int, timeout: int = 10) -> bool:
         return False
     except ProcessLookupError:
         return True  # Already gone
+    except PermissionError:
+        return False  # Cannot kill process owned by another user
