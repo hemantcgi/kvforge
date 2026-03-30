@@ -25,14 +25,15 @@ def tmp_root(tmp_path):
 
 @pytest.fixture
 def client(tmp_root):
-    with patch("studio.routes.ROOT", tmp_root), \
-         patch("studio.api.ROOT", tmp_root), \
-         patch("studio.migration.ROOT", tmp_root):
-        import importlib
-        import studio.routes as routes
-        import studio.api as api
+    import importlib
+    import studio.api as api
+    import studio.routes as routes
+    with patch("studio.migration.ROOT", tmp_root):
         importlib.reload(api)
         importlib.reload(routes)
+    with patch("studio.api.ROOT", tmp_root), \
+         patch("studio.routes.ROOT", tmp_root), \
+         patch("studio.migration.ROOT", tmp_root):
         from fastapi import FastAPI
         app = FastAPI()
         app.include_router(routes.router)
@@ -93,3 +94,21 @@ def test_gpu_check_returns_gpus():
         r = c.post("/api/gpu-check")
         assert r.status_code == 200
         assert r.json()["has_free_gpu"] is True
+
+
+def test_create_new_uc_has_custom_type(client, tmp_root):
+    r = client.post("/api/uc/new", json={"id": "my-custom-uc", "display_name": "Custom"})
+    assert r.status_code == 200
+    cfg = json.loads((tmp_root / "examples" / "my-custom-uc" / "uc_config.json").read_text())
+    assert cfg["type"] == "custom"
+
+
+def test_run_step_returns_409_on_duplicate(client, tmp_root):
+    from studio.migration import migrate_existing_use_cases
+    migrate_existing_use_cases(root=tmp_root)
+    # First run-step succeeds
+    r1 = client.post("/api/run-step", json={"uc_id": "usecase3_squad", "step": "train"})
+    assert r1.status_code == 200
+    # Second run-step for same UC returns 409
+    r2 = client.post("/api/run-step", json={"uc_id": "usecase3_squad", "step": "prs-eval"})
+    assert r2.status_code == 409

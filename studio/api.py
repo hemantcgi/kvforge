@@ -17,22 +17,23 @@ ROOT = Path(__file__).resolve().parent.parent
 api_router = APIRouter(prefix="/api")
 
 
-def _root() -> Path:
-    """Return ROOT, using studio.migration.ROOT so tests can patch it."""
-    import studio.migration as _m
-    return _m.ROOT
+def _uc_path(uc_id: str) -> Path:
+    """Return the UC directory path, raising 400 on path traversal attempts."""
+    path = (ROOT / "examples" / uc_id).resolve()
+    if not str(path).startswith(str((ROOT / "examples").resolve())):
+        raise HTTPException(400, "Invalid use case ID")
+    return path
 
 
 # ── Registry ──────────────────────────────────────────────────────────────────
 
 @api_router.get("/registry")
 def get_registry():
-    root = _root()
-    ucs = load_registry(root=root)
+    ucs = load_registry(root=ROOT)
     result = []
     for uc in ucs:
         uc_data = dict(uc)
-        version_path = root / "examples" / uc["id"] / "version.json"
+        version_path = ROOT / "examples" / uc["id"] / "version.json"
         if version_path.exists():
             try:
                 v = json.loads(version_path.read_text())
@@ -53,7 +54,7 @@ def get_registry():
 
 @api_router.get("/uc/{uc_id}/config")
 def get_uc_config(uc_id: str):
-    path = _root() / "examples" / uc_id / "uc_config.json"
+    path = _uc_path(uc_id) / "uc_config.json"
     if not path.exists():
         raise HTTPException(404, f"uc_config.json not found for {uc_id}")
     return json.loads(path.read_text())
@@ -61,7 +62,7 @@ def get_uc_config(uc_id: str):
 
 @api_router.post("/uc/{uc_id}/config")
 async def save_uc_config(uc_id: str, request: Request):
-    path = _root() / "examples" / uc_id / "uc_config.json"
+    path = _uc_path(uc_id) / "uc_config.json"
     if not path.exists():
         raise HTTPException(404, f"UC {uc_id} not found")
     existing = json.loads(path.read_text())
@@ -83,8 +84,9 @@ class NewUCRequest(BaseModel):
 
 @api_router.post("/uc/new")
 def create_new_uc(req: NewUCRequest):
-    root = _root()
-    uc_dir = root / "examples" / req.id
+    uc_dir = _uc_path(req.id)
+    if (uc_dir / "uc_config.json").exists():
+        raise HTTPException(409, f"Use case '{req.id}' already exists")
     uc_dir.mkdir(parents=True, exist_ok=True)
 
     from datetime import datetime, timezone
@@ -102,7 +104,7 @@ def create_new_uc(req: NewUCRequest):
                     "comparison_provider": "gemini", "comparison_model": "gemini-1.5-flash"},
     }
     (uc_dir / "uc_config.json").write_text(json.dumps(uc_config, indent=2))
-    add_to_registry(req.id, req.display_name, root=root)
+    add_to_registry(req.id, req.display_name, root=ROOT)
     return {"status": "created", "id": req.id}
 
 
@@ -153,10 +155,10 @@ def stop_job(job_id: str):
     job = jm.get(job_id)
     if not job:
         raise HTTPException(404, f"Job {job_id} not found")
-    if job["pid"]:
+    if job["status"] == "running" and job["pid"]:
         try:
             os.kill(job["pid"], signal.SIGTERM)
-        except ProcessLookupError:
+        except (ProcessLookupError, PermissionError):
             pass
     jm.stop(job_id)
     return {"status": "stopped"}
