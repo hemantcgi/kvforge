@@ -112,3 +112,27 @@ def test_run_step_returns_409_on_duplicate(client, tmp_root):
     # Second run-step for same UC returns 409
     r2 = client.post("/api/run-step", json={"uc_id": "usecase3_squad", "step": "prs-eval"})
     assert r2.status_code == 409
+
+
+def test_hub_page_returns_html(tmp_root):
+    """Smoke test: /studio serves the hub HTML page after migration."""
+    with patch("studio.routes.ROOT", tmp_root), \
+         patch("studio.api.ROOT", tmp_root), \
+         patch("studio.migration.ROOT", tmp_root):
+        import importlib, studio.routes as routes
+        importlib.reload(routes)
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        app = FastAPI()
+        app.include_router(routes.router)
+        # Create templates dir
+        tpl_dir = tmp_root / "templates" / "studio"
+        tpl_dir.mkdir(parents=True, exist_ok=True)
+        (tpl_dir / "hub.html").write_text("<html><body>KVForge Studio</body></html>")
+        # Patch TEMPLATES path in routes
+        import studio.routes as r
+        r.TEMPLATES = tpl_dir
+        c = TestClient(app)
+        resp = c.get("/")
+        assert resp.status_code == 200
+        assert "KVForge Studio" in resp.text
