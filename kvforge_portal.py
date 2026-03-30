@@ -91,6 +91,9 @@ async def _lifespan(app: FastAPI):
 
 app = FastAPI(title="KVForge Portal", lifespan=_lifespan)
 
+from studio.routes import router as _studio_router
+app.include_router(_studio_router, prefix="/studio")
+
 
 @app.get("/api/status")
 async def get_status():
