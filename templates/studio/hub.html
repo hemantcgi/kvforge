@@ -1,3 +1,879 @@
+<!-- templates/studio/hub.html -->
 <!DOCTYPE html>
-<html><head><title>KVForge Studio</title></head>
-<body><h1>KVForge Studio — loading...</h1></body></html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KVForge Studio</title>
+<style>
+/* === Reset + Base === */
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#020817;font-family:system-ui,-apple-system,sans-serif;color:#e2e8f0;font-size:13px;height:100vh;display:flex;overflow:hidden}
+
+/* === Sidebar === */
+#sidebar{width:220px;background:#080712;border-right:1px solid #1e1b4b;display:flex;flex-direction:column;transition:width 0.22s ease;flex-shrink:0;overflow:hidden}
+#sidebar.collapsed{width:52px}
+
+.sb-header-exp{padding:13px 12px;display:flex;align-items:center;gap:9px;border-bottom:1px solid #1e1b4b;flex-shrink:0}
+#sidebar.collapsed .sb-header-exp{display:none}
+.sb-header-col{display:none;padding:12px 0;justify-content:center;align-items:center;flex-direction:column;gap:8px;border-bottom:1px solid #1e1b4b;flex-shrink:0;cursor:pointer}
+#sidebar.collapsed .sb-header-col{display:flex}
+.sb-header-col:hover .logo-mark{box-shadow:0 0 12px #8b5cf688}
+
+.logo-mark{width:28px;height:28px;background:linear-gradient(135deg,#8b5cf6,#06b6d4);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:10px;flex-shrink:0;transition:box-shadow 0.2s}
+.logo-text{background:linear-gradient(90deg,#a78bfa,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;font-size:14px;white-space:nowrap}
+.collapse-btn{margin-left:auto;color:#475569;cursor:pointer;display:flex;align-items:center;padding:4px;border-radius:5px;transition:color 0.15s,background 0.15s;flex-shrink:0}
+.collapse-btn:hover{color:#a78bfa;background:#1e1b4b}
+.expand-hint{color:#4c1d95;font-size:18px}
+
+.sb-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:10px 8px}
+#sidebar.collapsed .nav-label,#sidebar.collapsed .section-title,#sidebar.collapsed .uc-name,#sidebar.collapsed .new-uc-label{display:none}
+.section-title{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#334155;padding:0 6px;margin:4px 0 6px;white-space:nowrap}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:7px;cursor:pointer;color:#64748b;transition:background .15s,color .15s;white-space:nowrap;margin-bottom:2px}
+#sidebar.collapsed .nav-item{justify-content:center;padding:8px 4px}
+.nav-item:hover{background:#1e1b4b;color:#c4b5fd}
+.nav-item.active{background:#1e1b4b;color:#a78bfa}
+.nav-icon{font-size:15px;flex-shrink:0}
+.nav-label{font-size:12px;font-weight:500}
+.divider{height:1px;background:#1e1b4b;margin:8px 4px}
+.uc-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;margin-bottom:1px;transition:background .15s}
+#sidebar.collapsed .uc-item{justify-content:center;padding:6px 4px}
+.uc-item:hover{background:#0f0f1a}
+.uc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.uc-name{font-size:11px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.uc-item.active .uc-name{color:#22d3ee}
+.new-uc-btn{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;border:1px dashed #4c1d95;color:#7c3aed;margin-top:6px;transition:background .15s;white-space:nowrap}
+#sidebar.collapsed .new-uc-btn{justify-content:center}
+.new-uc-btn:hover{background:#1a0a3a}
+
+/* === Main === */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* === Topbar === */
+#topbar{background:#080712;border-bottom:1px solid #1e1b4b;padding:0 20px;height:48px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.breadcrumb{display:flex;align-items:center;gap:5px;font-size:12px}
+.bc-seg{color:#475569;cursor:pointer;transition:color .15s;display:flex;align-items:center}
+.bc-seg:hover{color:#a78bfa}
+.bc-seg.current{color:#22d3ee;font-weight:600;cursor:default}
+.bc-sep{color:#1e1b4b;font-size:16px;margin:0 2px}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.gpu-pill{display:flex;align-items:center;gap:5px;background:#0f172a;border:1px solid #064e3b;border-radius:20px;padding:4px 10px;font-size:10px;color:#34d399;white-space:nowrap}
+.gpu-dot{width:6px;height:6px;background:#34d399;border-radius:50%;animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.icon-btn{display:flex;align-items:center;gap:5px;background:#0f0f1a;border:1px solid #1e1b4b;border-radius:6px;padding:5px 10px;font-size:11px;color:#64748b;cursor:pointer;transition:border-color .15s,color .15s}
+.icon-btn:hover{border-color:#4c1d95;color:#a78bfa}
+
+/* === Content === */
+#content{flex:1;overflow-y:auto;padding:20px}
+.page-title{color:#a78bfa;font-size:18px;font-weight:700;margin-bottom:4px}
+.page-sub{color:#475569;font-size:12px;margin-bottom:20px}
+
+/* === New UC inline form === */
+#new-uc-bar{display:none;background:#0c0a1e;border-bottom:1px solid #312e81;padding:8px 20px;align-items:center;gap:10px;flex-shrink:0}
+#new-uc-bar.visible{display:flex}
+#new-uc-bar input{background:#1e1b4b;border:1px solid #4338ca;border-radius:5px;padding:5px 10px;color:#e2e8f0;font-size:11px;outline:none}
+#new-uc-bar input:focus{border-color:#7c3aed}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s}
+.btn-primary{background:linear-gradient(135deg,#7c3aed,#0891b2);color:#fff}
+.btn-ghost{background:transparent;border:1px solid #312e81;color:#a78bfa}
+.btn-danger{background:transparent;border:1px solid #7f1d1d;color:#f87171}
+.btn:hover{opacity:.85}
+
+/* === UC Cards === */
+.uc-card{background:#0f0f1a;border:1px solid #1e1b4b;border-radius:10px;overflow:hidden;margin-bottom:10px}
+.uc-card-header{padding:11px 14px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.uc-card-header:hover{background:#0a0a1e}
+.uc-title{color:#a78bfa;font-weight:600;font-size:13px}
+.phase-badge{padding:2px 8px;border-radius:10px;font-size:9px;font-weight:600}
+.phase-1{background:#1e1b4b;color:#94a3b8}
+.phase-2{background:#1c1917;color:#f59e0b}
+.phase-3{background:#064e3b;color:#34d399}
+.prs-val{font-size:10px;margin-left:4px}
+.example-badge{background:#1e1b4b;color:#64748b;padding:2px 6px;border-radius:8px;font-size:9px}
+.journey{display:flex;align-items:center;gap:3px;margin-left:auto}
+.jd{width:8px;height:8px;border-radius:50%;background:#22d3ee}
+.ja{width:8px;height:8px;border-radius:50%;background:#f59e0b;box-shadow:0 0 5px #f59e0b88}
+.jl{width:8px;height:8px;border-radius:50%;border:1px solid #334155}
+.jline{width:16px;height:1px;background:#1e1b4b}
+.j-count{font-size:9px;margin-left:5px}
+
+/* === Module Chips === */
+.mod-strip{padding:6px 14px 8px;display:flex;gap:6px;border-top:1px solid #1e1b4b;background:#080a14;flex-wrap:wrap}
+.mod-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;border:1px solid;cursor:pointer;font-size:10px;font-weight:500;transition:all .15s;white-space:nowrap;user-select:none}
+.chip-arrow{font-size:9px;margin-left:2px;display:inline-block;transition:transform .2s}
+.mod-chip.open .chip-arrow{transform:rotate(180deg)}
+.chip-done{border-color:#064e3b;color:#34d399;background:#0a1a12}
+.chip-done:hover{border-color:#0d9488;background:#0d1f17}
+.chip-active{border-color:#7c3aed;color:#a78bfa;background:#12092a;box-shadow:0 0 8px #7c3aed44}
+.chip-active:hover{border-color:#9d4edd}
+.chip-locked{border-color:#1e293b;color:#334155;background:transparent;cursor:not-allowed}
+
+/* === Module Panels === */
+.mod-panel-wrap{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.mod-panel-wrap.open{max-height:1200px}
+.mod-panel{border-top:1px solid #312e81;background:#0c0a1e;padding:14px}
+.panel-top{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #1e1b4b}
+.panel-title{color:#a78bfa;font-weight:600;font-size:12px;flex:1}
+.status-pill{padding:2px 8px;border-radius:8px;font-size:9px;font-weight:600}
+.pill-done{background:#064e3b;color:#34d399}
+.pill-running{background:#1c1917;color:#f59e0b}
+.pill-error{background:#450a0a;color:#f87171}
+.collapse-sm{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#475569;cursor:pointer;padding:3px 8px;border:1px solid #1e1b4b;border-radius:5px;transition:color .15s,border-color .15s}
+.collapse-sm:hover{color:#a78bfa;border-color:#4c1d95}
+
+/* === Forms === */
+.field{margin-bottom:11px}
+label{display:block;color:#64748b;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px}
+input[type=text],input[type=number],select,textarea{width:100%;background:#080712;border:1px solid #1e1b4b;border-radius:6px;padding:7px 10px;color:#e2e8f0;font-size:11px;outline:none;transition:border-color .15s;font-family:inherit}
+input:focus,select:focus,textarea:focus{border-color:#7c3aed}
+textarea{resize:vertical;min-height:52px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.toggle-group{display:flex;border:1px solid #1e1b4b;border-radius:6px;overflow:hidden}
+.topt{flex:1;padding:7px;text-align:center;color:#475569;cursor:pointer;font-size:10px;background:#080712;transition:all .15s}
+.topt:not(:last-child){border-right:1px solid #1e1b4b}
+.topt.sel{background:#1e1b4b;color:#a78bfa}
+.hint{color:#475569;font-size:10px;margin-top:4px}
+.btn-row{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid #1e1b4b}
+.section-lbl{color:#64748b;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+.preview-card{background:#080712;border:1px solid #1e1b4b;border-radius:7px;padding:10px;margin-top:10px}
+.preview-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #0f172a}
+.preview-row:last-child{border-bottom:none}
+.pk{color:#475569;font-size:10px}
+.pv{color:#e2e8f0;font-size:10px;font-family:monospace}
+
+/* === GPU Grid === */
+.gpu-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
+.gpu-card{background:#080712;border:1px solid;border-radius:7px;padding:8px 10px}
+.gpu-free{border-color:#064e3b}
+.gpu-busy{border-color:#7f1d1d}
+.gpu-hd{display:flex;align-items:center;gap:5px;margin-bottom:5px;font-size:10px;font-weight:600}
+.gpu-free .gpu-hd{color:#34d399}
+.gpu-busy .gpu-hd{color:#f87171}
+.vbar{height:4px;background:#1e1b4b;border-radius:3px;overflow:hidden;margin-bottom:3px}
+.vfill{height:100%;border-radius:3px}
+.gpu-free .vfill{background:linear-gradient(90deg,#059669,#34d399)}
+.gpu-busy .vfill{background:linear-gradient(90deg,#dc2626,#f87171)}
+.gpu-meta{font-size:9px;color:#475569}
+
+/* === Pipeline Stepper === */
+.pipeline{display:flex;flex-direction:column}
+.pstep{display:flex;gap:10px;padding:7px 0;position:relative}
+.pstep:not(:last-child)::after{content:'';position:absolute;left:10px;top:26px;bottom:-2px;width:1px;background:#1e1b4b}
+.pico{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;margin-top:1px}
+.p-done{background:#064e3b;color:#34d399}
+.p-running{background:#312e81;color:#a78bfa;box-shadow:0 0 7px #7c3aed66}
+.p-pending{background:#0f172a;color:#334155;border:1px solid #1e293b}
+.ptitle{font-size:11px;font-weight:600;margin-bottom:2px}
+.pmeta{font-size:10px;color:#475569}
+.pbar{height:4px;background:#1e1b4b;border-radius:3px;overflow:hidden;margin-top:5px}
+.pfill{height:100%;background:linear-gradient(90deg,#7c3aed,#06b6d4);border-radius:3px;transition:width .5s}
+.plog{background:#020817;border:1px solid #1e1b4b;border-radius:5px;padding:6px 9px;font-size:9px;font-family:monospace;color:#64748b;margin-top:5px;max-height:80px;overflow-y:auto;line-height:1.7}
+.log-ok{color:#34d399}
+.log-info{color:#60a5fa}
+.log-warn{color:#f59e0b}
+.log-err{color:#f87171}
+.cur{display:inline-block;width:6px;height:10px;background:#a78bfa;animation:blink 1s infinite;vertical-align:middle}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* === Eval Stats === */
+.eval-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.stat-card{background:#080712;border:1px solid #1e1b4b;border-radius:7px;padding:10px;text-align:center}
+.stat-val{font-size:22px;font-weight:700;margin-bottom:3px}
+.stat-label{font-size:9px;color:#475569;text-transform:uppercase;letter-spacing:.07em}
+.stat-sub{font-size:9px;color:#334155;margin-top:2px}
+.compare-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#080712;border:1px solid #1e1b4b;border-radius:6px;margin-bottom:5px}
+.cmp-label{font-size:10px;color:#64748b;width:110px;flex-shrink:0}
+.cmp-bars{flex:1;display:flex;flex-direction:column;gap:3px}
+.cmp-bar{display:flex;align-items:center;gap:6px}
+.bar-track{flex:1;height:6px;background:#1e1b4b;border-radius:3px;overflow:hidden}
+.bar-a{height:100%;border-radius:3px;background:linear-gradient(90deg,#7c3aed,#a78bfa)}
+.bar-b{height:100%;border-radius:3px;background:linear-gradient(90deg,#0891b2,#22d3ee)}
+.bar-val{font-size:9px;color:#94a3b8;width:40px;text-align:right;flex-shrink:0}
+.bar-name{font-size:9px;width:55px;flex-shrink:0}
+.bar-name-a{color:#a78bfa}
+.bar-name-b{color:#22d3ee}
+</style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<div id="sidebar">
+  <div class="sb-header-exp">
+    <div class="logo-mark">KV</div>
+    <span class="logo-text">KVForge</span>
+    <div class="collapse-btn" onclick="toggleSidebar()" title="Collapse">&#8249;</div>
+  </div>
+  <div class="sb-header-col" onclick="toggleSidebar()" title="Expand">
+    <div class="logo-mark">KV</div>
+    <div class="expand-hint">&#8250;</div>
+  </div>
+  <div class="sb-body">
+    <div class="section-title">Workspace</div>
+    <div class="nav-item active" onclick="navTo('hub')" title="Studio Hub">
+      <span class="nav-icon">&#9783;</span>
+      <span class="nav-label">Studio Hub</span>
+    </div>
+    <div class="nav-item" onclick="window.open('/kvq','_blank')" title="KVQ Live Stats">
+      <span class="nav-icon">&#9096;</span>
+      <span class="nav-label">KVQ Live Stats</span>
+    </div>
+    <div class="nav-item" onclick="window.open('/ab-eval/uc1','_blank')" title="A/B Reports">
+      <span class="nav-icon">&#9638;</span>
+      <span class="nav-label">A/B Reports</span>
+    </div>
+    <div class="nav-item" onclick="showSettings()" title="Settings">
+      <span class="nav-icon">&#9881;</span>
+      <span class="nav-label">Settings</span>
+    </div>
+    <div class="divider"></div>
+    <div class="section-title">Use Cases</div>
+    <div id="uc-list"></div>
+    <div class="new-uc-btn" onclick="showNewUcForm()" title="New Use Case">
+      <span style="font-size:14px">&#43;</span>
+      <span class="new-uc-label nav-label">New Use Case</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Main ── -->
+<div id="main">
+  <div id="topbar">
+    <div class="breadcrumb" id="breadcrumb">
+      <div class="bc-seg" onclick="navTo('hub')">&#8962;</div>
+      <span class="bc-sep">&#8250;</span>
+      <div class="bc-seg current" id="bc-current">Studio Hub</div>
+    </div>
+    <div class="topbar-right">
+      <div class="gpu-pill" id="gpu-pill" onclick="refreshGpu()">
+        <div class="gpu-dot"></div>
+        <span id="gpu-text">Checking GPUs...</span>
+      </div>
+      <div class="icon-btn" onclick="showApiKeys()">&#128273; API Keys</div>
+    </div>
+  </div>
+
+  <!-- New UC form bar (hidden by default) -->
+  <div id="new-uc-bar">
+    <span style="color:#a78bfa;font-size:10px;font-weight:600">New use case:</span>
+    <input id="new-uc-id" placeholder="id (e.g. medqa-2024)" style="width:150px">
+    <input id="new-uc-name" placeholder="Display name" style="flex:1;max-width:240px">
+    <div class="btn btn-primary" onclick="createUc()">Create</div>
+    <div class="btn btn-ghost" onclick="hideNewUcForm()">Cancel</div>
+  </div>
+
+  <div id="content">
+    <div class="page-title">Studio Hub</div>
+    <div class="page-sub">Configure and run the KVForge pipeline on any dataset.</div>
+    <div id="uc-cards"></div>
+  </div>
+</div>
+
+<!-- ── API Keys Modal ── -->
+<div id="keys-modal" style="display:none;position:fixed;inset:0;background:#000a;z-index:100;align-items:center;justify-content:center">
+  <div style="background:#0f0f1a;border:1px solid #312e81;border-radius:12px;padding:24px;width:380px">
+    <div style="color:#a78bfa;font-size:14px;font-weight:700;margin-bottom:16px">API Keys</div>
+    <div class="field"><label>Gemini API Key</label>
+      <input type="text" id="key-gemini" placeholder="AIza...">
+      <div class="hint">Stored in browser only — never sent to server</div>
+    </div>
+    <div class="field"><label>OpenAI API Key</label>
+      <input type="text" id="key-openai" placeholder="sk-...">
+    </div>
+    <div class="btn-row">
+      <div class="btn btn-ghost" onclick="closeApiKeys()">Cancel</div>
+      <div class="btn btn-primary" onclick="saveApiKeys()">Save Keys</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ───────────────────────────────────────────────────────────────────
+const STATE = { ucs: [], openPanels: {}, pollingJob: null };
+
+// ── Init ────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  loadApiKeysFromStorage();
+  loadRegistry();
+  refreshGpu();
+});
+
+// ── Sidebar ─────────────────────────────────────────────────────────────────
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// ── Registry / UC list ──────────────────────────────────────────────────────
+async function loadRegistry() {
+  const res = await fetch('/studio/api/registry');
+  const data = await res.json();
+  STATE.ucs = data.use_cases || [];
+  renderUcList();
+  renderUcCards();
+}
+
+function renderUcList() {
+  const el = document.getElementById('uc-list');
+  el.innerHTML = STATE.ucs.map(uc => {
+    const color = uc.phase === 3 ? '#22d3ee' : uc.phase === 2 ? '#f59e0b' : '#475569';
+    return `<div class="uc-item" onclick="scrollToUc('${uc.id}')" title="${uc.display_name}">
+      <div class="uc-dot" style="background:${color}"></div>
+      <span class="uc-name">${uc.display_name || uc.id}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── UC Cards ─────────────────────────────────────────────────────────────────
+function renderUcCards() {
+  const el = document.getElementById('uc-cards');
+  el.innerHTML = STATE.ucs.map(uc => renderUcCard(uc)).join('');
+}
+
+function renderUcCard(uc) {
+  const phase = uc.phase || 1;
+  const prs = uc.prs ? uc.prs.toFixed(3) : '—';
+  const prsColor = uc.prs >= 0.75 ? '#34d399' : uc.prs ? '#f59e0b' : '#475569';
+  const dots = renderJourneyDots(uc);
+  const typeTag = uc.type === 'example' ? '<span class="example-badge">Example</span>' : '';
+
+  return `<div class="uc-card" id="uc-${uc.id}">
+    <div class="uc-card-header" onclick="toggleUcCard('${uc.id}')">
+      <span style="font-size:15px;color:#a78bfa">&#9638;</span>
+      <span class="uc-title">${uc.display_name || uc.id}</span>
+      ${typeTag}
+      <span class="phase-badge phase-${phase}">Phase ${phase}</span>
+      <span class="prs-val" style="color:${prsColor}">PRS ${prs}</span>
+      ${dots}
+    </div>
+    <div class="mod-strip" id="chips-${uc.id}">
+      ${renderChips(uc)}
+    </div>
+    ${renderPanels(uc)}
+  </div>`;
+}
+
+function renderJourneyDots(uc) {
+  // Determine completion of each module from uc_config + version
+  const steps = getStepStatuses(uc);
+  const dotHtml = steps.map((s, i) => {
+    const dot = s === 'done' ? '<div class="jd"></div>'
+               : s === 'active' ? '<div class="ja"></div>'
+               : '<div class="jl"></div>';
+    const line = i < steps.length - 1 ? '<div class="jline"></div>' : '';
+    return dot + line;
+  }).join('');
+  const done = steps.filter(s => s === 'done').length;
+  return `<div class="journey">${dotHtml}<span class="j-count" style="color:${done===5?'#34d399':'#64748b'}">${done}/5</span></div>`;
+}
+
+function getStepStatuses(uc) {
+  // Returns ['done'|'active'|'locked'] for [data, vectordb, llm, train, eval]
+  const cfg = STATE.configs && STATE.configs[uc.id];
+  const hasData    = cfg && cfg.data && cfg.data.dataset_id;
+  const hasVdb     = cfg && cfg.vectordb && cfg.vectordb.store;
+  const hasLlm     = cfg && cfg.llm && cfg.llm.local_model;
+  const hasTrain   = uc.phase >= 2;
+  const hasEval    = uc.phase >= 2 && uc.prs;
+  return [
+    hasData ? 'done' : 'active',
+    hasVdb  ? 'done' : hasData  ? 'active' : 'locked',
+    hasLlm  ? 'done' : 'active',
+    hasTrain? 'done' : hasLlm && hasData && hasVdb ? 'active' : 'locked',
+    hasEval ? 'done' : hasTrain ? 'active' : 'locked',
+  ];
+}
+
+// ── Module Chips ─────────────────────────────────────────────────────────────
+function renderChips(uc) {
+  const steps = getStepStatuses(uc);
+  const labels = ['Data','VectorDB','LLM','Training','Evaluation'];
+  const mods   = ['data','vdb','llm','train','eval'];
+  return mods.map((m, i) => {
+    const s = steps[i];
+    const cls = s === 'done' ? 'chip-done' : s === 'active' ? 'chip-active' : 'chip-locked';
+    const locked = s === 'locked';
+    const onclick = locked ? '' : `onclick="togglePanel('${uc.id}','${m}')"`;
+    const lockIcon = locked ? ' &#128274;' : '';
+    return `<div class="mod-chip ${cls}" id="chip-${uc.id}-${m}" ${onclick} title="${locked ? getLockedReason(m) : ''}">
+      ${labels[i]}${lockIcon}<span class="chip-arrow">&#9660;</span>
+    </div>`;
+  }).join('');
+}
+
+function getLockedReason(mod) {
+  if (mod === 'vdb')   return 'Requires Data configured first';
+  if (mod === 'train') return 'Requires Data, VectorDB and LLM configured';
+  if (mod === 'eval')  return 'Requires at least one training round complete';
+  return '';
+}
+
+// ── Module Panels ─────────────────────────────────────────────────────────────
+function renderPanels(uc) {
+  return ['data','vdb','llm','train','eval'].map(m =>
+    `<div class="mod-panel-wrap" id="panel-${uc.id}-${m}">
+       <div class="mod-panel" id="panel-body-${uc.id}-${m}">
+         <div style="color:#475569;font-size:11px">Loading...</div>
+       </div>
+     </div>`
+  ).join('');
+}
+
+// ── Panel Toggle ─────────────────────────────────────────────────────────────
+async function togglePanel(ucId, mod) {
+  const wrap  = document.getElementById(`panel-${ucId}-${mod}`);
+  const chip  = document.getElementById(`chip-${ucId}-${mod}`);
+  const isOpen = wrap.classList.contains('open');
+
+  if (!isOpen) {
+    // Load config if not cached
+    if (!STATE.configs) STATE.configs = {};
+    if (!STATE.configs[ucId]) {
+      try {
+        const r = await fetch(`/studio/api/uc/${ucId}/config`);
+        STATE.configs[ucId] = await r.json();
+      } catch(e) { STATE.configs[ucId] = {}; }
+    }
+    // Render panel content
+    const body = document.getElementById(`panel-body-${ucId}-${mod}`);
+    body.innerHTML = renderPanelContent(ucId, mod, STATE.configs[ucId]);
+  }
+
+  wrap.classList.toggle('open', !isOpen);
+  if (chip) {
+    chip.classList.toggle('open', !isOpen);
+    const arrow = chip.querySelector('.chip-arrow');
+    if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+  }
+}
+
+function collapsePanel(ucId, mod) {
+  togglePanel(ucId, mod); // Will close if open
+}
+
+// ── Panel Content Renderers ───────────────────────────────────────────────────
+function renderPanelContent(ucId, mod, cfg) {
+  switch(mod) {
+    case 'data':  return renderDataPanel(ucId, cfg);
+    case 'vdb':   return renderVdbPanel(ucId, cfg);
+    case 'llm':   return renderLlmPanel(ucId, cfg);
+    case 'train': return renderTrainPanel(ucId, cfg);
+    case 'eval':  return renderEvalPanel(ucId, cfg);
+    default: return '<div style="color:#475569">Unknown module</div>';
+  }
+}
+
+function renderDataPanel(ucId, cfg) {
+  const d = (cfg && cfg.data) || {};
+  const isHf = !d.source_type || d.source_type === 'huggingface';
+  return `<div class="panel-top">
+    <span>&#9650;</span>
+    <span class="panel-title">Data Source</span>
+    ${d.dataset_id || d.source_path ? '<span class="status-pill pill-done">&#10003; Configured</span>' : ''}
+    <div class="collapse-sm" onclick="togglePanel('${ucId}','data')">&#9650; Collapse</div>
+  </div>
+  <div class="field"><label>Source Type</label>
+    <div class="toggle-group">
+      <div class="topt ${isHf ? 'sel' : ''}" onclick="switchDataSource(this,'hf')">&#128194; HuggingFace</div>
+      <div class="topt ${!isHf ? 'sel' : ''}" onclick="switchDataSource(this,'pdf')">&#128196; PDF / Local</div>
+    </div>
+  </div>
+  <div id="data-hf-${ucId}" style="${isHf ? '' : 'display:none'}">
+    <div class="row2">
+      <div class="field"><label>Dataset ID</label><input type="text" id="d-dataset-${ucId}" value="${d.dataset_id || ''}"></div>
+      <div class="field"><label>Split</label><select id="d-split-${ucId}">
+        <option ${d.split==='train'?'selected':''}>train</option>
+        <option ${d.split==='validation'?'selected':''}>validation</option>
+        <option ${d.split==='test'?'selected':''}>test</option>
+      </select></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Text Column</label><input type="text" id="d-col-${ucId}" value="${d.text_column || 'text'}"></div>
+      <div class="field"><label>Max Rows</label><input type="number" id="d-rows-${ucId}" value="${d.max_rows || 5000}"></div>
+    </div>
+  </div>
+  <div id="data-pdf-${ucId}" style="${!isHf ? '' : 'display:none'}">
+    <div class="field"><label>Local Path (on server)</label>
+      <input type="text" id="d-path-${ucId}" value="${d.source_path || ''}" placeholder="examples/myuc/data/">
+      <div class="hint">Path relative to project root on the EC2 server</div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <div class="btn btn-ghost" onclick="togglePanel('${ucId}','data')">&#9650; Collapse</div>
+    <div class="btn btn-primary" onclick="saveDataConfig('${ucId}')">&#10003; Save</div>
+  </div>`;
+}
+
+function renderVdbPanel(ucId, cfg) {
+  const v = (cfg && cfg.vectordb) || {};
+  const stores = ['qdrant','chromadb','faiss'];
+  const storeTabs = stores.map(s =>
+    `<div class="topt ${(v.store||'qdrant')===s ? 'sel' : ''}" onclick="selToggle(this)">${s.charAt(0).toUpperCase()+s.slice(1)}</div>`
+  ).join('');
+  return `<div class="panel-top">
+    <span>&#9641;</span>
+    <span class="panel-title">VectorDB Configuration</span>
+    <div class="collapse-sm" onclick="togglePanel('${ucId}','vdb')">&#9650; Collapse</div>
+  </div>
+  <div class="field"><label>Store</label>
+    <div class="toggle-group" id="vdb-store-${ucId}">${storeTabs}</div>
+  </div>
+  <div class="row3">
+    <div class="field"><label>Dimensions</label><input type="number" id="vdb-dim-${ucId}" value="${v.dimensions||384}"></div>
+    <div class="field"><label>Chunk Size</label><input type="number" id="vdb-chunk-${ucId}" value="${v.chunk_size||512}"></div>
+    <div class="field"><label>Overlap</label><input type="number" id="vdb-overlap-${ucId}" value="${v.chunk_overlap||64}"></div>
+  </div>
+  <div class="row2">
+    <div class="field"><label>Embedding Model</label>
+      <select id="vdb-embed-${ucId}">
+        <option ${(v.embedding_model||'').includes('MiniLM') ? 'selected' : ''}>sentence-transformers/all-MiniLM-L6-v2</option>
+        <option ${(v.embedding_model||'').includes('bge-small') ? 'selected' : ''}>BAAI/bge-small-en-v1.5</option>
+      </select>
+    </div>
+    <div class="field"><label>Index Type</label>
+      <select id="vdb-idx-${ucId}">
+        <option>HNSW (recommended)</option><option>Flat</option><option>IVF</option>
+      </select>
+    </div>
+  </div>
+  <div class="btn-row">
+    <div class="btn btn-ghost" onclick="togglePanel('${ucId}','vdb')">&#9650; Collapse</div>
+    <div class="btn btn-primary" onclick="saveVdbConfig('${ucId}')">&#10003; Save & Index</div>
+  </div>`;
+}
+
+function renderLlmPanel(ucId, cfg) {
+  const l = (cfg && cfg.llm) || {};
+  const geminiKey = localStorage.getItem('kvf_gemini_key');
+  return `<div class="panel-top">
+    <span>&#9711;</span>
+    <span class="panel-title">Model Selection</span>
+    <div class="collapse-sm" onclick="togglePanel('${ucId}','llm')">&#9650; Collapse</div>
+  </div>
+  <div class="row2">
+    <div>
+      <div class="section-lbl">&#9881; Local Model (fine-tuned)</div>
+      <div class="field"><label>Base Model</label>
+        <select id="llm-model-${ucId}">
+          <option ${(l.local_model||'').includes('Llama') ? 'selected':''}>${'meta-llama/Llama-3.2-3B-Instruct'}</option>
+          <option ${(l.local_model||'').includes('Qwen')  ? 'selected':''}>Qwen/Qwen2.5-3B-Instruct</option>
+        </select>
+      </div>
+      <div class="field"><label>Quantization</label>
+        <div class="toggle-group">
+          <div class="topt ${l.quantization==='fp16'?'sel':''}" onclick="selToggle(this)">fp16</div>
+          <div class="topt ${(l.quantization||'4bit')==='4bit'?'sel':''}" onclick="selToggle(this)">4-bit</div>
+          <div class="topt ${l.quantization==='8bit'?'sel':''}" onclick="selToggle(this)">8-bit</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-lbl">&#9729; Comparison Model</div>
+      <div class="field"><label>Provider</label>
+        <div class="toggle-group">
+          <div class="topt ${(l.comparison_provider||'gemini')==='gemini'?'sel':''}" onclick="selToggle(this)">Gemini</div>
+          <div class="topt ${l.comparison_provider==='openai'?'sel':''}" onclick="selToggle(this)">OpenAI</div>
+        </div>
+      </div>
+      <div class="field"><label>Model</label>
+        <select id="llm-cmp-${ucId}">
+          <option>gemini-1.5-flash</option><option>gemini-1.5-pro</option>
+        </select>
+      </div>
+      ${geminiKey
+        ? '<div style="background:#0f172a;border:1px solid #312e81;border-radius:5px;padding:6px 10px;font-size:10px;color:#a78bfa;margin-top:4px">&#10003; Gemini key loaded</div>'
+        : '<div style="background:#1c0a0a;border:1px solid #7f1d1d;border-radius:5px;padding:6px 10px;font-size:10px;color:#f87171;margin-top:4px;cursor:pointer" onclick="showApiKeys()">&#128273; Add Gemini key</div>'}
+    </div>
+  </div>
+  <div class="btn-row">
+    <div class="btn btn-ghost" onclick="togglePanel('${ucId}','llm')">&#9650; Collapse</div>
+    <div class="btn btn-primary" onclick="saveLlmConfig('${ucId}')">&#10003; Save</div>
+  </div>`;
+}
+
+function renderTrainPanel(ucId, cfg) {
+  return `<div class="panel-top">
+    <span>&#8635;</span>
+    <span class="panel-title">Training Pipeline</span>
+    <span class="status-pill" id="train-status-${ucId}"></span>
+    <div class="collapse-sm" onclick="togglePanel('${ucId}','train')">&#9650; Collapse</div>
+  </div>
+  <div class="section-lbl">GPU Status <span style="color:#475569;font-weight:400;cursor:pointer" onclick="refreshGpuPanel('${ucId}')">(refresh)</span></div>
+  <div class="gpu-grid" id="gpu-grid-${ucId}">
+    <div style="color:#475569;font-size:10px">Loading GPU info...</div>
+  </div>
+  <div class="section-lbl">Pipeline Steps</div>
+  <div class="pipeline" id="pipeline-${ucId}">
+    ${renderPipelineSteps(ucId, cfg)}
+  </div>
+  <div class="btn-row">
+    <div class="btn btn-danger" id="stop-btn-${ucId}" style="display:none" onclick="stopJob('${ucId}')">&#9632; Stop</div>
+    <div class="btn btn-ghost" onclick="togglePanel('${ucId}','train')">&#9650; Collapse</div>
+    <div class="btn btn-primary" id="run-btn-${ucId}" onclick="runNextStep('${ucId}')">&#9654; Run Pipeline</div>
+  </div>`;
+}
+
+function renderPipelineSteps(ucId, cfg) {
+  const uc = STATE.ucs.find(u => u.id === ucId) || {};
+  const phase = uc.phase || 1;
+  const history = uc.prs_history || [];
+  const steps = [
+    {label: 'KV Indexing', done: phase >= 1, meta: ''},
+    {label: 'LoRA Training — Round 1', done: phase >= 2, meta: history[0] ? `PRS ${history[0].prs.toFixed(3)}` : ''},
+    {label: 'KV Recompute', done: phase >= 2, meta: ''},
+    {label: 'PRS Evaluation', done: phase >= 2, meta: ''},
+    {label: 'LoRA Training — Round 2', done: phase >= 3, meta: history[1] ? `PRS ${history[1].prs.toFixed(3)}` : ''},
+  ];
+  return steps.map(s => `
+    <div class="pstep">
+      <div class="pico ${s.done ? 'p-done' : 'p-pending'}">${s.done ? '&#10003;' : '&#9675;'}</div>
+      <div>
+        <div class="ptitle" style="color:${s.done ? '#34d399' : '#334155'}">${s.label}</div>
+        <div class="pmeta">${s.meta}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderEvalPanel(ucId, cfg) {
+  const uc = STATE.ucs.find(u => u.id === ucId) || {};
+  return `<div class="panel-top">
+    <span>&#9638;</span>
+    <span class="panel-title">Evaluation Results</span>
+    <div class="collapse-sm" onclick="togglePanel('${ucId}','eval')">&#9650; Collapse</div>
+  </div>
+  <div class="eval-stats">
+    <div class="stat-card"><div class="stat-val" style="color:#22d3ee" id="eval-win-${ucId}">—</div>
+      <div class="stat-label">Win Rate</div><div class="stat-sub">PRS &#8805; 0.75</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#a78bfa" id="eval-prs-${ucId}">${uc.prs ? uc.prs.toFixed(3) : '—'}</div>
+      <div class="stat-label">Avg PRS</div><div class="stat-sub">Phase ${uc.phase||1}</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#34d399" id="eval-lat-${ucId}">—</div>
+      <div class="stat-label">Speed Gain</div><div class="stat-sub">vs comparison model</div></div>
+  </div>
+  <div class="btn-row">
+    <div class="btn btn-ghost" onclick="runAbEval('${ucId}')">&#8635; Re-run Eval</div>
+    <div class="btn btn-primary" onclick="window.open('/ab-eval/${ucId}','_blank')">&#10138; Full A/B Report</div>
+  </div>`;
+}
+
+// ── Toggle helpers ────────────────────────────────────────────────────────────
+function selToggle(el) {
+  const group = el.parentElement;
+  group.querySelectorAll('.topt').forEach(e => e.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function switchDataSource(el, type) {
+  selToggle(el);
+  // Scope to the current panel only — find ucId from nearest mod-panel ancestor
+  const panel = el.closest('.mod-panel');
+  if (!panel) return;
+  const ucId = panel.id.replace('panel-body-', '').replace(/-data$/, '');
+  const hfEl  = document.getElementById(`data-hf-${ucId}`);
+  const pdfEl = document.getElementById(`data-pdf-${ucId}`);
+  if (hfEl)  hfEl.style.display  = type === 'hf'  ? '' : 'none';
+  if (pdfEl) pdfEl.style.display = type === 'pdf' ? '' : 'none';
+}
+
+// ── Config save helpers ───────────────────────────────────────────────────────
+async function saveDataConfig(ucId) {
+  const src = document.getElementById(`d-dataset-${ucId}`) ? 'huggingface' : 'pdf';
+  const payload = { data: {
+    source_type:  'huggingface',
+    dataset_id:   document.getElementById(`d-dataset-${ucId}`)?.value || '',
+    split:        document.getElementById(`d-split-${ucId}`)?.value || 'train',
+    text_column:  document.getElementById(`d-col-${ucId}`)?.value || 'text',
+    max_rows:     parseInt(document.getElementById(`d-rows-${ucId}`)?.value || '5000'),
+  }};
+  await fetch(`/studio/api/uc/${ucId}/config`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+  if (STATE.configs) delete STATE.configs[ucId];
+  await loadRegistry();
+}
+
+async function saveVdbConfig(ucId) {
+  const storeEl = document.querySelector(`#vdb-store-${ucId} .sel`);
+  const payload = { vectordb: {
+    store:           storeEl ? storeEl.textContent.trim().toLowerCase() : 'qdrant',
+    dimensions:      parseInt(document.getElementById(`vdb-dim-${ucId}`)?.value || '384'),
+    chunk_size:      parseInt(document.getElementById(`vdb-chunk-${ucId}`)?.value || '512'),
+    chunk_overlap:   parseInt(document.getElementById(`vdb-overlap-${ucId}`)?.value || '64'),
+    embedding_model: document.getElementById(`vdb-embed-${ucId}`)?.value || '',
+    index_type:      'hnsw',
+  }};
+  await fetch(`/studio/api/uc/${ucId}/config`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+  if (STATE.configs) delete STATE.configs[ucId];
+  await loadRegistry();
+}
+
+async function saveLlmConfig(ucId) {
+  const payload = { llm: {
+    local_model: document.getElementById(`llm-model-${ucId}`)?.value || '',
+    vllm_url: '',
+    comparison_model: document.getElementById(`llm-cmp-${ucId}`)?.value || 'gemini-1.5-flash',
+  }};
+  await fetch(`/studio/api/uc/${ucId}/config`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+  if (STATE.configs) delete STATE.configs[ucId];
+}
+
+// ── GPU ───────────────────────────────────────────────────────────────────────
+async function refreshGpu() {
+  try {
+    const r = await fetch('/studio/api/gpu-check', {method:'POST'});
+    const data = await r.json();
+    const pill = document.getElementById('gpu-pill');
+    const txt  = document.getElementById('gpu-text');
+    if (data.error) {
+      pill.style.borderColor = '#7f1d1d'; txt.textContent = 'GPU unavailable';
+      return;
+    }
+    const free = data.gpus.filter(g => g.status === 'free').length;
+    pill.style.borderColor = free > 0 ? '#064e3b' : '#7f1d1d';
+    txt.textContent = `${free}/${data.gpus.length} GPUs free`;
+  } catch(e) { document.getElementById('gpu-text').textContent = 'GPU check failed'; }
+}
+
+async function refreshGpuPanel(ucId) {
+  const grid = document.getElementById(`gpu-grid-${ucId}`);
+  if (!grid) return;
+  try {
+    const r = await fetch('/studio/api/gpu-check', {method:'POST'});
+    const data = await r.json();
+    if (data.error) { grid.innerHTML = `<div style="color:#f87171;font-size:10px">${data.error}</div>`; return; }
+    grid.innerHTML = data.gpus.map(g => `
+      <div class="gpu-card ${g.status === 'free' ? 'gpu-free' : 'gpu-busy'}">
+        <div class="gpu-hd">&#9641; GPU ${g.id} — ${g.status === 'free' ? 'Free' : g.process || 'Busy'}</div>
+        <div class="vbar"><div class="vfill" style="width:${Math.round(g.used_gb/g.total_gb*100)}%"></div></div>
+        <div class="gpu-meta">${g.used_gb} / ${g.total_gb} GB used</div>
+      </div>`).join('');
+  } catch(e) { grid.innerHTML = '<div style="color:#f87171;font-size:10px">Failed to fetch GPU status</div>'; }
+}
+
+// ── Pipeline run ──────────────────────────────────────────────────────────────
+async function runNextStep(ucId) {
+  const uc = STATE.ucs.find(u => u.id === ucId);
+  const phase = uc ? (uc.phase || 1) : 1;
+  // Determine next step based on phase
+  const step = phase < 1 ? 'index' : phase < 2 ? 'train' : 'train';
+
+  const r = await fetch('/studio/api/run-step', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({uc_id: ucId, step})
+  });
+  if (!r.ok) {
+    const err = await r.json();
+    alert(err.detail || 'Failed to start pipeline');
+    return;
+  }
+  const {job_id} = await r.json();
+  startStreaming(ucId, job_id);
+}
+
+async function runAbEval(ucId) {
+  const r = await fetch('/studio/api/run-step', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({uc_id: ucId, step: 'ab-eval'})
+  });
+  if (!r.ok) { alert('Failed to start A/B eval'); return; }
+  const {job_id} = await r.json();
+  startStreaming(ucId, job_id);
+}
+
+function startStreaming(ucId, jobId) {
+  const logEl = document.getElementById(`pipeline-${ucId}`);
+  const stopBtn = document.getElementById(`stop-btn-${ucId}`);
+  const runBtn  = document.getElementById(`run-btn-${ucId}`);
+  if (stopBtn) stopBtn.style.display = '';
+  if (runBtn)  runBtn.style.display  = 'none';
+
+  // Append live log area
+  if (logEl) {
+    logEl.innerHTML += `<div class="plog" id="log-${ucId}"></div>`;
+  }
+
+  const es = new EventSource(`/studio/api/stream/${jobId}`);
+  STATE.pollingJob = jobId;
+
+  // Start polling registry for status updates
+  const pollInterval = setInterval(() => loadRegistry(), 5000);
+
+  es.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    const logDiv = document.getElementById(`log-${ucId}`);
+    if (msg.type === 'log' && logDiv) {
+      logDiv.innerHTML += `<div>${escHtml(msg.line)}</div>`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+    if (msg.type === 'done' || msg.type === 'error') {
+      es.close();
+      clearInterval(pollInterval);
+      STATE.pollingJob = null;
+      if (stopBtn) stopBtn.style.display = 'none';
+      if (runBtn)  runBtn.style.display  = '';
+      loadRegistry();
+    }
+  };
+  es.onerror = () => { es.close(); clearInterval(pollInterval); };
+}
+
+async function stopJob(ucId) {
+  if (!STATE.pollingJob) return;
+  await fetch(`/studio/api/job/${STATE.pollingJob}`, {method:'DELETE'});
+  STATE.pollingJob = null;
+}
+
+// ── New UC ────────────────────────────────────────────────────────────────────
+function showNewUcForm() { document.getElementById('new-uc-bar').classList.add('visible'); }
+function hideNewUcForm() { document.getElementById('new-uc-bar').classList.remove('visible'); }
+
+async function createUc() {
+  const id   = document.getElementById('new-uc-id').value.trim();
+  const name = document.getElementById('new-uc-name').value.trim() || id;
+  if (!id) { alert('ID is required'); return; }
+  const r = await fetch('/studio/api/uc/new', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({id, display_name: name})
+  });
+  if (!r.ok) { alert('Failed to create use case'); return; }
+  hideNewUcForm();
+  document.getElementById('new-uc-id').value = '';
+  document.getElementById('new-uc-name').value = '';
+  await loadRegistry();
+}
+
+// ── API Keys ──────────────────────────────────────────────────────────────────
+function showApiKeys() {
+  document.getElementById('key-gemini').value = localStorage.getItem('kvf_gemini_key') || '';
+  document.getElementById('key-openai').value = localStorage.getItem('kvf_openai_key') || '';
+  document.getElementById('keys-modal').style.display = 'flex';
+}
+function closeApiKeys() { document.getElementById('keys-modal').style.display = 'none'; }
+function saveApiKeys() {
+  localStorage.setItem('kvf_gemini_key', document.getElementById('key-gemini').value);
+  localStorage.setItem('kvf_openai_key', document.getElementById('key-openai').value);
+  closeApiKeys();
+}
+function loadApiKeysFromStorage() {
+  // Keys are available via localStorage in JS; no server round-trip needed
+}
+
+// ── Nav helpers ───────────────────────────────────────────────────────────────
+function navTo(where) {
+  if (where === 'hub') {
+    document.getElementById('bc-current').textContent = 'Studio Hub';
+    loadRegistry();
+  }
+}
+function scrollToUc(ucId) {
+  const el = document.getElementById(`uc-${ucId}`);
+  if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+function toggleUcCard(ucId) {
+  const chips = document.getElementById(`chips-${ucId}`);
+  if (chips) chips.style.display = chips.style.display === 'none' ? '' : chips.style.display;
+}
+function showSettings() { alert('Settings coming soon.'); }
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
