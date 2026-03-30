@@ -3,7 +3,6 @@
 
 import asyncio
 import json
-import subprocess
 import sys
 from pathlib import Path
 
@@ -64,11 +63,12 @@ async def run_step_streaming(uc_id: str, step: str, job_id: str, job_manager):
             yield _sse({"type": "log", "line": line})
 
         exit_code = await proc.wait()
-        job_manager.complete(job_id, exit_code)
 
         if exit_code == 0:
+            job_manager.complete(job_id, exit_code)
             yield _sse({"type": "done", "exit_code": 0})
         else:
+            job_manager.fail(job_id, f"Process exited with code {exit_code}")
             yield _sse({"type": "error", "exit_code": exit_code,
                          "message": f"Process exited with code {exit_code}"})
 
