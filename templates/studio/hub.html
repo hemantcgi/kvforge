@@ -289,7 +289,7 @@ textarea{resize:vertical;min-height:52px}
 
 <script>
 // ── State ───────────────────────────────────────────────────────────────────
-const STATE = { ucs: [], openPanels: {}, pollingJob: null };
+const STATE = { ucs: [], openPanels: {}, pollingJob: null, configs: {} };
 
 // ── Init ────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -426,7 +426,6 @@ async function togglePanel(ucId, mod) {
 
   if (!isOpen) {
     // Load config if not cached
-    if (!STATE.configs) STATE.configs = {};
     if (!STATE.configs[ucId]) {
       try {
         const r = await fetch(`/studio/api/uc/${ucId}/config`);
@@ -447,7 +446,10 @@ async function togglePanel(ucId, mod) {
 }
 
 function collapsePanel(ucId, mod) {
-  togglePanel(ucId, mod); // Will close if open
+  const wrap = document.getElementById(`panel-${ucId}-${mod}`);
+  if (wrap && wrap.classList.contains('open')) {
+    togglePanel(ucId, mod);
+  }
 }
 
 // ── Panel Content Renderers ───────────────────────────────────────────────────
@@ -648,6 +650,20 @@ function renderEvalPanel(ucId, cfg) {
     <div class="stat-card"><div class="stat-val" style="color:#34d399" id="eval-lat-${ucId}">—</div>
       <div class="stat-label">Speed Gain</div><div class="stat-sub">vs comparison model</div></div>
   </div>
+  <div class="compare-row">
+    <span class="cmp-label">Semantic Accuracy</span>
+    <div class="cmp-bars">
+      <div class="cmp-bar"><span class="bar-name bar-name-a">KVForge</span><div class="bar-track"><div class="bar-a" id="cmp-acc-a-${ucId}" style="width:0%"></div></div><span class="bar-val" id="cmp-acc-av-${ucId}">—</span></div>
+      <div class="cmp-bar"><span class="bar-name bar-name-b">3rd Party</span><div class="bar-track"><div class="bar-b" id="cmp-acc-b-${ucId}" style="width:0%"></div></div><span class="bar-val" id="cmp-acc-bv-${ucId}">—</span></div>
+    </div>
+  </div>
+  <div class="compare-row" style="margin-top:5px">
+    <span class="cmp-label">Latency (p50 ms)</span>
+    <div class="cmp-bars">
+      <div class="cmp-bar"><span class="bar-name bar-name-a">KVForge</span><div class="bar-track"><div class="bar-a" id="cmp-lat-a-${ucId}" style="width:0%"></div></div><span class="bar-val" id="cmp-lat-av-${ucId}">—</span></div>
+      <div class="cmp-bar"><span class="bar-name bar-name-b">3rd Party</span><div class="bar-track"><div class="bar-b" id="cmp-lat-b-${ucId}" style="width:0%"></div></div><span class="bar-val" id="cmp-lat-bv-${ucId}">—</span></div>
+    </div>
+  </div>
   <div class="btn-row">
     <div class="btn btn-ghost" onclick="runAbEval('${ucId}')">&#8635; Re-run Eval</div>
     <div class="btn btn-primary" onclick="window.open('/ab-eval/${ucId}','_blank')">&#10138; Full A/B Report</div>
@@ -675,14 +691,25 @@ function switchDataSource(el, type) {
 
 // ── Config save helpers ───────────────────────────────────────────────────────
 async function saveDataConfig(ucId) {
-  const src = document.getElementById(`d-dataset-${ucId}`) ? 'huggingface' : 'pdf';
-  const payload = { data: {
-    source_type:  'huggingface',
-    dataset_id:   document.getElementById(`d-dataset-${ucId}`)?.value || '',
-    split:        document.getElementById(`d-split-${ucId}`)?.value || 'train',
-    text_column:  document.getElementById(`d-col-${ucId}`)?.value || 'text',
-    max_rows:     parseInt(document.getElementById(`d-rows-${ucId}`)?.value || '5000'),
-  }};
+  const hfEl  = document.getElementById(`data-hf-${ucId}`);
+  const pdfEl = document.getElementById(`data-pdf-${ucId}`);
+  const isPdf = pdfEl && pdfEl.style.display !== 'none';
+  let payload;
+  if (isPdf) {
+    payload = { data: {
+      source_type: 'pdf',
+      source_path: document.getElementById(`d-path-${ucId}`)?.value || '',
+      dataset_id: '', split: 'train', text_column: 'text', max_rows: 0,
+    }};
+  } else {
+    payload = { data: {
+      source_type:  'huggingface',
+      dataset_id:   document.getElementById(`d-dataset-${ucId}`)?.value || '',
+      split:        document.getElementById(`d-split-${ucId}`)?.value || 'train',
+      text_column:  document.getElementById(`d-col-${ucId}`)?.value || 'text',
+      max_rows:     parseInt(document.getElementById(`d-rows-${ucId}`)?.value || '5000'),
+    }};
+  }
   await fetch(`/studio/api/uc/${ucId}/config`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
   if (STATE.configs) delete STATE.configs[ucId];
   await loadRegistry();
@@ -750,8 +777,15 @@ async function refreshGpuPanel(ucId) {
 async function runNextStep(ucId) {
   const uc = STATE.ucs.find(u => u.id === ucId);
   const phase = uc ? (uc.phase || 1) : 1;
-  // Determine next step based on phase
-  const step = phase < 1 ? 'index' : phase < 2 ? 'train' : 'train';
+  // Determine next step based on phase and training history
+  let step;
+  if (phase < 2 && !uc.prs) {
+    step = 'index';  // Need to index first
+  } else if (phase < 2) {
+    step = 'train';
+  } else {
+    step = 'train';  // Round 2
+  }
 
   const r = await fetch('/studio/api/run-step', {
     method: 'POST',
@@ -868,7 +902,7 @@ function scrollToUc(ucId) {
 }
 function toggleUcCard(ucId) {
   const chips = document.getElementById(`chips-${ucId}`);
-  if (chips) chips.style.display = chips.style.display === 'none' ? '' : chips.style.display;
+  if (chips) chips.style.display = chips.style.display === 'none' ? '' : 'none';
 }
 function showSettings() { alert('Settings coming soon.'); }
 function escHtml(s) {
