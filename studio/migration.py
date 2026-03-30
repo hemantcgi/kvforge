@@ -2,7 +2,6 @@
 """One-time migration: creates kvforge_registry.json and uc_config.json from config.json."""
 
 import json
-import time
 from pathlib import Path
 from datetime import datetime, timezone
 

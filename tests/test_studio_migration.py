@@ -70,3 +70,18 @@ def test_uc_config_type_is_example(tmp_path):
     migrate_existing_use_cases(root=tmp_path)
     cfg = json.loads((tmp_path / "examples" / "usecase3_squad" / "uc_config.json").read_text())
     assert cfg["type"] == "example"
+
+
+def test_add_to_registry_custom_type(tmp_path):
+    _make_fake_examples(tmp_path)
+    migrate_existing_use_cases(root=tmp_path)
+    from studio.migration import add_to_registry
+    add_to_registry("my-custom-uc", "My Custom UC", root=tmp_path)
+    registry = json.loads((tmp_path / "kvforge_registry.json").read_text())
+    custom = next((uc for uc in registry["use_cases"] if uc["id"] == "my-custom-uc"), None)
+    assert custom is not None
+    assert custom["type"] == "custom"
+    # Idempotent: second call should not duplicate
+    add_to_registry("my-custom-uc", "My Custom UC", root=tmp_path)
+    registry2 = json.loads((tmp_path / "kvforge_registry.json").read_text())
+    assert sum(1 for uc in registry2["use_cases"] if uc["id"] == "my-custom-uc") == 1
