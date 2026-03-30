@@ -49,7 +49,9 @@ class JobManager:
             return job_id
 
     def get(self, job_id: str) -> Optional[dict]:
-        return self._jobs.get(job_id)
+        with self._lock:
+            job = self._jobs.get(job_id)
+            return dict(job) if job is not None else None
 
     def set_pid(self, job_id: str, pid: int):
         with self._lock:
@@ -88,7 +90,7 @@ class JobManager:
 
     def list_active(self) -> list[dict]:
         with self._lock:
-            return [j for j in self._jobs.values() if j["status"] == JobStatus.RUNNING]
+            return [dict(j) for j in self._jobs.values() if j["status"] == JobStatus.RUNNING]
 
 
 # Module-level singleton used by routes and pipeline_runner
