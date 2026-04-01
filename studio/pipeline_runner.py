@@ -10,14 +10,18 @@ ROOT = Path(__file__).resolve().parent.parent
 
 # Maps step name → module path relative to project root
 STEP_MODULES = {
-    "index":    "pipeline.kv_indexer",
-    "train":    "pipeline.lora_trainer",
-    "recompute":"pipeline.kv_indexer",
-    "prs-eval": "pipeline.prs_evaluator",
-    "ab-eval":  "pipeline.ab_evaluator",
+    "index":     "pipeline.kv_indexer",
+    "train":     "pipeline.lora_trainer",
+    "recompute": "pipeline.kv_indexer",
+    "prs-eval":  "pipeline.prs_evaluator",
+    "ab-eval":   "pipeline.ab_evaluator",
+    "sleep-faq": "pipeline.sleep_faq_generator",
 }
 
-# Extra args per step
+# Steps that require a free GPU — sleep-faq calls a cloud REST API, no GPU needed
+GPU_REQUIRED_STEPS = {"index", "train", "recompute", "prs-eval"}
+
+# Static extra args per step
 STEP_EXTRA_ARGS = {
     "recompute": ["--recompute"],
 }
@@ -28,6 +32,21 @@ def _build_cmd(uc_id: str, step: str) -> list[str]:
     config = str(ROOT / "examples" / uc_id / "config.json")
     cmd = [sys.executable, "-m", module, "--config", config]
     cmd += STEP_EXTRA_ARGS.get(step, [])
+    if step == "sleep-faq":
+        # --output is dynamic (depends on uc_id)
+        output = str(ROOT / "examples" / uc_id / "faqs.json")
+        cmd += ["--output", output]
+        # --count is read from uc_config.json if present
+        uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
+        if uc_cfg_path.exists():
+            try:
+                uc_cfg = json.loads(uc_cfg_path.read_text())
+                count = uc_cfg.get("llm", {}).get("sleep_faq_count", 50)
+                cmd += ["--count", str(count)]
+            except Exception:
+                cmd += ["--count", "50"]
+        else:
+            cmd += ["--count", "50"]
     return cmd
 
 
@@ -38,12 +57,13 @@ async def run_step_streaming(uc_id: str, step: str, job_id: str, job_manager):
     """
     from studio.gpu_monitor import get_gpu_status
 
-    # GPU pre-check
-    gpu_status = get_gpu_status()
-    if not gpu_status.get("has_free_gpu") and not gpu_status.get("error"):
-        job_manager.fail(job_id, "No free GPU available")
-        yield _sse({"type": "error", "message": "No free GPU available"})
-        return
+    # GPU pre-check — skipped for steps that don't need a GPU
+    if step in GPU_REQUIRED_STEPS:
+        gpu_status = get_gpu_status()
+        if not gpu_status.get("has_free_gpu") and not gpu_status.get("error"):
+            job_manager.fail(job_id, "No free GPU available")
+            yield _sse({"type": "error", "message": "No free GPU available"})
+            return
 
     cmd = _build_cmd(uc_id, step)
     yield _sse({"type": "start", "cmd": " ".join(cmd)})
