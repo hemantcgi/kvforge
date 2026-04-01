@@ -335,6 +335,9 @@ function renderUcCard(uc) {
   const prsColor = uc.prs >= 0.75 ? '#34d399' : uc.prs ? '#f59e0b' : '#475569';
   const dots = renderJourneyDots(uc);
   const typeTag = uc.type === 'example' ? '<span class="example-badge">Example</span>' : '';
+  const dashLink = uc.dashboard_port
+    ? `<a href="http://${location.hostname}:${uc.dashboard_port}/" target="_blank" onclick="event.stopPropagation()" style="margin-left:auto;padding:2px 10px;font-size:11px;background:#1e293b;border:1px solid #334155;border-radius:4px;color:#94a3b8;text-decoration:none;white-space:nowrap">Dashboard &#8599;</a>`
+    : '';
 
   return `<div class="uc-card" id="uc-${uc.id}">
     <div class="uc-card-header" onclick="toggleUcCard('${uc.id}')">
@@ -344,6 +347,7 @@ function renderUcCard(uc) {
       <span class="phase-badge phase-${phase}">Phase ${phase}</span>
       <span class="prs-val" style="color:${prsColor}">PRS ${prs}</span>
       ${dots}
+      ${dashLink}
     </div>
     <div class="mod-strip" id="chips-${uc.id}">
       ${renderChips(uc)}
@@ -363,31 +367,32 @@ function renderJourneyDots(uc) {
     return dot + line;
   }).join('');
   const done = steps.filter(s => s === 'done').length;
-  return `<div class="journey">${dotHtml}<span class="j-count" style="color:${done===5?'#34d399':'#64748b'}">${done}/5</span></div>`;
+  return `<div class="journey">${dotHtml}<span class="j-count" style="color:${done===6?'#34d399':'#64748b'}">${done}/6</span></div>`;
 }
 
 function getStepStatuses(uc) {
-  // Returns ['done'|'active'|'locked'] for [data, vectordb, llm, train, eval]
   const cfg = STATE.configs && STATE.configs[uc.id];
-  const hasData    = cfg && cfg.data && cfg.data.dataset_id;
-  const hasVdb     = cfg && cfg.vectordb && cfg.vectordb.store;
-  const hasLlm     = cfg && cfg.llm && cfg.llm.local_model;
-  const hasTrain   = uc.phase >= 2;
-  const hasEval    = uc.phase >= 2 && uc.prs;
+  const hasData   = cfg && cfg.data && cfg.data.dataset_id;
+  const hasVdb    = cfg && cfg.vectordb && cfg.vectordb.store;
+  const hasLlm    = cfg && cfg.llm && cfg.llm.local_model;
+  const hasFaqs   = !!uc.has_faqs;
+  const hasTrain  = uc.phase >= 2;
+  const hasEval   = uc.phase >= 2 && uc.prs;
   return [
-    hasData ? 'done' : 'active',
-    hasVdb  ? 'done' : hasData  ? 'active' : 'locked',
-    hasLlm  ? 'done' : 'active',
-    hasTrain? 'done' : hasLlm && hasData && hasVdb ? 'active' : 'locked',
-    hasEval ? 'done' : hasTrain ? 'active' : 'locked',
+    hasData  ? 'done' : 'active',
+    hasVdb   ? 'done' : hasData  ? 'active' : 'locked',
+    hasLlm   ? 'done' : 'active',
+    hasFaqs  ? 'done' : (hasVdb && hasLlm) ? 'active' : 'locked',
+    hasTrain ? 'done' : hasFaqs ? 'active' : 'locked',
+    hasEval  ? 'done' : hasTrain ? 'active' : 'locked',
   ];
 }
 
 // ── Module Chips ─────────────────────────────────────────────────────────────
 function renderChips(uc) {
   const steps = getStepStatuses(uc);
-  const labels = ['Data','VectorDB','LLM','Training','Evaluation'];
-  const mods   = ['data','vdb','llm','train','eval'];
+  const labels = ['Data','VectorDB','LLM','Sleep-FAQ','Training','Evaluation'];
+  const mods   = ['data','vdb','llm','sleep-faq','train','eval'];
   return mods.map((m, i) => {
     const s = steps[i];
     const cls = s === 'done' ? 'chip-done' : s === 'active' ? 'chip-active' : 'chip-locked';
@@ -401,15 +406,16 @@ function renderChips(uc) {
 }
 
 function getLockedReason(mod) {
-  if (mod === 'vdb')   return 'Requires Data configured first';
-  if (mod === 'train') return 'Requires Data, VectorDB and LLM configured';
-  if (mod === 'eval')  return 'Requires at least one training round complete';
+  if (mod === 'vdb')       return 'Requires Data configured first';
+  if (mod === 'sleep-faq') return 'Requires VectorDB indexed and LLM configured';
+  if (mod === 'train')     return 'Requires Sleep-FAQ generated first';
+  if (mod === 'eval')      return 'Requires at least one training round complete';
   return '';
 }
 
 // ── Module Panels ─────────────────────────────────────────────────────────────
 function renderPanels(uc) {
-  return ['data','vdb','llm','train','eval'].map(m =>
+  return ['data','vdb','llm','sleep-faq','train','eval'].map(m =>
     `<div class="mod-panel-wrap" id="panel-${uc.id}-${m}">
        <div class="mod-panel" id="panel-body-${uc.id}-${m}">
          <div style="color:#475569;font-size:11px">Loading...</div>
@@ -457,8 +463,9 @@ function renderPanelContent(ucId, mod, cfg) {
   switch(mod) {
     case 'data':  return renderDataPanel(ucId, cfg);
     case 'vdb':   return renderVdbPanel(ucId, cfg);
-    case 'llm':   return renderLlmPanel(ucId, cfg);
-    case 'train': return renderTrainPanel(ucId, cfg);
+    case 'llm':       return renderLlmPanel(ucId, cfg);
+    case 'sleep-faq': return renderSleepFaqPanel(ucId, cfg);
+    case 'train':     return renderTrainPanel(ucId, cfg);
     case 'eval':  return renderEvalPanel(ucId, cfg);
     default: return '<div style="color:#475569">Unknown module</div>';
   }
@@ -619,11 +626,12 @@ function renderPipelineSteps(ucId, cfg) {
   const phase = uc.phase || 1;
   const history = uc.prs_history || [];
   const steps = [
-    {label: 'KV Indexing', done: phase >= 1, meta: ''},
-    {label: 'LoRA Training — Round 1', done: phase >= 2, meta: history[0] ? `PRS ${history[0].prs.toFixed(3)}` : ''},
-    {label: 'KV Recompute', done: phase >= 2, meta: ''},
-    {label: 'PRS Evaluation', done: phase >= 2, meta: ''},
-    {label: 'LoRA Training — Round 2', done: phase >= 3, meta: history[1] ? `PRS ${history[1].prs.toFixed(3)}` : ''},
+    {label: 'KV Indexing',             done: phase >= 1,      meta: ''},
+    {label: 'Sleep-time FAQ Gen',      done: !!uc.has_faqs,   meta: uc.has_faqs ? '&#10003; faqs.json' : ''},
+    {label: 'LoRA Training — Round 1', done: phase >= 2,      meta: history[0] ? `PRS ${history[0].prs.toFixed(3)}` : ''},
+    {label: 'KV Recompute',            done: phase >= 2,      meta: ''},
+    {label: 'PRS Evaluation',          done: phase >= 2,      meta: ''},
+    {label: 'LoRA Training — Round 2', done: phase >= 3,      meta: history[1] ? `PRS ${history[1].prs.toFixed(3)}` : ''},
   ];
   return steps.map(s => `
     <div class="pstep">
@@ -667,6 +675,94 @@ function renderEvalPanel(ucId, cfg) {
   <div class="btn-row">
     <div class="btn btn-ghost" onclick="runAbEval('${ucId}')">&#8635; Re-run Eval</div>
     <div class="btn btn-primary" onclick="window.open('/ab-eval/${ucId}','_blank')">&#10138; Full A/B Report</div>
+  </div>`;
+}
+
+const SLEEP_FAQ_MODELS = {
+  gemini: ['gemini-2.5-flash','gemini-2.5-pro','gemini-2.0-flash'],
+  claude: ['claude-sonnet-4-6','claude-opus-4-6','claude-haiku-4-5-20251001'],
+  openai: ['gpt-4.1','gpt-4.1-mini','gpt-4o'],
+};
+
+function updateSleepFaqModels(ucId) {
+  const provider = document.getElementById(`sfaq-provider-${ucId}`).value;
+  const sel = document.getElementById(`sfaq-model-${ucId}`);
+  const models = SLEEP_FAQ_MODELS[provider] || SLEEP_FAQ_MODELS.gemini;
+  sel.innerHTML = models.map(m => `<option value="${m}">${m}</option>`).join('');
+}
+
+async function saveSleepFaqConfig(ucId) {
+  const provider = document.getElementById(`sfaq-provider-${ucId}`).value;
+  const model    = document.getElementById(`sfaq-model-${ucId}`).value;
+  const count    = parseInt(document.getElementById(`sfaq-count-${ucId}`).value) || 50;
+  await fetch(`/studio/api/uc/${ucId}/config`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({llm: {sleep_faq_provider: provider, sleep_faq_model: model, sleep_faq_count: count}}),
+  });
+  showToast('Sleep-FAQ config saved');
+}
+
+async function runSleepFaq(ucId) {
+  await saveSleepFaqConfig(ucId);
+  const r = await fetch('/studio/api/run-step', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({uc_id: ucId, step: 'sleep-faq'}),
+  });
+  if (!r.ok) { const e = await r.json(); showToast('Error: ' + (e.detail || 'unknown'), true); return; }
+  showToast('Sleep-time FAQ generation started');
+  setTimeout(() => refreshRegistry(), 3000);
+}
+
+function renderSleepFaqPanel(ucId, cfg) {
+  const uc = STATE.ucs.find(u => u.id === ucId) || {};
+  const l = (cfg && cfg.llm) || {};
+  const savedProvider = l.sleep_faq_provider || 'gemini';
+  const savedModel    = l.sleep_faq_model    || 'gemini-2.5-flash';
+  const savedCount    = l.sleep_faq_count    || 50;
+  const providers = ['gemini','claude','openai'];
+  const providerOpts = providers.map(p =>
+    `<option value="${p}" ${p === savedProvider ? 'selected' : ''}>${p.charAt(0).toUpperCase()+p.slice(1)}</option>`
+  ).join('');
+  const modelOpts = (SLEEP_FAQ_MODELS[savedProvider] || SLEEP_FAQ_MODELS.gemini).map(m =>
+    `<option value="${m}" ${m === savedModel ? 'selected' : ''}>${m}</option>`
+  ).join('');
+  const faqStatus = uc.has_faqs
+    ? '<span class="status-pill pill-done">&#10003; faqs.json exists</span>'
+    : '<span class="status-pill" style="background:#1c0a0a;color:#f87171">&#9675; Not generated</span>';
+  return `<div class="panel-top">
+    <span>&#128214;</span>
+    <span class="panel-title">Sleep-time FAQ Generation</span>
+    ${faqStatus}
+    <div class="collapse-sm" onclick="togglePanel('${ucId}','sleep-faq')">&#9650; Collapse</div>
+  </div>
+  <div style="color:#64748b;font-size:11px;margin-bottom:10px">
+    Uses a cloud LLM to reason over indexed chunks offline and generate Q&amp;A pairs
+    for LoRA training. Also pre-seeds the Phase 3 parametric shortcut.
+  </div>
+  <div class="row2">
+    <div class="field"><label>Provider</label>
+      <select id="sfaq-provider-${ucId}" onchange="updateSleepFaqModels('${ucId}')"
+        style="background:#1a1a1a;color:#eee;border:1px solid #444;padding:4px 6px;font-family:monospace;font-size:0.9em;width:100%;box-sizing:border-box;">
+        ${providerOpts}
+      </select>
+    </div>
+    <div class="field"><label>Model</label>
+      <select id="sfaq-model-${ucId}"
+        style="background:#1a1a1a;color:#eee;border:1px solid #444;padding:4px 6px;font-family:monospace;font-size:0.9em;width:100%;box-sizing:border-box;">
+        ${modelOpts}
+      </select>
+    </div>
+  </div>
+  <div class="field"><label>FAQ Count <span style="color:#475569;font-weight:400">(target pairs)</span></label>
+    <input type="number" id="sfaq-count-${ucId}" value="${savedCount}" min="10" max="500"
+      style="width:100px">
+  </div>
+  <div class="btn-row">
+    <div class="btn btn-ghost" onclick="togglePanel('${ucId}','sleep-faq')">&#9650; Collapse</div>
+    <div class="btn btn-ghost" onclick="saveSleepFaqConfig('${ucId}')">&#10003; Save Config</div>
+    <div class="btn btn-primary" onclick="runSleepFaq('${ucId}')">&#9654; Generate FAQs</div>
   </div>`;
 }
 
