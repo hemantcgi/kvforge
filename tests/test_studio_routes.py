@@ -136,3 +136,34 @@ def test_hub_page_returns_html(tmp_root):
         resp = c.get("/")
         assert resp.status_code == 200
         assert "KVForge Studio" in resp.text
+
+
+def test_registry_includes_has_faqs(client, tmp_root):
+    from studio.migration import migrate_existing_use_cases
+    migrate_existing_use_cases(root=tmp_root)
+    # No faqs.json yet — should be False
+    r = client.get("/api/registry")
+    assert r.status_code == 200
+    ucs = r.json()["use_cases"]
+    assert len(ucs) > 0
+    assert "has_faqs" in ucs[0]
+    assert ucs[0]["has_faqs"] is False
+    # Create faqs.json for the first UC
+    first_uc_id = ucs[0]["id"]
+    (tmp_root / "examples" / first_uc_id / "faqs.json").write_text("[]")
+    r2 = client.get("/api/registry")
+    ucs2 = r2.json()["use_cases"]
+    assert ucs2[0]["has_faqs"] is True
+
+
+def test_create_new_uc_includes_sleep_faq_defaults(client, tmp_root):
+    r = client.post("/api/uc/new", json={
+        "id": "my-new-uc", "display_name": "My New UC", "description": ""
+    })
+    assert r.status_code == 200
+    import json
+    uc_config = json.loads((tmp_root / "examples" / "my-new-uc" / "uc_config.json").read_text())
+    llm = uc_config["llm"]
+    assert llm["sleep_faq_provider"] == "gemini"
+    assert llm["sleep_faq_model"] == "gemini-2.5-flash"
+    assert llm["sleep_faq_count"] == 50

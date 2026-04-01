@@ -43,6 +43,16 @@ def get_registry():
             except Exception:
                 uc_data["phase"] = 1
                 uc_data["prs"] = None
+        cfg_path = ROOT / "examples" / uc["id"] / "config.json"
+        if cfg_path.exists():
+            try:
+                cfg = json.loads(cfg_path.read_text())
+                if "dashboard_port" in cfg:
+                    uc_data["dashboard_port"] = cfg["dashboard_port"]
+            except Exception:
+                pass
+        faqs_path = ROOT / "examples" / uc["id"] / "faqs.json"
+        uc_data["has_faqs"] = faqs_path.exists()
         jm = get_manager()
         active = next((j for j in jm.list_active() if j["uc_id"] == uc["id"]), None)
         uc_data["active_job"] = active
@@ -57,7 +67,14 @@ def get_uc_config(uc_id: str):
     path = _uc_path(uc_id) / "uc_config.json"
     if not path.exists():
         raise HTTPException(404, f"uc_config.json not found for {uc_id}")
-    return json.loads(path.read_text())
+    data = json.loads(path.read_text())
+    # Augment with dashboard_port from config.json if present
+    cfg_path = _uc_path(uc_id) / "config.json"
+    if cfg_path.exists():
+        cfg = json.loads(cfg_path.read_text())
+        if "dashboard_port" in cfg:
+            data["dashboard_port"] = cfg["dashboard_port"]
+    return data
 
 
 @api_router.post("/uc/{uc_id}/config")
@@ -101,7 +118,9 @@ def create_new_uc(req: NewUCRequest):
                     "index_type": "hnsw"},
         "llm":     {"local_model": "meta-llama/Llama-3.2-3B-Instruct",
                     "quantization": "4bit", "vllm_url": "",
-                    "comparison_provider": "gemini", "comparison_model": "gemini-1.5-flash"},
+                    "comparison_provider": "gemini", "comparison_model": "gemini-2.5-flash",
+                    "sleep_faq_provider": "gemini", "sleep_faq_model": "gemini-2.5-flash",
+                    "sleep_faq_count": 50},
     }
     (uc_dir / "uc_config.json").write_text(json.dumps(uc_config, indent=2))
     add_to_registry(req.id, req.display_name, root=ROOT)
@@ -132,7 +151,7 @@ def stop_vllm(req: StopVllmRequest):
 
 class RunStepRequest(BaseModel):
     uc_id: str
-    step: str  # "index" | "train" | "recompute" | "prs-eval" | "ab-eval"
+    step: str  # "index" | "train" | "recompute" | "prs-eval" | "ab-eval" | "sleep-faq"
 
 
 @api_router.post("/run-step")
