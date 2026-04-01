@@ -41,7 +41,12 @@ def _build_cmd(uc_id: str, step: str) -> list[str]:
         if uc_cfg_path.exists():
             try:
                 uc_cfg = json.loads(uc_cfg_path.read_text())
-                count = uc_cfg.get("llm", {}).get("sleep_faq_count", 50)
+                try:
+                    count = int(uc_cfg.get("llm", {}).get("sleep_faq_count", 50))
+                    if count <= 0:
+                        count = 50
+                except (TypeError, ValueError):
+                    count = 50
                 cmd += ["--count", str(count)]
             except Exception:
                 cmd += ["--count", "50"]
@@ -60,7 +65,7 @@ async def run_step_streaming(uc_id: str, step: str, job_id: str, job_manager):
     # GPU pre-check — skipped for steps that don't need a GPU
     if step in GPU_REQUIRED_STEPS:
         gpu_status = get_gpu_status()
-        if not gpu_status.get("has_free_gpu") and not gpu_status.get("error"):
+        if not gpu_status.get("has_free_gpu"):
             job_manager.fail(job_id, "No free GPU available")
             yield _sse({"type": "error", "message": "No free GPU available"})
             return
