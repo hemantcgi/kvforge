@@ -45,7 +45,7 @@ def _config_to_uc_config(uc_id: str, cfg: dict) -> dict:
             "quantization":         cfg.get("quantization", "4bit"),
             "vllm_url":             cfg.get("vllm_url", ""),
             "comparison_provider":  "gemini",
-            "comparison_model":     "gemini-1.5-flash",
+            "comparison_model":     "gemini-2.5-flash",
         },
     }
 

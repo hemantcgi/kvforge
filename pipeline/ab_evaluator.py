@@ -83,7 +83,7 @@ def run_eval(
     with httpx.Client(timeout=10.0) as setup_client:
         setup_client.post(
             f"{dashboard_url}/api/set_model_b_config",
-            json={"provider": "gemini", "model": "gemini-2.0-flash",
+            json={"provider": "gemini", "model": "gemini-2.5-flash",
                   "api_key": gemini_api_key},
         )
 

@@ -128,6 +128,11 @@ async def get_status():
 
 # Build a lookup map for quick uc_id → USE_CASE resolution
 _UC_MAP = {uc["id"]: uc for uc in USE_CASES}
+# Also map by ab_eval_dir basename so /ab-eval/usecase1_customer_support works
+for _uc in USE_CASES:
+    _long_id = Path(_uc["ab_eval_dir"]).name
+    if _long_id not in _UC_MAP:
+        _UC_MAP[_long_id] = _uc
 
 
 @app.get("/ab-eval/{uc_id}", response_class=HTMLResponse)

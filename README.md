@@ -18,6 +18,34 @@ Over time, LoRA fine-tuning on your corpus bakes knowledge into the model weight
 
 ---
 
+## KVForge Studio
+
+KVForge Studio is a browser-based UI for managing the full 6-step pipeline across one or more use-cases. It replaces manual script invocations with a point-and-click interface, real-time log streaming, and GPU health checks.
+
+**Start the portal:**
+
+```bash
+python kvforge_portal.py --port 8080
+# Open http://localhost:8080
+```
+
+**6-step pipeline (per use-case):**
+
+| Step | Name | Description |
+|------|------|-------------|
+| 1 | Index | Chunk, embed, and upsert documents into the vector store |
+| 2 | LLM Config | Configure the local model, quantization, and vLLM endpoint |
+| 3 | Sleep-time FAQ Gen | Pre-compute Q&A pairs from indexed chunks using a cloud LLM |
+| 4 | Training | LoRA fine-tuning with tier-weighted replay buffer |
+| 5 | KV Recompute | Refresh KV tensors with the updated LoRA adapter |
+| 6 | PRS Eval | Evaluate Parametric Readiness Score and advance phase if threshold is met |
+
+Per-UC configuration (model, GPU assignment, FAQ count) lives in `uc_config.json` alongside each use-case directory. Job logs stream to the browser via SSE. GPU steps include a free-GPU check before they run.
+
+> **Screenshot placeholder** — `docs/images/studio_screenshot.png`
+
+---
+
 ## Three-Phase Architecture
 
 ```mermaid
@@ -112,8 +140,12 @@ kvforge/
 │   ├── kv_background.py    # Background KV healing daemon
 │   ├── lora_trainer.py     # LoRA fine-tuning
 │   ├── prs_evaluator.py    # PRS evaluation
+│   ├── sleep_faq_generator.py   # Offline FAQ pre-computation via cloud LLM
 │   ├── monitoring_dashboard.py  # FastAPI monitoring server
 │   └── index_and_train.py  # Full pipeline orchestrator
+│
+├── studio/                 # KVForge Studio web UI
+│   └── kvforge_portal.py   # FastAPI portal server (port 8080)
 │
 ├── embeddings/             # Pluggable embedder backends
 ├── ingestion/              # Pluggable document loaders
@@ -237,12 +269,35 @@ python kvforge.py search \
 
 ### 6. Generate FAQs for training
 
+KVForge offers two ways to generate FAQs. The **sleep-time generator** pre-computes Q&A pairs offline using a cloud LLM (Gemini, Claude, or OpenAI) and typically produces much higher-quality training signal than the heuristic generator:
+
 ```bash
+# Sleep-time FAQ generator (recommended — uses cloud LLM)
+python -m pipeline.sleep_faq_generator \
+  --config datasource_my-corpus.json \
+  --output my-corpus_faqs.json \
+  --count 50
+
+# Heuristic generator (no API key required)
 python tools/generate_faqs.py \
   --config datasource_my-corpus.json \
   --output my-corpus_faqs.json \
   --n 50
 ```
+
+The sleep-time generator is configured via the `llm` block in `uc_config.json`:
+
+```json
+{
+  "llm": {
+    "sleep_faq_provider": "gemini",
+    "sleep_faq_model": "gemini-2.5-flash",
+    "sleep_faq_count": 50
+  }
+}
+```
+
+Generated FAQs are saved to `faqs.json` per use-case and automatically pre-seed `known_good_queries` in `version.json`, which improves the Phase 3 confidence gate from day one.
 
 ### 7. Run the full training pipeline (GPU required)
 
@@ -349,10 +404,12 @@ Supported values:
 | `pipeline/prs_evaluator.py` | Parametric Readiness Score: accuracy + calibration + consistency |
 | `pipeline/monitoring_dashboard.py` | FastAPI live dashboard at `:8080` |
 | `pipeline/index_and_train.py` | Orchestrator: index → train → KV refresh → PRS → phase advance |
+| `pipeline/sleep_faq_generator.py` | Offline FAQ pre-computation from indexed chunks via cloud LLM (Gemini / Claude / OpenAI) |
+| `studio/kvforge_portal.py` | KVForge Studio: browser UI for the 6-step pipeline with SSE log streaming |
 | `ingestion/` | DocumentLoader protocol + PDF/Markdown/JSONL/HTML/Directory backends |
 | `embeddings/` | Embedder protocol + FastEmbed/SentenceTransformers/OpenAI backends |
 | `vectorstore/` | VectorStore protocol + QdrantStore/ChromaStore backends |
-| `tools/generate_faqs.py` | Auto-generate FAQs from an indexed corpus |
+| `tools/generate_faqs.py` | Heuristic FAQ generator (no API key required) |
 
 ---
 
@@ -459,7 +516,17 @@ Individual test files:
 
 ## EC2 Deployment
 
-Tested on AWS g5.xlarge (NVIDIA A10G, 24 GB VRAM).
+Tested on AWS g5.xlarge (4× NVIDIA A10G, 24 GB VRAM each).
+
+**4-UC layout on a single g5.xlarge:**
+
+| Use-case | GPU | vLLM port | Monitoring port |
+|----------|-----|-----------|-----------------|
+| UC1 — Customer Support | GPU 0 | 8091 | 8081 |
+| UC2 — PubMedQA | GPU 1 | 8092 | 8082 |
+| UC3 — SQuAD | GPU 2 | 8093 | 8083 |
+| UC4 — Bedrock User Guide | GPU 3 | 8090 | 8084 |
+| KVForge Studio | — | — | **8080** |
 
 ```bash
 # Pull latest code
@@ -471,12 +538,15 @@ source venv/bin/activate
 # Run tests to verify deployment
 python -m pytest tests/ -v --override-ini="addopts="
 
-# Run the full pipeline
+# Start KVForge Studio (manages all UCs from one UI)
+python kvforge_portal.py --port 8080
+
+# Or run a single use-case pipeline directly
 python pipeline/index_and_train.py my_document.pdf \
   --config datasource_my-corpus.json \
   --faqs my-corpus_faqs.json
 
-# Start dashboard in background
+# Start per-UC monitoring dashboard in background
 nohup python pipeline/monitoring_dashboard.py \
   --config datasource_my-corpus.json &
 ```

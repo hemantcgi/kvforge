@@ -52,6 +52,28 @@ To advance beyond Phase 1 retrieval to Phase 2 (KV cache) and Phase 3 (parametri
 
 See `scripts/README.md` for all individual pipeline steps.
 
+## 6. Using KVForge Studio
+
+KVForge Studio gives you a browser UI to run and monitor the full pipeline without any command-line pipeline scripts.
+
+**Start the portal:**
+
+```bash
+python kvforge_portal.py --port 8080
+# Open http://localhost:8080
+```
+
+From the Studio you can:
+
+1. **Index** — point to a document directory; watch chunk/embed/upsert progress stream live.
+2. **LLM Config** — set the local model path, quantization (4bit/8bit), and vLLM endpoint URL.
+3. **Sleep-time FAQ Gen** — configure a cloud LLM provider and generate Q&A pairs offline; the generated `faqs.json` is used automatically in the next training step.
+4. **Training** — kick off LoRA fine-tuning; GPU availability is checked before the job starts.
+5. **KV Recompute** — refresh KV tensors with the updated adapter.
+6. **PRS Eval** — score the model and advance the phase if the threshold is met.
+
+Per-use-case settings (GPU ID, model, FAQ count) are stored in `uc_config.json` inside each use-case directory and editable directly from the Studio UI.
+
 ## Supported vector stores
 
 | Backend | Config value | When to use |

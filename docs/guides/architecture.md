@@ -61,14 +61,20 @@ User-facing CLIs (root):
   ask.py              Single-shot question answering
 
 Pipeline package (pipeline/):
-  kv_indexer.py       Chunk + embed + KV tensor computation
-  kv_inference.py     Phase 1/2/3 query-time inference
-  kv_background.py    Daemon: background KV healing + access flush
-  lora_trainer.py     LoRA fine-tuning with replay buffer
-  prs_evaluator.py    Parametric Readiness Score evaluation
-  monitoring_dashboard.py  FastAPI monitoring server
-  index_and_train.py  Orchestrator: subprocess-based pipeline runner
-  bedrock_rag.py      Legacy entry point (kept for symbol compatibility)
+  kv_indexer.py           Chunk + embed + KV tensor computation
+  kv_inference.py         Phase 1/2/3 query-time inference
+  kv_background.py        Daemon: background KV healing + access flush
+  lora_trainer.py         LoRA fine-tuning with replay buffer
+  prs_evaluator.py        Parametric Readiness Score evaluation
+  sleep_faq_generator.py  Offline FAQ pre-computation via cloud LLM
+  monitoring_dashboard.py FastAPI monitoring server
+  index_and_train.py      Orchestrator: subprocess-based pipeline runner
+  bedrock_rag.py          Legacy entry point (kept for symbol compatibility)
+
+Studio package (studio/):
+  kvforge_portal.py   Browser UI for the 6-step pipeline; SSE log streaming;
+                      per-UC uc_config.json management; GPU health checks.
+                      Served at port 8080 via FastAPI.
 
 Pluggable packages:
   vectorstore/        VectorStore protocol + Qdrant / ChromaDB / FAISS backends
@@ -78,6 +84,48 @@ Pluggable packages:
 Tools:
   tools/generate_faqs.py  Auto-generate FAQ Q/A pairs from corpus
   tools/gen_viewer.py     Generate A/B evaluation HTML viewer
+```
+
+## Sleep-time FAQ Generation
+
+Before LoRA training, the `pipeline/sleep_faq_generator.py` module pre-computes Q&A pairs from the
+already-indexed chunks using a cloud LLM — offline, with no user traffic involved. This is called
+"sleep-time" because it runs between indexing and training, not at query time.
+
+**Why it matters for training quality:**
+
+LoRA fine-tuning quality is directly proportional to the quality of the FAQ signal. Heuristic
+generators produce surface-level question templates; a cloud LLM can generate diverse, semantically
+rich questions that mirror real user intent. In practice this produces a measurable PRS lift
+(UC4 example: PRS 0.727 → 0.861 after switching to sleep-time FAQ generation).
+
+**What it saves:**
+
+- `faqs.json` — Q&A pairs used as training signal by `lora_trainer.py`
+- `version.json` (`known_good_queries`) — pre-seeds the Phase 3 confidence gate so high-quality
+  queries are recognized from the very first PRS evaluation round
+
+**Supported providers:** Gemini, Claude (Anthropic), OpenAI.
+
+**Configuration (in `uc_config.json`):**
+
+```json
+{
+  "llm": {
+    "sleep_faq_provider": "gemini",
+    "sleep_faq_model": "gemini-2.5-flash",
+    "sleep_faq_count": 50
+  }
+}
+```
+
+**Standalone invocation:**
+
+```bash
+python -m pipeline.sleep_faq_generator \
+  --config config.json \
+  --output faqs.json \
+  --count 50
 ```
 
 ## Tier System

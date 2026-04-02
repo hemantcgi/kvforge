@@ -49,7 +49,7 @@ _kv_inference = None
 
 _model_b_config: dict = {
     "provider": "gemini",
-    "model": "gemini-2.0-flash",  # must match first item in JS MODELS_B["gemini"]
+    "model": "gemini-2.5-flash",  # must match first item in JS MODELS_B["gemini"]
     "api_key": "",
 }
 
@@ -118,7 +118,9 @@ def health():
 
 @app.get("/api/version")
 def get_version():
-    return ver.load()
+    v = dict(ver.load())
+    v.pop("known_good_queries", None)
+    return v
 
 
 @app.get("/api/stats")
@@ -179,12 +181,14 @@ def get_stats():
         with open(rp) as f:
             access_report = json.load(f)
 
+    v_slim = dict(v)
+    v_slim.pop("known_good_queries", None)
     return {
-        "version": v,
+        "version": v_slim,
         "tier_counts": tier_counts,
         "top_chunks": top_chunks,
         "access_report": access_report,
-        "total_chunks": sum(v for k, v in tier_counts.items() if k != "error"),
+        "total_chunks": sum(tc_v for k, tc_v in tier_counts.items() if k != "error"),
     }
 
 
@@ -235,7 +239,7 @@ class QueryRequest(BaseModel):
 
 
 class ModelBConfigRequest(BaseModel):
-    provider: Literal["gemini", "openai"]
+    provider: Literal["gemini", "openai", "claude"]
     model: str
     api_key: str
 
@@ -579,6 +583,93 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
             "generation_ms": generation_ms, "chunks": chunks, "thinking": thinking}
 
 
+def _answer_claude(query: str, cfg: dict, params: QueryRequest) -> dict:
+    t0 = time.time()
+    tag = "B:Claude"
+    _log(tag, f"START query={query!r} top_k={params.b_top_k} max_tokens={params.b_max_output_tokens} temp={params.b_temperature}")
+    chunks = []
+    retrieval_ms = 0
+    generation_ms = 0
+    answer = ""
+    try:
+        from fastembed import TextEmbedding
+
+        _log(tag, "embedding query…")
+        embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
+        q_vec = list(embedder.embed([query]))[0].tolist()
+
+        _log(tag, "searching vector store…")
+        store = _get_store()
+        t_ret = time.time()
+        hits = store.query(cfg["collection"], q_vec, top_k=params.b_top_k)
+        retrieval_ms = int((time.time() - t_ret) * 1000)
+        top_score_b = f"{hits[0].score:.4f}" if hits else "n/a"
+        _log(tag, f"search done — {len(hits)} hits, top_score={top_score_b}, retrieval={retrieval_ms}ms")
+        chunks = [
+            {
+                "page": h.payload.get("page", 0),
+                "score": round(h.score, 4),
+                "text": h.payload.get("text", "")[:2000],
+            }
+            for h in hits
+        ]
+
+        context = "\n\n".join(
+            f"[page {c['page']}, score {c['score']}]\n{c['text']}" for c in chunks
+        )
+        prompt = (
+            f"Answer the question using ONLY the context below. "
+            f"Cite sources as [page N].\n\nContext:\n{context}\n\nQuestion: {query}"
+        )
+
+        api_key = _model_b_config.get("api_key") or ""
+        model = _model_b_config.get("model", "claude-sonnet-4-6")
+        _log(tag, f"calling Anthropic API ({model}, timeout=90s)…")
+        t_gen = time.time()
+        resp = httpx.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={
+                "model": model,
+                "max_tokens": params.b_max_output_tokens,
+                "temperature": params.b_temperature,
+                "messages": [{"role": "user", "content": prompt}],
+            },
+            timeout=90,
+        )
+        _log(tag, f"Anthropic HTTP {resp.status_code}")
+        resp.raise_for_status()
+        data = resp.json()
+        content = data.get("content", [])
+        if not content:
+            answer = "Claude returned no content"
+        else:
+            answer = "".join(c.get("text", "") for c in content if c.get("type") == "text").strip()
+            stop_reason = data.get("stop_reason", "unknown")
+            if not answer:
+                answer = f"Claude returned empty content (stop_reason: {stop_reason})"
+            else:
+                generation_ms = int((time.time() - t_gen) * 1000)
+                if stop_reason == "max_tokens":
+                    answer += "\n[response truncated — increase Max output tokens]"
+                else:
+                    _log(tag, f"generation done ({len(answer)} chars, {generation_ms}ms)")
+    except Exception as e:
+        import traceback
+        _log(tag, f"ERROR: {e}\n{traceback.format_exc()}")
+        answer = f"Error: {e}"
+        retrieval_ms = 0
+        generation_ms = 0
+    elapsed = int((time.time() - t0) * 1000)
+    _log(tag, f"DONE {elapsed}ms")
+    return {"answer": answer, "latency_ms": elapsed, "retrieval_ms": retrieval_ms,
+            "generation_ms": generation_ms, "chunks": chunks, "thinking": ""}
+
+
 def _answer_openai(query: str, cfg: dict, params: QueryRequest) -> dict:
     t0 = time.time()
     tag = "B:OpenAI"
@@ -670,7 +761,7 @@ async def run_query(req: QueryRequest):
     loop = asyncio.get_event_loop()
     fut_a = loop.run_in_executor(_query_executor, _answer_kvforge, req.query, cfg, req)
     provider = _model_b_config.get("provider", "gemini")
-    fn_b = _answer_openai if provider == "openai" else _answer_gemini
+    fn_b = {"openai": _answer_openai, "claude": _answer_claude}.get(provider, _answer_gemini)
     fut_b = loop.run_in_executor(_query_executor, fn_b, req.query, cfg, req)
     result_a, result_b = await asyncio.gather(fut_a, fut_b)
     return {
@@ -852,6 +943,7 @@ PRS = 0.5 × Accuracy
         <label>Provider</label>
         <select id="b_provider" style="background:#1a1a1a;color:#eee;border:1px solid #444;padding:4px 6px;font-family:monospace;font-size:0.9em;width:100%;box-sizing:border-box;">
           <option value="gemini">Gemini</option>
+          <option value="claude">Claude (Anthropic)</option>
           <option value="openai">OpenAI</option>
         </select>
       </div>
@@ -860,8 +952,8 @@ PRS = 0.5 × Accuracy
         <select id="b_model" style="background:#1a1a1a;color:#eee;border:1px solid #444;padding:4px 6px;font-family:monospace;font-size:0.9em;width:100%;box-sizing:border-box;"></select>
       </div>
       <div class="param-group">
-        <label>API Key</label>
-        <input id="b_api_key" type="password" placeholder="Paste API key…"/>
+        <label>API Key <span id="api-key-warning" style="color:#f87171;font-size:0.8em;display:none">⚠ required</span></label>
+        <input id="b_api_key" type="password" placeholder="Paste API key…" oninput="onApiKeyInput()"/>
       </div>
       <div class="param-group">
         <label>Max output tokens</label>
@@ -906,8 +998,14 @@ PRS = 0.5 × Accuracy
 
 <script>
 const MODELS_B = {
-  gemini: ['gemini-2.0-flash','gemini-2.5-pro','gemini-1.5-pro','gemini-1.5-flash'],
+  gemini: ['gemini-2.5-flash','gemini-2.5-pro','gemini-2.0-flash','gemini-1.5-pro'],
+  claude: ['claude-sonnet-4-6','claude-opus-4-6','claude-haiku-4-5-20251001'],
   openai: ['gpt-4.1','gpt-4.1-mini','gpt-4o','gpt-4o-mini'],
+};
+const PROVIDER_LABELS = {
+  gemini: 'Gemini',
+  claude: 'Claude',
+  openai: 'OpenAI',
 };
 
 function populateModelDropdown(provider) {
@@ -915,6 +1013,13 @@ function populateModelDropdown(provider) {
   sel.innerHTML = MODELS_B[provider].map(m => `<option value="${m}">${m}</option>`).join('');
   const saved = localStorage.getItem(`modelb_${provider}_model`);
   if (saved && MODELS_B[provider].includes(saved)) sel.value = saved;
+}
+
+function onApiKeyInput() {
+  const key = document.getElementById('b_api_key').value.trim();
+  document.getElementById('api-key-warning').style.display = key ? 'none' : 'inline';
+  document.getElementById('b_api_key').style.borderColor = key ? '#444' : '#f87171';
+  saveAndSyncModelB();
 }
 
 function saveAndSyncModelB() {
@@ -929,7 +1034,7 @@ function saveAndSyncModelB() {
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({provider, model, api_key: apiKey}),
   }).catch(e => console.error('[ModelB config sync failed]', e));
-  const label = provider === 'openai' ? 'OpenAI' : 'Gemini';
+  const label = PROVIDER_LABELS[provider] || provider;
   document.getElementById('label-b').textContent = `Answer B — ${label} RAG`;
   document.getElementById('header-b').textContent = `Answer B — ${label} (${model})`;
   document.getElementById('model-info-b').innerHTML =
@@ -939,7 +1044,19 @@ function saveAndSyncModelB() {
 document.getElementById('b_provider').addEventListener('change', function() {
   const provider = this.value;
   populateModelDropdown(provider);
-  document.getElementById('b_api_key').value = localStorage.getItem(`modelb_${provider}_key`) || '';
+  const savedKey = localStorage.getItem(`modelb_${provider}_key`) || '';
+  document.getElementById('b_api_key').value = savedKey;
+  // Show warning and highlight field if no key stored for this provider
+  const warn = document.getElementById('api-key-warning');
+  const keyInput = document.getElementById('b_api_key');
+  if (!savedKey) {
+    warn.style.display = 'inline';
+    keyInput.style.borderColor = '#f87171';
+    keyInput.focus();
+  } else {
+    warn.style.display = 'none';
+    keyInput.style.borderColor = '#444';
+  }
   saveAndSyncModelB();
 });
 document.getElementById('b_model').addEventListener('change', saveAndSyncModelB);
@@ -950,7 +1067,12 @@ async function loadConfig() {
   const savedProvider = localStorage.getItem('modelb_provider') || 'gemini';
   document.getElementById('b_provider').value = savedProvider;
   populateModelDropdown(savedProvider);
-  document.getElementById('b_api_key').value = localStorage.getItem(`modelb_${savedProvider}_key`) || '';
+  const savedKey = localStorage.getItem(`modelb_${savedProvider}_key`) || '';
+  document.getElementById('b_api_key').value = savedKey;
+  if (!savedKey) {
+    document.getElementById('api-key-warning').style.display = 'inline';
+    document.getElementById('b_api_key').style.borderColor = '#f87171';
+  }
   saveAndSyncModelB();
   try {
     const cfg = await fetch('/api/config').then(r => r.json());
@@ -1137,8 +1259,32 @@ def _main():
     )
     parser.add_argument("--port", type=int, default=None,
                         help="Dashboard port (overrides config dashboard_port)")
+    parser.add_argument("--gemini-key", default=None,
+                        help="Gemini API key — pre-seeds Model B config so it persists across restarts")
+    parser.add_argument("--gemini-model", default="gemini-2.5-flash",
+                        help="Gemini model for Model B (default: gemini-2.5-flash)")
+    parser.add_argument("--openai-key", default=None,
+                        help="OpenAI API key — sets Model B to OpenAI on startup")
+    parser.add_argument("--openai-model", default="gpt-4.1",
+                        help="OpenAI model for Model B (default: gpt-4.1)")
+    parser.add_argument("--claude-key", default=None,
+                        help="Anthropic API key — sets Model B to Claude on startup")
+    parser.add_argument("--claude-model", default="claude-sonnet-4-6",
+                        help="Claude model for Model B (default: claude-sonnet-4-6)")
     args = parser.parse_args()
     _config_path = args.config
+    if args.claude_key:
+        _model_b_config["provider"] = "claude"
+        _model_b_config["model"] = args.claude_model
+        _model_b_config["api_key"] = args.claude_key
+    elif args.openai_key:
+        _model_b_config["provider"] = "openai"
+        _model_b_config["model"] = args.openai_model
+        _model_b_config["api_key"] = args.openai_key
+    elif args.gemini_key:
+        _model_b_config["provider"] = "gemini"
+        _model_b_config["model"] = args.gemini_model
+        _model_b_config["api_key"] = args.gemini_key
     cfg = _load_cfg()
     port = args.port if args.port is not None else cfg.get("dashboard_port", 8080)
     uvicorn.run(app, host="0.0.0.0", port=port)
