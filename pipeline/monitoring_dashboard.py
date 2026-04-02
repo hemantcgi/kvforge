@@ -220,6 +220,59 @@ def get_access_report():
         return json.load(f)
 
 
+@app.get("/api/coverage")
+def get_coverage(top_k: int = 5):
+    """Return FAQ coverage heatmap data.
+
+    For each FAQ in faqs.json, finds the top_k closest chunks by cosine
+    similarity using the configured embedding model and vector store.
+
+    Returns:
+        JSON with ``faqs`` list (question, answer) and ``matches`` dict
+        keyed by FAQ index containing chunk matches with id, tier, text,
+        page, access_count, kv_version, and similarity score.
+    """
+    cfg = _load_cfg()
+    faqs_path = Path(_config_path).parent / "faqs.json"
+    if not faqs_path.exists():
+        return JSONResponse({"error": "faqs.json not found"}, status_code=404)
+    with open(faqs_path) as f:
+        faqs = json.load(f)
+    if not faqs:
+        return JSONResponse({"error": "faqs.json is empty"}, status_code=404)
+
+    try:
+        from fastembed import TextEmbedding
+        embedder = TextEmbedding(
+            model_name=cfg.get("embed_model", "BAAI/bge-small-en-v1.5"),
+            show_download_progress=False,
+        )
+        store = _get_store()
+        collection = cfg["collection"]
+        matches = {}
+        questions = [f.get("question", "") for f in faqs]
+        # Batch-embed all questions for efficiency
+        vecs = list(embedder.embed(questions))
+        for i, (faq, qvec) in enumerate(zip(faqs, vecs)):
+            hits = store.query(collection, qvec.tolist(), top_k)
+            matches[i] = [
+                {
+                    "chunk_id": h.id,
+                    "score": round(float(h.score), 4),
+                    "tier": h.payload.get("tier", "frozen"),
+                    "text": h.payload.get("text", ""),
+                    "page": h.payload.get("page", 0),
+                    "access_count": h.payload.get("access_count", 0),
+                    "kv_version": h.payload.get("kv_version"),
+                    "text_preview": h.payload.get("text", "")[:80] + "…",
+                }
+                for h in hits
+            ]
+        return {"faqs": faqs, "matches": matches}
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
 # ---------------------------------------------------------------------------
 # A/B Query Comparison
 # ---------------------------------------------------------------------------
@@ -841,6 +894,38 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .modal-close:hover { color:#eee; }
   .prs-bar-wrap { background:#222; border-radius:4px; height:12px; margin:3px 0 8px; }
   .prs-bar { height:12px; border-radius:4px; background:#27a; transition:width 0.4s; }
+  /* FAQ Coverage Heatmap */
+  .heatmap-table { border-collapse:collapse; font-size:0.82em; }
+  .heatmap-table th { background:#1a1a1a; color:#888; padding:5px 8px; position:sticky; top:0; z-index:2; white-space:nowrap; }
+  .heatmap-table td.faq-label { color:#adf; max-width:260px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:5px 10px 5px 4px; }
+  .hm-cell {
+    width:52px; height:42px; cursor:pointer; border:1px solid #1a1a1a;
+    transition: opacity 0.15s; text-align:center; vertical-align:middle;
+    font-size:0.78em; color:#111; font-weight:bold; padding:2px;
+  }
+  .hm-cell:hover { opacity:0.75; outline:1px solid #fff; }
+  .hm-hot    { background:#e67e22; }
+  .hm-warm   { background:#f1c40f; }
+  .hm-cold   { background:#3498db; }
+  .hm-frozen { background:#555; color:#aaa; }
+  /* Chunk detail modal */
+  .chunk-modal-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,0.75); z-index:2000;
+    align-items:center; justify-content:center;
+  }
+  .chunk-modal-overlay.open { display:flex; }
+  .chunk-modal-box {
+    background:#1a1a1a; border:1px solid #444; border-radius:6px;
+    padding:24px; max-width:680px; width:92%; position:relative;
+    color:#eee; font-family:monospace; line-height:1.6; max-height:80vh; overflow-y:auto;
+  }
+  .chunk-modal-box h2 { color:#7af; margin:0 0 10px; font-size:1em; }
+  .chunk-meta { font-size:0.82em; color:#888; margin-bottom:10px; }
+  .chunk-meta span { margin-right:14px; }
+  .chunk-text-body { background:#111; padding:12px; border-radius:4px; font-size:0.88em; white-space:pre-wrap; word-break:break-word; color:#dde; line-height:1.5; }
+  .heatmap-legend { display:flex; gap:14px; margin:8px 0 12px; font-size:0.82em; align-items:center; }
+  .legend-dot { display:inline-block; width:14px; height:14px; border-radius:2px; vertical-align:middle; margin-right:4px; }
 </style>
 </head>
 <body>
@@ -889,8 +974,38 @@ PRS = 0.5 × Accuracy
   </div>
 </div>
 
+<!-- Chunk detail modal (coverage heatmap) -->
+<div class="chunk-modal-overlay" id="chunk-modal" onclick="if(event.target===this)closeChunkModal()">
+  <div class="chunk-modal-box">
+    <span class="modal-close" onclick="closeChunkModal()">&#x2715;</span>
+    <h2 id="cm-title">Chunk Detail</h2>
+    <div class="chunk-meta" id="cm-meta"></div>
+    <div class="chunk-text-body" id="cm-text"></div>
+  </div>
+</div>
+
 <h1>KVForge Dashboard</h1>
 <div id="root">Loading…</div>
+
+<!-- FAQ Coverage Heatmap -->
+<div class="card" id="coverage-section">
+  <b>FAQ Coverage Heatmap</b>
+  <span style="font-size:0.82em;color:#888;margin-left:8px">— which chunks each FAQ maps to (top-5 by cosine similarity)</span>
+  <button onclick="loadCoverage()"
+    style="float:right;padding:4px 12px;background:#27a;color:#fff;border:none;cursor:pointer;font-family:monospace;font-size:0.85em">
+    Refresh
+  </button>
+  <div class="heatmap-legend">
+    <span><span class="legend-dot" style="background:#e67e22"></span>Hot</span>
+    <span><span class="legend-dot" style="background:#f1c40f"></span>Warm</span>
+    <span><span class="legend-dot" style="background:#3498db"></span>Cold</span>
+    <span><span class="legend-dot" style="background:#555"></span>Frozen</span>
+    <span style="color:#888;margin-left:8px">Click any cell to see full chunk text</span>
+  </div>
+  <div id="heatmap-content" style="overflow-x:auto">
+    <span style="color:#666">Click Refresh to load coverage data…</span>
+  </div>
+</div>
 
 <div class="card" id="query-section">
   <b>Query A/B Comparison</b>
@@ -1229,7 +1344,77 @@ function closePrsModal() {
 }
 
 // Close modal on Escape key
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closePrsModal(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closePrsModal(); closeChunkModal(); }
+});
+
+// ---------------------------------------------------------------------------
+// FAQ Coverage Heatmap
+// ---------------------------------------------------------------------------
+
+const TIER_CLASS = { hot:'hm-hot', warm:'hm-warm', cold:'hm-cold', frozen:'hm-frozen' };
+const TIER_LABEL = { hot:'🔥 Hot', warm:'🌡 Warm', cold:'❄ Cold', frozen:'🧊 Frozen' };
+
+let _coverageData = null;  // cached after first load
+
+async function loadCoverage() {
+  const el = document.getElementById('heatmap-content');
+  el.innerHTML = '<span style="color:#888">Loading coverage data…</span>';
+  try {
+    const data = await fetch('/api/coverage?top_k=5').then(r => r.json());
+    if (data.error) { el.innerHTML = `<span style="color:#f77">Error: ${data.error}</span>`; return; }
+    _coverageData = data;
+    renderHeatmap(data, el);
+  } catch(e) {
+    el.innerHTML = `<span style="color:#f77">Failed: ${e.message}</span>`;
+  }
+}
+
+function renderHeatmap(data, el) {
+  const { faqs, matches } = data;
+  const n = faqs.length;
+  if (!n) { el.innerHTML = '<span style="color:#666">No FAQs found.</span>'; return; }
+  // Determine column count from first FAQ's matches
+  const topK = (matches[0] || []).length;
+  let html = `<table class="heatmap-table"><thead><tr>
+    <th style="min-width:220px">FAQ</th>
+    ${Array.from({length:topK},(_,i)=>`<th>Match ${i+1}</th>`).join('')}
+  </tr></thead><tbody>`;
+  for (let i = 0; i < n; i++) {
+    const q = faqs[i].question || '';
+    const short = q.length > 55 ? q.slice(0,55)+'…' : q;
+    const cells = (matches[i] || []).map((m, j) => {
+      const tc = TIER_CLASS[m.tier] || 'hm-frozen';
+      const score = m.score.toFixed(3);
+      return `<td class="hm-cell ${tc}" title="${m.tier} | score ${score} | page ${m.page}"
+        onclick="openChunkModal(${i},${j})">${score}</td>`;
+    }).join('');
+    html += `<tr><td class="faq-label" title="${q.replace(/"/g,'&quot;')}">${short}</td>${cells}</tr>`;
+  }
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+function openChunkModal(faqIdx, matchIdx) {
+  if (!_coverageData) return;
+  const faq = _coverageData.faqs[faqIdx];
+  const m = (_coverageData.matches[faqIdx] || [])[matchIdx];
+  if (!m) return;
+  document.getElementById('cm-title').textContent =
+    `Chunk #${m.chunk_id} — ${TIER_LABEL[m.tier] || m.tier}`;
+  document.getElementById('cm-meta').innerHTML =
+    `<span>Score: <b style="color:#7af">${m.score}</b></span>` +
+    `<span>Page: <b>${m.page}</b></span>` +
+    `<span>Access count: <b>${m.access_count}</b></span>` +
+    `<span>KV version: <b>${m.kv_version !== null && m.kv_version !== undefined ? m.kv_version : '—'}</b></span>` +
+    `<br><span style="color:#888;margin-top:4px;display:block">FAQ: ${faq.question}</span>`;
+  document.getElementById('cm-text').textContent = m.text || '(no text)';
+  document.getElementById('chunk-modal').classList.add('open');
+}
+
+function closeChunkModal() {
+  document.getElementById('chunk-modal').classList.remove('open');
+}
 
 loadConfig();
 load();
