@@ -202,10 +202,9 @@ def cmd_compute_kv(cfg: dict, filter_type: str, filter_value) -> None:
         if filter_type == "null":
             scroll_filter = Filter(must=[IsNullCondition(is_null={"key": "kv_version"})])
         elif filter_type == "stale":
-            scroll_filter = Filter(should=[
-                IsNullCondition(is_null={"key": "kv_version"}),
-                Filter(must=[FieldCondition(key="kv_version", range=Range(lt=int(filter_value)))]),
-            ])
+            # Qdrant drops null payload fields so IsNullCondition misses absent
+            # kv_version; do a full scan and rely on the client-side filter.
+            scroll_filter = None
         else:
             scroll_filter = Filter(must=[
                 FieldCondition(key="source_file", match={"value": filter_value})

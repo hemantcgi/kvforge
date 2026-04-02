@@ -3,6 +3,7 @@
 
 import asyncio
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -21,9 +22,11 @@ STEP_MODULES = {
 # Steps that require a free GPU — sleep-faq calls a cloud REST API, no GPU needed
 GPU_REQUIRED_STEPS = {"index", "train", "recompute", "prs-eval"}
 
-# Static extra args per step
+# Static extra args per step (subcommands/flags appended after --config)
 STEP_EXTRA_ARGS = {
-    "recompute": ["--recompute"],
+    "index": ["index"],
+    # recompute uses compute-kv; --stale-version is added dynamically in _build_cmd
+    "recompute": ["compute-kv"],
 }
 
 
@@ -32,6 +35,36 @@ def _build_cmd(uc_id: str, step: str) -> list[str]:
     config = str(ROOT / "examples" / uc_id / "config.json")
     cmd = [sys.executable, "-m", module, "--config", config]
     cmd += STEP_EXTRA_ARGS.get(step, [])
+    if step == "recompute":
+        # Pass stale-version = current_lora_version + 1 so that chunks already
+        # at kv_version == current_lora_version are also recomputed (handles the
+        # case where a new checkpoint overwrites an existing version number).
+        version_path = ROOT / "examples" / uc_id / "version.json"
+        if version_path.exists():
+            try:
+                ver = json.loads(version_path.read_text())
+                lora_ver = int(ver.get("current_lora_version", 1))
+                cmd += ["--stale-version", str(lora_ver + 1)]
+            except Exception:
+                cmd += ["--stale-version", "2"]
+        else:
+            cmd += ["--stale-version", "2"]
+    if step == "train":
+        # Pass --faqs if faqs.json exists, otherwise fall back to --source-file
+        faqs_path = ROOT / "examples" / uc_id / "faqs.json"
+        if faqs_path.exists():
+            cmd += ["--faqs", str(faqs_path)]
+        else:
+            source_path = ROOT / "examples" / uc_id / "data" / "train.jsonl"
+            cmd += ["--source-file", str(source_path)]
+    if step == "prs-eval":
+        faqs_path = ROOT / "examples" / uc_id / "faqs.json"
+        if faqs_path.exists():
+            cmd += ["--faqs", str(faqs_path)]
+        else:
+            # Fall back to train data if no faqs generated yet
+            source_path = ROOT / "examples" / uc_id / "data" / "train.jsonl"
+            cmd += ["--faqs", str(source_path)]
     if step == "sleep-faq":
         # --output is dynamic (depends on uc_id)
         output = str(ROOT / "examples" / uc_id / "faqs.json")
@@ -71,6 +104,7 @@ async def run_step_streaming(uc_id: str, step: str, job_id: str, job_manager):
             return
 
     cmd = _build_cmd(uc_id, step)
+    env = _build_env(uc_id, step)
     yield _sse({"type": "start", "cmd": " ".join(cmd)})
 
     try:
@@ -79,6 +113,7 @@ async def run_step_streaming(uc_id: str, step: str, job_id: str, job_manager):
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
             cwd=str(ROOT),
+            env=env,
         )
         job_manager.set_pid(job_id, proc.pid)
 
@@ -100,6 +135,22 @@ async def run_step_streaming(uc_id: str, step: str, job_id: str, job_manager):
     except Exception as e:
         job_manager.fail(job_id, str(e))
         yield _sse({"type": "error", "message": str(e)})
+
+
+def _build_env(uc_id: str, step: str) -> dict:
+    """Return subprocess env with CUDA_VISIBLE_DEVICES set for GPU steps."""
+    env = os.environ.copy()
+    if step in GPU_REQUIRED_STEPS:
+        uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
+        gpu_id = 0  # default
+        if uc_cfg_path.exists():
+            try:
+                uc_cfg = json.loads(uc_cfg_path.read_text())
+                gpu_id = int(uc_cfg.get("gpu_id", 0))
+            except Exception:
+                pass
+        env["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
+    return env
 
 
 def _sse(data: dict) -> str:
