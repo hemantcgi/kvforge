@@ -4,6 +4,14 @@
 
 It works with **any dataset, any embedding model, any small language model, and any vector database.**
 
+> **Research Paper:** [KVForge: Progressive RAG with KV-Cache Injection and Parametric Consolidation](docs/KVForge_Research_Paper.pdf)
+
+---
+
+## System Architecture
+
+![KVForge System Architecture](docs/KVForge_Architecture_Diagram.png)
+
 ---
 
 ## Core Idea
