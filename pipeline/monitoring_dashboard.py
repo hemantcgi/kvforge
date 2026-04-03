@@ -921,10 +921,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     font-size:0.78em; color:#111; font-weight:bold; padding:2px;
   }
   .hm-cell:hover { opacity:0.75; outline:1px solid #fff; }
-  .hm-hot    { background:#e67e22; }
-  .hm-warm   { background:#f1c40f; }
-  .hm-cold   { background:#3498db; }
-  .hm-frozen { background:#555; color:#aaa; }
+  .hm-hot    { background:#e74c3c; color:#fff; }
+  .hm-warm   { background:#e67e22; color:#fff; }
+  .hm-cold   { background:#f1c40f; color:#111; }
+  .hm-frozen { background:#3498db; color:#fff; }
   /* Chunk detail modal */
   .chunk-modal-overlay {
     display:none; position:fixed; inset:0;
@@ -1013,11 +1013,18 @@ PRS = 0.5 × Accuracy
     Refresh
   </button>
   <div class="heatmap-legend">
-    <span><span class="legend-dot" style="background:#e67e22"></span>Hot</span>
-    <span><span class="legend-dot" style="background:#f1c40f"></span>Warm</span>
-    <span><span class="legend-dot" style="background:#3498db"></span>Cold</span>
-    <span><span class="legend-dot" style="background:#555"></span>Frozen</span>
+    <span><span class="legend-dot" style="background:#e74c3c"></span>≥ 0.85</span>
+    <span><span class="legend-dot" style="background:#e67e22"></span>≥ 0.75</span>
+    <span><span class="legend-dot" style="background:#f1c40f"></span>≥ 0.65</span>
+    <span><span class="legend-dot" style="background:#3498db"></span>&lt; 0.65</span>
     <span style="color:#888;margin-left:8px">Click any cell to see full chunk text</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;margin:8px 0 12px;font-size:0.85em">
+    <label for="hm-threshold" style="color:#aaa">Score threshold:</label>
+    <input id="hm-threshold" type="range" min="0.60" max="1.00" step="0.01" value="0.60"
+      style="width:200px;accent-color:#27a" oninput="onThresholdChange(this.value)"/>
+    <span id="hm-threshold-val" style="color:#7af;font-weight:bold;min-width:38px">0.60</span>
+    <span style="color:#666;font-size:0.9em">— cells below threshold are hidden</span>
   </div>
   <div id="heatmap-content" style="overflow-x:auto">
     <span style="color:#666">Click Refresh to load coverage data…</span>
@@ -1389,10 +1396,23 @@ document.addEventListener('keydown', e => {
 // FAQ Coverage Heatmap
 // ---------------------------------------------------------------------------
 
-const TIER_CLASS = { hot:'hm-hot', warm:'hm-warm', cold:'hm-cold', frozen:'hm-frozen' };
 const TIER_LABEL = { hot:'🔥 Hot', warm:'🌡 Warm', cold:'❄ Cold', frozen:'🧊 Frozen' };
 
+function scoreClass(score) {
+  if (score >= 0.85) return 'hm-hot';
+  if (score >= 0.75) return 'hm-warm';
+  if (score >= 0.65) return 'hm-cold';
+  return 'hm-frozen';
+}
+
 let _coverageData = null;  // cached after first load
+let _hmThreshold = 0.60;
+
+function onThresholdChange(val) {
+  _hmThreshold = parseFloat(val);
+  document.getElementById('hm-threshold-val').textContent = _hmThreshold.toFixed(2);
+  if (_coverageData) renderHeatmap(_coverageData, document.getElementById('heatmap-content'));
+}
 
 async function loadCoverage() {
   const el = document.getElementById('heatmap-content');
@@ -1411,24 +1431,37 @@ function renderHeatmap(data, el) {
   const { faqs, matches } = data;
   const n = faqs.length;
   if (!n) { el.innerHTML = '<span style="color:#666">No FAQs found.</span>'; return; }
-  // Determine column count from first FAQ's matches
   const topK = (matches[0] || []).length;
-  let html = `<table class="heatmap-table"><thead><tr>
-    <th style="min-width:220px">FAQ</th>
-    ${Array.from({length:topK},(_,i)=>`<th>Match ${i+1}</th>`).join('')}
-  </tr></thead><tbody>`;
+  // Only include rows where at least one match meets the threshold
+  let rows = '';
+  let visibleRows = 0;
   for (let i = 0; i < n; i++) {
+    const ms = matches[i] || [];
+    const hasMatch = ms.some(m => m.score >= _hmThreshold);
+    if (!hasMatch) continue;
+    visibleRows++;
     const q = faqs[i].question || '';
     const short = q.length > 55 ? q.slice(0,55)+'…' : q;
-    const cells = (matches[i] || []).map((m, j) => {
-      const tc = TIER_CLASS[m.tier] || 'hm-frozen';
+    const cells = ms.map((m, j) => {
+      if (m.score < _hmThreshold) {
+        return `<td class="hm-cell hm-frozen" style="opacity:0.2;cursor:default" title="score ${m.score.toFixed(3)} — below threshold">—</td>`;
+      }
+      const cls = scoreClass(m.score);
       const score = m.score.toFixed(3);
-      return `<td class="hm-cell ${tc}" title="${m.tier} | score ${score} | page ${m.page}"
+      return `<td class="hm-cell ${cls}" title="score ${score} | tier ${m.tier} | page ${m.page}"
         onclick="openChunkModal(${i},${j})">${score}</td>`;
     }).join('');
-    html += `<tr><td class="faq-label" title="${q.replace(/"/g,'&quot;')}">${short}</td>${cells}</tr>`;
+    rows += `<tr><td class="faq-label" title="${q.replace(/"/g,'&quot;')}">${short}</td>${cells}</tr>`;
   }
-  html += '</tbody></table>';
+  if (!visibleRows) {
+    el.innerHTML = `<span style="color:#888">No matches above threshold ${_hmThreshold.toFixed(2)}. Lower the slider.</span>`;
+    return;
+  }
+  const html = `<div style="color:#666;font-size:0.8em;margin-bottom:6px">${visibleRows} of ${n} FAQs have at least one match ≥ ${_hmThreshold.toFixed(2)}</div>
+  <table class="heatmap-table"><thead><tr>
+    <th style="min-width:220px">FAQ</th>
+    ${Array.from({length:topK},(_,i)=>`<th>Match ${i+1}</th>`).join('')}
+  </tr></thead><tbody>${rows}</tbody></table>`;
   el.innerHTML = html;
 }
 
