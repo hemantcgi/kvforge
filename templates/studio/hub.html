@@ -141,6 +141,13 @@ textarea{resize:vertical;min-height:52px}
 .preview-row:last-child{border-bottom:none}
 .pk{color:#475569;font-size:10px}
 .pv{color:#e2e8f0;font-size:10px;font-family:monospace}
+.vdb-readonly-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:4px}
+.vdb-ro-wide{grid-column:span 2}
+.vdb-ro-item{background:#080712;border:1px solid #1e1b4b;border-radius:6px;padding:8px 10px}
+.vdb-ro-label{color:#475569;font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
+.vdb-ro-value{color:#e2e8f0;font-size:12px}
+.vdb-badge{display:inline-block;background:#1e1b4b;color:#a78bfa;border-radius:4px;padding:1px 8px;font-size:11px;font-weight:600}
+.vdb-mono{font-family:monospace;font-size:11px;word-break:break-all}
 
 /* === GPU Grid === */
 .gpu-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
@@ -522,40 +529,63 @@ function renderDataPanel(ucId, cfg) {
 }
 
 function renderVdbPanel(ucId, cfg) {
-  const v = (cfg && cfg.vectordb) || {};
-  const stores = ['qdrant','chromadb','faiss'];
-  const storeTabs = stores.map(s =>
-    `<div class="topt ${(v.store||'qdrant')===s ? 'sel' : ''}" onclick="selToggle(this)">${s.charAt(0).toUpperCase()+s.slice(1)}</div>`
-  ).join('');
+  // Prefer authoritative values from config.json (datasource_config);
+  // fall back to uc_config.json vectordb fields for new/custom UCs.
+  const ds = (cfg && cfg.datasource_config) || {};
+  const v  = (cfg && cfg.vectordb) || {};
+
+  const store      = ds.vector_store    || v.store            || '—';
+  const dims       = ds.vector_dim      || v.dimensions        || '—';
+  const chunkSize  = ds.chunk_size      || v.chunk_size        || '—';
+  const overlap    = ds.chunk_overlap   || v.chunk_overlap     || '—';
+  const embedModel = ds.embed_model     || v.embedding_model   || '—';
+  const backend    = ds.embedder_backend                       || '—';
+  const collection = ds.collection                             || '—';
+  const loader     = ds.loader                                 || '—';
+
+  const storeLabel = store.charAt(0).toUpperCase() + store.slice(1);
+
   return `<div class="panel-top">
     <span>&#9641;</span>
     <span class="panel-title">VectorDB Configuration</span>
     <div class="collapse-sm" onclick="togglePanel('${ucId}','vdb')">&#9650; Collapse</div>
   </div>
-  <div class="field"><label>Store</label>
-    <div class="toggle-group" id="vdb-store-${ucId}">${storeTabs}</div>
-  </div>
-  <div class="row3">
-    <div class="field"><label>Dimensions</label><input type="number" id="vdb-dim-${ucId}" value="${v.dimensions||384}"></div>
-    <div class="field"><label>Chunk Size</label><input type="number" id="vdb-chunk-${ucId}" value="${v.chunk_size||512}"></div>
-    <div class="field"><label>Overlap</label><input type="number" id="vdb-overlap-${ucId}" value="${v.chunk_overlap||64}"></div>
-  </div>
-  <div class="row2">
-    <div class="field"><label>Embedding Model</label>
-      <select id="vdb-embed-${ucId}">
-        <option ${(v.embedding_model||'').includes('MiniLM') ? 'selected' : ''}>sentence-transformers/all-MiniLM-L6-v2</option>
-        <option ${(v.embedding_model||'').includes('bge-small') ? 'selected' : ''}>BAAI/bge-small-en-v1.5</option>
-      </select>
+  <div class="vdb-readonly-grid">
+    <div class="vdb-ro-item">
+      <div class="vdb-ro-label">Vector Store</div>
+      <div class="vdb-ro-value vdb-badge">${storeLabel}</div>
     </div>
-    <div class="field"><label>Index Type</label>
-      <select id="vdb-idx-${ucId}">
-        <option>HNSW (recommended)</option><option>Flat</option><option>IVF</option>
-      </select>
+    <div class="vdb-ro-item">
+      <div class="vdb-ro-label">Collection</div>
+      <div class="vdb-ro-value">${collection}</div>
+    </div>
+    <div class="vdb-ro-item">
+      <div class="vdb-ro-label">Dimensions</div>
+      <div class="vdb-ro-value">${dims}</div>
+    </div>
+    <div class="vdb-ro-item">
+      <div class="vdb-ro-label">Chunk Size</div>
+      <div class="vdb-ro-value">${chunkSize}</div>
+    </div>
+    <div class="vdb-ro-item">
+      <div class="vdb-ro-label">Chunk Overlap</div>
+      <div class="vdb-ro-value">${overlap}</div>
+    </div>
+    <div class="vdb-ro-item">
+      <div class="vdb-ro-label">Loader</div>
+      <div class="vdb-ro-value">${loader}</div>
+    </div>
+    <div class="vdb-ro-item vdb-ro-wide">
+      <div class="vdb-ro-label">Embedding Model</div>
+      <div class="vdb-ro-value vdb-mono">${embedModel}</div>
+    </div>
+    <div class="vdb-ro-item">
+      <div class="vdb-ro-label">Embedder Backend</div>
+      <div class="vdb-ro-value">${backend}</div>
     </div>
   </div>
   <div class="btn-row">
     <div class="btn btn-ghost" onclick="togglePanel('${ucId}','vdb')">&#9650; Collapse</div>
-    <div class="btn btn-primary" onclick="saveVdbConfig('${ucId}')">&#10003; Save & Index</div>
   </div>`;
 }
 
@@ -820,20 +850,6 @@ async function saveDataConfig(ucId) {
   await loadRegistry();
 }
 
-async function saveVdbConfig(ucId) {
-  const storeEl = document.querySelector(`#vdb-store-${ucId} .sel`);
-  const payload = { vectordb: {
-    store:           storeEl ? storeEl.textContent.trim().toLowerCase() : 'qdrant',
-    dimensions:      parseInt(document.getElementById(`vdb-dim-${ucId}`)?.value || '384'),
-    chunk_size:      parseInt(document.getElementById(`vdb-chunk-${ucId}`)?.value || '512'),
-    chunk_overlap:   parseInt(document.getElementById(`vdb-overlap-${ucId}`)?.value || '64'),
-    embedding_model: document.getElementById(`vdb-embed-${ucId}`)?.value || '',
-    index_type:      'hnsw',
-  }};
-  await fetch(`/studio/api/uc/${ucId}/config`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-  if (STATE.configs) delete STATE.configs[ucId];
-  await loadRegistry();
-}
 
 async function saveLlmConfig(ucId) {
   const payload = { llm: {

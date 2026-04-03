@@ -68,12 +68,17 @@ def get_uc_config(uc_id: str):
     if not path.exists():
         raise HTTPException(404, f"uc_config.json not found for {uc_id}")
     data = json.loads(path.read_text())
-    # Augment with dashboard_port from config.json if present
+    # Augment with fields from config.json (authoritative datasource config)
     cfg_path = _uc_path(uc_id) / "config.json"
     if cfg_path.exists():
         cfg = json.loads(cfg_path.read_text())
         if "dashboard_port" in cfg:
             data["dashboard_port"] = cfg["dashboard_port"]
+        # Expose authoritative vectordb fields for read-only display
+        data["datasource_config"] = {k: cfg[k] for k in (
+            "vector_store", "vector_dim", "chunk_size", "chunk_overlap",
+            "embed_model", "embedder_backend", "collection", "loader",
+        ) if k in cfg}
     return data
 
 
