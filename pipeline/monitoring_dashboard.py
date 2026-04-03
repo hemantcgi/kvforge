@@ -413,6 +413,9 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
             hits = store.query(cfg["collection"], q_vec, params.a_top_k)
             retrieval_ms = int((time.time() - t_ret) * 1000)
             _log(tag, f"search done — {len(hits)} hits, retrieval={retrieval_ms}ms")
+            if hits and _kv_background:
+                for rank, h in enumerate(hits, start=1):
+                    _kv_background.record_access(h.id, rank)
             if not hits:
                 answer = "No relevant chunks found."
             else:
@@ -559,12 +562,16 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
         _log(tag, f"search done — {len(hits)} hits, top_score={top_score_b}, retrieval={retrieval_ms}ms")
         chunks = [
             {
+                "chunk_id": h.id,
                 "page": h.payload.get("page", 0),
                 "score": round(h.score, 4),
                 "text": h.payload.get("text", "")[:2000],
             }
             for h in hits
         ]
+        if _kv_background and hits:
+            for rank, chunk in enumerate(chunks, start=1):
+                _kv_background.record_access(chunk["chunk_id"], rank)
 
         # 2. build prompt
         context = "\n\n".join(
@@ -660,12 +667,16 @@ def _answer_claude(query: str, cfg: dict, params: QueryRequest) -> dict:
         _log(tag, f"search done — {len(hits)} hits, top_score={top_score_b}, retrieval={retrieval_ms}ms")
         chunks = [
             {
+                "chunk_id": h.id,
                 "page": h.payload.get("page", 0),
                 "score": round(h.score, 4),
                 "text": h.payload.get("text", "")[:2000],
             }
             for h in hits
         ]
+        if _kv_background and hits:
+            for rank, chunk in enumerate(chunks, start=1):
+                _kv_background.record_access(chunk["chunk_id"], rank)
 
         context = "\n\n".join(
             f"[page {c['page']}, score {c['score']}]\n{c['text']}" for c in chunks
@@ -747,12 +758,16 @@ def _answer_openai(query: str, cfg: dict, params: QueryRequest) -> dict:
         _log(tag, f"search done — {len(hits)} hits, top_score={top_score_b}, retrieval={retrieval_ms}ms")
         chunks = [
             {
+                "chunk_id": h.id,
                 "page": h.payload.get("page", 0),
                 "score": round(h.score, 4),
                 "text": h.payload.get("text", "")[:2000],
             }
             for h in hits
         ]
+        if _kv_background and hits:
+            for rank, chunk in enumerate(chunks, start=1):
+                _kv_background.record_access(chunk["chunk_id"], rank)
 
         # build prompt
         context = "\n\n".join(
