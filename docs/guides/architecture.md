@@ -72,6 +72,9 @@ Pipeline package (pipeline/):
   bedrock_rag.py          Legacy entry point (kept for symbol compatibility)
 
 Studio package (studio/):
+  pipeline_runner.py  Spawns pipeline step subprocesses; streams stdout/stderr
+                      as SSE events; GPU pre-check before GPU-required steps;
+                      per-UC CUDA_VISIBLE_DEVICES isolation via uc_config.json.
   kvforge_portal.py   Browser UI for the 6-step pipeline; SSE log streaming;
                       per-UC uc_config.json management; GPU health checks.
                       Served at port 8080 via FastAPI.
@@ -128,16 +131,39 @@ python -m pipeline.sleep_faq_generator \
   --count 50
 ```
 
+## Monitoring Dashboard
+
+Each use-case exposes a per-process FastAPI dashboard (`pipeline/monitoring_dashboard.py`) at
+a dedicated port (8081–8084 on the reference EC2 deployment). Dashboards are fully independent
+and read their own `config.json` and `version.json`.
+
+**Key panels:**
+
+| Panel | What it shows |
+|-------|---------------|
+| Phase / LoRA version | Current pipeline phase and adapter version number |
+| Tier distribution | Hot / warm / cold / frozen chunk counts |
+| Top-10 chunks | Most-accessed chunks sorted by `access_count`; click preview → full-text popup |
+| PRS history | Per-round scores with inline progress bars; help modal explains the formula |
+| FAQ Coverage Heatmap | FAQs × top-K matching chunks; cells coloured by cosine similarity (red≥0.85, orange≥0.75, yellow≥0.65, blue<0.65); threshold slider filters rows; click cell → full chunk popup |
+| A/B query | Side-by-side KVForge (Model A) vs cloud LLM (Model B: Gemini / Claude / OpenAI) |
+
+**Access tracking:** Every query — Model A or Model B, via vLLM or HF transformers — calls
+`kv_background.record_access(chunk_id, rank)` for every retrieved chunk. The background daemon
+periodically flushes these counters to Qdrant, keeping tier data accurate across all query paths.
+
 ## Tier System
 
 The access tracker classifies each chunk by query frequency and recency:
 
-| Tier | Access count | Effect |
-|------|-------------|--------|
-| hot  | ≥ 10/week | KV healing priority 8×; highest replay weight |
-| warm | 3–9/week  | KV healing priority 4×; medium replay weight |
-| cold | 1–2/week  | KV healing priority 2×; low replay weight |
-| frozen | 0/week  | No KV healing; lowest replay weight |
+| Tier | Condition | Replay weight |
+|------|-----------|:---:|
+| hot  | Top 15% by access count, last accessed < 7 days | 8 |
+| warm | Next 50%, last accessed < 30 days | 4 |
+| cold | Remaining accessed chunks | 2 |
+| frozen | Never accessed (access_count = 0) | 1 |
+
+Thresholds scale dynamically with corpus size so small corpora don't get stuck with all chunks in one tier.
 
 ## PRS Gate
 

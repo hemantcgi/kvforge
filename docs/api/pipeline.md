@@ -94,19 +94,42 @@ from pipeline.prs_evaluator import _extract_qa, _compute_prs
 
 **CLI:**
 ```
-python -m pipeline.monitoring_dashboard --config <cfg.json> [--port 8080]
+python -m pipeline.monitoring_dashboard --config <cfg.json> [--port 8081]
+python -m pipeline.monitoring_dashboard --config <cfg.json> --port 8084 \
+    --gemini-key $GEMINI_KEY --gemini-model gemini-2.5-flash
+python -m pipeline.monitoring_dashboard --config <cfg.json> \
+    --openai-key $OPENAI_KEY --openai-model gpt-4.1
+python -m pipeline.monitoring_dashboard --config <cfg.json> \
+    --claude-key $ANTHROPIC_KEY --claude-model claude-sonnet-4-6
 ```
 
 **REST API endpoints** (once running on `localhost:<port>`):
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/health` | GET | Service health check |
-| `/stats` | GET | Collection stats (count, phase, PRS) |
-| `/version` | GET | Current phase and LoRA version |
-| `/config` | GET | Active datasource config |
-| `/query` | POST | `{"question": "..."}` — KVForge answer |
-| `/ab_query` | POST | `{"question": "..."}` — KVForge vs Gemini A/B comparison |
+| `/api/health` | GET | Liveness check — returns `{"status":"ok","timestamp":<unix>}` |
+| `/api/version` | GET | Current phase and LoRA version from `version.json` |
+| `/api/stats` | GET | Tier counts, top-10 most-accessed chunks (with full text, kv_version), PRS history |
+| `/api/config` | GET | Display-safe config fields (model names, embed model, collection, top_k) |
+| `/api/access-report` | GET | Raw `access_report.json` if present |
+| `/api/coverage` | GET | FAQ coverage heatmap: for each FAQ in `faqs.json`, returns top-K matching chunks with score, tier, text, page, access_count, kv_version. Query param: `top_k` (default 5) |
+| `/api/query` | POST | A/B comparison query — Model A (KVForge) vs Model B (Gemini/Claude/OpenAI). Both sides record chunk access counts. Body: `QueryRequest` |
+| `/api/set_model_b_config` | POST | Hot-swap Model B provider, model name, and API key at runtime |
+
+**`QueryRequest` body schema:**
+```json
+{
+  "query": "What is the return policy?",
+  "a_top_k": 5,
+  "a_max_new_tokens": 64,
+  "a_temperature": 0.7,
+  "a_top_p": 0.9,
+  "a_repetition_penalty": 1.2,
+  "b_top_k": 5,
+  "b_max_output_tokens": 4096,
+  "b_temperature": 1.0
+}
+```
 
 ---
 

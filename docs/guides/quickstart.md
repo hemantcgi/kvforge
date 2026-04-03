@@ -74,6 +74,35 @@ From the Studio you can:
 
 Per-use-case settings (GPU ID, model, FAQ count) are stored in `uc_config.json` inside each use-case directory and editable directly from the Studio UI.
 
+## 7. Per-use-case monitoring dashboard
+
+Each use-case has its own monitoring dashboard served by `pipeline/monitoring_dashboard.py`:
+
+```bash
+python -m pipeline.monitoring_dashboard \
+  --config examples/usecase1_customer_support/config.json \
+  --port 8081
+# Open http://localhost:8081
+```
+
+**What you can do from the dashboard:**
+
+- Check current phase, LoRA version, and total chunk count.
+- See tier distribution (how many chunks are hot / warm / cold / frozen).
+- Click any row in **Top 10 chunks** to read the full text of that chunk.
+- Open the **FAQ Coverage Heatmap** (click Refresh) to see which chunks each FAQ maps to. Use the threshold slider (0.60–1.00) to focus on high-confidence matches. Click any cell for full chunk text, page, access count, and KV version.
+- Run **A/B query comparisons** — configure Model B (Gemini, OpenAI, or Claude) in the settings panel and ask a question to compare answers side-by-side.
+
+To pass a Model B API key at startup (avoids entering it in the UI each time):
+
+```bash
+python -m pipeline.monitoring_dashboard \
+  --config examples/usecase1_customer_support/config.json \
+  --port 8081 \
+  --openai-key $OPENAI_API_KEY \
+  --openai-model gpt-4.1
+```
+
 ## Supported vector stores
 
 | Backend | Config value | When to use |

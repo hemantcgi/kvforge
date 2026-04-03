@@ -1,22 +1,52 @@
 """FastAPI monitoring dashboard for KVForge.
 
-Provides a REST API consumed by the bundled HTML dashboard UI.  Key endpoints:
+Provides a self-contained REST API + HTML UI for observing one use-case
+collection.  One dashboard process per use-case (ports 8081-8084 on the
+reference EC2 deployment).
 
-* ``GET /api/health``        — liveness check.
-* ``GET /api/version``       — current LoRA version and phase.
-* ``GET /api/stats``         — tier counts, top accessed chunks, access report.
-* ``GET /api/config``        — display-safe config fields for the UI settings panel.
-* ``POST /api/query``        — A/B query: runs KVForge (Model A) and Gemini
-  (Model B) in parallel and returns both answers with latency metrics.
+REST endpoints
+--------------
+* ``GET  /api/health``          — liveness check.
+* ``GET  /api/version``         — current LoRA version and phase.
+* ``GET  /api/stats``           — tier counts, top-10 most-accessed chunks
+                                  (with full text), access report.
+* ``GET  /api/config``          — display-safe config for the settings panel.
+* ``GET  /api/access-report``   — raw access_report.json if present.
+* ``GET  /api/coverage``        — FAQ coverage heatmap data: for each FAQ in
+                                  faqs.json, returns the top-K closest chunks
+                                  (cosine similarity) with tier, text, page,
+                                  access_count, kv_version, and score.
+* ``POST /api/query``           — A/B comparison query.  Model A = KVForge
+                                  (local vLLM or HF transformers).  Model B =
+                                  Gemini / Claude / OpenAI (configurable at
+                                  runtime).  Both sides record chunk access
+                                  counts so tier data stays accurate.
+* ``POST /api/set_model_b_config`` — hot-swap Model B provider/model/api_key.
 
-GPU modules (torch/transformers) are imported and the base model is pre-warmed
-in the startup event so that worker threads never race on the lazy-import lock.
+Dashboard UI features
+---------------------
+* Phase, LoRA version, total chunks at a glance.
+* Tier distribution bar (hot / warm / cold / frozen) with dynamic counts.
+* Top-10 most-accessed chunks table — click any preview to open a full-text
+  popup (chunk text, page, access count, kv_version, tier).
+* PRS history with progress bars and a help modal explaining the formula.
+* FAQ Coverage Heatmap — FAQs as rows, top-K matching chunks as columns,
+  cells coloured by cosine similarity score (≥0.85 red, ≥0.75 orange,
+  ≥0.65 yellow, <0.65 blue).  A threshold slider (0.60–1.00) hides rows
+  with no match above the cutoff.  Click any cell for the full chunk popup.
+* A/B query panel with configurable generation params for both models.
+
+GPU model loading
+-----------------
+Heavy modules (torch, transformers) are imported and the LoRA checkpoint is
+pre-warmed in the FastAPI lifespan startup hook so worker threads never race
+on the lazy-import lock.
 
 Start the server::
 
-    python3 -m pipeline.monitoring_dashboard
-    python3 -m pipeline.monitoring_dashboard --config examples/usecase4_bedrock_userguide/config.json
-    uvicorn pipeline.monitoring_dashboard:app --port 8084 --reload
+    python -m pipeline.monitoring_dashboard --config examples/usecase1_customer_support/config.json
+    python -m pipeline.monitoring_dashboard --config examples/usecase4_bedrock_userguide/config.json --port 8084
+    uvicorn pipeline.monitoring_dashboard:app --port 8081 --reload
 """
 
 import argparse

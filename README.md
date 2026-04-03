@@ -333,15 +333,33 @@ print(answer)
 ### 9. Monitor
 
 ```bash
-python pipeline/monitoring_dashboard.py --config datasource_my-corpus.json
-# Open http://localhost:8080
+python -m pipeline.monitoring_dashboard --config datasource_my-corpus.json --port 8081
+# Open http://localhost:8081
 ```
 
 The dashboard shows:
-- Current phase and LoRA version
-- Tier distribution (hot / warm / cold / frozen)
-- Top 10 most-accessed chunks
-- PRS history across training rounds
+
+| Panel | Description |
+|-------|-------------|
+| Phase / LoRA version | Current pipeline phase and adapter version |
+| Tier distribution | Hot / warm / cold / frozen counts |
+| Top 10 chunks | Most-accessed chunks — click any preview to see full text |
+| PRS history | Per-round scores with progress bars |
+| FAQ Coverage Heatmap | Which chunks each FAQ maps to (cosine similarity); cells colored by score; threshold slider (0.60–1.00) to filter low-confidence matches; click any cell for full chunk text popup |
+| A/B query panel | Compare KVForge (local vLLM or HF) against Gemini, Claude, or OpenAI in one request |
+
+Configure Model B at startup or switch it live in the UI:
+
+```bash
+# Gemini
+python -m pipeline.monitoring_dashboard --config cfg.json --gemini-key $KEY
+
+# OpenAI
+python -m pipeline.monitoring_dashboard --config cfg.json --openai-key $KEY --openai-model gpt-4.1
+
+# Claude
+python -m pipeline.monitoring_dashboard --config cfg.json --claude-key $KEY --claude-model claude-sonnet-4-6
+```
 
 ---
 
@@ -402,9 +420,10 @@ Supported values:
 | `pipeline/kv_background.py` | Daemon threads: KV recompute queue + access tracker flush |
 | `pipeline/lora_trainer.py` | LoRA fine-tuning with tier-weighted replay buffer |
 | `pipeline/prs_evaluator.py` | Parametric Readiness Score: accuracy + calibration + consistency |
-| `pipeline/monitoring_dashboard.py` | FastAPI live dashboard at `:8080` |
+| `pipeline/monitoring_dashboard.py` | FastAPI monitoring dashboard: tier stats, top-10 chunks, PRS history, FAQ coverage heatmap, A/B query comparison |
 | `pipeline/index_and_train.py` | Orchestrator: index → train → KV refresh → PRS → phase advance |
 | `pipeline/sleep_faq_generator.py` | Offline FAQ pre-computation from indexed chunks via cloud LLM (Gemini / Claude / OpenAI) |
+| `studio/pipeline_runner.py` | SSE subprocess runner — spawns pipeline steps, streams logs to browser, handles GPU checks and per-UC env isolation |
 | `studio/kvforge_portal.py` | KVForge Studio: browser UI for the 6-step pipeline with SSE log streaming |
 | `ingestion/` | DocumentLoader protocol + PDF/Markdown/JSONL/HTML/Directory backends |
 | `embeddings/` | Embedder protocol + FastEmbed/SentenceTransformers/OpenAI backends |
