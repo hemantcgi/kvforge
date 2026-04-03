@@ -201,7 +201,19 @@ Generated FAQs serve two functions:
 1. **Training signal** for LoRA fine-tuning (`--faqs faqs.json`).
 2. **Confidence gate seed**: the FAQ question embeddings pre-populate `known_good_queries` in `version.json`, so the Phase 3 gate has prior knowledge of the corpus question distribution from the first PRS evaluation round.
 
-### 4.5 Tier Classification and Replay Buffer
+### 4.5 Sleep-Time Access Analysis and Tier Classification
+
+#### 4.5.1 Continuous Access Tracking
+
+Every query path — KVForge local inference (Model A), vLLM, or external cloud LLM comparison (Model B) — calls `kv_background.record_access(chunk_id, rank)` for each retrieved chunk. A background daemon accumulates these `(chunk_id, access_count, last_accessed_ts)` records in memory and periodically flushes them to the vector store payload.
+
+This flush-and-classify cycle is the *sleep-time access scan*: computation performed offline, between query bursts, with three goals:
+
+1. **Identify** which chunks are accessed most often by real user traffic.
+2. **Classify** each chunk into a tier that reflects its importance to live queries.
+3. **Shape** the three downstream pipeline stages that immediately follow: KV recomputation, FAQ generation, and LoRA training.
+
+#### 4.5.2 Tier Classification
 
 Chunks are classified into four tiers based on access frequency and recency:
 
@@ -210,11 +222,28 @@ Chunks are classified into four tiers based on access frequency and recency:
 | hot | Top 15% by access count, last accessed < 7 days | 8 |
 | warm | Next 50%, last accessed < 30 days | 4 |
 | cold | Remaining accessed chunks | 2 |
-| frozen | Never accessed | 1 |
+| frozen | Never accessed (access_count = 0) | 1 |
 
-Thresholds are dynamic: the 15% / 50% percentile boundaries scale with corpus size so that small corpora (100 chunks) and large corpora (50,000 chunks) have approximately the same tier distribution shape.
+Thresholds are dynamic: the 15th and 65th percentile access-count boundaries scale with corpus size, so small corpora (100 chunks) and large corpora (50,000 chunks) have the same tier distribution shape regardless of absolute traffic volume.
 
-The replay buffer is a SQLite database. During LoRA training, each mini-batch is sampled proportional to tier weight × replay ratio (default 20%). This ensures the fine-tuned model does not forget the knowledge most needed for live traffic, at the cost of only a 20% addition to the FAQ-derived training set.
+#### 4.5.3 Downstream Utilization of Access Tier Data
+
+The tier map produced by the sleep-time scan is consumed by three pipeline stages. The table below summarises how tier information flows through each stage:
+
+| Tier | KV Recompute Priority | FAQ Questions Generated | Replay Sample Weight |
+|------|:---------------------:|:-----------------------:|:--------------------:|
+| hot  | 1st — immediate | 8× budget share | 8 |
+| warm | 2nd | 4× budget share | 4 |
+| cold | 3rd | 2× budget share | 2 |
+| frozen | Last — deferred | 1× budget share | 1 |
+
+**KV Recomputation Priority Queue.** Every LoRA update invalidates all stored KV tensors. Recomputing all chunks in a single burst is expensive (~0.20 s/chunk). Instead, the `kv_background` daemon processes chunks in tier order — hot first, frozen last. This minimizes the window during which high-traffic chunks serve stale KV tensors (Phase 1 text fallback), while deferring recomputation of rarely-accessed chunks to idle GPU time. In a 2,520-chunk corpus, hot chunks (~378 chunks, top 15%) are fully recomputed in approximately 76 seconds, restoring Phase 2 quality for the majority of live user queries before the full recompute completes.
+
+**FAQ Generation Allocation.** When the total FAQ budget is smaller than `total_chunks × questions_per_chunk`, the FAQ generator cannot cover every chunk equally. KVForge distributes the question budget in proportion to tier weight: a hot chunk receives 8× the question allocation of a frozen chunk. This concentrates training signal on the knowledge most relevant to actual user queries, rather than applying equal effort to chunks that are never retrieved.
+
+**Replay Buffer Sampling.** The SQLite replay buffer stores `(chunk_id, tier, text, answer)` rows derived from the generated FAQs. During LoRA training, each mini-batch mixes primary FAQ samples with replayed samples drawn proportional to tier weight (default replay fraction: 20%). With the default weights, approximately 60% of replayed samples come from hot and warm chunks combined, biasing the gradient signal toward the knowledge most likely to be tested by live traffic. This design serves as a lightweight proxy for elastic weight consolidation [18]: rather than constraining weight updates directly, it over-represents high-traffic knowledge in the training distribution.
+
+The net effect is a feedback loop: live query traffic shapes access tiers → tiers shape FAQ generation and training → the fine-tuned model improves most on the content users actually query.
 
 ### 4.6 Parametric Readiness Score (PRS)
 
@@ -407,9 +436,17 @@ Several mitigations are possible:
 2. **Background healing**: the `kv_background` daemon continuously recomputes stale chunks during idle GPU time, amortizing the cost across the retraining interval.
 3. **Larger LoRA rank**: higher rank adapters produce larger KV delta per training step, reaching PRS thresholds faster and reducing the number of recompute rounds.
 
-### 6.3 Tier System Effectiveness
+### 6.3 Sleep-Time Access Loop: Design and Expected Production Behavior
 
-The tier-weighted replay buffer prevents catastrophic forgetting by oversampling high-traffic chunks during LoRA training. In our experiments, all chunks remained at `tier=frozen` during the training phase (no live query traffic), so the replay buffer defaulted to uniform sampling. In a production deployment with real user traffic, we expect the tier weighting to show clearer benefit: the most-queried documents are the ones most likely to cause user-visible quality regressions if forgotten.
+The sleep-time access loop closes a feedback cycle between live query traffic and the offline training pipeline. In our experiments, all chunks remained at `tier=frozen` during the training phase because evaluation traffic did not constitute real user traffic, so the replay buffer defaulted to uniform sampling and KV recomputation proceeded in arbitrary order.
+
+In a production deployment with organic query traffic, the loop is expected to produce three measurable effects:
+
+**KV recompute latency reduction.** If 20% of chunks account for 80% of user queries (a typical Pareto distribution), hot-first recomputation means that 80% of query traffic has fresh KV tensors within the first 20% of the recompute window. The remaining 80% of chunks (frozen/cold) can be recomputed lazily without impacting most users.
+
+**Training signal alignment.** Without tier-weighted FAQ generation, a random 50-question FAQ set drawn from 2,520 chunks covers 2% of the corpus. With tier weighting, those 50 questions are concentrated on the ~378 hot chunks that matter most for user queries, improving the signal-to-noise ratio of the training set by a factor proportional to the tier weight differential (up to 8×).
+
+**Catastrophic forgetting prevention.** The most common failure mode in continual LoRA fine-tuning is forgetting high-frequency knowledge in favour of recently added corpus sections. Tier-weighted replay directly addresses this: new or rarely-queried chunks receive minimal replay weight, while established hot-chunk knowledge is over-represented in every mini-batch. We expect this to become the dominant quality lever as KVForge corpora mature and access distributions stabilize around a core set of high-traffic documents.
 
 ### 6.4 Multi-Tenant Deployment
 
