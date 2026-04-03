@@ -166,6 +166,8 @@ def get_stats():
               "access_count": r.payload.get("access_count", 0),
               "parametric_hit_count": r.payload.get("parametric_hit_count", 0),
               "tier": r.payload.get("tier", "frozen"),
+              "kv_version": r.payload.get("kv_version"),
+              "text": r.payload.get("text", ""),
               "text_preview": (r.payload.get("text", "")[:80] + "…")}
              for r in all_results],
             key=lambda x: x["access_count"],
@@ -1222,12 +1224,29 @@ async function loadConfig() {
 }
 
 let _prsHistory = [];
+let _topChunks = [];
+
+function openTopChunkModal(idx) {
+  const c = _topChunks[idx];
+  if (!c) return;
+  const TIER_LABEL = { hot:'🔥 Hot', warm:'🌡 Warm', cold:'❄ Cold', frozen:'🧊 Frozen' };
+  document.getElementById('cm-title').textContent =
+    `Chunk #${c.chunk_id} — ${TIER_LABEL[c.tier] || c.tier}`;
+  document.getElementById('cm-meta').innerHTML =
+    `<span>Page: <b>${c.page}</b></span>` +
+    `<span>Access count: <b>${c.access_count}</b></span>` +
+    `<span>Parametric hits: <b>${c.parametric_hit_count}</b></span>` +
+    `<span>KV version: <b>${c.kv_version !== null && c.kv_version !== undefined ? c.kv_version : '—'}</b></span>`;
+  document.getElementById('cm-text').textContent = c.text || '(no text)';
+  document.getElementById('chunk-modal').classList.add('open');
+}
 
 async function load(){
   const [stats, ver] = await Promise.all(
     [fetch('/api/stats').then(r=>r.json()), fetch('/api/version').then(r=>r.json())]
   );
   _prsHistory = ver.prs_history || [];
+  _topChunks = stats.top_chunks || [];
   const tc = stats.tier_counts;
   document.getElementById('root').innerHTML = `
     <div class="card"><b>Phase:</b> ${ver.phase} &nbsp;|&nbsp;
@@ -1242,9 +1261,12 @@ async function load(){
     </div>
     <div class="card"><b>Top 10 chunks by access count:</b>
       <table><tr><th>ID</th><th>Page</th><th>Tier</th><th>Access</th><th>Parametric</th><th>Preview</th></tr>
-      ${stats.top_chunks.map(c=>`<tr><td>${c.chunk_id}</td><td>${c.page}</td>
+      ${stats.top_chunks.map((c,i)=>`<tr><td>${c.chunk_id}</td><td>${c.page}</td>
         <td class="${c.tier}">${c.tier}</td><td>${c.access_count}</td>
-        <td>${c.parametric_hit_count}</td><td>${c.text_preview}</td></tr>`).join('')}
+        <td>${c.parametric_hit_count}</td>
+        <td style="cursor:pointer;color:#7af;text-decoration:underline dotted"
+            title="Click to view full chunk text"
+            onclick="openTopChunkModal(${i})">${c.text_preview}</td></tr>`).join('')}
       </table>
     </div>
     <div class="card">
