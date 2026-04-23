@@ -864,7 +864,7 @@ async def run_query(req: QueryRequest):
     fn_b = {"openai": _answer_openai, "claude": _answer_claude}.get(provider, _answer_gemini)
     fut_b = loop.run_in_executor(_query_executor, fn_b, req.query, cfg, req)
     result_a, result_b = await asyncio.gather(fut_a, fut_b)
-    return {
+    response = {
         "answer_a": result_a["answer"],
         "latency_a_ms": result_a["latency_ms"],
         "retrieval_a_ms": result_a.get("retrieval_ms", 0),
@@ -880,6 +880,44 @@ async def run_query(req: QueryRequest):
         "chunks_b": result_b.get("chunks", []),
         "thinking_b": result_b.get("thinking", ""),
     }
+    # Flywheel: record query event for analytics
+    try:
+        from core.analytics import record_query, init_db
+        init_db(cfg)
+        cluster_id = (result_a.get("chunks", [{}]) or [{}])[0].get("cluster_id")
+        record_query(cfg, cluster_id=cluster_id,
+                     phase_used=result_a.get("mode", "text_in_context"),
+                     latency_ms=result_a["latency_ms"])
+    except Exception:
+        pass
+    return response
+
+
+@app.get("/api/flywheel")
+async def get_flywheel():
+    """Return Flywheel summary: PRS history, cost estimate, ETA to Phase 3."""
+    cfg = _load_cfg()
+    try:
+        from core.analytics import get_flywheel_summary, init_db
+        init_db(cfg)
+        return get_flywheel_summary(cfg)
+    except Exception as exc:
+        return {"error": str(exc)}
+
+
+@app.patch("/api/flywheel/cost-rate")
+async def update_cost_rate(body: dict):
+    """Update cost_per_1k_tokens in the datasource config."""
+    new_rate = float(body.get("cost_per_1k_tokens", 5.0))
+    try:
+        import json as _json
+        from pathlib import Path as _Path
+        data = _json.loads(_Path(_config_path).read_text())
+        data["cost_per_1k_tokens"] = new_rate
+        _Path(_config_path).write_text(_json.dumps(data, indent=2))
+        return {"cost_per_1k_tokens": new_rate}
+    except Exception as exc:
+        return {"error": str(exc)}
 
 
 # ---------------------------------------------------------------------------

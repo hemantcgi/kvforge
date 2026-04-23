@@ -194,6 +194,58 @@ def answer_with_retrieval(query: str, cfg: dict) -> str:
         return generate_text_in_context(query, chunks, model, tokenizer)
 
 
+def route_query(query: str, cfg: dict) -> list[dict]:
+    """Dynamic PRS cluster-aware retrieval.
+
+    Embeds *query*, finds its nearest cluster, then calls
+    ``answer_with_retrieval`` restricted to chunks from that cluster.
+    Falls back to full-collection retrieval when no cluster data exists.
+
+    Args:
+        query: User query string.
+        cfg: Datasource config dict.
+
+    Returns:
+        List of chunk dicts from the nearest cluster (or full collection).
+    """
+    from pathlib import Path as _Path
+    cluster_file = _Path(cfg.get("checkpoint_dir", ".")) / "clusters.json"
+    if not cluster_file.exists():
+        return []
+
+    try:
+        from core.cluster_manager import load_clusters, nearest_cluster
+        cluster_data = load_clusters(str(cluster_file))
+        embedder = TextEmbedding(model_name=cfg["embed_model"],
+                                  show_download_progress=False)
+        q_vec = list(embedder.embed([query]))[0]
+        import numpy as np
+        cluster_id = nearest_cluster(
+            np.array(q_vec), np.array(cluster_data["centroids"])
+        )
+        store = get_store(cfg)
+        from pipeline.bedrock_rag import Config
+        rag_cfg = Config(**{k: cfg[k] for k in Config.__dataclass_fields__ if k in cfg})
+        hits = store.query(
+            cfg["collection"], q_vec.tolist(), top_k=cfg.get("top_k", 5),
+            scroll_filter={"cluster_id": str(cluster_id)},
+        )
+        return [
+            {
+                "chunk_id": h.id,
+                "text": h.payload.get("text", ""),
+                "page": h.payload.get("page"),
+                "score": round(h.score, 4),
+                "kv_cache": h.payload.get("kv_cache"),
+                "kv_version": h.payload.get("kv_version"),
+                "cluster_id": str(cluster_id),
+            }
+            for h in hits
+        ]
+    except Exception:
+        return []
+
+
 def main() -> None:
     """Pipe-compatible: read JSON from stdin (from bedrock_rag.py search)."""
     if sys.stdin.isatty():

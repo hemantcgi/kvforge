@@ -170,6 +170,21 @@ def cmd_index(pdf_path: Path, cfg: dict) -> None:
         store.upsert(cfg["collection"], points[start:start + cfg["upsert_batch"]])
     print(f"\nIndexed {len(points)} chunks with KV (kv_version=null)")
 
+    # Cluster embeddings and tag each chunk with its cluster_id
+    try:
+        from core.cluster_manager import cluster_embeddings, save_clusters
+        from pathlib import Path as _Path
+        vec_array = np.array(vectors)
+        k_range = tuple(cfg.get("cluster_k_range", [3, 20]))
+        centroids, labels = cluster_embeddings(vec_array, k_range=k_range)
+        cluster_file = str(_Path(cfg["checkpoint_dir"]) / "clusters.json")
+        save_clusters(cluster_file, centroids, labels, lora_version=ver.get_lora_version())
+        for point, label in zip(points, labels):
+            store.set_payload(cfg["collection"], point.id, {"cluster_id": str(int(label))})
+        print(f"Clustered {len(points)} chunks into {len(centroids)} clusters")
+    except Exception as exc:
+        print(f"  (clustering skipped: {exc})")
+
 
 def cmd_compute_kv(cfg: dict, filter_type: str, filter_value) -> None:
     """Recompute KV tensors for chunks that match the specified filter.
