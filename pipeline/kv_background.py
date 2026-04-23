@@ -38,6 +38,7 @@ import core.version as ver
 from vectorstore.registry import get_store
 
 _kv_queue: queue.Queue = queue.Queue()
+_image_kv_queue: queue.Queue = queue.Queue()
 _access_buffer: dict[int, dict] = {}
 _access_lock = threading.Lock()
 _query_count = 0
@@ -57,6 +58,19 @@ def enqueue_kv_recompute(chunk_ids: list[int]) -> None:
     """
     for cid in chunk_ids:
         _kv_queue.put(cid)
+
+
+def enqueue_image_kv_recompute(chunk_ids: list[int]) -> None:
+    """Schedule image KV tensor recomputation for the given chunk IDs.
+
+    Puts each ID onto the internal image queue consumed by ``_image_kv_worker``.
+    Returns immediately; does not block the inference thread.
+
+    Args:
+        chunk_ids: List of image chunk identifiers whose KV cache needs refreshing.
+    """
+    for cid in chunk_ids:
+        _image_kv_queue.put(cid)
 
 
 def record_access(chunk_id: int, rank: int) -> None:

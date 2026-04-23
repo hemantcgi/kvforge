@@ -54,7 +54,8 @@ def get_stale_chunk_ids(chunks: list[dict], current_lora_version: int) -> list[i
 # ── Inference paths ───────────────────────────────────────────────────────
 
 def generate_with_kv(query: str, chunks: list[dict],
-                      model, tokenizer, cfg: dict) -> str:
+                      model, tokenizer, cfg: dict,
+                      extra_context: str = "") -> str:
     """Fast path: inject pre-computed KV tensors as past_key_values."""
     num_layers, num_kv_heads, head_dim = model_loader.get_kv_shape(cfg)
     kv_shape = (num_layers, 2, num_kv_heads, head_dim)
@@ -85,7 +86,8 @@ def generate_with_kv(query: str, chunks: list[dict],
             (k.to(model.device), v.to(model.device)) for k, v in past_kv
         )
 
-    prompt = f"Based on the context provided, answer: {query}"
+    context_prefix = f"Additional context:\n{extra_context}\n\n" if extra_context else ""
+    prompt = f"{context_prefix}Based on the context provided, answer: {query}"
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
     with torch.no_grad():
         output = model.generate(
@@ -105,12 +107,15 @@ def generate_text_in_context(query: str, chunks: list[dict],
                                max_new_tokens: int = 256,
                                temperature: float = 0.7,
                                top_p: float = 0.9,
-                               repetition_penalty: float = 1.2) -> str:
+                               repetition_penalty: float = 1.2,
+                               extra_context: str = "") -> str:
     """Fallback path: include chunk text in prompt."""
     context = "\n\n---\n\n".join(
         f"[page {c['page']}, score {c['score']}]\n{c['text']}"
         for c in chunks
     )
+    if extra_context:
+        context += f"\n\n---\n\n{extra_context}"
     # Direct instruction prompt — avoids chat-template tokens that confuse the
     # model when used without the exact fine-tuning format.
     prompt = (
