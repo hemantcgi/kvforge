@@ -60,6 +60,7 @@ def test_all_new_fields_have_correct_defaults():
     # Dynamic PRS
     assert cfg.deployment_mode == "auto"
     assert cfg.prs_advancement_threshold == 0.72
+    assert cfg.prs_regression_threshold == 0.60
     assert cfg.prs_signal_weights == {"faq": 0.4, "vdb": 0.4, "realtime": 0.2}
     assert cfg.query_log_db == "query_log.db"
     # Flywheel

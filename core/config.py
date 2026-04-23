@@ -71,6 +71,12 @@ class DatasourceConfig(BaseModel):
         access_flush_queries: Background access-tracker flush query-count
             trigger.
         dashboard_port: Port for the monitoring dashboard FastAPI server.
+        prs_advancement_threshold: PRS score above which a phase advancement
+            is triggered (default 0.72).
+        prs_regression_threshold: PRS score below which a phase regression
+            is triggered. Must be strictly less than
+            ``prs_advancement_threshold`` (default 0.72) to maintain a
+            hysteresis band.
     """
 
     # Vector store connection
