@@ -76,7 +76,7 @@ class DatasourceConfig(BaseModel):
     # Vector store connection
     qdrant_host: str = "localhost"
     qdrant_port: int = 6333
-    vector_store: Literal["qdrant", "chroma", "faiss"] = "qdrant"
+    vector_store: Literal["qdrant", "chroma", "faiss", "pinecone", "pgvector", "weaviate", "milvus"] = "qdrant"
 
     # ChromaDB (in-process)
     chroma_persist_dir: str = ".chroma"
@@ -135,6 +135,58 @@ class DatasourceConfig(BaseModel):
     access_flush_seconds: int = 300
     access_flush_queries: int = 50
     dashboard_port: int = 8080
+
+    # Dynamic PRS — deployment and cluster settings
+    deployment_mode: Literal["greenfield", "brownfield", "auto"] = "auto"
+    difficulty_estimator: str = "intra_cluster_distance"
+    cluster_k_range: list[int] = Field(default_factory=lambda: [3, 20])
+    min_cluster_samples_for_adaptation: int = 10
+    prs_stability_window: int = 3
+    prs_advancement_threshold: float = 0.72
+    prs_auto_weight: bool = True
+    prs_signal_weights: dict = Field(
+        default_factory=lambda: {"faq": 0.4, "vdb": 0.4, "realtime": 0.2}
+    )
+    brownfield_routing_threshold: float = 0.85
+    brownfield_confidence_floor: float = 0.80
+    brownfield_coverage_target: float = 0.70
+    realtime_requery_window_minutes: int = 10
+    query_log_db: str = "query_log.db"
+
+    # Flywheel Analytics
+    analytics_db: str = ""
+    cost_per_1k_tokens: float = 5.0
+    tokens_per_ms_baseline: float = 0.8
+
+    # VDB Expansion — backend-specific connection fields
+    pinecone_api_key: str = ""
+    pinecone_cloud: str = "aws"
+    pinecone_region: str = "us-east-1"
+    pgvector_dsn: str = ""
+    pgvector_table: str = ""
+    weaviate_url: str = "http://localhost:8080"
+    weaviate_api_key: str = ""
+    milvus_uri: str = "http://localhost:19530"
+    milvus_token: str = ""
+
+    # ModelScout
+    model_registry_path: str = ""
+    model_scout_program: str = "model_scout_program.md"
+    model_scout_results: str = "model_scout_results.json"
+    scout_initial_corpus_chunks: int = 200
+    scout_initial_faq_count: int = 30
+    scout_initial_lora_steps: int = 50
+    scout_initial_lora_rank: int = 8
+    scout_max_lora_steps: int = 200
+    scout_max_corpus_chunks: int = 2000
+    scout_max_faq_count: int = 200
+
+    # Multimodal / image support
+    image_collection_suffix: str = "_images"
+    image_store_dir: str = ""
+    multimodal_model: str = "llava-hf/llava-1.5-7b-hf"
+    clip_model: str = "openai/clip-vit-base-patch32"
+    image_kv_inference: bool = False
 
 
 def load_config(path: str) -> DatasourceConfig:
