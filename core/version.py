@@ -126,31 +126,61 @@ def activate_phase_2() -> None:
         print("✅ Phase 2 activated — KV injection enabled")
 
 
-def append_prs(round_num: int, prs: float) -> None:
-    """Record a PRS score and automatically advance the phase if thresholds are met.
+def append_prs(
+    round_num: int,
+    prs: float,
+    regression_threshold: float = 0.60,
+    stability_window: int = 3,
+) -> None:
+    """Record a PRS score and automatically advance or downgrade the phase.
 
-    Phase transitions:
-
+    Phase advancement:
     * Phase 2: triggered when ``prs >= 0.75`` for the first time.
     * Phase 3: triggered when ``prs >= 0.75`` for two consecutive rounds.
 
+    Phase regression (downgrade):
+    * Triggered when the last ``stability_window`` rounds are ALL below
+      ``regression_threshold``. Downgrades one phase per call.
+
     Args:
-        round_num: LoRA training round number (used for record-keeping only).
+        round_num: LoRA training round number (record-keeping only).
         prs: Parametric Readiness Score in [0, 1].
+        regression_threshold: PRS floor; consecutive rounds below this
+            trigger a phase downgrade. Default 0.60.
+        stability_window: Number of consecutive rounds required to trigger
+            advance or downgrade. Default 3.
     """
     data = load()
     data["prs_history"].append({"round": round_num, "prs": round(prs, 4)})
     history = data["prs_history"]
-    # Phase 2: PRS >= 0.75 for at least one round
+
+    # ── Advance ──────────────────────────────────────────────────────────────
     if prs >= 0.75 and data["phase"] < 2:
         data["phase"] = 2
         print("✅ Phase 2 activated — KV injection enabled")
-    # Phase 3: PRS >= 0.75 for 2 consecutive rounds
     if (len(history) >= 2
             and all(r["prs"] >= 0.75 for r in history[-2:])
             and data["phase"] < 3):
         data["phase"] = 3
         print("✅ Phase 3 activated — confidence gate now live")
+
+    # ── Regress ───────────────────────────────────────────────────────────────
+    window = history[-stability_window:]
+    if (len(window) >= stability_window
+            and all(r["prs"] < regression_threshold for r in window)):
+        if data["phase"] == 3:
+            data["phase"] = 2
+            print(
+                f"⚠️  Phase regression: 3 → 2 "
+                f"(PRS below {regression_threshold} for {stability_window} consecutive rounds)"
+            )
+        elif data["phase"] == 2:
+            data["phase"] = 1
+            print(
+                f"⚠️  Phase regression: 2 → 1 "
+                f"(PRS below {regression_threshold} for {stability_window} consecutive rounds)"
+            )
+
     save(data)
 
 
