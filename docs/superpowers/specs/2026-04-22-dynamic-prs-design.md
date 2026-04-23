@@ -69,7 +69,7 @@ Each cluster tracks three coverage signals independently:
 
 - `faq_coverage` — fraction of FAQs mapped to this cluster that the model answers correctly (accuracy_ratio ≥ 0.85)
 - `vdb_coverage` — fraction of this cluster's chunks the model can answer from weights, sampled each LoRA round (20 chunks per cluster, or all if cluster < 20 chunks)
-- `realtime_coverage` — fraction of real-time queries hitting this cluster answered parametrically and not re-queried within 10 minutes (proxy for user satisfaction)
+- `realtime_coverage` — fraction of real-time queries hitting this cluster answered parametrically and not re-queried within the configured requery window (proxy for user satisfaction; window is per-UC and dashboard-editable)
 
 ```json
 // version.json cluster state
@@ -112,9 +112,25 @@ Initial per-cluster threshold is set as:
 ```
 initial_threshold = base_threshold × difficulty_multiplier
 base_threshold = prs_advancement_threshold (config, default 0.72)
-difficulty_multiplier = clip(mean_intra_cluster_embedding_distance / global_mean_distance, 0.85, 1.15)
+difficulty_multiplier = clip(estimator.score(cluster_chunks) / global_mean, 0.85, 1.15)
 ```
-High intra-cluster embedding variance → chunks are semantically spread → harder domain → higher threshold. Low variance → tight cluster → easier to master → lower threshold. This requires no external domain classifier; it derives difficulty from the embedding geometry already computed at index time.
+
+The `difficulty_multiplier` is produced by a pluggable **DifficultyEstimator** — a `@runtime_checkable` Protocol with a single method `score(chunks: list[str]) -> float`. This follows the same structural typing pattern used for all other KVForge backends. The system ships with built-in estimators; operators can register custom ones in `uc_config.json`:
+
+```json
+"difficulty_estimator": "intra_cluster_distance"  // or "vocab_complexity" | "entity_density" | "length_variance" | a custom registered name
+```
+
+Built-in estimators:
+
+| Estimator | Signal | Best for |
+|---|---|---|
+| `intra_cluster_distance` *(default)* | Mean pairwise embedding distance within cluster — high spread = harder domain | General purpose; requires no text parsing |
+| `vocab_complexity` | Ratio of rare tokens (outside top-10k vocab) to total tokens | Technical docs, legal, medical |
+| `entity_density` | Named entity count per 100 tokens (via spaCy or simple NER) | Knowledge-dense domains |
+| `length_variance` | Std dev of chunk token lengths — high variance = inconsistent content structure | Mixed-format corpora |
+
+All estimators operate only on data already available at index time (embeddings or raw chunk text). No external API calls. New estimators are added by implementing the Protocol and registering in `core/difficulty_estimators.py`.
 
 After enough labeled query outcomes accumulate (≥ 30 per cluster), the threshold adapts: it is set to the PRS score at which the per-cluster logistic regression classifier achieves ≥ 80% precision on held-out queries (5-fold cross-validation). This replaces the geometry-based estimate with an empirically validated threshold for that cluster.
 
@@ -165,16 +181,28 @@ query → retrieve top-K chunks → check model_confidence of each chunk
   any K < routing_threshold → retrieval
 ```
 
-`routing_threshold` starts at 0.85 (conservative) and can be lowered per UC via config as the operator gains confidence in the model.
+`routing_threshold` starts at 0.85 (conservative) and can be lowered per UC via the KVForge Studio dashboard. Changes take effect immediately — no restart or LoRA round required.
 
 #### 3. Migration to Greenfield
 
-When `model_confidence ≥ 0.80` for ≥ 70% of VDB chunks, the UC is eligible to transition to greenfield cluster mode. The transition:
-1. Runs semantic clustering over existing embeddings
-2. Maps existing per-chunk confidence scores to per-cluster initial coverage estimates
-3. Switches routing to per-cluster centroid matching
+A UC is eligible to migrate when the proportion of VDB chunks whose `model_confidence` exceeds the confidence floor reaches the coverage target. Both values are **per-UC and editable in the KVForge Studio dashboard**:
 
-Transition is operator-triggered (not automatic) to preserve control during migration. The trigger is a CLI command `python kvforge.py migrate-to-greenfield --config <uc_config.json>` or a button in KVForge Studio's UC management panel. The system reports migration eligibility (% chunks above confidence floor) in the monitoring dashboard so the operator can make an informed decision.
+| Setting | Default | Description |
+|---|---|---|
+| `brownfield_confidence_floor` | 0.80 | Minimum `model_confidence` a chunk must have to count as "mastered" |
+| `brownfield_coverage_target` | 0.70 | Fraction of total chunks that must be mastered before migration is offered |
+
+When either value is changed in the dashboard, migration eligibility is **re-evaluated immediately** against the current chunk confidence scores in the VDB — no waiting for the next LoRA round. The dashboard shows a live progress bar: `X% of chunks mastered (target: Y%)`.
+
+The transition itself is operator-triggered (not automatic). Trigger via:
+- KVForge Studio: "Migrate to Greenfield" button in the UC management panel (enabled when eligibility is met)
+- CLI: `python kvforge.py migrate-to-greenfield --config <uc_config.json>`
+
+The migration process:
+1. Runs semantic clustering over existing chunk embeddings
+2. Maps per-chunk confidence scores to per-cluster initial `vdb_coverage` estimates
+3. Switches routing logic to per-cluster centroid matching
+4. Sets `deployment_mode: "greenfield"` in the UC config
 
 ---
 
@@ -184,19 +212,32 @@ New per-UC config fields in `DatasourceConfig`:
 
 ```json
 {
-  "deployment_mode": "greenfield",          // "greenfield" | "brownfield" | "auto"
+  "deployment_mode": "greenfield",               // "greenfield" | "brownfield" | "auto"
   "prs_weights": {"faq": 0.4, "vdb": 0.4, "realtime": 0.2},
-  "prs_auto_weight": true,                  // enable logistic regression weight adaptation
-  "prs_stability_window": 3,               // rounds for slope calculation
-  "prs_advancement_threshold": 0.72,       // initial per-UC floor (auto-calibrated if null)
-  "brownfield_routing_threshold": 0.85,    // initial confidence threshold for brownfield mode
-  "realtime_requery_window_minutes": 10,   // window for detecting re-queries (satisfaction proxy)
-  "cluster_k_range": [3, 20],              // K search range for silhouette auto-selection
-  "min_cluster_samples_for_adaptation": 10 // min labeled queries before weight adaptation runs
+  "prs_auto_weight": true,                       // enable logistic regression weight adaptation
+  "prs_stability_window": 3,                     // rounds for slope calculation
+  "prs_advancement_threshold": 0.72,             // initial per-UC floor (auto-calibrated if null)
+  "difficulty_estimator": "intra_cluster_distance", // pluggable difficulty estimator
+  "cluster_k_range": [3, 20],                    // K search range for silhouette auto-selection
+  "min_cluster_samples_for_adaptation": 10,      // min labeled queries before weight adaptation runs
+  "brownfield_routing_threshold": 0.85,          // initial confidence threshold for brownfield routing
+  "brownfield_confidence_floor": 0.80,           // chunk confidence floor for migration eligibility
+  "brownfield_coverage_target": 0.70,            // fraction of chunks mastered to offer migration
+  "realtime_requery_window_minutes": 10          // requery window for satisfaction proxy
 }
 ```
 
 `deployment_mode: "auto"` detects brownfield when existing VDB chunks lack `cluster_id`.
+
+**Dashboard-editable settings** — the following fields can be changed per UC in KVForge Studio without editing the config file. Changes are written back to the UC config and take effect immediately (no restart):
+
+| Field | Dashboard label | Takes effect |
+|---|---|---|
+| `realtime_requery_window_minutes` | "Re-query detection window" | Next query logged |
+| `brownfield_confidence_floor` | "Chunk mastery threshold" | Immediately — live eligibility re-evaluated |
+| `brownfield_coverage_target` | "Migration coverage target %" | Immediately — live eligibility re-evaluated |
+| `brownfield_routing_threshold` | "Parametric routing confidence" | Next query routed |
+| `prs_advancement_threshold` | "PRS advancement floor" | Next LoRA round |
 
 ---
 
@@ -245,10 +286,11 @@ Logged real-time queries (weighted by cluster frequency)
 |---|---|
 | `core/cluster_manager.py` | K-means clustering, centroid persistence, query-to-cluster routing |
 | `core/prs_adapter.py` | Per-cluster signal tracking, logistic regression weight learning, advancement logic |
+| `core/difficulty_estimators.py` | DifficultyEstimator Protocol + built-in implementations (intra_cluster_distance, vocab_complexity, entity_density, length_variance) |
 | `pipeline/chunk_confidence.py` | Brownfield per-chunk confidence scoring (background) |
 | `pipeline/query_logger.py` | Real-time query logging → training pair accumulation |
 
-Modified modules: `pipeline/prs_evaluator.py`, `pipeline/kv_inference.py`, `core/version.py`, `core/config.py`, `studio/routes.py` (dashboard cluster view).
+Modified modules: `pipeline/prs_evaluator.py`, `pipeline/kv_inference.py`, `core/version.py`, `core/config.py`, `studio/routes.py` (dashboard cluster view + dashboard-editable UC settings panel).
 
 ---
 
