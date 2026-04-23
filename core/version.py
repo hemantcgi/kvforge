@@ -29,6 +29,7 @@ DEFAULTS: dict[str, Any] = {
     "phase": 1,
     "prs_history": [],
     "known_good_queries": [],
+    "clusters": {},
 }
 
 
@@ -151,3 +152,42 @@ def append_prs(round_num: int, prs: float) -> None:
         data["phase"] = 3
         print("✅ Phase 3 activated — confidence gate now live")
     save(data)
+
+
+def get_cluster_state(cluster_id: str) -> dict:
+    """Return per-cluster PRS state dict, or empty dict if cluster not yet tracked.
+
+    Args:
+        cluster_id: Cluster identifier string.
+
+    Returns:
+        Dict with cluster-specific PRS state, or ``{}`` if not found.
+    """
+    return load().get("clusters", {}).get(str(cluster_id), {})
+
+
+def save_cluster_state(cluster_id: str, state: dict) -> None:
+    """Atomically update a single cluster's state in version.json.
+
+    Args:
+        cluster_id: Cluster identifier string.
+        state: Dict with cluster-specific PRS state.
+    """
+    data = load()
+    data.setdefault("clusters", {})[str(cluster_id)] = state
+    save(data)
+
+
+def get_global_phase() -> int:
+    """Return minimum phase across all clusters (conservative).
+
+    Falls back to the top-level ``'phase'`` key when no clusters exist.
+
+    Returns:
+        Minimum phase integer (1, 2, or 3).
+    """
+    data = load()
+    clusters = data.get("clusters", {})
+    if not clusters:
+        return data.get("phase", 1)
+    return min(c.get("phase", 1) for c in clusters.values())
