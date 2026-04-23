@@ -70,10 +70,30 @@ def test_all_new_fields_have_correct_defaults():
     assert cfg.pinecone_api_key == ""
     assert cfg.milvus_uri == "http://localhost:19530"
     # ModelScout
-    assert cfg.scout_initial_lora_rank == 8
+    assert cfg.scout_initial_lora_rank == 16
     # Multimodal
     assert cfg.image_collection_suffix == "_images"
     assert cfg.image_kv_inference is False
+
+
+def test_model_scout_config_defaults():
+    from core.config import DatasourceConfig
+    cfg = DatasourceConfig(
+        collection="test", embed_model="BAAI/bge-small-en-v1.5",
+        vector_dim=384, llm_model="meta-llama/Llama-3.2-3B-Instruct",
+        checkpoint_dir="/tmp/ckpt", version_file="/tmp/v.json",
+        replay_db="/tmp/r.db",
+    )
+    assert cfg.model_registry_path == "core/model_registry.json"
+    assert cfg.model_scout_program == "model_scout_program.md"
+    assert cfg.model_scout_results == "model_scout_results.tsv"
+    assert cfg.scout_initial_corpus_chunks == 200
+    assert cfg.scout_initial_faq_count == 20
+    assert cfg.scout_initial_lora_steps == 500
+    assert cfg.scout_initial_lora_rank == 16
+    assert cfg.scout_max_lora_steps == 2000
+    assert cfg.scout_max_corpus_chunks == 2000
+    assert cfg.scout_max_faq_count == 100
 
 
 def test_config_model_dump_has_keys_used_by_existing_code():
