@@ -143,6 +143,7 @@ class DatasourceConfig(BaseModel):
     min_cluster_samples_for_adaptation: int = 10
     prs_stability_window: int = 3
     prs_advancement_threshold: float = 0.72
+    prs_regression_threshold: float = 0.60
     prs_auto_weight: bool = True
     prs_signal_weights: dict = Field(
         default_factory=lambda: {"faq": 0.4, "vdb": 0.4, "realtime": 0.2}
