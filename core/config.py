@@ -170,16 +170,16 @@ class DatasourceConfig(BaseModel):
     milvus_token: str = ""
 
     # ModelScout
-    model_registry_path: str = ""
+    model_registry_path: str = "core/model_registry.json"
     model_scout_program: str = "model_scout_program.md"
-    model_scout_results: str = "model_scout_results.json"
+    model_scout_results: str = "model_scout_results.tsv"
     scout_initial_corpus_chunks: int = 200
-    scout_initial_faq_count: int = 30
-    scout_initial_lora_steps: int = 50
-    scout_initial_lora_rank: int = 8
-    scout_max_lora_steps: int = 200
+    scout_initial_faq_count: int = 20
+    scout_initial_lora_steps: int = 500
+    scout_initial_lora_rank: int = 16
+    scout_max_lora_steps: int = 2000
     scout_max_corpus_chunks: int = 2000
-    scout_max_faq_count: int = 200
+    scout_max_faq_count: int = 100
 
     # Multimodal / image support
     image_collection_suffix: str = "_images"
