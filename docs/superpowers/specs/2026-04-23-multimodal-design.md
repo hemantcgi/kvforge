@@ -297,6 +297,39 @@ text query
 
 ---
 
+## Background Image KV Recomputation
+
+When `multimodal_search` retrieves image chunks with stale KV tensors, it enqueues their IDs for background recomputation — mirroring the text path in `kv_inference.py`.
+
+`pipeline/image_inference.py` gains:
+
+```python
+def get_stale_image_chunk_ids(
+    image_chunks: list[dict], current_lora_version: int
+) -> list[int]:
+    return [
+        c["chunk_id"]
+        for c in image_chunks
+        if c.get("kv_version") is None or c["kv_version"] < current_lora_version
+    ]
+```
+
+`pipeline/kv_background.py` gains a separate queue and worker for image recomputation:
+
+```python
+_image_kv_queue: queue.Queue = queue.Queue()
+
+def enqueue_image_kv_recompute(chunk_ids: list[int]) -> None:
+    for cid in chunk_ids:
+        _image_kv_queue.put(cid)
+```
+
+`_image_kv_worker` uses `LLaVALoader` (not the text LLM) and scrolls `<collection>_images`. It runs as a separate daemon thread started by `start(cfg)`. The text KV worker and image KV worker are fully independent — separate queues, separate models, separate collections.
+
+`multimodal_search` calls `enqueue_image_kv_recompute` for stale image chunks immediately after merging results, before returning.
+
+---
+
 ## What Does Not Change
 
 - `kv_indexer.py` — text indexing pipeline untouched

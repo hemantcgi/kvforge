@@ -1480,6 +1480,263 @@ git commit -m "feat: add multimodal_query — parallel search + merge + multimod
 
 ---
 
+## Task 10: Background image KV recomputation
+
+When stale image chunks are retrieved at query time, enqueue them for
+background recomputation — mirroring the text path in `kv_inference.py`.
+Requires a separate queue and worker in `kv_background.py` because image
+recomputation uses `LLaVALoader`, not the text LLM.
+
+**Files:**
+- Modify: `pipeline/image_inference.py`
+- Modify: `pipeline/kv_background.py`
+- Modify: `pipeline/multimodal_query.py`
+- Test: `tests/test_multimodal.py`
+
+- [ ] **Step 1: Write the failing tests**
+
+Append to `tests/test_multimodal.py`:
+
+```python
+def test_get_stale_image_chunk_ids_returns_null_and_old_versions():
+    from pipeline.image_inference import get_stale_image_chunk_ids
+    chunks = [
+        {**_fake_image_chunk(5,  100), "chunk_id": 100},   # fresh
+        {**_fake_image_chunk(None, 101), "chunk_id": 101},  # null → stale
+        {**_fake_image_chunk(3,  102), "chunk_id": 102},   # old version → stale
+    ]
+    stale = get_stale_image_chunk_ids(chunks, current_lora_version=5)
+    assert set(stale) == {101, 102}
+
+
+def test_enqueue_image_kv_recompute_puts_ids_on_queue():
+    import pipeline.kv_background as bg
+    bg._image_kv_queue.queue.clear()
+    bg.enqueue_image_kv_recompute([201, 202, 203])
+    assert bg._image_kv_queue.qsize() == 3
+
+
+def test_multimodal_search_enqueues_stale_image_chunks():
+    """multimodal_search must enqueue stale image chunk IDs for background healing."""
+    from unittest.mock import MagicMock, patch
+    import numpy as np
+    import core.kv_utils as kv_utils
+
+    stale_kv = np.zeros((4, 2, 8, 64), dtype=np.float16)
+
+    def _hit(id_, score, modality, kv_ver):
+        h = MagicMock()
+        h.id = id_
+        h.score = score
+        if modality == "text":
+            h.payload = {"text": "t", "page": 1,
+                          "kv_cache": kv_utils.serialize_kv(stale_kv),
+                          "kv_version": kv_ver}
+        else:
+            h.payload = {"caption": "c", "image_path": "/img.png", "page": 2,
+                          "kv_cache": kv_utils.serialize_kv(stale_kv),
+                          "kv_version": kv_ver}
+        return h
+
+    text_hits  = [_hit(1, 0.9, "text",  5)]
+    image_hits = [_hit(101, 0.85, "image", 2)]   # stale (current is 5)
+
+    fake_store = MagicMock()
+    fake_store.query.side_effect = [text_hits, image_hits]
+    fake_text_embedder = MagicMock()
+    fake_text_embedder.encode.return_value = [[0.0] * 384]
+    fake_clip = MagicMock()
+    fake_clip.encode_text.return_value = [0.0] * 512
+
+    import pipeline.kv_background as bg
+    bg._image_kv_queue.queue.clear()
+
+    cfg = {
+        "collection": "col",
+        "image_collection_suffix": "_images",
+        "top_k": 5,
+        "clip_model": "openai/clip-vit-base-patch32",
+    }
+
+    with patch("pipeline.multimodal_query.get_store", return_value=fake_store), \
+         patch("pipeline.multimodal_query.get_embedder", return_value=fake_text_embedder), \
+         patch("pipeline.multimodal_query.CLIPEmbedder", return_value=fake_clip), \
+         patch("pipeline.multimodal_query.ver.get_lora_version", return_value=5):
+        from pipeline.multimodal_query import multimodal_search
+        multimodal_search("query", cfg)
+
+    assert bg._image_kv_queue.qsize() == 1
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+```bash
+python -m pytest tests/test_multimodal.py::test_get_stale_image_chunk_ids_returns_null_and_old_versions tests/test_multimodal.py::test_enqueue_image_kv_recompute_puts_ids_on_queue tests/test_multimodal.py::test_multimodal_search_enqueues_stale_image_chunks -v --override-ini="addopts="
+```
+
+Expected: FAIL — `get_stale_image_chunk_ids` not defined, `_image_kv_queue` not defined.
+
+- [ ] **Step 3: Add `get_stale_image_chunk_ids` to `pipeline/image_inference.py`**
+
+Append to `pipeline/image_inference.py`:
+
+```python
+def get_stale_image_chunk_ids(
+    image_chunks: list[dict], current_lora_version: int
+) -> list[int]:
+    """Return chunk IDs whose KV tensors are missing or behind the current LoRA version."""
+    return [
+        c["chunk_id"]
+        for c in image_chunks
+        if c.get("kv_version") is None or c["kv_version"] < current_lora_version
+    ]
+```
+
+- [ ] **Step 4: Add image KV queue + worker + enqueue function to `pipeline/kv_background.py`**
+
+After the existing `_kv_queue` declaration (around line 40), add:
+
+```python
+_image_kv_queue: queue.Queue = queue.Queue()
+```
+
+After the existing `enqueue_kv_recompute` function, add:
+
+```python
+def enqueue_image_kv_recompute(chunk_ids: list[int]) -> None:
+    """Schedule image KV tensor recomputation for the given chunk IDs.
+
+    Puts each ID onto the internal image queue consumed by ``_image_kv_worker``.
+    Returns immediately; does not block the inference thread.
+
+    Args:
+        chunk_ids: List of image chunk identifiers whose KV cache needs refreshing.
+    """
+    for cid in chunk_ids:
+        _image_kv_queue.put(cid)
+```
+
+After the existing `_kv_worker` function, add:
+
+```python
+def _image_kv_worker(cfg: dict) -> None:
+    """Background thread: drain the image KV recompute queue.
+
+    Uses LLaVALoader (multimodal LLM) to recompute image KV tensors.
+    Runs independently of the text KV worker — separate queue, separate model.
+
+    Args:
+        cfg: Datasource configuration dict.
+    """
+    from core.multimodal_loader import LLaVALoader
+    import core.kv_utils as kv_utils
+
+    client = get_store(cfg)
+    image_collection = cfg["collection"] + cfg.get("image_collection_suffix", "_images")
+    mm_llm = LLaVALoader(cfg)
+
+    while True:
+        chunk_id = _image_kv_queue.get()
+        try:
+            current_ver = ver.get_lora_version()
+            results, _ = client.scroll(
+                image_collection, limit=1, with_payload=True,
+            )
+            results = [r for r in results if r.id == chunk_id]
+            if not results:
+                _image_kv_queue.task_done()
+                continue
+            image_path = results[0].payload.get("image_path", "")
+            if not image_path:
+                _image_kv_queue.task_done()
+                continue
+            kv_arr = mm_llm.encode_image_kv(image_path)
+            client.set_payload(
+                image_collection,
+                chunk_id,
+                {"kv_cache": kv_utils.serialize_kv(kv_arr), "kv_version": current_ver},
+            )
+        except Exception as e:
+            print(f"[kv_background] image KV recompute error for chunk {chunk_id}: {e}",
+                  flush=True)
+        finally:
+            _image_kv_queue.task_done()
+```
+
+- [ ] **Step 5: Update `start()` in `kv_background.py` to launch the image worker**
+
+Find the `start(cfg)` function in `kv_background.py`. It currently starts two threads (kv_worker and access_worker). Add a third thread for the image KV worker. The existing start function likely looks like:
+
+```python
+def start(cfg: dict) -> None:
+    ...
+    t = threading.Thread(target=_kv_worker, args=(cfg,), daemon=True)
+    t.start()
+    ...
+```
+
+Add immediately after the existing `_kv_worker` thread start:
+
+```python
+    img_t = threading.Thread(target=_image_kv_worker, args=(cfg,), daemon=True,
+                              name="image-kv-worker")
+    img_t.start()
+```
+
+- [ ] **Step 6: Add stale-image enqueue to `multimodal_search` in `pipeline/multimodal_query.py`**
+
+In `multimodal_query.py`, add the import at the top:
+
+```python
+from pipeline.image_inference import (
+    decide_image_inference_mode,
+    get_image_context,
+    get_stale_image_chunk_ids,
+)
+```
+
+In `multimodal_search`, after `merged = sorted(...)`, add:
+
+```python
+    # Enqueue stale image chunks for background KV recomputation
+    import pipeline.kv_background as kv_background
+    current_ver = ver.get_lora_version()
+    stale_image_ids = get_stale_image_chunk_ids(
+        [c for c in merged if c["modality"] == "image"], current_ver
+    )
+    if stale_image_ids:
+        kv_background.enqueue_image_kv_recompute(stale_image_ids)
+
+    return merged[:top_k]
+```
+
+Remove the existing `return merged[:top_k]` line that was there before (it now moves inside the block above).
+
+- [ ] **Step 7: Run all three new tests**
+
+```bash
+python -m pytest tests/test_multimodal.py::test_get_stale_image_chunk_ids_returns_null_and_old_versions tests/test_multimodal.py::test_enqueue_image_kv_recompute_puts_ids_on_queue tests/test_multimodal.py::test_multimodal_search_enqueues_stale_image_chunks -v --override-ini="addopts="
+```
+
+Expected: All PASS
+
+- [ ] **Step 8: Run full multimodal suite**
+
+```bash
+python -m pytest tests/test_multimodal.py -v --override-ini="addopts="
+```
+
+Expected: All PASS
+
+- [ ] **Step 9: Commit**
+
+```bash
+git add pipeline/image_inference.py pipeline/kv_background.py pipeline/multimodal_query.py tests/test_multimodal.py
+git commit -m "feat: background image KV recomputation — enqueue stale image chunks at query time"
+```
+
+---
+
 ## Task 9: Full suite verification
 
 **Files:**
@@ -1532,6 +1789,9 @@ git commit -m "test: verify full suite passes after multimodal addition"
 | `multimodal_search` — parallel search, merge by score, cap at top_k | Task 8 |
 | `multimodal_answer` — default path + Path A | Task 8 |
 | 5 new config fields | Task 1 |
+| Background image KV recomputation — stale chunks enqueued at query time | Task 10 |
+| `_image_kv_worker` uses LLaVALoader (separate from text KV worker) | Task 10 |
 | Existing text pipeline tests unaffected | Task 9 |
 
 All 7 success criteria from the spec are covered by tests in Tasks 3, 5, 8, and 9.
+The background recomputation gap (Task 10) adds 3 additional tests.
