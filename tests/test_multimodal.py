@@ -188,6 +188,7 @@ def test_clip_embedder_image_and_text_same_dim():
     fake_model = MagicMock()
     fake_model.get_image_features.return_value = torch.zeros(1, 512)
     fake_model.get_text_features.return_value = torch.zeros(1, 512)
+    fake_model.config.projection_dim = 512
 
     fake_processor = MagicMock()
     fake_processor.return_value = {"pixel_values": torch.zeros(1, 3, 224, 224),
