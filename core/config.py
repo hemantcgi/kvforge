@@ -74,9 +74,9 @@ class DatasourceConfig(BaseModel):
         prs_advancement_threshold: PRS score above which a phase advancement
             is triggered (default 0.72).
         prs_regression_threshold: PRS score below which a phase regression
-            is triggered. Must be strictly less than
-            ``prs_advancement_threshold`` (default 0.72) to maintain a
-            hysteresis band.
+            is triggered. Should be below 0.75 (the hardcoded advancement
+            floor in ``append_prs``) to avoid a phantom advance→regress flip
+            in a single call. No automatic validation is performed.
     """
 
     # Vector store connection

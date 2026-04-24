@@ -81,3 +81,18 @@ def test_phase1_does_not_regress_below_1(tmp_path):
     ver.append_prs(3, 0.42, regression_threshold=0.60, stability_window=3)
     data = ver.load()
     assert data["phase"] == 1
+
+
+def test_no_regress_when_advance_fires_same_call(tmp_path):
+    """When advance fires, regression must not also fire in the same call.
+
+    With a pathological config (regression_threshold > advance threshold),
+    a PRS of 0.76 would advance phase 1→2 and then the regression window
+    check could immediately revert it. Guard ensures this never happens.
+    """
+    ver = _make_ver_file(tmp_path, phase=1, prs_history=[0.80, 0.80])
+    # regression_threshold=0.90 means 0.76 is below it, but advance fires first
+    ver.append_prs(3, 0.76, regression_threshold=0.90, stability_window=3)
+    data = ver.load()
+    # advance should have fired (prs >= 0.75 and two consecutive rounds >= 0.75)
+    assert data["phase"] == 3  # not regressed back

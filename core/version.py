@@ -155,6 +155,7 @@ def append_prs(
     history = data["prs_history"]
 
     # ── Advance ──────────────────────────────────────────────────────────────
+    phase_before_advance = data["phase"]
     if prs >= 0.75 and data["phase"] < 2:
         data["phase"] = 2
         print("✅ Phase 2 activated — KV injection enabled")
@@ -165,8 +166,11 @@ def append_prs(
         print("✅ Phase 3 activated — confidence gate now live")
 
     # ── Regress ───────────────────────────────────────────────────────────────
+    # Skip regression when advance fired in this same call to prevent a
+    # phantom advance→regress flip from a single high-regression-threshold config.
     window = history[-stability_window:]
-    if (len(window) >= stability_window
+    if (data["phase"] == phase_before_advance
+            and len(window) >= stability_window
             and all(r["prs"] < regression_threshold for r in window)):
         if data["phase"] == 3:
             data["phase"] = 2

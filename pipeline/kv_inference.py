@@ -23,6 +23,10 @@ from pipeline.bedrock_rag import _run_search, Config
 from fastembed import TextEmbedding
 from vectorstore.registry import get_store
 
+# Track which query_log_db paths have already been initialised in this process
+# so init_db() is not called on every inference request.
+_initialized_query_log_dbs: set[str] = set()
+
 
 SYSTEM_PROMPT = (
     "You are a precise assistant. Answer ONLY using the provided context. "
@@ -196,7 +200,9 @@ def answer_with_retrieval(query: str, cfg: dict) -> str:
     try:
         from pipeline import query_logger as _ql
         _db = cfg.get("query_log_db", "query_log.db")
-        _ql.init_db(_db)
+        if _db not in _initialized_query_log_dbs:
+            _ql.init_db(_db)
+            _initialized_query_log_dbs.add(_db)
         _ql.log_query(
             db_path=_db,
             query_text=query,
