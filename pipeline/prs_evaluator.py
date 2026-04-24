@@ -220,7 +220,9 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
             vdb_coverage = min(len(faqs) / max(cfg.get("scout_initial_faq_count", 20), 1), 1.0)
             for cid_int in range(k):
                 cid = str(cid_int)
-                realtime_stats = get_cluster_stats(cfg, cid)
+                realtime_stats = get_cluster_stats(
+                    cfg.get("query_log_db", "query_log.db"), cid
+                )
                 state = update_cluster_after_round(cid, faq_coverage, vdb_coverage, realtime_stats, cfg)
                 cluster_states[cid] = state
     except Exception:
@@ -264,7 +266,12 @@ def main() -> None:
     v = ver.load()
     prs = evaluate(faqs, cfg, v.get("checkpoint_path"))
     round_num = v["current_lora_version"]
-    ver.append_prs(round_num, prs)
+    ver.append_prs(
+        round_num,
+        prs,
+        regression_threshold=cfg.get("prs_regression_threshold", 0.60),
+        stability_window=cfg.get("prs_stability_window", 3),
+    )
     print(f"📊 PRS after round {round_num}: {prs:.4f}")
     print(f"   Phase: {ver.get_phase()}")
 
