@@ -52,6 +52,7 @@ Start the server::
 import argparse
 import asyncio
 import json
+import subprocess as _sp
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -241,6 +242,69 @@ def get_config():
         "top_k": cfg.get("top_k", 5),
         "collection": cfg.get("collection", ""),
     }
+
+
+def _check_qdrant(cfg: dict) -> dict:
+    url = cfg.get("qdrant_url", "http://localhost:6333")
+    try:
+        import time as _t
+        t0 = _t.time()
+        r = httpx.get(f"{url}/healthz", timeout=2)
+        ms = int((_t.time() - t0) * 1000)
+        return {"ok": r.status_code == 200, "latency_ms": ms}
+    except Exception as exc:
+        return {"ok": False, "latency_ms": -1, "error": str(exc)}
+
+
+def _check_gpu() -> dict:
+    try:
+        out = _sp.check_output(
+            ["nvidia-smi", "--query-gpu=name,utilization.gpu,memory.used,memory.total",
+             "--format=csv,noheader,nounits"],
+            stderr=_sp.DEVNULL, timeout=3, text=True,
+        ).strip().splitlines()[0]
+        name, util, used, total = [x.strip() for x in out.split(",")]
+        return {"ok": True, "name": name, "util_pct": int(util),
+                "mem_used_mib": int(used), "mem_total_mib": int(total)}
+    except Exception:
+        return {"ok": False}
+
+
+def _check_llm() -> dict:
+    loaded = _model_loader is not None
+    return {"ok": True, "loaded": loaded}
+
+
+_ERROR_HINTS: list[tuple[str, str]] = [
+    ("No module named pypdf",          "Install missing package: pip install pypdf"),
+    ("No module named pdfplumber",     "Install missing package: pip install pdfplumber pymupdf"),
+    ("No module named fastembed",      "Install missing package: pip install fastembed"),
+    ("No module named qdrant_client",  "Install missing package: pip install qdrant-client"),
+    ("CUDA out of memory",             "GPU out of memory — reduce batch size or chunk count, or restart to free VRAM"),
+    ("Connection refused",             "Service unreachable — check Qdrant is running (port 6333) and config URL is correct"),
+    ("401",                            "Authentication error — check your HF_TOKEN or API key is set correctly"),
+    ("BaseModelOutputWithPooling",     "CLIP embedder type mismatch — embeddings/clip_embedder.py needs the pooler_output fix"),
+    ("AutoModelForCausalLM",           "Wrong model class for LLaVA — use LlavaForConditionalGeneration in core/multimodal_loader.py"),
+    ("collection already exists",      "Collection 409 conflict — delete the existing empty collection: curl -X DELETE http://localhost:6333/collections/<name>"),
+]
+
+
+@app.get("/api/connectivity")
+def get_connectivity():
+    cfg = _load_cfg()
+    return {
+        "qdrant": _check_qdrant(cfg),
+        "gpu": _check_gpu(),
+        "llm": _check_llm(),
+    }
+
+
+@app.get("/api/error-hint")
+def get_error_hint(msg: str = ""):
+    for pattern, hint in _ERROR_HINTS:
+        if pattern.lower() in msg.lower():
+            return {"hint": hint, "severity": "error"}
+    return {"hint": None, "severity": None}
 
 
 @app.get("/api/access-report")
