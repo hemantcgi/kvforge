@@ -41,6 +41,9 @@ def get_embedder(cfg: dict):
         from embeddings.openai_embedder import OpenAIEmbedder
         return OpenAIEmbedder(model_name=model_name, dim=dim,
                                api_key=cfg.get("openai_api_key"))
+    if backend == "clip":
+        from embeddings.clip_embedder import CLIPEmbedder
+        return CLIPEmbedder(model_name=cfg.get("clip_model", "openai/clip-vit-base-patch32"))
     raise ValueError(
-        f"Unknown embedder_backend '{backend}'. Choose: fastembed, sentence_transformers, openai"
+        f"Unknown embedder_backend '{backend}'. Choose: fastembed, sentence_transformers, openai, clip"
     )

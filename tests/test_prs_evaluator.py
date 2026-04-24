@@ -1,4 +1,7 @@
 """Tests for flexible FAQ schema support in prs_evaluator."""
+import os
+import tempfile
+
 import pytest
 
 
@@ -48,3 +51,19 @@ def test_prs_uses_default_weights_when_none():
     prs = _compute_prs([0.8], [0.9], [0.7], weights=None)
     expected = 0.5 * 0.8 + 0.3 * 0.9 + 0.2 * 0.7
     assert abs(prs - expected) < 0.001
+
+
+def test_get_cluster_stats_receives_string_not_dict():
+    """Regression: prs_evaluator must pass db_path str, not cfg dict."""
+    from pipeline import query_logger
+
+    with tempfile.TemporaryDirectory() as td:
+        db_path = os.path.join(td, "q.db")
+        query_logger.init_db(db_path)
+        # sqlite3.connect rejects a dict — raises TypeError
+        cfg_dict = {"query_log_db": db_path}
+        with pytest.raises((TypeError, AttributeError)):
+            query_logger.get_cluster_stats(cfg_dict, "0")
+        # Passing the resolved string works
+        result = query_logger.get_cluster_stats(db_path, "0")
+        assert result == {"realtime_coverage": 0.0, "query_count": 0}

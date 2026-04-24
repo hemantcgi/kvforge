@@ -51,6 +51,52 @@ def test_load_config_from_json_file(tmp_path):
     assert isinstance(cfg.lora_target_modules, list)
 
 
+def test_all_new_fields_have_correct_defaults():
+    from core.config import DatasourceConfig
+    cfg = DatasourceConfig(
+        collection="t", embed_model="m", vector_dim=384,
+        llm_model="m", checkpoint_dir="/t", version_file="/t/v.json", replay_db="/t/r.db"
+    )
+    # Dynamic PRS
+    assert cfg.deployment_mode == "auto"
+    assert cfg.prs_advancement_threshold == 0.72
+    assert cfg.prs_regression_threshold == 0.60
+    assert cfg.prs_signal_weights == {"faq": 0.4, "vdb": 0.4, "realtime": 0.2}
+    assert cfg.query_log_db == "query_log.db"
+    # Flywheel
+    assert cfg.analytics_db == ""
+    assert cfg.cost_per_1k_tokens == 5.0
+    # VDB Expansion
+    assert cfg.vector_store == "qdrant"
+    assert cfg.pinecone_api_key == ""
+    assert cfg.milvus_uri == "http://localhost:19530"
+    # ModelScout
+    assert cfg.scout_initial_lora_rank == 16
+    # Multimodal
+    assert cfg.image_collection_suffix == "_images"
+    assert cfg.image_kv_inference is False
+
+
+def test_model_scout_config_defaults():
+    from core.config import DatasourceConfig
+    cfg = DatasourceConfig(
+        collection="test", embed_model="BAAI/bge-small-en-v1.5",
+        vector_dim=384, llm_model="meta-llama/Llama-3.2-3B-Instruct",
+        checkpoint_dir="/tmp/ckpt", version_file="/tmp/v.json",
+        replay_db="/tmp/r.db",
+    )
+    assert cfg.model_registry_path == "core/model_registry.json"
+    assert cfg.model_scout_program == "model_scout_program.md"
+    assert cfg.model_scout_results == "model_scout_results.tsv"
+    assert cfg.scout_initial_corpus_chunks == 200
+    assert cfg.scout_initial_faq_count == 20
+    assert cfg.scout_initial_lora_steps == 500
+    assert cfg.scout_initial_lora_rank == 16
+    assert cfg.scout_max_lora_steps == 2000
+    assert cfg.scout_max_corpus_chunks == 2000
+    assert cfg.scout_max_faq_count == 100
+
+
 def test_config_model_dump_has_keys_used_by_existing_code():
     from core.config import DatasourceConfig
     cfg = DatasourceConfig(
