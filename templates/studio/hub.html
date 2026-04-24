@@ -200,6 +200,33 @@ textarea{resize:vertical;min-height:52px}
 .bar-name{font-size:9px;width:55px;flex-shrink:0}
 .bar-name-a{color:#a78bfa}
 .bar-name-b{color:#22d3ee}
+
+/* === Wizard Modal === */
+.wizard-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:3000;align-items:center;justify-content:center}
+.wizard-overlay.open{display:flex}
+.wizard-box{background:#0c0a1e;border:1px solid #312e81;border-radius:12px;padding:28px;max-width:540px;width:92%;position:relative;color:#e2e8f0;max-height:90vh;overflow-y:auto}
+.wizard-box h2{color:#a78bfa;font-size:15px;font-weight:700;margin:0 0 6px}
+.wizard-steps{display:flex;gap:6px;margin-bottom:20px}
+.wz-step{flex:1;height:3px;background:#1e1b4b;border-radius:2px;transition:background 0.35s}
+.wz-step.done{background:#7c3aed}
+.wz-step.active{background:#22d3ee}
+.wz-section{display:none}.wz-section.visible{display:block}
+.wz-label{font-size:11px;color:#94a3b8;margin:10px 0 3px;display:block}
+.wz-input{background:#1e1b4b;border:1px solid #4338ca;border-radius:5px;padding:6px 10px;color:#e2e8f0;font-size:12px;width:100%;box-sizing:border-box;margin-bottom:4px}
+.wz-input:focus{border-color:#7c3aed;outline:none}
+.wz-radio-group{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.wz-radio{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #1e1b4b;border-radius:6px;cursor:pointer;transition:border-color 0.15s}
+.wz-radio:hover{border-color:#4338ca}
+.wz-radio.selected{border-color:#7c3aed;background:#1e1b4b}
+.wz-radio-title{font-size:12px;font-weight:600;color:#c4b5fd}
+.wz-radio-sub{font-size:10px;color:#64748b}
+.wz-nav{display:flex;justify-content:space-between;margin-top:18px;gap:10px}
+.wz-err{color:#f87171;font-size:11px;margin-top:6px;display:none}
+.wz-err.visible{display:block}
+.wz-review-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1e1b4b;font-size:12px}
+.wz-review-row:last-child{border-bottom:none}
+.wz-review-key{color:#94a3b8}
+.wz-review-val{color:#e2e8f0;font-weight:600}
 </style>
 </head>
 <body>
@@ -364,6 +391,7 @@ function renderUcCard(uc) {
       <span class="prs-val" style="color:${prsColor}">PRS ${prs}</span>
       ${dots}
       ${dashLink}
+      <div class="btn btn-primary" style="margin-left:6px;font-size:10px;padding:4px 10px;white-space:nowrap" onclick="event.stopPropagation();openWizard('${uc.id}','${(uc.display_name||uc.id).replace(/'/g,"\\'")}')">&#128640; Launch</div>
     </div>
     <div class="mod-strip" id="chips-${uc.id}">
       ${renderChips(uc)}
@@ -1029,6 +1057,174 @@ function showSettings() { alert('Settings coming soon.'); }
 function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+
+// ── Wizard ────────────────────────────────────────────────────────────────────
+var _wzUcId = null, _wzStep = 1;
+
+function openWizard(ucId, ucName) {
+  _wzUcId = ucId; _wzStep = 1;
+  document.getElementById('wz-uc-name').textContent = 'Use Case: ' + ucName;
+  document.querySelectorAll('.wz-radio').forEach(function(r) { r.classList.remove('selected'); });
+  document.querySelectorAll('input[name="wz-step"]').forEach(function(r) { r.checked = false; });
+  document.getElementById('wz-epochs').value = '';
+  document.getElementById('wz-top-k').value = '';
+  document.getElementById('wz-faq-count').value = '';
+  document.querySelectorAll('.wz-err').forEach(function(e) { e.classList.remove('visible'); });
+  _wzShowStep(1);
+  document.getElementById('wizard-overlay').classList.add('open');
+}
+
+function closeWizard() {
+  document.getElementById('wizard-overlay').classList.remove('open');
+}
+
+function _wzShowStep(n) {
+  _wzStep = n;
+  document.querySelectorAll('.wz-section').forEach(function(s) { s.classList.remove('visible'); });
+  document.getElementById('wz-step'+n).classList.add('visible');
+  [1,2,3].forEach(function(i) {
+    var el = document.getElementById('wz-s'+i);
+    if (!el) return;
+    el.className = 'wz-step' + (i < n ? ' done' : i === n ? ' active' : '');
+  });
+  document.getElementById('wz-back').style.display = n > 1 ? '' : 'none';
+  document.getElementById('wz-next').textContent = n < 3 ? 'Next →' : '🚀 Launch';
+}
+
+function wzBack() { if (_wzStep > 1) _wzShowStep(_wzStep - 1); }
+
+function _wzSelectedStep() {
+  var r = document.querySelector('input[name="wz-step"]:checked');
+  return r ? r.value : null;
+}
+
+function _wzShowParams(step) {
+  document.getElementById('wz-params-train').style.display = (step === 'train' || step === 'prs-eval') ? '' : 'none';
+  document.getElementById('wz-params-sleep-faq').style.display = step === 'sleep-faq' ? '' : 'none';
+  document.getElementById('wz-params-default').style.display = (!step || step === 'index' || step === 'recompute') ? '' : 'none';
+}
+
+function _wzBuildReview(step) {
+  var rows = [['Step', step], ['Use Case', _wzUcId]];
+  var epochs = document.getElementById('wz-epochs').value;
+  var topK = document.getElementById('wz-top-k').value;
+  var faqCount = document.getElementById('wz-faq-count').value;
+  if (epochs) rows.push(['Epochs', epochs]);
+  if (topK) rows.push(['Top-K', topK]);
+  if (faqCount) rows.push(['FAQ count', faqCount]);
+  document.getElementById('wz-review').innerHTML = rows.map(function(kv) {
+    return '<div class="wz-review-row"><span class="wz-review-key">'+kv[0]+'</span><span class="wz-review-val">'+kv[1]+'</span></div>';
+  }).join('');
+}
+
+async function wzNext() {
+  if (_wzStep === 1) {
+    var step = _wzSelectedStep();
+    var err = document.getElementById('wz-err1');
+    if (!step) { err.textContent = 'Please select a step.'; err.classList.add('visible'); return; }
+    err.classList.remove('visible');
+    _wzShowParams(step);
+    _wzShowStep(2);
+  } else if (_wzStep === 2) {
+    var step = _wzSelectedStep();
+    var body = { step: step };
+    var epochsVal = parseInt(document.getElementById('wz-epochs').value);
+    var topKVal = parseInt(document.getElementById('wz-top-k').value);
+    var faqCountVal = parseInt(document.getElementById('wz-faq-count').value);
+    if (!isNaN(epochsVal)) body.epochs = epochsVal;
+    if (!isNaN(topKVal)) body.top_k = topKVal;
+    if (!isNaN(faqCountVal)) body.faq_count = faqCountVal;
+    var err = document.getElementById('wz-err2');
+    try {
+      var resp = await fetch('/studio/api/wizard-validate', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+      var data = await resp.json();
+      if (!data.ok) { err.textContent = data.errors.join(' · '); err.classList.add('visible'); return; }
+    } catch(e) { /* offline — skip validation */ }
+    err.classList.remove('visible');
+    _wzBuildReview(step);
+    _wzShowStep(3);
+  } else if (_wzStep === 3) {
+    var step = _wzSelectedStep();
+    var err = document.getElementById('wz-err3');
+    try {
+      var resp = await fetch('/studio/api/run-step', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({uc_id: _wzUcId, step: step})});
+      var data = await resp.json();
+      if (resp.ok) {
+        closeWizard();
+        if (typeof loadRegistry === 'function') loadRegistry();
+      } else {
+        err.textContent = data.detail || 'Launch failed'; err.classList.add('visible');
+      }
+    } catch(e) {
+      err.textContent = 'Network error: ' + e.message; err.classList.add('visible');
+    }
+  }
+}
+
+document.querySelectorAll('.wz-radio').forEach(function(label) {
+  label.addEventListener('click', function() {
+    document.querySelectorAll('.wz-radio').forEach(function(r) { r.classList.remove('selected'); });
+    label.classList.add('selected');
+  });
+});
 </script>
+
+<!-- Pipeline Wizard Modal -->
+<div class="wizard-overlay" id="wizard-overlay" onclick="if(event.target===this)closeWizard()">
+  <div class="wizard-box">
+    <span style="position:absolute;top:12px;right:16px;cursor:pointer;color:#64748b;font-size:1.1em" onclick="closeWizard()">&#x2715;</span>
+    <h2>Launch Pipeline Step</h2>
+    <div style="font-size:11px;color:#64748b;margin-bottom:12px" id="wz-uc-name">Use Case: —</div>
+    <div class="wizard-steps">
+      <div class="wz-step active" id="wz-s1"></div>
+      <div class="wz-step" id="wz-s2"></div>
+      <div class="wz-step" id="wz-s3"></div>
+    </div>
+
+    <!-- Step 1: Select step -->
+    <div class="wz-section visible" id="wz-step1">
+      <div style="font-size:13px;font-weight:600;color:#a78bfa;margin-bottom:10px">1 · Select pipeline step</div>
+      <div class="wz-radio-group" id="wz-step-radios">
+        <label class="wz-radio"><input type="radio" name="wz-step" value="index" style="accent-color:#7c3aed"><div><div class="wz-radio-title">Index Documents</div><div class="wz-radio-sub">Chunk → embed → store KV tensors in vector store</div></div></label>
+        <label class="wz-radio"><input type="radio" name="wz-step" value="train" style="accent-color:#7c3aed"><div><div class="wz-radio-title">Train LoRA</div><div class="wz-radio-sub">Fine-tune with tier-weighted FAQ replay buffer</div></div></label>
+        <label class="wz-radio"><input type="radio" name="wz-step" value="prs-eval" style="accent-color:#7c3aed"><div><div class="wz-radio-title">Evaluate PRS</div><div class="wz-radio-sub">Score parametric readiness; may trigger phase advance</div></div></label>
+        <label class="wz-radio"><input type="radio" name="wz-step" value="sleep-faq" style="accent-color:#7c3aed"><div><div class="wz-radio-title">Generate FAQs</div><div class="wz-radio-sub">Offline FAQ generation via cloud LLM (sleep-time)</div></div></label>
+        <label class="wz-radio"><input type="radio" name="wz-step" value="recompute" style="accent-color:#7c3aed"><div><div class="wz-radio-title">Recompute KV Tensors</div><div class="wz-radio-sub">Refresh stale KV caches after LoRA version bump</div></div></label>
+      </div>
+      <div class="wz-err" id="wz-err1">Please select a step.</div>
+    </div>
+
+    <!-- Step 2: Parameters -->
+    <div class="wz-section" id="wz-step2">
+      <div style="font-size:13px;font-weight:600;color:#a78bfa;margin-bottom:10px">2 · Configure parameters</div>
+      <div id="wz-params-train">
+        <label class="wz-label">Epochs (leave blank to use config default)</label>
+        <input class="wz-input" type="number" id="wz-epochs" min="1" max="20" placeholder="e.g. 3">
+        <label class="wz-label">Top-K chunks for context</label>
+        <input class="wz-input" type="number" id="wz-top-k" min="1" max="50" placeholder="e.g. 5">
+      </div>
+      <div id="wz-params-sleep-faq" style="display:none">
+        <label class="wz-label">FAQ count to generate</label>
+        <input class="wz-input" type="number" id="wz-faq-count" min="5" max="500" placeholder="e.g. 50">
+      </div>
+      <div id="wz-params-default" style="display:none">
+        <p style="color:#64748b;font-size:12px">No extra parameters needed — uses values from config.json.</p>
+      </div>
+      <div class="wz-err" id="wz-err2"></div>
+    </div>
+
+    <!-- Step 3: Review & Launch -->
+    <div class="wz-section" id="wz-step3">
+      <div style="font-size:13px;font-weight:600;color:#a78bfa;margin-bottom:10px">3 · Review &amp; Launch</div>
+      <div id="wz-review"></div>
+      <div class="wz-err" id="wz-err3"></div>
+    </div>
+
+    <div class="wz-nav">
+      <button class="btn btn-ghost" id="wz-back" onclick="wzBack()" style="display:none">&#8592; Back</button>
+      <button class="btn btn-primary" id="wz-next" onclick="wzNext()">Next &#8594;</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

@@ -152,6 +152,29 @@ def stop_vllm(req: StopVllmRequest):
     return {"status": "stopped", "port": req.port}
 
 
+# ── Wizard Validate ───────────────────────────────────────────────────────────
+
+VALID_STEPS = {"index", "train", "recompute", "prs-eval", "ab-eval", "sleep-faq"}
+
+@api_router.post("/wizard-validate")
+async def wizard_validate(request: Request):
+    body = await request.json()
+    errors = []
+    step = body.get("step", "")
+    if step not in VALID_STEPS:
+        errors.append(f"Unknown step '{step}'. Valid steps: {sorted(VALID_STEPS)}")
+    epochs = body.get("epochs")
+    if epochs is not None and (not isinstance(epochs, int) or epochs < 1):
+        errors.append("epochs must be an integer >= 1")
+    top_k = body.get("top_k")
+    if top_k is not None and (not isinstance(top_k, int) or top_k < 1 or top_k > 100):
+        errors.append("top_k must be an integer between 1 and 100")
+    faq_count = body.get("faq_count")
+    if faq_count is not None and (not isinstance(faq_count, int) or faq_count < 5 or faq_count > 500):
+        errors.append("faq_count must be an integer between 5 and 500")
+    return {"ok": len(errors) == 0, "errors": errors}
+
+
 # ── Pipeline Jobs ─────────────────────────────────────────────────────────────
 
 class RunStepRequest(BaseModel):
