@@ -74,3 +74,10 @@ def test_dashboard_html_has_phase_stepper(tmp_path):
 def test_dashboard_html_has_prs_chart_canvas(tmp_path):
     import pipeline.monitoring_dashboard as dm
     assert "prs-chart" in dm.DASHBOARD_HTML
+
+
+def test_dashboard_html_has_flywheel_section(tmp_path):
+    import pipeline.monitoring_dashboard as dm
+    assert "flywheel-chart" in dm.DASHBOARD_HTML
+    assert "fw-rounds" in dm.DASHBOARD_HTML
+    assert "fw-tbody" in dm.DASHBOARD_HTML

@@ -1098,6 +1098,16 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .ps-line-fill { height:100%; background:#27a; width:0%; transition:width 1s ease; }
   /* PRS chart container */
   .prs-chart-wrap { position:relative; height:160px; margin:10px 0; }
+  /* Flywheel */
+  .fw-summary { display:flex; gap:20px; flex-wrap:wrap; margin:8px 0 12px; }
+  .fw-kv { display:flex; flex-direction:column; gap:2px; }
+  .fw-kv-label { font-size:9px; color:#666; text-transform:uppercase; letter-spacing:.07em; }
+  .fw-kv-val { font-size:1.3em; font-weight:700; color:#7af; }
+  .fw-chart-wrap { position:relative; height:140px; margin:8px 0; }
+  .fw-table { width:100%; border-collapse:collapse; font-size:0.82em; margin-top:10px; }
+  .fw-table th { color:#7af; border-bottom:1px solid #333; padding:4px 8px; text-align:left; }
+  .fw-table td { border-bottom:1px solid #1a1a1a; padding:4px 8px; color:#ccc; }
+  .fw-table tr:hover td { background:#1a1a1a; }
 </style>
 </head>
 <body>
@@ -1180,6 +1190,22 @@ PRS = 0.5 × Accuracy
   </div>
   <div style="font-size:0.82em;color:#888;margin-bottom:8px;">PRS History</div>
   <div class="prs-chart-wrap"><canvas id="prs-chart"></canvas></div>
+</div>
+
+<!-- Flywheel Analytics -->
+<div class="card" id="flywheel-card">
+  <b>Flywheel Analytics</b>
+  <div class="fw-summary">
+    <div class="fw-kv"><div class="fw-kv-label">Rounds</div><div class="fw-kv-val" id="fw-rounds">—</div></div>
+    <div class="fw-kv"><div class="fw-kv-label">Last PRS</div><div class="fw-kv-val" id="fw-last-prs">—</div></div>
+    <div class="fw-kv"><div class="fw-kv-label">Est. Cost</div><div class="fw-kv-val" id="fw-cost">—</div></div>
+    <div class="fw-kv"><div class="fw-kv-label">ETA Phase 3</div><div class="fw-kv-val" id="fw-eta">—</div></div>
+  </div>
+  <div class="fw-chart-wrap"><canvas id="flywheel-chart"></canvas></div>
+  <table class="fw-table" id="fw-table">
+    <thead><tr><th>Round</th><th>PRS</th><th>Phase</th><th>Cost ($)</th></tr></thead>
+    <tbody id="fw-tbody"></tbody>
+  </table>
 </div>
 
 <div id="root">Loading…</div>
@@ -1695,9 +1721,56 @@ function closeChunkModal() {
   document.getElementById('chunk-modal').classList.remove('open');
 }
 
+let _fwChart = null;
+
+function loadFlywheel() {
+  fetch('/api/flywheel').then(function(r) { return r.json(); }).then(function(data) {
+    if (data.error) return;
+    document.getElementById('fw-rounds').textContent = data.rounds_completed != null ? data.rounds_completed : '—';
+    document.getElementById('fw-last-prs').textContent = data.last_prs != null ? data.last_prs.toFixed(3) : '—';
+    document.getElementById('fw-cost').textContent = data.estimated_cost_usd != null ? '$' + data.estimated_cost_usd.toFixed(4) : '—';
+    document.getElementById('fw-eta').textContent = data.eta_to_phase3 || '—';
+
+    var snapshots = data.round_snapshots || [];
+    var labels = snapshots.map(function(s) { return 'R' + s.round; });
+    var vals   = snapshots.map(function(s) { return s.prs; });
+    var colors = vals.map(function(v) { return v >= 0.75 ? '#2ecc71' : v >= 0.60 ? '#f39c12' : '#e74c3c'; });
+
+    if (_fwChart) { _fwChart.destroy(); _fwChart = null; }
+    var canvas = document.getElementById('flywheel-chart');
+    if (!canvas || typeof Chart === 'undefined') return;
+    _fwChart = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'PRS per Round', data: vals,
+          backgroundColor: colors, borderRadius: 3,
+        }]
+      },
+      options: {
+        animation: { duration: 500 },
+        scales: {
+          y: { min: 0, max: 1, ticks: { color: '#888', stepSize: 0.25 }, grid: { color: '#222' } },
+          x: { ticks: { color: '#888' }, grid: { display: false } }
+        },
+        plugins: { legend: { display: false } },
+        responsive: true, maintainAspectRatio: false,
+      }
+    });
+
+    var tbody = document.getElementById('fw-tbody');
+    tbody.innerHTML = snapshots.map(function(s) {
+      return '<tr><td>' + s.round + '</td><td>' + (s.prs != null ? s.prs.toFixed(3) : '—') + '</td><td>' + (s.phase || '—') + '</td><td>' + (s.cost_usd != null ? '$' + s.cost_usd.toFixed(4) : '—') + '</td></tr>';
+    }).join('');
+  }).catch(function() {});
+}
+
 loadConfig();
 load();
+loadFlywheel();
 setInterval(load, 30000);
+setInterval(loadFlywheel, 60000);
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('qinput').addEventListener('keydown', e => {
