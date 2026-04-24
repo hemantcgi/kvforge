@@ -59,3 +59,18 @@ def test_error_hint_cuda_oom(tmp_path):
     data = resp.json()
     assert data["hint"] is not None
     assert data["severity"] == "error"
+
+
+def test_dashboard_html_has_chartjs(tmp_path):
+    import pipeline.monitoring_dashboard as dm
+    assert "chart.js" in dm.DASHBOARD_HTML.lower()
+
+
+def test_dashboard_html_has_phase_stepper(tmp_path):
+    import pipeline.monitoring_dashboard as dm
+    assert "phase-stepper" in dm.DASHBOARD_HTML.lower()
+
+
+def test_dashboard_html_has_prs_chart_canvas(tmp_path):
+    import pipeline.monitoring_dashboard as dm
+    assert "prs-chart" in dm.DASHBOARD_HTML

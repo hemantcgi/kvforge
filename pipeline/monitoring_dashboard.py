@@ -990,6 +990,7 @@ async def update_cost_rate(body: dict):
 DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><title>KVForge Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <style>
   body { font-family: monospace; background:#111; color:#eee; padding:20px; }
   h1 { color:#7af; }
@@ -1074,6 +1075,29 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .chunk-text-body { background:#111; padding:12px; border-radius:4px; font-size:0.88em; white-space:pre-wrap; word-break:break-word; color:#dde; line-height:1.5; }
   .heatmap-legend { display:flex; gap:14px; margin:8px 0 12px; font-size:0.82em; align-items:center; }
   .legend-dot { display:inline-block; width:14px; height:14px; border-radius:2px; vertical-align:middle; margin-right:4px; }
+  /* Phase stepper */
+  .phase-stepper { display:flex; align-items:center; margin:12px 0 18px; }
+  .ps-node { display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .ps-circle {
+    width:40px; height:40px; border-radius:50%; border:2px solid #333;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:13px; color:#555; background:#1a1a1a;
+    transition:all 0.5s ease;
+  }
+  .ps-circle.done { border-color:#27a; color:#27a; background:#0d1f2d; }
+  .ps-circle.active {
+    border-color:#7af; color:#7af; background:#0d1a2a;
+    box-shadow:0 0 14px #27a888; animation:ps-pulse 2s infinite;
+  }
+  @keyframes ps-pulse { 0%,100%{box-shadow:0 0 8px #27a8} 50%{box-shadow:0 0 20px #27af} }
+  .ps-label { font-size:9px; color:#555; text-transform:uppercase; letter-spacing:.08em; }
+  .ps-label.done { color:#27a; }
+  .ps-label.active { color:#7af; }
+  .ps-line { flex:1; height:2px; background:#222; margin:0 6px; margin-bottom:14px;
+             position:relative; overflow:hidden; min-width:30px; }
+  .ps-line-fill { height:100%; background:#27a; width:0%; transition:width 1s ease; }
+  /* PRS chart container */
+  .prs-chart-wrap { position:relative; height:160px; margin:10px 0; }
 </style>
 </head>
 <body>
@@ -1133,6 +1157,31 @@ PRS = 0.5 × Accuracy
 </div>
 
 <h1>KVForge Dashboard</h1>
+
+<!-- Phase Progression -->
+<div class="card" id="phase-stepper-card">
+  <b>Phase Progression</b>
+  <span class="help-btn" onclick="openPrsModal()">?</span>
+  <div class="phase-stepper" id="phase-stepper">
+    <div class="ps-node">
+      <div class="ps-circle" id="ps1">1</div>
+      <div class="ps-label" id="ps1-lbl">Text RAG</div>
+    </div>
+    <div class="ps-line"><div class="ps-line-fill" id="ps-line1"></div></div>
+    <div class="ps-node">
+      <div class="ps-circle" id="ps2">2</div>
+      <div class="ps-label" id="ps2-lbl">KV Inject</div>
+    </div>
+    <div class="ps-line"><div class="ps-line-fill" id="ps-line2"></div></div>
+    <div class="ps-node">
+      <div class="ps-circle" id="ps3">3</div>
+      <div class="ps-label" id="ps3-lbl">Parametric</div>
+    </div>
+  </div>
+  <div style="font-size:0.82em;color:#888;margin-bottom:8px;">PRS History</div>
+  <div class="prs-chart-wrap"><canvas id="prs-chart"></canvas></div>
+</div>
+
 <div id="root">Loading…</div>
 
 <!-- FAQ Coverage Heatmap -->
@@ -1363,6 +1412,53 @@ async function loadConfig() {
 
 let _prsHistory = [];
 let _topChunks = [];
+let _prsChart = null;
+
+function renderPhaseStepper(phase) {
+  [1,2,3].forEach(function(n) {
+    var circle = document.getElementById('ps'+n);
+    var label = document.getElementById('ps'+n+'-lbl');
+    if (!circle) return;
+    circle.className = 'ps-circle' + (n < phase ? ' done' : n === phase ? ' active' : '');
+    label.className = 'ps-label' + (n < phase ? ' done' : n === phase ? ' active' : '');
+  });
+  var l1 = document.getElementById('ps-line1');
+  var l2 = document.getElementById('ps-line2');
+  if (l1) l1.style.width = phase >= 2 ? '100%' : '0%';
+  if (l2) l2.style.width = phase >= 3 ? '100%' : '0%';
+}
+
+function renderPrsChart(history) {
+  var canvas = document.getElementById('prs-chart');
+  if (!canvas || typeof Chart === 'undefined') return;
+  var labels = history.map(function(h) { return 'Rnd ' + h.round; });
+  var vals   = history.map(function(h) { return h.prs; });
+  if (_prsChart) { _prsChart.destroy(); _prsChart = null; }
+  _prsChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'PRS', data: vals,
+        borderColor: '#27a', backgroundColor: 'rgba(34,119,170,0.12)',
+        pointBackgroundColor: '#7af', tension: 0.35, fill: true,
+      }]
+    },
+    options: {
+      animation: { duration: 600 },
+      scales: {
+        y: { min: 0, max: 1, ticks: { color: '#888', stepSize: 0.25 },
+             grid: { color: '#222' } },
+        x: { ticks: { color: '#888' }, grid: { color: '#222' } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: function(ctx) { return 'PRS: ' + ctx.parsed.y.toFixed(3); } } }
+      },
+      responsive: true, maintainAspectRatio: false,
+    }
+  });
+}
 
 function openTopChunkModal(idx) {
   const c = _topChunks[idx];
@@ -1384,6 +1480,8 @@ async function load(){
     [fetch('/api/stats').then(r=>r.json()), fetch('/api/version').then(r=>r.json())]
   );
   _prsHistory = ver.prs_history || [];
+  renderPhaseStepper(ver.phase || 1);
+  renderPrsChart(ver.prs_history || []);
   _topChunks = stats.top_chunks || [];
   const tc = stats.tier_counts;
   document.getElementById('root').innerHTML = `
@@ -1406,26 +1504,6 @@ async function load(){
             title="Click to view full chunk text"
             onclick="openTopChunkModal(${i})">${c.text_preview}</td></tr>`).join('')}
       </table>
-    </div>
-    <div class="card">
-      <b>PRS history</b>
-      <span class="help-btn" onclick="openPrsModal()">?</span>
-      <div style="margin-top:8px">
-      ${(ver.prs_history||[]).length === 0 ? '<span style="color:#666">No data yet — run prs_evaluator.py to generate scores</span>' :
-        (ver.prs_history||[]).map(r => {
-          const pct = Math.round((r.prs||0)*100);
-          const col = pct >= 80 ? '#4d4' : pct >= 75 ? '#fa7' : '#f77';
-          return `<div style="margin:4px 0">
-            <span style="color:#888;font-size:0.85em">Round ${r.round}</span>
-            <span style="color:${col};font-weight:bold;margin:0 8px">${(r.prs||0).toFixed(4)}</span>
-            <div class="prs-bar-wrap" style="display:inline-block;width:160px;vertical-align:middle">
-              <div class="prs-bar" style="width:${pct}%;background:${col}"></div>
-            </div>
-            <span style="color:#666;font-size:0.8em;margin-left:6px">${pct}%</span>
-          </div>`;
-        }).join('')
-      }
-      </div>
     </div>`;
 }
 
