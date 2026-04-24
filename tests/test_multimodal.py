@@ -53,7 +53,7 @@ def test_multimodal_llm_protocol_shape():
         "pixel_values": torch.zeros(1, 3, 224, 224),
     }
 
-    with patch("core.multimodal_loader.AutoModelForCausalLM") as mock_auto, \
+    with patch("core.multimodal_loader.LlavaForConditionalGeneration") as mock_auto, \
          patch("core.multimodal_loader.AutoProcessor") as mock_proc, \
          patch("core.multimodal_loader.Image") as mock_pil:
         mock_auto.from_pretrained.return_value = fake_model
@@ -83,7 +83,7 @@ def test_multimodal_llm_kv_shape_property():
     fake_model.language_model.config.num_attention_heads = 32
     fake_model.language_model.config.hidden_size = 32 * 128
 
-    with patch("core.multimodal_loader.AutoModelForCausalLM") as mock_auto, \
+    with patch("core.multimodal_loader.LlavaForConditionalGeneration") as mock_auto, \
          patch("core.multimodal_loader.AutoProcessor"):
         mock_auto.from_pretrained.return_value = fake_model
         import core.multimodal_loader as ml
@@ -115,7 +115,7 @@ def test_multimodal_llm_caption_returns_string():
     }
     fake_processor.decode.return_value = "A bar chart showing sales data."
 
-    with patch("core.multimodal_loader.AutoModelForCausalLM") as mock_auto, \
+    with patch("core.multimodal_loader.LlavaForConditionalGeneration") as mock_auto, \
          patch("core.multimodal_loader.AutoProcessor") as mock_proc, \
          patch("core.multimodal_loader.Image"):
         mock_auto.from_pretrained.return_value = fake_model
