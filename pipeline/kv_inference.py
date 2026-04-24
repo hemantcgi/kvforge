@@ -189,9 +189,26 @@ def answer_with_retrieval(query: str, cfg: dict) -> str:
 
     mode = decide_inference_mode(chunks, current_ver)
     if mode == "kv_injection":
-        return generate_with_kv(query, chunks, model, tokenizer, cfg)
+        answer = generate_with_kv(query, chunks, model, tokenizer, cfg)
     else:
-        return generate_text_in_context(query, chunks, model, tokenizer)
+        answer = generate_text_in_context(query, chunks, model, tokenizer)
+
+    try:
+        from pipeline import query_logger as _ql
+        _db = cfg.get("query_log_db", "query_log.db")
+        _ql.init_db(_db)
+        _ql.log_query(
+            db_path=_db,
+            query_text=query,
+            answer_text=answer,
+            routed_to="retrieval",
+            cluster_id=None,
+            chunk_id=str(chunks[0]["chunk_id"]) if chunks else None,
+        )
+    except Exception:
+        pass
+
+    return answer
 
 
 def route_query(query: str, cfg: dict) -> list[dict]:
