@@ -54,3 +54,26 @@ def test_hub_html_has_wizard_steps():
     assert "wz-step1" in html
     assert "wz-step2" in html
     assert "wz-step3" in html
+
+
+def test_hub_html_has_connectivity_pills():
+    hub_path = Path(__file__).parent.parent / "templates" / "studio" / "hub.html"
+    html = hub_path.read_text()
+    assert "cd-qdrant" in html
+    assert "cd-gpu" in html
+    assert "cd-llm" in html
+
+
+def test_hub_html_has_error_toast():
+    hub_path = Path(__file__).parent.parent / "templates" / "studio" / "hub.html"
+    html = hub_path.read_text()
+    assert "err-toast" in html
+    assert "showErrToast" in html
+    assert "dismissErrToast" in html
+
+
+def test_hub_html_error_scanning_in_sse():
+    hub_path = Path(__file__).parent.parent / "templates" / "studio" / "hub.html"
+    html = hub_path.read_text()
+    assert "_looksLikeError" in html
+    assert "showErrToast" in html

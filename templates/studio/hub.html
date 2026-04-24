@@ -227,6 +227,17 @@ textarea{resize:vertical;min-height:52px}
 .wz-review-row:last-child{border-bottom:none}
 .wz-review-key{color:#94a3b8}
 .wz-review-val{color:#e2e8f0;font-weight:600}
+/* === Connectivity Pills === */
+.conn-pill{display:flex;align-items:center;gap:5px;background:#0f172a;border:1px solid #1e293b;border-radius:20px;padding:4px 10px;font-size:10px;color:#64748b;white-space:nowrap;cursor:default}
+.conn-dot{width:6px;height:6px;border-radius:50%;background:#475569;flex-shrink:0;transition:background 0.4s}
+.conn-dot.ok{background:#34d399}
+.conn-dot.fail{background:#f87171}
+/* === Error Assistant Toast === */
+.err-toast{display:none;position:fixed;bottom:20px;right:20px;max-width:380px;background:#1a0a0a;border:1px solid #7f1d1d;border-radius:10px;padding:14px 16px;z-index:5000;color:#fca5a5;font-size:12px;line-height:1.5;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
+.err-toast.visible{display:block}
+.err-toast-title{font-weight:700;margin-bottom:4px;color:#f87171}
+.err-toast-hint{margin-top:6px;color:#fbbf24;font-size:11px;display:none}
+.err-toast-hint.visible{display:block}
 </style>
 </head>
 <body>
@@ -279,6 +290,11 @@ textarea{resize:vertical;min-height:52px}
       <div class="bc-seg current" id="bc-current">Studio Hub</div>
     </div>
     <div class="topbar-right">
+      <div id="conn-pills" style="display:flex;gap:5px;align-items:center">
+        <div class="conn-pill" title="Qdrant vector store"><div class="conn-dot" id="cd-qdrant"></div><span>Qdrant</span></div>
+        <div class="conn-pill" title="GPU"><div class="conn-dot" id="cd-gpu"></div><span>GPU</span></div>
+        <div class="conn-pill" title="LLM"><div class="conn-dot" id="cd-llm"></div><span>LLM</span></div>
+      </div>
       <div class="gpu-pill" id="gpu-pill" onclick="refreshGpu()">
         <div class="gpu-dot"></div>
         <span id="gpu-text">Checking GPUs...</span>
@@ -353,6 +369,12 @@ async function loadRegistry() {
   STATE.ucs = data.use_cases || [];
   renderUcList();
   renderUcCards();
+  // Wire connectivity polling to first UC that has a dashboard port
+  var firstWithPort = STATE.ucs.find(function(u) { return u.dashboard_port; });
+  if (firstWithPort && !_connPort) {
+    setConnPort(firstWithPort.dashboard_port);
+    pollConnectivity();
+  }
 }
 
 function renderUcList() {
@@ -984,6 +1006,7 @@ function startStreaming(ucId, jobId) {
     if (msg.type === 'log' && logDiv) {
       logDiv.innerHTML += `<div>${escHtml(msg.line)}</div>`;
       logDiv.scrollTop = logDiv.scrollHeight;
+      if (_looksLikeError(msg.line || '')) showErrToast(msg.line);
     }
     if (msg.type === 'done' || msg.type === 'error') {
       es.close();
@@ -1167,6 +1190,74 @@ document.querySelectorAll('.wz-radio').forEach(function(label) {
     label.classList.add('selected');
   });
 });
+
+// ── Connectivity Status ───────────────────────────────────────────────────────
+var _connPort = null;
+
+function setConnPort(port) {
+  _connPort = port;
+}
+
+function _setConnDot(id, status) {
+  var el = document.getElementById('cd-' + id);
+  if (!el) return;
+  el.className = 'conn-dot' + (status === 'ok' ? ' ok' : status === 'fail' ? ' fail' : '');
+}
+
+async function pollConnectivity() {
+  if (!_connPort) return;
+  try {
+    var resp = await fetch('http://' + location.hostname + ':' + _connPort + '/api/connectivity', {signal: AbortSignal.timeout(3000)});
+    if (!resp.ok) throw new Error('non-200');
+    var data = await resp.json();
+    _setConnDot('qdrant', data.qdrant && data.qdrant.ok ? 'ok' : 'fail');
+    _setConnDot('gpu',    data.gpu    && data.gpu.ok    ? 'ok' : 'fail');
+    _setConnDot('llm',   data.llm    && data.llm.ok    ? 'ok' : 'fail');
+  } catch(e) {
+    ['qdrant','gpu','llm'].forEach(function(k) { _setConnDot(k, 'fail'); });
+  }
+}
+
+setInterval(pollConnectivity, 30000);
+
+// ── Error Assistant ───────────────────────────────────────────────────────────
+var _ERR_PATTERNS = ['traceback','error:','exception:','failed:','errno','attributeerror','importerror','modulenotfounderror','valueerror','runtimeerror'];
+var _errToastTimer = null;
+
+function _looksLikeError(line) {
+  var l = line.toLowerCase();
+  return _ERR_PATTERNS.some(function(p) { return l.includes(p); });
+}
+
+async function showErrToast(errLine) {
+  var toast = document.getElementById('err-toast');
+  var msgEl = document.getElementById('err-toast-msg');
+  var hintEl = document.getElementById('err-toast-hint');
+  msgEl.textContent = errLine.substring(0, 200);
+  hintEl.className = 'err-toast-hint';
+  hintEl.textContent = '';
+  toast.className = 'err-toast visible';
+  if (_errToastTimer) clearTimeout(_errToastTimer);
+  _errToastTimer = setTimeout(dismissErrToast, 15000);
+
+  if (!_connPort) return;
+  try {
+    var url = 'http://' + location.hostname + ':' + _connPort + '/api/error-hint?msg=' + encodeURIComponent(errLine);
+    var resp = await fetch(url, {signal: AbortSignal.timeout(3000)});
+    if (resp.ok) {
+      var data = await resp.json();
+      if (data.hint) {
+        hintEl.textContent = '&#128161; ' + data.hint;
+        hintEl.className = 'err-toast-hint visible';
+      }
+    }
+  } catch(e) {}
+}
+
+function dismissErrToast() {
+  document.getElementById('err-toast').className = 'err-toast';
+  if (_errToastTimer) { clearTimeout(_errToastTimer); _errToastTimer = null; }
+}
 </script>
 
 <!-- Pipeline Wizard Modal -->
@@ -1224,6 +1315,18 @@ document.querySelectorAll('.wz-radio').forEach(function(label) {
       <button class="btn btn-ghost" id="wz-back" onclick="wzBack()" style="display:none">&#8592; Back</button>
       <button class="btn btn-primary" id="wz-next" onclick="wzNext()">Next &#8594;</button>
     </div>
+  </div>
+</div>
+
+<!-- Error Assistant Toast -->
+<div class="err-toast" id="err-toast">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+    <div style="flex:1">
+      <div class="err-toast-title">&#9888; Error Detected</div>
+      <div id="err-toast-msg"></div>
+      <div class="err-toast-hint" id="err-toast-hint"></div>
+    </div>
+    <span style="cursor:pointer;color:#64748b;flex-shrink:0;padding:2px" onclick="dismissErrToast()">&#x2715;</span>
   </div>
 </div>
 </body>
