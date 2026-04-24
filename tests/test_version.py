@@ -1,8 +1,6 @@
 import json
 import sys
-import pytest
 from pathlib import Path
-from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -73,5 +71,13 @@ def test_existing_callers_unaffected_no_new_args(tmp_path):
     """append_prs called with just (round_num, prs) must not crash."""
     ver = _make_ver_file(tmp_path, phase=1, prs_history=[])
     ver.append_prs(1, 0.50)  # no extra kwargs — must not raise
+    data = ver.load()
+    assert data["phase"] == 1
+
+
+def test_phase1_does_not_regress_below_1(tmp_path):
+    """Phase 1 is the floor — bad rounds must not push it to 0."""
+    ver = _make_ver_file(tmp_path, phase=1, prs_history=[0.40, 0.41])
+    ver.append_prs(3, 0.42, regression_threshold=0.60, stability_window=3)
     data = ver.load()
     assert data["phase"] == 1

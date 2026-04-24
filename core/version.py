@@ -148,7 +148,7 @@ def append_prs(
         regression_threshold: PRS floor; consecutive rounds below this
             trigger a phase downgrade. Default 0.60.
         stability_window: Number of consecutive rounds required to trigger
-            advance or downgrade. Default 3.
+            a phase downgrade. Default 3.
     """
     data = load()
     data["prs_history"].append({"round": round_num, "prs": round(prs, 4)})
