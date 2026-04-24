@@ -247,10 +247,9 @@ def get_config():
 def _check_qdrant(cfg: dict) -> dict:
     url = cfg.get("qdrant_url", "http://localhost:6333")
     try:
-        import time as _t
-        t0 = _t.time()
+        t0 = time.time()
         r = httpx.get(f"{url}/healthz", timeout=2)
-        ms = int((_t.time() - t0) * 1000)
+        ms = int((time.time() - t0) * 1000)
         return {"ok": r.status_code == 200, "latency_ms": ms}
     except Exception as exc:
         return {"ok": False, "latency_ms": -1, "error": str(exc)}
