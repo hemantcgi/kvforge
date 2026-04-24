@@ -2,7 +2,7 @@
   "id": "usecase4_bedrock_userguide",
   "display_name": "Bedrock User Guide",
   "type": "example",
-  "created_at": "2026-04-01T20:18:51.450031+00:00",
+  "created_at": "2026-04-23T12:56:02.082144+00:00",
   "data": {
     "source_type": "pdf",
     "source_path": "examples/usecase4_bedrock_userguide/data/",
@@ -25,6 +25,5 @@
     "vllm_url": "http://localhost:8090",
     "comparison_provider": "gemini",
     "comparison_model": "gemini-2.5-flash"
-  },
-  "gpu_id": 3
+  }
 }

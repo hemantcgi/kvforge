@@ -204,6 +204,43 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
         data["known_good_queries"] = good_embs
         ver.save(data)
 
+    # Hook 1: Dynamic PRS — per-cluster three-signal update
+    lora_version = ver.get_lora_version()
+    cluster_states: dict = {}
+    try:
+        from pathlib import Path as _Path
+        cluster_file = _Path(cfg.get("checkpoint_dir", ".")) / "clusters.json"
+        if cluster_file.exists():
+            from core.prs_adapter import update_cluster_after_round
+            from pipeline.query_logger import get_cluster_stats
+            from core.cluster_manager import load_clusters
+            cluster_data = load_clusters(str(cluster_file))
+            k = cluster_data["k"]
+            faq_coverage = sum(1 for r in accuracy_ratios if r >= 0.85) / max(len(accuracy_ratios), 1)
+            vdb_coverage = min(len(faqs) / max(cfg.get("scout_initial_faq_count", 20), 1), 1.0)
+            for cid_int in range(k):
+                cid = str(cid_int)
+                realtime_stats = get_cluster_stats(
+                    cfg.get("query_log_db", "query_log.db"), cid
+                )
+                state = update_cluster_after_round(cid, faq_coverage, vdb_coverage, realtime_stats, cfg)
+                cluster_states[cid] = state
+    except Exception:
+        pass
+
+    # Hook 2: Flywheel — record training round snapshot
+    try:
+        from core.analytics import record_round, init_db
+        init_db(cfg)
+        if not cluster_states:
+            cluster_states = {"global": {
+                "prs": prs, "phase": ver.load().get("phase", 1),
+                "query_count": len(faqs), "faq_coverage": prs,
+            }}
+        record_round(cfg, lora_version, cluster_states, tier_distribution={})
+    except Exception:
+        pass
+
     return prs
 
 
@@ -229,7 +266,12 @@ def main() -> None:
     v = ver.load()
     prs = evaluate(faqs, cfg, v.get("checkpoint_path"))
     round_num = v["current_lora_version"]
-    ver.append_prs(round_num, prs)
+    ver.append_prs(
+        round_num,
+        prs,
+        regression_threshold=cfg.get("prs_regression_threshold", 0.60),
+        stability_window=cfg.get("prs_stability_window", 3),
+    )
     print(f"📊 PRS after round {round_num}: {prs:.4f}")
     print(f"   Phase: {ver.get_phase()}")
 

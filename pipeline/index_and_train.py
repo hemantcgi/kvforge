@@ -76,8 +76,10 @@ def main() -> None:
              "--faqs", args.faqs],
             "SP2: PRS evaluation")
 
-    # Activate phase 2 after the first successful LoRA round (SP1+SP3 must be deployed)
-    _ver.activate_phase_2()
+    # When --skip-prs is set, advance manually since append_prs is not called.
+    # When PRS runs normally, prs_evaluator calls append_prs which handles advancement.
+    if args.skip_prs:
+        _ver.activate_phase_2()
 
     print(f"\n✅ index_and_train complete for {pdf.name}")
     print("   Stale chunks from prior rounds have been healed proactively.")

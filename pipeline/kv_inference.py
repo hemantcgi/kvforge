@@ -23,6 +23,10 @@ from pipeline.bedrock_rag import _run_search, Config
 from fastembed import TextEmbedding
 from vectorstore.registry import get_store
 
+# Track which query_log_db paths have already been initialised in this process
+# so init_db() is not called on every inference request.
+_initialized_query_log_dbs: set[str] = set()
+
 
 SYSTEM_PROMPT = (
     "You are a precise assistant. Answer ONLY using the provided context. "
@@ -54,7 +58,8 @@ def get_stale_chunk_ids(chunks: list[dict], current_lora_version: int) -> list[i
 # ── Inference paths ───────────────────────────────────────────────────────
 
 def generate_with_kv(query: str, chunks: list[dict],
-                      model, tokenizer, cfg: dict) -> str:
+                      model, tokenizer, cfg: dict,
+                      extra_context: str = "") -> str:
     """Fast path: inject pre-computed KV tensors as past_key_values."""
     num_layers, num_kv_heads, head_dim = model_loader.get_kv_shape(cfg)
     kv_shape = (num_layers, 2, num_kv_heads, head_dim)
@@ -85,7 +90,8 @@ def generate_with_kv(query: str, chunks: list[dict],
             (k.to(model.device), v.to(model.device)) for k, v in past_kv
         )
 
-    prompt = f"Based on the context provided, answer: {query}"
+    context_prefix = f"Additional context:\n{extra_context}\n\n" if extra_context else ""
+    prompt = f"{context_prefix}Based on the context provided, answer: {query}"
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
     with torch.no_grad():
         output = model.generate(
@@ -105,12 +111,15 @@ def generate_text_in_context(query: str, chunks: list[dict],
                                max_new_tokens: int = 256,
                                temperature: float = 0.7,
                                top_p: float = 0.9,
-                               repetition_penalty: float = 1.2) -> str:
+                               repetition_penalty: float = 1.2,
+                               extra_context: str = "") -> str:
     """Fallback path: include chunk text in prompt."""
     context = "\n\n---\n\n".join(
         f"[page {c['page']}, score {c['score']}]\n{c['text']}"
         for c in chunks
     )
+    if extra_context:
+        context += f"\n\n---\n\n{extra_context}"
     # Direct instruction prompt — avoids chat-template tokens that confuse the
     # model when used without the exact fine-tuning format.
     prompt = (
@@ -184,9 +193,80 @@ def answer_with_retrieval(query: str, cfg: dict) -> str:
 
     mode = decide_inference_mode(chunks, current_ver)
     if mode == "kv_injection":
-        return generate_with_kv(query, chunks, model, tokenizer, cfg)
+        answer = generate_with_kv(query, chunks, model, tokenizer, cfg)
     else:
-        return generate_text_in_context(query, chunks, model, tokenizer)
+        answer = generate_text_in_context(query, chunks, model, tokenizer)
+
+    try:
+        from pipeline import query_logger as _ql
+        _db = cfg.get("query_log_db", "query_log.db")
+        if _db not in _initialized_query_log_dbs:
+            _ql.init_db(_db)
+            _initialized_query_log_dbs.add(_db)
+        _ql.log_query(
+            db_path=_db,
+            query_text=query,
+            answer_text=answer,
+            routed_to="retrieval",
+            cluster_id=None,
+            chunk_id=str(chunks[0]["chunk_id"]) if chunks else None,
+        )
+    except Exception:
+        pass
+
+    return answer
+
+
+def route_query(query: str, cfg: dict) -> list[dict]:
+    """Dynamic PRS cluster-aware retrieval.
+
+    Embeds *query*, finds its nearest cluster, then calls
+    ``answer_with_retrieval`` restricted to chunks from that cluster.
+    Falls back to full-collection retrieval when no cluster data exists.
+
+    Args:
+        query: User query string.
+        cfg: Datasource config dict.
+
+    Returns:
+        List of chunk dicts from the nearest cluster (or full collection).
+    """
+    from pathlib import Path as _Path
+    cluster_file = _Path(cfg.get("checkpoint_dir", ".")) / "clusters.json"
+    if not cluster_file.exists():
+        return []
+
+    try:
+        from core.cluster_manager import load_clusters, nearest_cluster
+        cluster_data = load_clusters(str(cluster_file))
+        embedder = TextEmbedding(model_name=cfg["embed_model"],
+                                  show_download_progress=False)
+        q_vec = list(embedder.embed([query]))[0]
+        import numpy as np
+        cluster_id = nearest_cluster(
+            np.array(q_vec), np.array(cluster_data["centroids"])
+        )
+        store = get_store(cfg)
+        from pipeline.bedrock_rag import Config
+        rag_cfg = Config(**{k: cfg[k] for k in Config.__dataclass_fields__ if k in cfg})
+        hits = store.query(
+            cfg["collection"], q_vec.tolist(), top_k=cfg.get("top_k", 5),
+            scroll_filter={"cluster_id": str(cluster_id)},
+        )
+        return [
+            {
+                "chunk_id": h.id,
+                "text": h.payload.get("text", ""),
+                "page": h.payload.get("page"),
+                "score": round(h.score, 4),
+                "kv_cache": h.payload.get("kv_cache"),
+                "kv_version": h.payload.get("kv_version"),
+                "cluster_id": str(cluster_id),
+            }
+            for h in hits
+        ]
+    except Exception:
+        return []
 
 
 def main() -> None:

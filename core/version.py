@@ -29,6 +29,7 @@ DEFAULTS: dict[str, Any] = {
     "phase": 1,
     "prs_history": [],
     "known_good_queries": [],
+    "clusters": {},
 }
 
 
@@ -125,29 +126,102 @@ def activate_phase_2() -> None:
         print("✅ Phase 2 activated — KV injection enabled")
 
 
-def append_prs(round_num: int, prs: float) -> None:
-    """Record a PRS score and automatically advance the phase if thresholds are met.
+def append_prs(
+    round_num: int,
+    prs: float,
+    regression_threshold: float = 0.60,
+    stability_window: int = 3,
+) -> None:
+    """Record a PRS score and automatically advance or downgrade the phase.
 
-    Phase transitions:
-
+    Phase advancement:
     * Phase 2: triggered when ``prs >= 0.75`` for the first time.
     * Phase 3: triggered when ``prs >= 0.75`` for two consecutive rounds.
 
+    Phase regression (downgrade):
+    * Triggered when the last ``stability_window`` rounds are ALL below
+      ``regression_threshold``. Downgrades one phase per call.
+
     Args:
-        round_num: LoRA training round number (used for record-keeping only).
+        round_num: LoRA training round number (record-keeping only).
         prs: Parametric Readiness Score in [0, 1].
+        regression_threshold: PRS floor; consecutive rounds below this
+            trigger a phase downgrade. Default 0.60.
+        stability_window: Number of consecutive rounds required to trigger
+            a phase downgrade. Default 3.
     """
     data = load()
     data["prs_history"].append({"round": round_num, "prs": round(prs, 4)})
     history = data["prs_history"]
-    # Phase 2: PRS >= 0.75 for at least one round
+
+    # ── Advance ──────────────────────────────────────────────────────────────
+    phase_before_advance = data["phase"]
     if prs >= 0.75 and data["phase"] < 2:
         data["phase"] = 2
         print("✅ Phase 2 activated — KV injection enabled")
-    # Phase 3: PRS >= 0.75 for 2 consecutive rounds
     if (len(history) >= 2
             and all(r["prs"] >= 0.75 for r in history[-2:])
             and data["phase"] < 3):
         data["phase"] = 3
         print("✅ Phase 3 activated — confidence gate now live")
+
+    # ── Regress ───────────────────────────────────────────────────────────────
+    # Skip regression when advance fired in this same call to prevent a
+    # phantom advance→regress flip from a single high-regression-threshold config.
+    window = history[-stability_window:]
+    if (data["phase"] == phase_before_advance
+            and len(window) >= stability_window
+            and all(r["prs"] < regression_threshold for r in window)):
+        if data["phase"] == 3:
+            data["phase"] = 2
+            print(
+                f"⚠️  Phase regression: 3 → 2 "
+                f"(PRS below {regression_threshold} for {stability_window} consecutive rounds)"
+            )
+        elif data["phase"] == 2:
+            data["phase"] = 1
+            print(
+                f"⚠️  Phase regression: 2 → 1 "
+                f"(PRS below {regression_threshold} for {stability_window} consecutive rounds)"
+            )
+
     save(data)
+
+
+def get_cluster_state(cluster_id: str) -> dict:
+    """Return per-cluster PRS state dict, or empty dict if cluster not yet tracked.
+
+    Args:
+        cluster_id: Cluster identifier string.
+
+    Returns:
+        Dict with cluster-specific PRS state, or ``{}`` if not found.
+    """
+    return load().get("clusters", {}).get(str(cluster_id), {})
+
+
+def save_cluster_state(cluster_id: str, state: dict) -> None:
+    """Atomically update a single cluster's state in version.json.
+
+    Args:
+        cluster_id: Cluster identifier string.
+        state: Dict with cluster-specific PRS state.
+    """
+    data = load()
+    data.setdefault("clusters", {})[str(cluster_id)] = state
+    save(data)
+
+
+def get_global_phase() -> int:
+    """Return minimum phase across all clusters (conservative).
+
+    Falls back to the top-level ``'phase'`` key when no clusters exist.
+
+    Returns:
+        Minimum phase integer (1, 2, or 3).
+    """
+    data = load()
+    clusters = data.get("clusters", {})
+    if not clusters:
+        return data.get("phase", 1)
+    return min(c.get("phase", 1) for c in clusters.values())
