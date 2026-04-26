@@ -58,4 +58,11 @@ This index links to per-section detail pages. Each section page contains all que
 
 ---
 
+**Architecture Philosophy & Battlecards** → [View full section](docs/faq/architecture-philosophy.md)
+- [Why fine-tune at all? Can't we just store KV tensors for every chunk and use the vector database as a live KV cache at query time?](docs/faq/architecture-philosophy.md#why-fine-tune-at-all-cant-we-just-store-kv-tensors-for-every-chunk-and-use-the-vector-database-as-a-live-kv-cache-at-query-time)
+- [Why store KV tensors in the vector database instead of a separate key-value store?](docs/faq/architecture-philosophy.md#why-store-kv-tensors-in-the-vector-database-instead-of-a-separate-key-value-store)
+- [Why mean-pool the KV tensors over sequence length instead of storing per-token KV?](docs/faq/architecture-philosophy.md#why-mean-pool-the-kv-tensors-over-sequence-length-instead-of-storing-per-token-kv)
+
+---
+
 *Have a question not covered here? Open an issue at [github.com/hemantcgi/kvforge/issues](https://github.com/hemantcgi/kvforge/issues).*
