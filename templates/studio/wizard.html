@@ -545,6 +545,13 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
           <div class="review-row"><span class="review-key">LoRA</span><span class="review-val" id="review-lora">—</span></div>
         </div>
 
+        <div class="review-table" style="margin-bottom:8px">
+          <div class="review-row">
+            <span class="review-label">Use Case Name</span>
+            <input type="text" id="uc-name" class="finput" placeholder="my-corpus" value="my-corpus" style="width:200px">
+          </div>
+        </div>
+
         <div style="font-size:9px;color:#6b7280;margin-bottom:8px">
           Pipeline will run: Index → KV compute → Train (pass 1) → Train (pass 2) → PRS eval → auto-advance phase
         </div>
@@ -962,7 +969,7 @@ function collectLoraParams() {
     dropout:    parseFloat(document.getElementById('lora-dropout').value) / 100,
     epochs:     parseInt(document.getElementById('lora-epochs').value),
     batch_size: parseInt(document.getElementById('lora-batch').value),
-    lr:         parseFloat(document.getElementById('lora-lr').value),
+    lr:         parseFloat(document.getElementById('lora-lr').value) || 2e-4,
     passes:     document.querySelector('input[name="passes"]:checked')?.value || '1+2',
   };
   nextStep();
@@ -975,7 +982,8 @@ function buildReview() {
   const d = WIZARD.data;
   document.getElementById('review-source').textContent =
     d.pdf ? `PDF · ${d.pdf.filename} · ~${d.pdf.estimated_chunks} chunks`
-          : `VDB · ${d.vdb?.type} · ${d.vdb?.host || d.vdb?.base_url || ''}`;
+          : d.vdb ? `VDB · ${d.vdb.type} · ${d.vdb.host || d.vdb.base_url || ''}`
+                  : `HuggingFace · ${d.hf_repo || 'not configured'}`;
   document.getElementById('review-model').textContent = d.model_id || '—';
   document.getElementById('review-gpu').textContent = d.gpu_id != null ? `GPU ${d.gpu_id}` : '—';
   document.getElementById('review-faq').textContent = d.faq_mode || d.gen_mode || 'not configured';
@@ -1054,14 +1062,19 @@ async function startPipelineStep(step) {
       logEl.scrollTop = logEl.scrollHeight;
     }
   };
-  es.addEventListener('done', () => {
+  es.addEventListener('done', async () => {
     es.close();
     if (stepEl) stepEl.dataset.status = 'done';
     updateStepDots();
     _currentStepIdx++;
     const next = PIPELINE_STEPS[_currentStepIdx];
     if (next) {
-      startPipelineStep(next);
+      await startPipelineStep(next).catch(() => {
+        if (document.getElementById(`pipeline-step-${next}`)) {
+          document.getElementById(`pipeline-step-${next}`).dataset.status = 'failed';
+        }
+        updateStepDots();
+      });
     } else {
       const finishBtn = document.getElementById('finish-btn');
       if (finishBtn) {
@@ -1070,11 +1083,11 @@ async function startPipelineStep(step) {
       }
     }
   });
-  es.addEventListener('error', () => {
+  es.onerror = () => {
     es.close();
     if (stepEl) stepEl.dataset.status = 'failed';
     updateStepDots();
-  });
+  };
 }
 
 function updateStepDots() {
@@ -1091,8 +1104,6 @@ function updateStepDots() {
 // ═══════════════════════════════════════════════════════════
 // Initialise defaults
 WIZARD.data.gen_mode = 'upload';
-WIZARD.data.lora_rank = 16;
-WIZARD.data.lora_alpha = 32;
 WIZARD.data.source_type = 'pdf';
 
 // Start on step 1
