@@ -125,24 +125,23 @@ def _redact_cmd(cmd: list[str]) -> str:
     return " ".join(parts)
 
 
-async def run_step_streaming(uc_id: str, step: str, job_id: str, job_manager):
+async def run_step_background(uc_id: str, step: str, job_id: str, job_manager) -> None:
     """
-    Spawn pipeline step subprocess and yield SSE-formatted lines.
-    Also appends log lines to job_manager.
+    Run pipeline step subprocess as a background task, independent of any SSE
+    connection. Buffers all output in job_manager so clients can connect/
+    disconnect freely without affecting the subprocess.
     """
     from studio.gpu_monitor import get_gpu_status
 
-    # GPU pre-check — skipped for steps that don't need a GPU
     if step in GPU_REQUIRED_STEPS:
         gpu_status = get_gpu_status()
         if not gpu_status.get("has_free_gpu"):
             job_manager.fail(job_id, "No free GPU available")
-            yield _sse({"type": "error", "message": "No free GPU available"})
             return
 
     cmd = _build_cmd(uc_id, step)
     env = _build_env(uc_id, step)
-    yield _sse({"type": "start", "cmd": _redact_cmd(cmd)})
+    job_manager.append_log(job_id, f"[studio] starting: {_redact_cmd(cmd)}")
 
     try:
         proc = await asyncio.create_subprocess_exec(
@@ -157,21 +156,47 @@ async def run_step_streaming(uc_id: str, step: str, job_id: str, job_manager):
         async for raw_line in proc.stdout:
             line = raw_line.decode("utf-8", errors="replace").rstrip()
             job_manager.append_log(job_id, line)
-            yield _sse({"type": "log", "line": line})
 
         exit_code = await proc.wait()
-
         if exit_code == 0:
             job_manager.complete(job_id, exit_code)
-            yield _sse({"type": "done", "exit_code": 0})
+            job_manager.append_log(job_id, f"[studio] done (exit 0)")
         else:
             job_manager.fail(job_id, f"Process exited with code {exit_code}")
-            yield _sse({"type": "error", "exit_code": exit_code,
-                         "message": f"Process exited with code {exit_code}"})
+            job_manager.append_log(job_id, f"[studio] failed (exit {exit_code})")
 
     except Exception as e:
         job_manager.fail(job_id, str(e))
-        yield _sse({"type": "error", "message": str(e)})
+        job_manager.append_log(job_id, f"[studio] error: {e}")
+
+
+async def run_step_streaming(uc_id: str, step: str, job_id: str, job_manager):
+    """
+    SSE relay: replays buffered log lines then tails new ones until the job
+    finishes. Does NOT spawn a subprocess — call run_step_background for that.
+    """
+    offset = 0
+    while True:
+        job = job_manager.get(job_id)
+        if not job:
+            yield _sse({"type": "error", "message": "job not found"})
+            return
+
+        lines = job.get("last_lines", [])
+        while offset < len(lines):
+            yield _sse({"type": "log", "line": lines[offset]})
+            offset += 1
+
+        status = job.get("status")
+        if status != "running":
+            if status == "done":
+                yield _sse({"type": "done", "exit_code": 0})
+            else:
+                yield _sse({"type": "error", "exit_code": -1,
+                             "message": job.get("error", "failed")})
+            return
+
+        await asyncio.sleep(0.3)
 
 
 def _build_env(uc_id: str, step: str) -> dict:

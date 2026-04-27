@@ -1,9 +1,10 @@
 # studio/api.py
 """All /studio/api/* endpoint handlers — imported by routes.py."""
 
+import asyncio
 import json
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, Request, UploadFile, Form
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, UploadFile, Form
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional
@@ -188,8 +189,8 @@ class RunStepRequest(BaseModel):
 
 
 @api_router.post("/run-step")
-def run_step(req: RunStepRequest):
-    from studio.pipeline_runner import STEP_MODULES
+async def run_step(req: RunStepRequest, background_tasks: BackgroundTasks):
+    from studio.pipeline_runner import STEP_MODULES, run_step_background
     if req.step not in STEP_MODULES:
         raise HTTPException(400, f"Unknown step: {req.step}. Valid: {list(STEP_MODULES)}")
     jm = get_manager()
@@ -197,6 +198,8 @@ def run_step(req: RunStepRequest):
         job_id = jm.create(req.uc_id, req.step)
     except DuplicateJobError as e:
         raise HTTPException(409, str(e))
+    # Launch subprocess immediately as a background task, independent of any SSE connection
+    background_tasks.add_task(run_step_background, req.uc_id, req.step, job_id, jm)
     return {"job_id": job_id, "uc_id": req.uc_id, "step": req.step}
 
 

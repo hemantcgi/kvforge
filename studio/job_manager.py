@@ -19,7 +19,7 @@ class DuplicateJobError(Exception):
     """Raised when a UC already has a running job."""
 
 
-_MAX_LOG_LINES = 100
+_MAX_LOG_LINES = 500
 
 
 class JobManager:
