@@ -130,6 +130,21 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
 .gpu-mem { font-size: 7px; color: #6b7280; }
 .gpu-model-text { font-size: 7px; margin-top: 3px; color: #6b7280; }
 .gpu-error { font-size: 9px; color: #f87171; padding: 8px; }
+.gpu-no-free-banner { grid-column: span 2; background: #2a1a1a; border: 1px solid #7f1d1d;
+  border-radius: 5px; padding: 7px 10px; font-size: 9px; color: #fca5a5; margin-bottom: 2px; }
+.gpu-freeup-btn { margin-top: 5px; width: 100%; font-size: 7.5px; padding: 3px 0;
+  border-radius: 3px; border: 1px solid #7f1d1d; background: #2d1111; color: #f87171;
+  cursor: pointer; }
+.gpu-freeup-btn:hover { background: #3d1a1a; }
+.gpu-stop-panel { margin-top: 5px; background: #1a1111; border: 1px solid #3a1a1a;
+  border-radius: 4px; padding: 5px 6px; }
+.gpu-stop-panel input { width: 100%; box-sizing: border-box; font-size: 9px;
+  background: #111; border: 1px solid #3a1a1a; color: #f87171; border-radius: 3px;
+  padding: 2px 5px; margin-bottom: 4px; }
+.gpu-stop-confirm { width: 100%; font-size: 7.5px; padding: 3px 0;
+  border-radius: 3px; border: 1px solid #b91c1c; background: #7f1d1d; color: #fff;
+  cursor: pointer; }
+.gpu-stop-confirm:hover { background: #991b1b; }
 
 /* Feasibility banner */
 .feasibility { border-radius: 5px; padding: 7px 9px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
@@ -924,24 +939,47 @@ async function checkCustomVram() {
 // ═══════════════════════════════════════════════════════════
 // STEP 4 — GPU CARDS
 // ═══════════════════════════════════════════════════════════
+let _vllmProcesses = [];  // populated by loadGpuCards, consumed by freeUpGpu
+
 async function loadGpuCards() {
   const container = document.getElementById('gpu-cards');
   if (!container) return;
 
   try {
-    const resp = await fetch('/studio/api/gpu/realtime');
-    if (!resp.ok) throw new Error(`Server error ${resp.status}`);
-    const data = await resp.json();
+    // Fetch realtime stats + vLLM process list in parallel
+    const [rtResp, checkResp] = await Promise.all([
+      fetch('/studio/api/gpu/realtime'),
+      fetch('/studio/api/gpu-check', { method: 'POST' }),
+    ]);
+    if (!rtResp.ok) throw new Error(`GPU realtime error ${rtResp.status}`);
+    const data = await rtResp.json();
+    _vllmProcesses = checkResp.ok ? ((await checkResp.json()).vllm_processes || []) : [];
 
     if (!data.gpus || data.gpus.length === 0) {
       container.innerHTML = '<div class="gpu-error" style="grid-column:span 2">No GPUs detected.</div>';
       return;
     }
 
-    container.innerHTML = data.gpus.map(g => {
+    const noFree = !data.has_free_gpu;
+    const banner = noFree
+      ? `<div class="gpu-no-free-banner" style="grid-column:span 2">
+           ⚠️ No free GPUs available. Use <strong>Free up</strong> on a busy GPU to release it.
+         </div>`
+      : '';
+
+    container.innerHTML = banner + data.gpus.map(g => {
       const usedPct = g.total_gb > 0 ? Math.round((g.used_gb / g.total_gb) * 100) : 0;
       const isFree = g.status === 'free';
       const statusClass = isFree ? 'free' : 'busy';
+      const freeupBtn = isFree ? '' : `
+        <button class="gpu-freeup-btn" onclick="event.stopPropagation();freeUpGpu(${g.id})">
+          ⚡ Free up GPU
+        </button>
+        <div class="gpu-stop-panel" id="gpu-stop-${g.id}" style="display:none">
+          <input type="number" id="gpu-port-${g.id}" placeholder="vLLM port" min="1" max="65535">
+          <button class="gpu-stop-confirm"
+            onclick="event.stopPropagation();stopVllm(${g.id})">Stop vLLM</button>
+        </div>`;
       return `
         <div class="gpu-card ${statusClass}" data-gpu-id="${g.id}" onclick="selectGpu(${g.id}, this)">
           <div class="gpu-hd">
@@ -951,10 +989,50 @@ async function loadGpuCards() {
           <div class="vbar"><div class="vfill" style="width:${usedPct}%"></div></div>
           <div class="gpu-mem">${g.used_gb} / ${g.total_gb} GB used</div>
           <div class="gpu-model-text">${g.name || ''}</div>
+          ${freeupBtn}
         </div>`;
     }).join('');
   } catch (e) {
     container.innerHTML = `<div class="gpu-error" style="grid-column:span 2">GPU data unavailable: ${e.message}</div>`;
+  }
+}
+
+function freeUpGpu(gpuId) {
+  const panel = document.getElementById(`gpu-stop-${gpuId}`);
+  if (!panel) return;
+  const isVisible = panel.style.display !== 'none';
+  panel.style.display = isVisible ? 'none' : '';
+  if (!isVisible) {
+    // Pre-fill port from first detected vLLM process (best-effort)
+    const portInput = document.getElementById(`gpu-port-${gpuId}`);
+    if (portInput && _vllmProcesses.length > 0) {
+      const detected = _vllmProcesses.find(p => p.port != null);
+      portInput.value = detected ? detected.port : 8090;
+    } else if (portInput) {
+      portInput.value = 8090;
+    }
+  }
+}
+
+async function stopVllm(gpuId) {
+  const portInput = document.getElementById(`gpu-port-${gpuId}`);
+  const port = portInput ? parseInt(portInput.value, 10) : NaN;
+  if (!port || isNaN(port)) { alert('Enter a valid port number.'); return; }
+
+  const btn = document.querySelector(`#gpu-stop-${gpuId} .gpu-stop-confirm`);
+  if (btn) { btn.disabled = true; btn.textContent = 'Stopping…'; }
+
+  try {
+    const resp = await fetch('/studio/api/gpu/stop-vllm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ port }),
+    });
+    if (!resp.ok) throw new Error(`Server error ${resp.status}`);
+    await loadGpuCards();
+  } catch (e) {
+    alert(`Failed to stop vLLM: ${e.message}`);
+    if (btn) { btn.disabled = false; btn.textContent = 'Stop vLLM'; }
   }
 }
 
