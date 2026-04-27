@@ -62,3 +62,9 @@ def test_save_is_atomic(tmp_path):
         sm.save({"curation_threshold": 10})
         assert not (tmp_path / "settings.tmp").exists()
         assert f.exists()
+
+
+def test_save_rejects_unknown_key(tmp_path):
+    with patch.object(sm, "SETTINGS_FILE", tmp_path / "settings.json"):
+        with pytest.raises(ValueError, match="Unknown settings keys"):
+            sm.save({"my_rogue_key": "value"})

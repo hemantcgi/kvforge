@@ -19,9 +19,11 @@ _SECRET_KEYS = {"anthropic_api_key", "openai_api_key", "gemini_api_key", "huggin
 
 _KEY_VALIDATORS: dict = {
     "anthropic_api_key": lambda v: v.startswith("sk-ant-"),
-    "openai_api_key": lambda v: v.startswith("sk-"),
+    "openai_api_key": lambda v: v.startswith("sk-") and not v.startswith("sk-ant-"),
     "gemini_api_key": lambda v: v.startswith("AIza"),
 }
+
+ALLOWED_KEYS = set(DEFAULTS)
 
 
 def _load() -> dict:
@@ -55,6 +57,10 @@ def get_setting(key: str):
 
 
 def save(updates: dict) -> None:
+    unknown = set(updates) - ALLOWED_KEYS
+    if unknown:
+        raise ValueError(f"Unknown settings keys: {unknown}")
+
     for key, value in updates.items():
         if key in _KEY_VALIDATORS and isinstance(value, str) and value:
             if not _KEY_VALIDATORS[key](value):
@@ -63,6 +69,10 @@ def save(updates: dict) -> None:
     current.update(updates)
     SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
     tmp = SETTINGS_FILE.with_suffix(".tmp")
-    with open(tmp, "w") as f:
-        json.dump(current, f, indent=2)
-    os.replace(tmp, SETTINGS_FILE)
+    try:
+        with open(tmp, "w") as f:
+            json.dump(current, f, indent=2)
+        os.replace(tmp, SETTINGS_FILE)
+    except Exception:
+        Path(tmp).unlink(missing_ok=True)
+        raise
