@@ -92,6 +92,13 @@ class JobManager:
         with self._lock:
             return [dict(j) for j in self._jobs.values() if j["status"] == JobStatus.RUNNING]
 
+    def last_for_uc(self, uc_id: str) -> Optional[dict]:
+        with self._lock:
+            matches = [j for j in self._jobs.values() if j["uc_id"] == uc_id]
+            if not matches:
+                return None
+            return dict(max(matches, key=lambda j: j["start_time"]))
+
 
 # Module-level singleton used by routes and pipeline_runner
 _manager = JobManager()

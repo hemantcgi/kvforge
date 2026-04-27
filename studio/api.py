@@ -240,6 +240,23 @@ def gpu_realtime_endpoint():
     return JSONResponse(get_gpu_realtime())
 
 
+# ── Job logs ───────────────────────────────────────────────────────────────────
+
+@api_router.get("/uc/{uc_id}/logs")
+def uc_logs_endpoint(uc_id: str):
+    _uc_path(uc_id)  # path traversal guard
+    jm = get_manager()
+    job = jm.last_for_uc(uc_id)
+    if not job:
+        return JSONResponse({"lines": [], "status": None, "step": None, "job_id": None})
+    return JSONResponse({
+        "lines": job.get("last_lines", []),
+        "status": job.get("status"),
+        "step": job.get("step"),
+        "job_id": job.get("job_id"),
+    })
+
+
 # ── PRS history ────────────────────────────────────────────────────────────────
 
 @api_router.get("/uc/{uc_id}/prs-history")

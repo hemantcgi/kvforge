@@ -717,7 +717,7 @@ function renderTrainPanel(ucId, cfg) {
   <div class="btn-row">
     <div class="btn btn-danger" id="stop-btn-${ucId}" style="${isRunning ? '' : 'display:none'}" onclick="stopJob('${ucId}')">&#9632; Stop</div>
     <div class="btn btn-ghost" onclick="togglePanel('${ucId}','train')">&#9650; Collapse</div>
-    <div class="btn btn-ghost" id="logs-btn-${ucId}" style="${isRunning ? '' : 'display:none'}" onclick="toggleLogs('${ucId}')">&#128203; View Logs</div>
+    <div class="btn btn-ghost" id="logs-btn-${ucId}" onclick="toggleLogs('${ucId}')">&#128203; View Logs</div>
     <div class="btn btn-primary" id="run-btn-${ucId}" style="${isRunning ? 'display:none' : ''}" onclick="runNextStep('${ucId}')">&#9654; Run Pipeline</div>
   </div>`;
 }
@@ -1000,22 +1000,47 @@ async function runAbEval(ucId) {
 function _setRunningUI(ucId, running) {
   const stopBtn = document.getElementById(`stop-btn-${ucId}`);
   const runBtn  = document.getElementById(`run-btn-${ucId}`);
-  const logsBtn = document.getElementById(`logs-btn-${ucId}`);
   const statusPill = document.getElementById(`train-status-${ucId}`);
   if (stopBtn) stopBtn.style.display = running ? '' : 'none';
   if (runBtn)  { runBtn.style.display = running ? 'none' : ''; runBtn.disabled = false; }
-  if (logsBtn) logsBtn.style.display = running ? '' : 'none';
   if (statusPill) statusPill.innerHTML = running ? '&#9654; Running…' : '';
 }
 
-function toggleLogs(ucId) {
+async function toggleLogs(ucId) {
   const logDiv = document.getElementById(`log-${ucId}`);
   if (!logDiv) return;
   const logsBtn = document.getElementById(`logs-btn-${ucId}`);
   const isVisible = logDiv.style.display !== 'none';
-  logDiv.style.display = isVisible ? 'none' : '';
-  if (logsBtn) logsBtn.textContent = isVisible ? '📋 View Logs' : '📋 Hide Logs';
-  if (!isVisible) logDiv.scrollTop = logDiv.scrollHeight;
+  if (isVisible) {
+    logDiv.style.display = 'none';
+    if (logsBtn) logsBtn.textContent = '📋 View Logs';
+    return;
+  }
+  // Expand: if no active stream, fetch last job logs from API
+  if (!STATE.activeStreams[ucId]) {
+    logDiv.style.display = '';
+    logDiv.innerHTML = '<div style="color:#475569;font-size:10px;padding:4px">Loading logs…</div>';
+    if (logsBtn) logsBtn.textContent = '📋 Hide Logs';
+    try {
+      const resp = await fetch(`/studio/api/uc/${ucId}/logs`);
+      const data = await resp.json();
+      if (!data.lines || data.lines.length === 0) {
+        logDiv.innerHTML = '<div style="color:#475569;font-size:10px;padding:4px">No recent logs for this use case.</div>';
+      } else {
+        const statusColor = data.status === 'done' ? '#34d399' : data.status === 'failed' ? '#f87171' : '#fcd34d';
+        logDiv.innerHTML = `<div style="color:${statusColor};font-size:9px;padding:2px 4px;margin-bottom:4px">` +
+          `Last run: ${data.step || '?'} · ${data.status || '?'}</div>` +
+          data.lines.map(l => `<div>${escHtml(l)}</div>`).join('');
+        logDiv.scrollTop = logDiv.scrollHeight;
+      }
+    } catch(e) {
+      logDiv.innerHTML = `<div style="color:#f87171;font-size:10px;padding:4px">Failed to load logs: ${escHtml(e.message)}</div>`;
+    }
+  } else {
+    logDiv.style.display = '';
+    if (logsBtn) logsBtn.textContent = '📋 Hide Logs';
+    logDiv.scrollTop = logDiv.scrollHeight;
+  }
 }
 
 function startStreaming(ucId, jobId) {
