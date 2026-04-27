@@ -206,3 +206,84 @@ def test_ab_query_missing_query_returns_400():
     client = TestClient(app)
     resp = client.post("/api/uc/uc-test/ab-query", json={})
     assert resp.status_code == 400
+
+
+# ── Wizard: VDB validate ───────────────────────────────────────────────────────
+
+def test_wizard_validate_vdb_ok():
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    with patch("studio.api.vdb_validator.validate", return_value={"ok": True, "error": None, "collection_count": 3}):
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        resp = client.post("/api/wizard/validate-vdb", json={"type": "qdrant", "host": "localhost", "port": 6333})
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is True
+    assert resp.json()["collection_count"] == 3
+
+
+def test_wizard_validate_vdb_failure():
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    with patch("studio.api.vdb_validator.validate", return_value={"ok": False, "error": "refused", "collection_count": None}):
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        resp = client.post("/api/wizard/validate-vdb", json={"type": "qdrant"})
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is False
+
+
+# ── Wizard: PDF upload ─────────────────────────────────────────────────────────
+
+def test_wizard_upload_pdf_returns_estimate(tmp_path):
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    with patch("studio.api.ROOT", tmp_path):
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        resp = client.post(
+            "/api/wizard/upload-pdf",
+            files={"file": ("test.pdf", b"%PDF fake content " * 200, "application/pdf")},
+            data={"uc_id": "uc-new"},
+        )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["filename"] == "test.pdf"
+    assert "estimated_chunks" in data
+    assert data["estimated_chunks"] > 0
+
+
+# ── Wizard: VRAM estimate ──────────────────────────────────────────────────────
+
+def test_wizard_estimate_vram_known_model():
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    app = FastAPI()
+    app.include_router(api_router)
+    client = TestClient(app)
+    resp = client.post("/api/wizard/estimate-vram",
+                       json={"model_id": "meta-llama/Llama-3.2-3B-Instruct", "lora_rank": 16})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["fits"] is True
+    assert data["vram_required_gb"] < 22.0
+
+
+def test_wizard_estimate_vram_unknown_model():
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    app = FastAPI()
+    app.include_router(api_router)
+    client = TestClient(app)
+    resp = client.post("/api/wizard/estimate-vram",
+                       json={"model_id": "unknown/UnknownModel-999B", "lora_rank": 16})
+    assert resp.status_code == 200
+    assert resp.json()["fits"] is False or resp.json().get("error") is not None

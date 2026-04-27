@@ -3,10 +3,11 @@
 
 import json
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, UploadFile, Form
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional
+import re as _re
 
 from studio.migration import migrate_existing_use_cases, load_registry, add_to_registry
 from studio.gpu_monitor import get_gpu_status, stop_vllm_process, get_gpu_realtime
@@ -14,6 +15,7 @@ from studio.job_manager import get_manager, DuplicateJobError
 from studio import settings_manager
 from studio import curation_manager
 from studio import ab_runner
+from studio import vdb_validator
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -300,3 +302,68 @@ async def ab_query_endpoint(uc_id: str, request: Request):
         model_b_settings=body.get("model_b_settings", {}),
     )
     return JSONResponse(result)
+
+
+# ── Wizard ─────────────────────────────────────────────────────────────────────
+
+_KNOWN_PARAMS_B: dict[str, float] = {
+    "meta-llama/Llama-3.2-3B": 3.2,
+    "meta-llama/Llama-3.2-3B-Instruct": 3.2,
+    "meta-llama/Llama-3.1-8B": 8.0,
+    "meta-llama/Llama-3.1-8B-Instruct": 8.0,
+    "google/gemma-2-2b": 2.0,
+    "google/gemma-2-2b-it": 2.0,
+    "google/gemma-2-9b": 9.0,
+    "Qwen/Qwen3-1.7B": 1.7,
+    "Qwen/Qwen3-4B": 4.0,
+    "Qwen/Qwen3-8B": 8.0,
+}
+_GPU_VRAM_GB = 22.0  # A10G default
+
+
+@api_router.post("/wizard/validate-vdb")
+async def wizard_validate_vdb(request: Request):
+    body = await request.json()
+    return JSONResponse(vdb_validator.validate(body))
+
+
+@api_router.post("/wizard/upload-pdf")
+async def wizard_upload_pdf(file: UploadFile, uc_id: str = Form("")):
+    content = await file.read()
+    size_mb = len(content) / (1024 * 1024)
+    estimated_chunks = max(1, int(len(content) / 600))
+    upload_dir = ROOT / "tmp" / "uploads" / (uc_id or "default")
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    dest = upload_dir / (file.filename or "upload.pdf")
+    dest.write_bytes(content)
+    return JSONResponse({
+        "filename": file.filename,
+        "size_mb": round(size_mb, 2),
+        "estimated_chunks": estimated_chunks,
+        "path": str(dest),
+    })
+
+
+@api_router.post("/wizard/estimate-vram")
+async def wizard_estimate_vram(request: Request):
+    body = await request.json()
+    model_id: str = body.get("model_id", "")
+    lora_rank: int = int(body.get("lora_rank", 16))
+    params_b = _KNOWN_PARAMS_B.get(model_id)
+    if params_b is None:
+        m = _re.search(r"(\d+(?:\.\d+)?)[Bb]", model_id.split("/")[-1])
+        params_b = float(m.group(1)) if m else None
+    if params_b is None:
+        return JSONResponse({
+            "vram_required_gb": None, "fits": False,
+            "fits_with_reduced_batch": False,
+            "error": "Unknown model — specify parameter count manually",
+        })
+    vram = round((params_b * 0.7) + 4.0, 1)
+    vram_reduced = round((params_b * 0.7) + 2.5, 1)
+    return JSONResponse({
+        "vram_required_gb": vram,
+        "fits": vram <= _GPU_VRAM_GB,
+        "fits_with_reduced_batch": vram_reduced <= _GPU_VRAM_GB,
+        "params_billions": params_b,
+    })
