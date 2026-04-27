@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
 import studio.settings_manager as sm
 from studio.gpu_monitor import parse_gpu_realtime
 
@@ -163,3 +163,40 @@ def test_ab_curate_rejects_traversal(tmp_path):
             assert False, "Should have raised HTTPException"
         except HTTPException as e:
             assert e.status_code == 400
+
+
+# ── A/B query ──────────────────────────────────────────────────────────────────
+
+def test_ab_query_returns_both_responses():
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    mock_result = {
+        "response_a": {"text": "Local answer.", "latency_ms": 800, "source": "local-vllm"},
+        "response_b": {"text": "Cloud answer.", "latency_ms": 1200, "source": "anthropic"},
+    }
+    with patch("studio.api.ab_runner.run_ab_query", new_callable=AsyncMock) as mock_ab:
+        mock_ab.return_value = mock_result
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        resp = client.post("/api/uc/uc-test/ab-query", json={
+            "query": "What is RAG?",
+            "model_a_settings": {"temperature": 0.2},
+            "model_b_settings": {"provider": "anthropic"},
+        })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["response_a"]["text"] == "Local answer."
+    assert data["response_b"]["text"] == "Cloud answer."
+
+
+def test_ab_query_missing_query_returns_400():
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    app = FastAPI()
+    app.include_router(api_router)
+    client = TestClient(app)
+    resp = client.post("/api/uc/uc-test/ab-query", json={})
+    assert resp.status_code == 400

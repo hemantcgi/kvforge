@@ -13,6 +13,7 @@ from studio.gpu_monitor import get_gpu_status, stop_vllm_process, get_gpu_realti
 from studio.job_manager import get_manager, DuplicateJobError
 from studio import settings_manager
 from studio import curation_manager
+from studio import ab_runner
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -281,3 +282,21 @@ async def ab_curate_endpoint(uc_id: str, request: Request):
 def curation_status_endpoint(uc_id: str):
     _uc_path(uc_id)  # path traversal guard
     return JSONResponse(curation_manager.get_status(uc_id))
+
+
+# ── A/B query ──────────────────────────────────────────────────────────────────
+
+@api_router.post("/uc/{uc_id}/ab-query")
+async def ab_query_endpoint(uc_id: str, request: Request):
+    _uc_path(uc_id)  # path traversal guard
+    body = await request.json()
+    query = body.get("query", "")
+    if not query:
+        raise HTTPException(400, "query is required")
+    result = await ab_runner.run_ab_query(
+        uc_id=uc_id,
+        query=query,
+        model_a_settings=body.get("model_a_settings", {}),
+        model_b_settings=body.get("model_b_settings", {}),
+    )
+    return JSONResponse(result)
