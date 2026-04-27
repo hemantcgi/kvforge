@@ -266,6 +266,7 @@ def prs_history_endpoint(uc_id: str):
 
 @api_router.post("/uc/{uc_id}/ab-curate")
 async def ab_curate_endpoint(uc_id: str, request: Request):
+    _uc_path(uc_id)  # path traversal guard
     body = await request.json()
     question = body.get("question", "")
     answer = body.get("answer", "")
@@ -278,4 +279,5 @@ async def ab_curate_endpoint(uc_id: str, request: Request):
 
 @api_router.get("/uc/{uc_id}/curation-status")
 def curation_status_endpoint(uc_id: str):
+    _uc_path(uc_id)  # path traversal guard
     return JSONResponse(curation_manager.get_status(uc_id))

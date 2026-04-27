@@ -124,7 +124,8 @@ def test_ab_curate_appends_record(tmp_path):
     from fastapi import FastAPI
     (tmp_path / "examples" / "uc-test").mkdir(parents=True)
     import studio.curation_manager as cur
-    with patch.object(cur, "ROOT", tmp_path), \
+    with patch("studio.api.ROOT", tmp_path), \
+         patch.object(cur, "ROOT", tmp_path), \
          patch("studio.api.curation_manager.ROOT", tmp_path):
         app = FastAPI()
         app.include_router(api_router)
@@ -149,3 +150,16 @@ def test_curation_status_empty(tmp_path):
     assert resp.status_code == 200
     assert resp.json()["count"] == 0
     assert resp.json()["at_threshold"] is False
+
+
+def test_ab_curate_rejects_traversal(tmp_path):
+    """Test that ab-curate rejects path traversal attempts."""
+    from studio.api import _uc_path
+    from fastapi import HTTPException
+    with patch("studio.api.ROOT", tmp_path):
+        # Test that _uc_path raises HTTPException 400 on traversal
+        try:
+            _uc_path("../etc/passwd")
+            assert False, "Should have raised HTTPException"
+        except HTTPException as e:
+            assert e.status_code == 400
