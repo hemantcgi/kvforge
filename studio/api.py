@@ -9,8 +9,9 @@ from pydantic import BaseModel
 from typing import Optional
 
 from studio.migration import migrate_existing_use_cases, load_registry, add_to_registry
-from studio.gpu_monitor import get_gpu_status, stop_vllm_process
+from studio.gpu_monitor import get_gpu_status, stop_vllm_process, get_gpu_realtime
 from studio.job_manager import get_manager, DuplicateJobError
+from studio import settings_manager
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -209,3 +210,27 @@ def stop_job(job_id: str):
             pass
     jm.stop(job_id)
     return {"status": "stopped"}
+
+
+# ── Settings ──────────────────────────────────────────────────────────────────
+
+@api_router.get("/settings")
+def get_settings_endpoint():
+    return JSONResponse(settings_manager.get_masked())
+
+
+@api_router.post("/settings")
+async def save_settings_endpoint(request: Request):
+    body = await request.json()
+    try:
+        settings_manager.save(body)
+    except ValueError as e:
+        raise HTTPException(400, detail=str(e))
+    return JSONResponse({"ok": True})
+
+
+# ── GPU realtime ───────────────────────────────────────────────────────────────
+
+@api_router.get("/gpu/realtime")
+def gpu_realtime_endpoint():
+    return JSONResponse(get_gpu_realtime())
