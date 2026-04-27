@@ -9,7 +9,11 @@ CURATED_FILENAME = "faqs_curated.json"
 
 
 def _path(uc_id: str) -> Path:
-    return ROOT / "examples" / uc_id / CURATED_FILENAME
+    p = (ROOT / "examples" / uc_id / CURATED_FILENAME).resolve()
+    allowed = (ROOT / "examples").resolve()
+    if not p.is_relative_to(allowed):
+        raise ValueError(f"Invalid uc_id escapes examples directory: {uc_id!r}")
+    return p
 
 
 def _load(uc_id: str) -> list:

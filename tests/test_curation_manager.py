@@ -38,7 +38,8 @@ def test_append_stores_fields(uc_dir):
 
 
 def test_get_status_empty(uc_dir):
-    with patch.object(cm, "ROOT", uc_dir):
+    with patch.object(cm, "ROOT", uc_dir), \
+         patch("studio.settings_manager.SETTINGS_FILE", uc_dir / "settings.json"):
         status = cm.get_status("test-uc")
     assert status["count"] == 0
     assert status["threshold"] == 50
@@ -46,7 +47,8 @@ def test_get_status_empty(uc_dir):
 
 
 def test_get_status_at_threshold(uc_dir):
-    with patch.object(cm, "ROOT", uc_dir):
+    with patch.object(cm, "ROOT", uc_dir), \
+         patch("studio.settings_manager.SETTINGS_FILE", uc_dir / "settings.json"):
         for i in range(50):
             cm.append("test-uc", f"Q{i}", f"A{i}")
         status = cm.get_status("test-uc")
@@ -67,3 +69,9 @@ def test_write_is_atomic(uc_dir):
     with patch.object(cm, "ROOT", uc_dir):
         cm.append("test-uc", "Q", "A")
         assert not (uc_dir / "examples" / "test-uc" / "faqs_curated.tmp").exists()
+
+
+def test_path_traversal_rejected(uc_dir):
+    with patch.object(cm, "ROOT", uc_dir):
+        with pytest.raises(ValueError, match="escapes examples directory"):
+            cm.get_status("../../etc")
