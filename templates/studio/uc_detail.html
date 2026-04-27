@@ -489,21 +489,24 @@ svg.prs-chart { width: 100%; height: 130px; display: block; overflow: visible; }
           <span class="ab-models">Model A = KVForge Llama 3.2 3B LoRA v3 &nbsp;·&nbsp; Model B = Claude Haiku 4.5 (FloTorch)</span>
         </div>
         <div class="ab-query-row">
-          <input class="ab-input" value="What are the default quota limits for Amazon Bedrock on-demand throughput?" readonly>
-          <div class="ab-run">▶ Run both</div>
+          <input class="ab-input" id="ab-query-input" value="What are the default quota limits for Amazon Bedrock on-demand throughput?" placeholder="Enter your question…">
+          <div class="ab-run" id="ab-run-btn" onclick="runQuery()">▶ Run both</div>
         </div>
         <div class="ab-cols">
           <div class="ab-col ab-col-a">
-            <div class="ab-col-label">Model A · KVForge LoRA<span class="ab-badge">0.81 s · Phase 3</span></div>
-            <div class="ab-text">Amazon Bedrock enforces default service quotas per AWS region. On-demand throughput is limited to 60 requests per minute with up to 100 concurrent invocations per model. You can request quota increases via the AWS Service Quotas console.</div>
-            <div class="ab-meta"><div class="ab-meta-item"><b>Latency</b> 0.81 s</div><div class="ab-meta-item"><b>Source</b> parametric weights</div><div class="ab-meta-item"><b>Confidence</b> 0.88</div></div>
+            <div class="ab-col-label">Model A · KVForge LoRA<span class="ab-badge" id="ab-badge-a">0.81 s · Phase 3</span></div>
+            <div class="ab-text" id="ab-text-a">Amazon Bedrock enforces default service quotas per AWS region. On-demand throughput is limited to 60 requests per minute with up to 100 concurrent invocations per model. You can request quota increases via the AWS Service Quotas console.</div>
+            <div class="ab-meta"><div class="ab-meta-item"><b>Latency</b> <span id="ab-latency-a">0.81 s</span></div><div class="ab-meta-item"><b>Source</b> <span id="ab-source-a">parametric weights</span></div><div class="ab-meta-item"><b>Confidence</b> 0.88</div></div>
+            <div style="margin-top:8px"><button onclick="verdict('a')" style="background:#1a2a3a;border:1px solid #264f78;color:#9cdcfe;font-size:9px;padding:3px 10px;border-radius:4px;cursor:pointer">▲ Prefer A</button></div>
           </div>
           <div class="ab-col ab-col-b">
-            <div class="ab-col-label">Model B · Haiku 4.5<span class="ab-badge">1.24 s · API</span></div>
-            <div class="ab-text">Amazon Bedrock quota limits vary by model and AWS region. Default limits include restrictions on requests per minute and tokens per minute per foundation model. View or request increases via Service Quotas in the AWS Management Console.</div>
-            <div class="ab-meta"><div class="ab-meta-item"><b>Latency</b> 1.24 s</div><div class="ab-meta-item"><b>Source</b> API call</div><div class="ab-meta-item"><b>Cost</b> ~$0.0003</div></div>
+            <div class="ab-col-label">Model B · Haiku 4.5<span class="ab-badge" id="ab-badge-b">1.24 s · API</span></div>
+            <div class="ab-text" id="ab-text-b">Amazon Bedrock quota limits vary by model and AWS region. Default limits include restrictions on requests per minute and tokens per minute per foundation model. View or request increases via Service Quotas in the AWS Management Console.</div>
+            <div class="ab-meta"><div class="ab-meta-item"><b>Latency</b> <span id="ab-latency-b">1.24 s</span></div><div class="ab-meta-item"><b>Source</b> <span id="ab-source-b">API call</span></div><div class="ab-meta-item"><b>Cost</b> ~$0.0003</div></div>
+            <div style="margin-top:8px"><button onclick="verdict('b')" style="background:#1a3020;border:1px solid #1e5c4f;color:#4ec9b0;font-size:9px;padding:3px 10px;border-radius:4px;cursor:pointer">▲ Prefer B</button></div>
           </div>
         </div>
+        <div style="margin-top:8px;font-size:8px;color:#374151">Curation: <span id="curate-count">—</span> / <span id="curate-threshold">—</span> pairs curated <span id="curate-at-threshold" style="display:none;color:#4ec9b0;margin-left:6px">✓ threshold reached</span></div>
       </div>
     </div>
   </div>
@@ -524,6 +527,9 @@ svg.prs-chart { width: 100%; height: 130px; display: block; overflow: visible; }
 </div>
 
 <script>
+// Module-level state for A/B panel
+let lastQuery = '', lastResponseA = '', lastResponseB = '';
+
 // PRS data points with version, date, and training details
 async function loadUCState() {
   try {
@@ -552,6 +558,8 @@ async function loadUCState() {
       }
     }
   } catch (e) { /* non-fatal */ }
+
+  loadCurationStatus();
 }
 
 loadUCState();
@@ -689,6 +697,107 @@ function drawChart() {
       dot.setAttribute('r', parseInt(dot.dataset.idx) === PRS_POINTS.length - 1 ? 5 : 4);
     });
   });
+}
+
+// ── A/B Query Panel ──
+
+async function runQuery() {
+  const input = document.getElementById('ab-query-input');
+  const query = (input.value || '').trim();
+  if (!query) return;
+
+  const textA = document.getElementById('ab-text-a');
+  const textB = document.getElementById('ab-text-b');
+  const badgeA = document.getElementById('ab-badge-a');
+  const badgeB = document.getElementById('ab-badge-b');
+  const latA = document.getElementById('ab-latency-a');
+  const latB = document.getElementById('ab-latency-b');
+  const srcA = document.getElementById('ab-source-a');
+  const srcB = document.getElementById('ab-source-b');
+  const btn = document.getElementById('ab-run-btn');
+
+  textA.textContent = 'Querying…';
+  textB.textContent = 'Querying…';
+  btn.style.opacity = '0.5';
+  btn.style.pointerEvents = 'none';
+
+  try {
+    const resp = await fetch(`/api/uc/${UC_ID}/ab-query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, model_a_settings: {}, model_b_settings: {} }),
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    const ra = data.response_a || {};
+    const rb = data.response_b || {};
+
+    lastQuery = query;
+    lastResponseA = ra.text || '';
+    lastResponseB = rb.text || '';
+
+    textA.textContent = ra.text || '(no response)';
+    textB.textContent = rb.text || '(no response)';
+
+    if (ra.latency_ms != null) {
+      const s = (ra.latency_ms / 1000).toFixed(2);
+      latA.textContent = s + ' s';
+      badgeA.textContent = s + ' s · ' + (ra.source || 'local');
+    }
+    if (rb.latency_ms != null) {
+      const s = (rb.latency_ms / 1000).toFixed(2);
+      latB.textContent = s + ' s';
+      badgeB.textContent = s + ' s · ' + (rb.source || 'cloud');
+    }
+    if (ra.source) srcA.textContent = ra.source;
+    if (rb.source) srcB.textContent = rb.source;
+  } catch (err) {
+    textA.textContent = 'Error: ' + err.message;
+    textB.textContent = 'Error: ' + err.message;
+  } finally {
+    btn.style.opacity = '';
+    btn.style.pointerEvents = '';
+  }
+}
+
+async function verdict(choice) {
+  if (!lastQuery) return;
+  const answer = choice === 'a' ? lastResponseA : lastResponseB;
+  const source_model = 'model_' + choice;
+  try {
+    const resp = await fetch(`/api/uc/${UC_ID}/ab-curate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: lastQuery, answer, source_model }),
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    const countEl = document.getElementById('curate-count');
+    if (countEl && data.count != null) countEl.textContent = data.count;
+    if (data.at_threshold) {
+      const badge = document.getElementById('curate-at-threshold');
+      if (badge) badge.style.display = '';
+    }
+  } catch (err) {
+    console.error('Curate error:', err);
+  }
+}
+
+async function loadCurationStatus() {
+  try {
+    const resp = await fetch(`/api/uc/${UC_ID}/curation-status`);
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const countEl = document.getElementById('curate-count');
+    const threshEl = document.getElementById('curate-threshold');
+    const badge = document.getElementById('curate-at-threshold');
+    if (countEl && data.count != null) countEl.textContent = data.count;
+    if (threshEl && data.threshold != null) threshEl.textContent = data.threshold;
+    if (badge && data.at_threshold) badge.style.display = '';
+  } catch (err) {
+    console.warn('Curation status load failed:', err);
+  }
 }
 
 // ── GPU Monitor ──
