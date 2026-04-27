@@ -812,8 +812,9 @@ async function runSleepFaq(ucId) {
     body: JSON.stringify({uc_id: ucId, step: 'sleep-faq'}),
   });
   if (!r.ok) { const e = await r.json(); showToast('Error: ' + (e.detail || 'unknown'), true); return; }
+  const { job_id } = await r.json();
   showToast('Sleep-time FAQ generation started');
-  setTimeout(() => refreshRegistry(), 3000);
+  startStreaming(ucId, job_id);
 }
 
 function renderSleepFaqPanel(ucId, cfg) {
@@ -1037,15 +1038,25 @@ async function toggleLogs(ucId) {
       logDiv.innerHTML = `<div style="color:#f87171;font-size:10px;padding:4px">Failed to load logs: ${escHtml(e.message)}</div>`;
     }
   } else {
+    // Active stream — show logDiv. If empty (panel opened mid-run), backfill buffered lines from API.
     logDiv.style.display = '';
     if (logsBtn) logsBtn.textContent = '📋 Hide Logs';
+    if (!logDiv.hasChildNodes()) {
+      try {
+        const resp = await fetch(`/studio/api/uc/${ucId}/logs`);
+        const data = await resp.json();
+        if (data.lines && data.lines.length > 0) {
+          logDiv.innerHTML = data.lines.map(l => `<div>${escHtml(l)}</div>`).join('');
+        }
+      } catch(e) { /* ignore — new lines from SSE will populate the div */ }
+    }
     logDiv.scrollTop = logDiv.scrollHeight;
   }
 }
 
 function startStreaming(ucId, jobId) {
   _setRunningUI(ucId, true);
-  // Show log area automatically
+  // Show log area if Training panel is open; logs will backfill via toggleLogs if panel opens later
   const logDiv = document.getElementById(`log-${ucId}`);
   if (logDiv) { logDiv.style.display = ''; logDiv.innerHTML = ''; }
   const logsBtn = document.getElementById(`logs-btn-${ucId}`);
