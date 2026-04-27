@@ -538,7 +538,7 @@ let lastQuery = '', lastResponseA = '', lastResponseB = '';
 // PRS data points with version, date, and training details
 async function loadUCState() {
   try {
-    const resp = await fetch(`/api/uc/${UC_ID}/config`);
+    const resp = await fetch(`/studio/api/uc/${UC_ID}/config`);
     if (!resp.ok) return;
     const cfg = await resp.json();
     document.getElementById('uc-title').textContent = cfg.name || UC_ID;
@@ -547,7 +547,7 @@ async function loadUCState() {
   }
 
   try {
-    const resp = await fetch(`/api/registry`);
+    const resp = await fetch(`/studio/api/registry`);
     if (!resp.ok) return;
     const reg = await resp.json();
     const uc = (reg.use_cases || reg).find(u => u.id === UC_ID);
@@ -573,7 +573,7 @@ const PRS_POINTS = [];  // populated by loadPRSHistory()
 
 async function loadPRSHistory() {
   try {
-    const resp = await fetch(`/api/uc/${UC_ID}/prs-history`);
+    const resp = await fetch(`/studio/api/uc/${UC_ID}/prs-history`);
     if (!resp.ok) return;
     const data = await resp.json();
     PRS_POINTS.length = 0;
@@ -729,7 +729,7 @@ async function runQuery() {
   btn.style.pointerEvents = 'none';
 
   try {
-    const resp = await fetch(`/api/uc/${UC_ID}/ab-query`, {
+    const resp = await fetch(`/studio/api/uc/${UC_ID}/ab-query`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, model_a_settings: {}, model_b_settings: {} }),
@@ -787,7 +787,7 @@ async function verdict(choice) {
   const answer = choice === 'a' ? lastResponseA : lastResponseB;
   const source_model = 'model_' + choice;
   try {
-    const resp = await fetch(`/api/uc/${UC_ID}/ab-curate`, {
+    const resp = await fetch(`/studio/api/uc/${UC_ID}/ab-curate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question: lastQuery, answer, source_model }),
@@ -820,7 +820,7 @@ async function verdict(choice) {
 
 async function loadCurationStatus() {
   try {
-    const resp = await fetch(`/api/uc/${UC_ID}/curation-status`);
+    const resp = await fetch(`/studio/api/uc/${UC_ID}/curation-status`);
     if (!resp.ok) return;
     const data = await resp.json();
     const countEl = document.getElementById('curate-count');
@@ -858,7 +858,7 @@ async function refreshGpuData() {
 
   let result;
   try {
-    const resp = await fetch('/api/gpu/realtime');
+    const resp = await fetch('/studio/api/gpu/realtime');
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     result = await resp.json();
   } catch (err) {

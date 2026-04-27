@@ -60,7 +60,6 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
 .uz-btn { display: inline-block; background: #264f7822; border: 1px solid #264f78; color: #9cdcfe; padding: 3px 10px; border-radius: 4px; font-size: 9px; margin-top: 5px; cursor: pointer; }
 .status-line { font-size: 9px; margin-bottom: 6px; min-height: 14px; }
 .status-ok { color: #4ec9b0; }
-.status-ok { color: #4ec9b0; }
 .status-err { color: #f87171; }
 .status-info { color: #9cdcfe; }
 
@@ -690,7 +689,7 @@ async function loadExistingUCs() {
   const sel = document.getElementById('existing-uc-select');
   if (!sel) return;
   try {
-    const resp = await fetch('/api/registry');
+    const resp = await fetch('/studio/api/registry');
     if (!resp.ok) throw new Error('Failed to load use cases');
     const data = await resp.json();
     const ucs = data.use_cases || data || [];
@@ -733,7 +732,7 @@ async function handlePdfUpload(file) {
   fd.append('file', file);
   fd.append('uc_id', WIZARD.data.uc_id || 'new-uc');
   try {
-    const resp = await fetch('/api/wizard/upload-pdf', { method: 'POST', body: fd });
+    const resp = await fetch('/studio/api/wizard/upload-pdf', { method: 'POST', body: fd });
     if (!resp.ok) throw new Error(`Server error ${resp.status}`);
     const data = await resp.json();
     WIZARD.data.pdf = data;
@@ -821,7 +820,7 @@ async function testVdbConnection() {
   resultEl.className = 'status-line status-info';
 
   try {
-    const resp = await fetch('/api/wizard/validate-vdb', {
+    const resp = await fetch('/studio/api/wizard/validate-vdb', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(config),
@@ -900,7 +899,7 @@ async function checkCustomVram() {
   pill.className = 'vram-pill vram-unknown';
 
   try {
-    const resp = await fetch('/api/wizard/estimate-vram', {
+    const resp = await fetch('/studio/api/wizard/estimate-vram', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model_id: modelId, lora_rank: 16 }),
@@ -930,7 +929,7 @@ async function loadGpuCards() {
   if (!container) return;
 
   try {
-    const resp = await fetch('/api/gpu/realtime');
+    const resp = await fetch('/studio/api/gpu/realtime');
     if (!resp.ok) throw new Error(`Server error ${resp.status}`);
     const data = await resp.json();
 
@@ -1068,7 +1067,7 @@ async function launchPipeline() {
     WIZARD.data.uc_id = ucId;
 
     try {
-      const createResp = await fetch('/api/uc/new', {
+      const createResp = await fetch('/studio/api/uc/new', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ id: ucId, display_name: ucName || ucId }),
@@ -1125,7 +1124,7 @@ async function startPipelineStep(step) {
   if (stepEl) stepEl.dataset.status = 'running';
   updateStepDots();
 
-  const resp = await fetch('/api/run-step', {
+  const resp = await fetch('/studio/api/run-step', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({uc_id: WIZARD.data.uc_id, step}),
