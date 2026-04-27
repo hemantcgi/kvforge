@@ -189,6 +189,12 @@ def test_ab_query_returns_both_responses():
     data = resp.json()
     assert data["response_a"]["text"] == "Local answer."
     assert data["response_b"]["text"] == "Cloud answer."
+    mock_ab.assert_called_once_with(
+        uc_id="uc-test",
+        query="What is RAG?",
+        model_a_settings={"temperature": 0.2},
+        model_b_settings={"provider": "anthropic"},
+    )
 
 
 def test_ab_query_missing_query_returns_400():
