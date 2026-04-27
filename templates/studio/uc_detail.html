@@ -839,57 +839,121 @@ let gpuOverlayOpen = false;
 let gpuRefreshInterval = null;
 let gpuSecondsAgo = 0;
 
-const GPU_BASE = [
-  { id: 0, util: 8,  memUsed: 1.2,  temp: 36, pwr: 72  },
-  { id: 1, util: 94, memUsed: 19.4, temp: 71, pwr: 195 },
-  { id: 2, util: 91, memUsed: 18.9, temp: 69, pwr: 190 },
-  { id: 3, util: 93, memUsed: 19.1, temp: 70, pwr: 192 },
-];
-
-function jitter(val, range) {
-  return Math.max(0, val + (Math.random() - 0.5) * range);
-}
-
 function barClass(util) {
   return util >= 80 ? 'bar-high' : util >= 50 ? 'bar-med' : 'bar-low';
 }
 function textClass(util) {
   return util >= 80 ? 'util-high' : util >= 50 ? 'util-med' : 'util-low';
 }
-function memColor(used) {
-  return used >= 18 ? '#f87171' : used >= 14 ? '#fcd34d' : '#4ec9b0';
+function memColor(used, total) {
+  const pct = total > 0 ? used / total : 0;
+  return pct >= 0.8 ? '#f87171' : pct >= 0.6 ? '#fcd34d' : '#4ec9b0';
 }
 
-function refreshGpuData() {
+async function refreshGpuData() {
   gpuSecondsAgo = 0;
-  let totalMem = 0, totalUtil = 0, maxTemp = 0;
+  document.getElementById('gpu-refresh-badge').textContent = '↻ live · 0s ago';
 
-  GPU_BASE.forEach(g => {
-    const util = Math.round(Math.min(100, Math.max(0, jitter(g.util, 6))));
-    const mem  = Math.min(22, Math.max(0, jitter(g.memUsed, 0.3)));
-    const temp = Math.round(jitter(g.temp, 2));
-    const pwr  = Math.round(jitter(g.pwr, 8));
-    const memPct = (mem / 22) * 100;
+  let result;
+  try {
+    const resp = await fetch('/api/gpu/realtime');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    result = await resp.json();
+  } catch (err) {
+    // Network/fetch error — show error state in pill and badge
+    const pill = document.getElementById('gpu-pill-btn');
+    if (pill) { pill.textContent = 'GPU — error'; pill.style.background = '#1a1a1a'; pill.style.color = '#6b7280'; pill.style.borderColor = '#374151'; }
+    document.getElementById('gpu-refresh-badge').textContent = '↻ error';
+    return;
+  }
+
+  // Error state: nvidia-smi not available or similar
+  if (result.error && (!result.gpus || result.gpus.length === 0)) {
+    const pill = document.getElementById('gpu-pill-btn');
+    if (pill) { pill.textContent = 'No GPU available'; pill.style.background = '#1a1a1a'; pill.style.color = '#6b7280'; pill.style.borderColor = '#374151'; }
+    document.getElementById('gpu-refresh-badge').textContent = '↻ unavailable';
+    // Show error message in gpu-table area
+    const table = document.getElementById('gpu-table');
+    if (table) {
+      // Only update if not already showing error to avoid re-rendering on every tick
+      if (!table.dataset.errorShown) {
+        // Hide existing static GPU rows
+        Array.from(table.querySelectorAll('.gpu-row')).forEach(r => { r.style.display = 'none'; });
+        const errDiv = document.createElement('div');
+        errDiv.id = 'gpu-error-msg';
+        errDiv.style.cssText = 'padding:16px 12px;font-size:10px;color:#6b7280;font-family:monospace;text-align:center;';
+        errDiv.textContent = result.error || 'GPU monitoring unavailable';
+        table.appendChild(errDiv);
+        table.dataset.errorShown = '1';
+      }
+    }
+    return;
+  }
+
+  // Restore static rows if a previous error was displayed
+  const table = document.getElementById('gpu-table');
+  if (table && table.dataset.errorShown) {
+    Array.from(table.querySelectorAll('.gpu-row')).forEach(r => { r.style.display = ''; });
+    const errDiv = document.getElementById('gpu-error-msg');
+    if (errDiv) errDiv.remove();
+    delete table.dataset.errorShown;
+  }
+
+  // Update GPU pill in topbar
+  const pill = document.getElementById('gpu-pill-btn');
+  if (pill) {
+    const gpuCount = result.gpus.length;
+    if (result.has_free_gpu) {
+      const freeGpu = result.gpus.find(g => g.status === 'free');
+      const utilStr = freeGpu ? `${freeGpu.util_pct}%` : 'free';
+      pill.textContent = `GPU ${utilStr}`;
+      pill.style.background = '#1a3020';
+      pill.style.color = '#4ec9b0';
+      pill.style.borderColor = '#1e5c4f';
+    } else {
+      const avgUtil = Math.round(result.gpus.reduce((s, g) => s + g.util_pct, 0) / gpuCount);
+      pill.textContent = `GPU ${avgUtil}% · ${gpuCount} busy`;
+      pill.style.background = '#2a1e00';
+      pill.style.color = '#fcd34d';
+      pill.style.borderColor = '#78350f';
+    }
+  }
+
+  // Update each GPU row with live data
+  let totalMem = 0, totalTotal = 0, totalUtil = 0, maxTemp = 0;
+
+  result.gpus.forEach(g => {
+    const id = g.id;
+    const util = g.util_pct;
+    const memUsed = g.used_gb;
+    const memTotal = g.total_gb;
+    const temp = g.temp_c;
+    const pwr = g.power_w;
+    const memPct = memTotal > 0 ? (memUsed / memTotal) * 100 : 0;
     const bc = barClass(util);
 
-    document.getElementById(`util-${g.id}`).textContent = util + '%';
-    document.getElementById(`util-${g.id}`).className = `gpu-util-val ${textClass(util)}`;
-    document.getElementById(`utilbar-${g.id}`).style.width = util + '%';
-    document.getElementById(`utilbar-${g.id}`).className = `gpu-util-bar ${bc}`;
-    document.getElementById(`mem-${g.id}`).textContent = mem.toFixed(1) + ' / 22.0 GB';
-    document.getElementById(`mem-${g.id}`).style.color = memColor(mem);
-    document.getElementById(`membar-${g.id}`).style.width = memPct.toFixed(1) + '%';
-    document.getElementById(`membar-${g.id}`).className = `gpu-util-bar ${bc}`;
-    document.getElementById(`temp-${g.id}`).textContent = temp + '°C';
-    document.getElementById(`pwr-${g.id}`).textContent = pwr + 'W';
+    const utilEl = document.getElementById(`util-${id}`);
+    if (utilEl) { utilEl.textContent = util + '%'; utilEl.className = `gpu-util-val ${textClass(util)}`; }
+    const utilbarEl = document.getElementById(`utilbar-${id}`);
+    if (utilbarEl) { utilbarEl.style.width = util + '%'; utilbarEl.className = `gpu-util-bar ${bc}`; }
+    const memEl = document.getElementById(`mem-${id}`);
+    if (memEl) { memEl.textContent = memUsed.toFixed(1) + ' / ' + memTotal.toFixed(1) + ' GB'; memEl.style.color = memColor(memUsed, memTotal); }
+    const membarEl = document.getElementById(`membar-${id}`);
+    if (membarEl) { membarEl.style.width = memPct.toFixed(1) + '%'; membarEl.className = `gpu-util-bar ${bc}`; }
+    const tempEl = document.getElementById(`temp-${id}`);
+    if (tempEl) tempEl.textContent = temp + '°C';
+    const pwrEl = document.getElementById(`pwr-${id}`);
+    if (pwrEl) pwrEl.textContent = pwr + 'W';
 
-    totalMem += mem; totalUtil += util; maxTemp = Math.max(maxTemp, temp);
+    totalMem += memUsed;
+    totalTotal += memTotal;
+    totalUtil += util;
+    maxTemp = Math.max(maxTemp, temp);
   });
 
-  document.getElementById('avg-util').textContent = Math.round(totalUtil / 4) + '%';
+  const gpuCount = result.gpus.length || 1;
+  document.getElementById('avg-util').textContent = Math.round(totalUtil / gpuCount) + '%';
   document.getElementById('max-temp').textContent = maxTemp + '°C';
-  const totalFree = (88 - totalMem).toFixed(1);
-  document.getElementById('gpu-refresh-badge').textContent = '↻ live · 0s ago';
 }
 
 function tickRefreshBadge() {
