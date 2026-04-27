@@ -50,3 +50,10 @@ def test_empty_procs():
 def test_malformed_proc_line_skipped():
     r = parse_gpu_realtime(STATS, UUIDS, "bad-line-no-commas")
     assert r["gpus"][0]["processes"] == []
+
+
+def test_na_power_field_skipped_or_zero():
+    stats_with_na = "0, NVIDIA A10G, 1229, 22528, 8, 36, [N/A]\n1, NVIDIA A10G, 19865, 22528, 94, 71, 195.50"
+    r = parse_gpu_realtime(stats_with_na, UUIDS, PROCS)
+    assert len(r["gpus"]) == 2
+    assert r["gpus"][0]["power_w"] == 0 or r["gpus"][0]["power_w"] is None

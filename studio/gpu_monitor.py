@@ -161,19 +161,23 @@ def parse_gpu_realtime(stats_csv: str, uuid_csv: str, procs_csv: str) -> dict:
         parts = [p.strip() for p in line.split(",")]
         if len(parts) < 7:
             continue
-        used_mib = int(parts[2])
-        total_mib = int(parts[3])
-        gpus.append({
-            "id": int(parts[0]),
-            "name": parts[1],
-            "used_gb": round(used_mib / 1024, 1),
-            "total_gb": round(total_mib / 1024, 1),
-            "util_pct": int(parts[4]),
-            "temp_c": int(parts[5]),
-            "power_w": int(float(parts[6])),
-            "status": "free" if used_mib < 4096 else "busy",
-            "processes": [],
-        })
+        try:
+            used_mib = int(parts[2])
+            total_mib = int(parts[3])
+            power_str = parts[6].replace("[N/A]", "0").replace("N/A", "0")
+            gpus.append({
+                "id": int(parts[0]),
+                "name": parts[1],
+                "used_gb": round(used_mib / 1024, 1),
+                "total_gb": round(total_mib / 1024, 1),
+                "util_pct": int(parts[4]),
+                "temp_c": int(parts[5]),
+                "power_w": int(float(power_str)) if power_str else None,
+                "status": "free" if used_mib < 4096 else "busy",
+                "processes": [],
+            })
+        except (ValueError, IndexError):
+            continue
 
     uuid_to_idx: dict[str, int] = {}
     for line in uuid_csv.strip().splitlines():
