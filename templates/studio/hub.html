@@ -339,7 +339,7 @@ textarea{resize:vertical;min-height:52px}
 
 <script>
 // ── State ───────────────────────────────────────────────────────────────────
-const STATE = { ucs: [], openPanels: {}, pollingJob: null, configs: {} };
+const STATE = { ucs: [], openPanels: {}, activeStreams: {}, configs: {} };
 
 // ── Utilities ────────────────────────────────────────────────────────────────
 function showToast(msg, isError) {
@@ -507,6 +507,14 @@ async function togglePanel(ucId, mod) {
     // Render panel content
     const body = document.getElementById(`panel-body-${ucId}-${mod}`);
     body.innerHTML = renderPanelContent(ucId, mod, STATE.configs[ucId]);
+
+    // Auto-attach log stream if a job is already running for this UC
+    if (mod === 'train') {
+      const uc = STATE.ucs.find(u => u.id === ucId);
+      if (uc && uc.active_job && !STATE.activeStreams[ucId]) {
+        attachStream(ucId, uc.active_job.job_id);
+      }
+    }
   }
 
   wrap.classList.toggle('open', !isOpen);
@@ -689,10 +697,12 @@ function renderLlmPanel(ucId, cfg) {
 }
 
 function renderTrainPanel(ucId, cfg) {
+  const uc = STATE.ucs.find(u => u.id === ucId) || {};
+  const isRunning = !!uc.active_job;
   return `<div class="panel-top">
     <span>&#8635;</span>
     <span class="panel-title">Training Pipeline</span>
-    <span class="status-pill" id="train-status-${ucId}"></span>
+    <span class="status-pill" id="train-status-${ucId}">${isRunning ? '&#9654; Running…' : ''}</span>
     <div class="collapse-sm" onclick="togglePanel('${ucId}','train')">&#9650; Collapse</div>
   </div>
   <div class="section-lbl">GPU Status <span style="color:#475569;font-weight:400;cursor:pointer" onclick="refreshGpuPanel('${ucId}')">(refresh)</span></div>
@@ -703,10 +713,12 @@ function renderTrainPanel(ucId, cfg) {
   <div class="pipeline" id="pipeline-${ucId}">
     ${renderPipelineSteps(ucId, cfg)}
   </div>
+  <div class="plog" id="log-${ucId}" style="display:none"></div>
   <div class="btn-row">
-    <div class="btn btn-danger" id="stop-btn-${ucId}" style="display:none" onclick="stopJob('${ucId}')">&#9632; Stop</div>
+    <div class="btn btn-danger" id="stop-btn-${ucId}" style="${isRunning ? '' : 'display:none'}" onclick="stopJob('${ucId}')">&#9632; Stop</div>
     <div class="btn btn-ghost" onclick="togglePanel('${ucId}','train')">&#9650; Collapse</div>
-    <div class="btn btn-primary" id="run-btn-${ucId}" onclick="runNextStep('${ucId}')">&#9654; Run Pipeline</div>
+    <div class="btn btn-ghost" id="logs-btn-${ucId}" style="${isRunning ? '' : 'display:none'}" onclick="toggleLogs('${ucId}')">&#128203; View Logs</div>
+    <div class="btn btn-primary" id="run-btn-${ucId}" style="${isRunning ? 'display:none' : ''}" onclick="runNextStep('${ucId}')">&#9654; Run Pipeline</div>
   </div>`;
 }
 
@@ -948,15 +960,17 @@ async function refreshGpuPanel(ucId) {
 async function runNextStep(ucId) {
   const uc = STATE.ucs.find(u => u.id === ucId);
   const phase = uc ? (uc.phase || 1) : 1;
-  // Determine next step based on phase and training history
   let step;
   if (phase < 2 && !uc.prs) {
-    step = 'index';  // Need to index first
+    step = 'index';
   } else if (phase < 2) {
     step = 'train';
   } else {
     step = 'train';  // Round 2
   }
+
+  const runBtn = document.getElementById(`run-btn-${ucId}`);
+  if (runBtn) runBtn.disabled = true;
 
   const r = await fetch('/studio/api/run-step', {
     method: 'POST',
@@ -966,6 +980,7 @@ async function runNextStep(ucId) {
   if (!r.ok) {
     const err = await r.json();
     alert(err.detail || 'Failed to start pipeline');
+    if (runBtn) runBtn.disabled = false;
     return;
   }
   const {job_id} = await r.json();
@@ -982,22 +997,42 @@ async function runAbEval(ucId) {
   startStreaming(ucId, job_id);
 }
 
-function startStreaming(ucId, jobId) {
-  const logEl = document.getElementById(`pipeline-${ucId}`);
+function _setRunningUI(ucId, running) {
   const stopBtn = document.getElementById(`stop-btn-${ucId}`);
   const runBtn  = document.getElementById(`run-btn-${ucId}`);
-  if (stopBtn) stopBtn.style.display = '';
-  if (runBtn)  runBtn.style.display  = 'none';
+  const logsBtn = document.getElementById(`logs-btn-${ucId}`);
+  const statusPill = document.getElementById(`train-status-${ucId}`);
+  if (stopBtn) stopBtn.style.display = running ? '' : 'none';
+  if (runBtn)  { runBtn.style.display = running ? 'none' : ''; runBtn.disabled = false; }
+  if (logsBtn) logsBtn.style.display = running ? '' : 'none';
+  if (statusPill) statusPill.innerHTML = running ? '&#9654; Running…' : '';
+}
 
-  // Append live log area
-  if (logEl) {
-    logEl.innerHTML += `<div class="plog" id="log-${ucId}"></div>`;
-  }
+function toggleLogs(ucId) {
+  const logDiv = document.getElementById(`log-${ucId}`);
+  if (!logDiv) return;
+  const logsBtn = document.getElementById(`logs-btn-${ucId}`);
+  const isVisible = logDiv.style.display !== 'none';
+  logDiv.style.display = isVisible ? 'none' : '';
+  if (logsBtn) logsBtn.textContent = isVisible ? '📋 View Logs' : '📋 Hide Logs';
+  if (!isVisible) logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+function startStreaming(ucId, jobId) {
+  _setRunningUI(ucId, true);
+  // Show log area automatically
+  const logDiv = document.getElementById(`log-${ucId}`);
+  if (logDiv) { logDiv.style.display = ''; logDiv.innerHTML = ''; }
+  const logsBtn = document.getElementById(`logs-btn-${ucId}`);
+  if (logsBtn) logsBtn.textContent = '📋 Hide Logs';
+  attachStream(ucId, jobId);
+}
+
+function attachStream(ucId, jobId) {
+  if (STATE.activeStreams[ucId]) return;  // already attached
+  STATE.activeStreams[ucId] = jobId;
 
   const es = new EventSource(`/studio/api/stream/${jobId}`);
-  STATE.pollingJob = jobId;
-
-  // Start polling registry for status updates
   const pollInterval = setInterval(() => loadRegistry(), 5000);
 
   es.onmessage = (e) => {
@@ -1011,19 +1046,20 @@ function startStreaming(ucId, jobId) {
     if (msg.type === 'done' || msg.type === 'error') {
       es.close();
       clearInterval(pollInterval);
-      STATE.pollingJob = null;
-      if (stopBtn) stopBtn.style.display = 'none';
-      if (runBtn)  runBtn.style.display  = '';
+      delete STATE.activeStreams[ucId];
+      _setRunningUI(ucId, false);
       loadRegistry();
     }
   };
-  es.onerror = () => { es.close(); clearInterval(pollInterval); };
+  es.onerror = () => { es.close(); clearInterval(pollInterval); delete STATE.activeStreams[ucId]; };
 }
 
 async function stopJob(ucId) {
-  if (!STATE.pollingJob) return;
-  await fetch(`/studio/api/job/${STATE.pollingJob}`, {method:'DELETE'});
-  STATE.pollingJob = null;
+  const jobId = STATE.activeStreams[ucId];
+  if (!jobId) return;
+  await fetch(`/studio/api/job/${jobId}`, {method:'DELETE'});
+  delete STATE.activeStreams[ucId];
+  _setRunningUI(ucId, false);
 }
 
 // ── New UC ────────────────────────────────────────────────────────────────────
@@ -1174,7 +1210,8 @@ async function wzNext() {
       var data = await resp.json();
       if (resp.ok) {
         closeWizard();
-        if (typeof loadRegistry === 'function') loadRegistry();
+        await loadRegistry();
+        startStreaming(_wzUcId, data.job_id);
       } else {
         err.textContent = data.detail || 'Launch failed'; err.classList.add('visible');
       }
