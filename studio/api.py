@@ -327,14 +327,21 @@ async def wizard_validate_vdb(request: Request):
     return JSONResponse(vdb_validator.validate(body))
 
 
+_UC_ID_SAFE_RE = _re.compile(r'^[a-zA-Z0-9_-]{1,64}$')
+_MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
+
 @api_router.post("/wizard/upload-pdf")
 async def wizard_upload_pdf(file: UploadFile, uc_id: str = Form("")):
     content = await file.read()
+    if len(content) > _MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="File exceeds 50 MB limit")
+    safe_uc_id = uc_id if _UC_ID_SAFE_RE.match(uc_id) else "default"
+    safe_name = Path(file.filename or "upload.pdf").name or "upload.pdf"
     size_mb = len(content) / (1024 * 1024)
     estimated_chunks = max(1, int(len(content) / 600))
-    upload_dir = ROOT / "tmp" / "uploads" / (uc_id or "default")
+    upload_dir = ROOT / "tmp" / "uploads" / safe_uc_id
     upload_dir.mkdir(parents=True, exist_ok=True)
-    dest = upload_dir / (file.filename or "upload.pdf")
+    dest = upload_dir / safe_name
     dest.write_bytes(content)
     return JSONResponse({
         "filename": file.filename,
