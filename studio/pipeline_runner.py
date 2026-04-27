@@ -17,6 +17,7 @@ STEP_MODULES = {
     "prs-eval":  "pipeline.prs_evaluator",
     "ab-eval":   "pipeline.ab_evaluator",
     "sleep-faq": "pipeline.sleep_faq_generator",
+    "faq-gen-cloud": "pipeline.sleep_faq_generator",
 }
 
 # Steps that require a free GPU — sleep-faq calls a cloud REST API, no GPU needed
@@ -85,6 +86,22 @@ def _build_cmd(uc_id: str, step: str) -> list[str]:
                 cmd += ["--count", "50"]
         else:
             cmd += ["--count", "50"]
+    if step == "faq-gen-cloud":
+        from studio.settings_manager import get_setting
+        output = str(ROOT / "examples" / uc_id / "faqs.json")
+        cmd += ["--output", output]
+        uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
+        provider = "anthropic"
+        count = 50
+        if uc_cfg_path.exists():
+            try:
+                uc_cfg = json.loads(uc_cfg_path.read_text())
+                provider = uc_cfg.get("llm", {}).get("cloud_provider", "anthropic")
+                count = int(uc_cfg.get("llm", {}).get("sleep_faq_count", 50))
+            except Exception:
+                pass
+        api_key = get_setting(f"{provider}_api_key") or ""
+        cmd += ["--provider", provider, "--api-key", api_key, "--count", str(count)]
     return cmd
 
 
