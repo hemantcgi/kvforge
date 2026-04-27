@@ -1,1 +1,987 @@
-<html><body>Wizard placeholder</body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KVForge Studio — New Use Case Setup</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #111827; color: #d4d4d4; font-family: system-ui, sans-serif; font-size: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
+.subtitle { color: #6b7280; font-size: 11px; margin-bottom: 20px; }
+
+.wizard-outer { width: 100%; max-width: 480px; }
+
+/* Topbar */
+.wiz-top { background: #181818; border-bottom: 1px solid #2d2d2d; padding: 8px 12px; display: flex; align-items: center; gap: 8px; border-radius: 10px 10px 0 0; }
+.wiz-logo { width: 20px; height: 20px; background: linear-gradient(135deg, #264f78, #4ec9b0); border-radius: 5px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 8px; flex-shrink: 0; }
+.wiz-title { color: #d4d4d4; font-weight: 700; font-size: 11px; flex: 1; }
+.wiz-close { color: #4b5563; font-size: 12px; cursor: pointer; }
+.wiz-close:hover { color: #9cdcfe; }
+
+/* Step frame */
+.wiz-frame { background: #1e1e1e; border: 1px solid #2d2d2d; border-radius: 10px; overflow: hidden; }
+
+/* Progress bar */
+.wiz-prog { padding: 8px 12px 0; }
+.prog-bar { display: flex; gap: 2px; margin-bottom: 3px; }
+.ps { flex: 1; height: 2px; border-radius: 1px; transition: background 0.3s; }
+.ps.done { background: #4ec9b0; }
+.ps.active { background: #9cdcfe; }
+.ps.future { background: #2d2d2d; }
+.prog-labels { display: flex; justify-content: space-between; font-size: 7px; color: #404040; margin-bottom: 8px; }
+.prog-labels .cur { color: #9cdcfe; }
+
+/* Body */
+.wiz-body { padding: 10px 12px 12px; }
+.step-title { color: #9cdcfe; font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+.step-sub { color: #6b7280; font-size: 9px; margin-bottom: 10px; }
+
+/* Step panels */
+.step-panel { display: none; }
+.step-panel.active { display: block; }
+
+/* Source cards */
+.src-cards { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+.src-card { border-radius: 6px; padding: 7px 10px; display: flex; align-items: center; gap: 9px; cursor: pointer; transition: all 0.15s; }
+.src-card.sel { border: 1px solid #4ec9b0; background: #1a2e28; }
+.src-card.unsel { border: 1px solid #2d2d2d; background: #181818; }
+.src-card:hover { border-color: #4ec9b088; }
+.src-icon { font-size: 16px; }
+.src-title { font-size: 10px; font-weight: 600; color: #d4d4d4; }
+.src-sub { font-size: 8px; color: #6b7280; }
+
+/* Upload zone */
+.upload-zone { border: 1px dashed #264f78; border-radius: 6px; padding: 12px; text-align: center; margin-bottom: 8px; background: #181818; cursor: pointer; transition: all 0.15s; }
+.upload-zone.dragover { border-color: #4ec9b0; background: #1a2e28; }
+.upload-zone:hover { border-color: #4ec9b088; }
+.uz-icon { font-size: 20px; margin-bottom: 3px; }
+.uz-text { color: #6b7280; font-size: 9px; }
+.uz-btn { display: inline-block; background: #264f7822; border: 1px solid #264f78; color: #9cdcfe; padding: 3px 10px; border-radius: 4px; font-size: 9px; margin-top: 5px; cursor: pointer; }
+.status-line { font-size: 9px; margin-bottom: 6px; min-height: 14px; }
+.status-ok { color: #4ec9b0; }
+.status-err { color: #f87171; }
+.status-info { color: #9cdcfe; }
+
+/* VDB grid */
+.vdb-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 8px; }
+.vdb-tile { border: 1px solid #2d2d2d; border-radius: 5px; padding: 6px 8px; text-align: center; cursor: pointer; background: #181818; transition: all .15s; }
+.vdb-tile:hover { border-color: #4ec9b088; }
+.vdb-tile.sel { border-color: #4ec9b0; background: #1a2e28; }
+.vdb-name { font-size: 9px; font-weight: 700; color: #d4d4d4; }
+.vdb-tag { font-size: 7px; color: #6b7280; margin-top: 1px; }
+.vdb-tag.cloud { color: #9cdcfe; }
+
+/* VDB sub-panels */
+.vdb-fields { display: none; }
+.vdb-fields.visible { display: block; }
+
+/* Field */
+.field { margin-bottom: 7px; }
+.flabel { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #6b7280; margin-bottom: 3px; }
+.finput { width: 100%; background: #181818; border: 1px solid #2d2d2d; border-radius: 4px; padding: 5px 8px; color: #d4d4d4; font-size: 10px; font-family: monospace; }
+.finput:focus { outline: none; border-color: #4ec9b0; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+
+/* Test VDB button */
+.test-btn { background: #264f7822; border: 1px solid #264f78; color: #9cdcfe; padding: 4px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; margin-bottom: 6px; }
+.test-btn:hover { background: #264f7844; }
+
+/* Model cards */
+.model-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
+.model-card { border-radius: 6px; padding: 7px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.15s; }
+.model-card.sel { border: 1px solid #4ec9b0; background: #1a2e28; }
+.model-card.unsel { border: 1px solid #2d2d2d; background: #181818; }
+.model-card:hover { border-color: #4ec9b088; }
+.mc-icon { font-size: 14px; }
+.mc-name { font-size: 10px; font-weight: 700; color: #d4d4d4; }
+.mc-meta { font-size: 8px; color: #6b7280; }
+.mc-vram { margin-left: auto; flex-shrink: 0; }
+.vram-pill { font-size: 8px; font-weight: 700; padding: 2px 6px; border-radius: 3px; }
+.vram-ok { background: #1a3a2a; color: #4ec9b0; border: 1px solid #1e5c4f; }
+.vram-warn { background: #2a2a1a; color: #fcd34d; border: 1px solid #4a4a1a; }
+.vram-bad { background: #3a1a1a; color: #f87171; border: 1px solid #5a2020; }
+.vram-unknown { background: #1e1e1e; color: #6b7280; border: 1px solid #2d2d2d; }
+
+/* Custom model row */
+.custom-model-row { display: flex; gap: 5px; align-items: center; }
+.custom-model-row .finput { flex: 1; }
+.check-btn { background: #264f7822; border: 1px solid #264f78; color: #9cdcfe; padding: 4px 8px; border-radius: 4px; font-size: 9px; cursor: pointer; white-space: nowrap; }
+.check-btn:hover { background: #264f7844; }
+
+/* GPU grid */
+.gpu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+.gpu-card { border-radius: 6px; padding: 8px; cursor: pointer; transition: all 0.15s; }
+.gpu-card.free { border: 1px solid #1e5c4f; background: #111a14; }
+.gpu-card.busy { border: 1px solid #3a1a1a; background: #1a1111; opacity: 0.7; cursor: not-allowed; }
+.gpu-card.selected { border: 1px solid #4ec9b0; background: #1a2e28; box-shadow: 0 0 0 1px #4ec9b022; }
+.gpu-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.gpu-id { font-size: 10px; font-weight: 700; }
+.gpu-card.free .gpu-id, .gpu-card.selected .gpu-id { color: #4ec9b0; }
+.gpu-card.busy .gpu-id { color: #f87171; }
+.gpu-badge { font-size: 7px; padding: 1px 5px; border-radius: 3px; }
+.gpu-card.free .gpu-badge, .gpu-card.selected .gpu-badge { background: #1a3a2a; color: #4ec9b0; }
+.gpu-card.busy .gpu-badge { background: #3a1a1a; color: #f87171; }
+.vbar { height: 3px; background: #2d2d2d; border-radius: 2px; overflow: hidden; margin-bottom: 3px; }
+.vfill { height: 100%; border-radius: 2px; }
+.gpu-card.free .vfill, .gpu-card.selected .vfill { background: #4ec9b0; }
+.gpu-card.busy .vfill { background: #f87171; }
+.gpu-mem { font-size: 7px; color: #6b7280; }
+.gpu-model-text { font-size: 7px; margin-top: 3px; color: #6b7280; }
+.gpu-error { font-size: 9px; color: #f87171; padding: 8px; }
+
+/* Feasibility banner */
+.feasibility { border-radius: 5px; padding: 7px 9px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.feas-ok { background: #1a2e28; border: 1px solid #1e5c4f; }
+.feas-warn { background: #2a2a1a; border: 1px solid #4a4a1a; }
+.feas-icon { font-size: 16px; }
+.feas-title { font-size: 10px; font-weight: 700; }
+.feas-ok .feas-title { color: #4ec9b0; }
+.feas-warn .feas-title { color: #fcd34d; }
+.feas-sub { font-size: 8px; color: #6b7280; margin-top: 1px; }
+
+/* Fine-tuning params */
+.param-section { margin-bottom: 8px; }
+.param-header { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #4ec9b0; margin-bottom: 5px; padding-bottom: 3px; border-bottom: 1px solid #2d2d2d; }
+.slider-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.slider-label { font-size: 9px; color: #808080; width: 80px; flex-shrink: 0; }
+.slider { flex: 1; accent-color: #4ec9b0; }
+.slider-val { font-size: 9px; color: #9cdcfe; font-family: monospace; width: 36px; text-align: right; flex-shrink: 0; }
+
+/* FAQ gen */
+.gen-toggle { display: flex; border: 1px solid #2d2d2d; border-radius: 5px; overflow: hidden; margin-bottom: 8px; }
+.gen-opt { flex: 1; padding: 6px; text-align: center; font-size: 9px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.gen-opt.sel { background: #1a2e28; color: #4ec9b0; }
+.gen-opt.unsel { background: #181818; color: #6b7280; }
+.gen-opt:hover { color: #9cdcfe; }
+
+/* Progress step */
+.pipe-steps { display: flex; flex-direction: column; gap: 0; }
+.pipe-step { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; position: relative; }
+.pipe-step:not(:last-child)::after { content:''; position:absolute; left:8px; top:22px; bottom:0; width:1px; background:#2d2d2d; }
+.ps-dot { width:18px; height:18px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:9px; margin-top:1px; }
+.ps-done { background:#1a3a2a; color:#4ec9b0; }
+.ps-run { background:#1a2a3a; color:#9cdcfe; box-shadow:0 0 6px #264f7855; }
+.ps-pend { background:#1e1e1e; border:1px solid #2d2d2d; color:#404040; }
+.ps-title { font-size:10px; font-weight:600; }
+.ps-done-t { color:#4ec9b0; }
+.ps-run-t { color:#9cdcfe; }
+.ps-pend-t { color:#404040; }
+.ps-meta { font-size:8px; color:#4b5563; margin-top:1px; }
+.ps-log { background:#111; border:1px solid #2d2d2d; border-radius:3px; padding:4px 7px; font-family:monospace; font-size:8px; color:#4ec9b0; margin-top:4px; max-height:36px; overflow:hidden; }
+.cursor { display:inline-block; width:5px; height:9px; background:#4ec9b0; animation:blink 1s infinite; vertical-align:middle; }
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* Nav */
+.wiz-nav { display:flex; justify-content:space-between; align-items:center; padding-top:8px; border-top:1px solid #2d2d2d; margin-top:8px; }
+.nav-back { color:#4b5563; font-size:9px; cursor:pointer; background:none; border:none; font-family:inherit; }
+.nav-back:hover { color:#9cdcfe; }
+.nav-back:disabled { opacity:0.3; cursor:default; }
+.nav-indicator { font-size:8px; color:#404040; }
+.nav-next { background:linear-gradient(135deg,#264f78,#1e5c4f); color:#d4d4d4; font-size:9px; font-weight:700; padding:4px 12px; border-radius:4px; cursor:pointer; border:none; font-family:inherit; }
+.nav-next:hover:not(:disabled) { opacity:0.9; }
+.nav-next:disabled { opacity:0.4; cursor:not-allowed; }
+.nav-next.launch { background:linear-gradient(135deg,#1e5c4f,#4ec9b0); color:#0a1a10; }
+
+/* Review table */
+.review-table { background:#181818; border:1px solid #2d2d2d; border-radius:6px; padding:8px 10px; margin-bottom:8px; }
+.review-row { display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid #252525; font-size:9px; }
+.review-row:last-child { border-bottom:none; }
+.review-key { color:#6b7280; }
+.review-val { color:#d4d4d4; font-family:monospace; }
+</style>
+</head>
+<body>
+
+<div class="wizard-outer">
+  <div class="wiz-frame">
+    <!-- Topbar (shared across steps via JS control) -->
+    <div class="wiz-top">
+      <div class="wiz-logo">KV</div>
+      <span class="wiz-title">New Use Case Setup</span>
+      <span class="wiz-close" onclick="window.history.back()">✕</span>
+    </div>
+
+    <!-- Progress bar — updated by goStep() -->
+    <div class="wiz-prog">
+      <div class="prog-bar" id="prog-bar">
+        <div class="ps active" data-idx="0"></div>
+        <div class="ps future" data-idx="1"></div>
+        <div class="ps future" data-idx="2"></div>
+        <div class="ps future" data-idx="3"></div>
+        <div class="ps future" data-idx="4"></div>
+        <div class="ps future" data-idx="5"></div>
+        <div class="ps future" data-idx="6"></div>
+      </div>
+      <div class="prog-labels" id="prog-labels">
+        <span data-idx="0">Data</span>
+        <span data-idx="1">FAQ</span>
+        <span data-idx="2">Model</span>
+        <span data-idx="3">GPU</span>
+        <span data-idx="4">Train</span>
+        <span data-idx="5">Launch</span>
+        <span data-idx="6">Live</span>
+      </div>
+    </div>
+
+    <div class="wiz-body">
+
+      <!-- ══ STEP 1: Data Source ══ -->
+      <div class="step-panel" id="step-panel-1">
+        <div class="step-title">Step 1 — Data Source</div>
+        <div class="step-sub">Where does your corpus live? Pick one.</div>
+
+        <div class="src-cards" id="src-cards">
+          <div class="src-card sel" data-src="pdf" onclick="selectSource('pdf')">
+            <div class="src-icon">📄</div>
+            <div>
+              <div class="src-title">Upload PDF</div>
+              <div class="src-sub">We chunk, embed and index it for you</div>
+            </div>
+          </div>
+          <div class="src-card unsel" data-src="vdb" onclick="selectSource('vdb')">
+            <div class="src-icon">🔌</div>
+            <div>
+              <div class="src-title">Connect Vector Database</div>
+              <div class="src-sub">Qdrant · Chroma · FAISS · Pinecone · Weaviate · Milvus · custom</div>
+            </div>
+          </div>
+          <div class="src-card unsel" data-src="hf" onclick="selectSource('hf')">
+            <div class="src-icon">🤗</div>
+            <div>
+              <div class="src-title">HuggingFace Dataset</div>
+              <div class="src-sub">Any dataset ID from hub.huggingface.co</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PDF Upload sub-panel -->
+        <div id="src-pdf-panel">
+          <div class="upload-zone" id="pdf-drop-zone">
+            <div class="uz-icon">☁</div>
+            <div class="uz-text">Drag PDF here or</div>
+            <div class="uz-btn" onclick="document.getElementById('pdf-file-input').click()">Browse file</div>
+            <input type="file" id="pdf-file-input" accept=".pdf" style="display:none" onchange="handlePdfUpload(this.files[0])">
+          </div>
+          <div class="status-line" id="pdf-status"></div>
+        </div>
+
+        <!-- VDB Connect sub-panel -->
+        <div id="src-vdb-panel" style="display:none">
+          <div class="vdb-grid" id="vdb-grid">
+            <div class="vdb-tile sel" data-vdb="qdrant" onclick="selectVdb('qdrant')"><div class="vdb-name">Qdrant</div><div class="vdb-tag">local/cloud</div></div>
+            <div class="vdb-tile" data-vdb="chroma" onclick="selectVdb('chroma')"><div class="vdb-name">ChromaDB</div><div class="vdb-tag">local</div></div>
+            <div class="vdb-tile" data-vdb="faiss" onclick="selectVdb('faiss')"><div class="vdb-name">FAISS</div><div class="vdb-tag">local</div></div>
+            <div class="vdb-tile" data-vdb="pinecone" onclick="selectVdb('pinecone')"><div class="vdb-name">Pinecone</div><div class="vdb-tag cloud">cloud</div></div>
+            <div class="vdb-tile" data-vdb="weaviate" onclick="selectVdb('weaviate')"><div class="vdb-name">Weaviate</div><div class="vdb-tag cloud">cloud</div></div>
+            <div class="vdb-tile" data-vdb="milvus" onclick="selectVdb('milvus')"><div class="vdb-name">Milvus</div><div class="vdb-tag cloud">cloud</div></div>
+            <div class="vdb-tile" data-vdb="generic" onclick="selectVdb('generic')" style="grid-column:span 3"><div class="vdb-name">Custom / OpenAI-compatible</div><div class="vdb-tag">enter base URL</div></div>
+          </div>
+
+          <!-- Qdrant fields -->
+          <div class="vdb-fields visible" id="vdb-fields-qdrant">
+            <div class="field"><div class="flabel">Host / URL</div><input id="vdb-host" class="finput" placeholder="localhost" value="localhost"></div>
+            <div class="row2">
+              <div class="field"><div class="flabel">Port</div><input id="vdb-port" class="finput" placeholder="6333" value="6333"></div>
+              <div class="field"><div class="flabel">API Key (optional)</div><input id="vdb-apikey" class="finput" type="password" placeholder="sk-..."></div>
+            </div>
+            <div class="field"><div class="flabel">Collection</div><input id="vdb-collection" class="finput" placeholder="my-collection"></div>
+          </div>
+
+          <!-- Pinecone fields -->
+          <div class="vdb-fields" id="vdb-fields-pinecone">
+            <div class="field"><div class="flabel">API Key</div><input id="vdb-apikey-pc" class="finput" type="password" placeholder="pc-..."></div>
+            <div class="field"><div class="flabel">Index Name</div><input id="vdb-collection-pc" class="finput" placeholder="my-index"></div>
+          </div>
+
+          <!-- FAISS fields -->
+          <div class="vdb-fields" id="vdb-fields-faiss">
+            <div class="field"><div class="flabel">Index path</div><input id="vdb-path" class="finput" placeholder="/data/index.faiss"></div>
+          </div>
+
+          <!-- Weaviate fields -->
+          <div class="vdb-fields" id="vdb-fields-weaviate">
+            <div class="field"><div class="flabel">URL</div><input id="vdb-host-wv" class="finput" placeholder="https://...weaviate.network"></div>
+            <div class="field"><div class="flabel">API Key</div><input id="vdb-apikey-wv" class="finput" type="password" placeholder="wv-..."></div>
+          </div>
+
+          <!-- Chroma / Milvus fields -->
+          <div class="vdb-fields" id="vdb-fields-chroma">
+            <div class="field"><div class="flabel">Host</div><input id="vdb-host-ch" class="finput" placeholder="localhost"></div>
+            <div class="row2">
+              <div class="field"><div class="flabel">Port</div><input id="vdb-port-ch" class="finput" placeholder="8000"></div>
+              <div class="field"><div class="flabel">Collection</div><input id="vdb-collection-ch" class="finput" placeholder="my-collection"></div>
+            </div>
+          </div>
+
+          <!-- Milvus fields -->
+          <div class="vdb-fields" id="vdb-fields-milvus">
+            <div class="field"><div class="flabel">Host</div><input id="vdb-host-mv" class="finput" placeholder="localhost"></div>
+            <div class="row2">
+              <div class="field"><div class="flabel">Port</div><input id="vdb-port-mv" class="finput" placeholder="19530"></div>
+              <div class="field"><div class="flabel">Collection</div><input id="vdb-collection-mv" class="finput" placeholder="my-collection"></div>
+            </div>
+          </div>
+
+          <!-- Generic fields -->
+          <div class="vdb-fields" id="vdb-fields-generic">
+            <div class="field"><div class="flabel">Base URL</div><input id="vdb-host-gn" class="finput" placeholder="https://api.example.com"></div>
+            <div class="row2">
+              <div class="field"><div class="flabel">Auth Header Key</div><input id="vdb-auth-key" class="finput" placeholder="Authorization"></div>
+              <div class="field"><div class="flabel">Auth Header Value</div><input id="vdb-auth-val" class="finput" type="password" placeholder="Bearer sk-..."></div>
+            </div>
+          </div>
+
+          <button class="test-btn" onclick="testVdbConnection()">Test Connection</button>
+          <div class="status-line" id="vdb-test-result"></div>
+        </div>
+
+        <!-- HuggingFace sub-panel -->
+        <div id="src-hf-panel" style="display:none">
+          <div class="field"><div class="flabel">Dataset ID</div><input id="hf-dataset-id" class="finput" placeholder="squad, rajpurkar/squad, ..."></div>
+          <div class="field"><div class="flabel">Split (optional)</div><input id="hf-split" class="finput" placeholder="train" value="train"></div>
+        </div>
+
+        <div class="wiz-nav">
+          <button class="nav-back" disabled onclick="prevStep()">← Back</button>
+          <span class="nav-indicator">1 of 7</span>
+          <button class="nav-next" id="step1-next" disabled onclick="nextStep()">Next →</button>
+        </div>
+      </div><!-- /step-panel-1 -->
+
+      <!-- ══ STEP 2: Training Q&A ══ -->
+      <div class="step-panel" id="step-panel-2">
+        <div class="step-title">Step 2 — Training Q&amp;A</div>
+        <div class="step-sub">Upload an existing dataset or generate synthetic Q&amp;A from your corpus.</div>
+
+        <div class="gen-toggle">
+          <div class="gen-opt sel" onclick="selectGenMode('upload', this)">⬆ Upload existing</div>
+          <div class="gen-opt unsel" onclick="selectGenMode('local', this)">🖥 Generate local</div>
+          <div class="gen-opt unsel" onclick="selectGenMode('cloud', this)">☁ Generate cloud</div>
+        </div>
+
+        <div id="gen-upload-panel">
+          <div class="upload-zone">
+            <div class="uz-icon">📋</div>
+            <div class="uz-text">JSON array of {question, answer} pairs</div>
+            <div class="uz-btn" onclick="document.getElementById('faq-file-input').click()">Browse file</div>
+            <input type="file" id="faq-file-input" accept=".json,.jsonl" style="display:none" onchange="handleFaqUpload(this.files[0])">
+          </div>
+          <div class="status-line" id="faq-upload-status"></div>
+        </div>
+
+        <div id="gen-local-panel" style="display:none">
+          <div class="field"><div class="flabel">Target Q&amp;A count</div><input id="gen-count-local" class="finput" value="2000"></div>
+          <div class="field"><div class="flabel">Q&amp;A per chunk</div><input id="gen-per-chunk-local" class="finput" value="4"></div>
+        </div>
+
+        <div id="gen-cloud-panel" style="display:none">
+          <div class="field"><div class="flabel">LLM Provider</div>
+            <select id="gen-provider" class="finput">
+              <option value="openai">OpenAI</option>
+              <option value="anthropic">Anthropic (Claude)</option>
+              <option value="gemini">Google Gemini</option>
+            </select>
+          </div>
+          <div class="field"><div class="flabel">API Key</div><input id="gen-api-key" class="finput" type="password" placeholder="sk-..."></div>
+          <div class="field"><div class="flabel">Target Q&amp;A count</div><input id="gen-count-cloud" class="finput" value="2000"></div>
+        </div>
+
+        <div class="wiz-nav">
+          <button class="nav-back" onclick="prevStep()">← Back</button>
+          <span class="nav-indicator">2 of 7</span>
+          <button class="nav-next" onclick="nextStep()">Next →</button>
+        </div>
+      </div><!-- /step-panel-2 -->
+
+      <!-- ══ STEP 3: Model Selection ══ -->
+      <div class="step-panel" id="step-panel-3">
+        <div class="step-title">Step 3 — Select Model</div>
+        <div class="step-sub">VRAM shown for your largest free GPU. Cached = already downloaded.</div>
+
+        <div class="model-list" id="model-list">
+          <div class="model-card sel" data-model="meta-llama/Llama-3.2-3B-Instruct" onclick="selectModel(this)">
+            <div class="mc-icon">🦙</div>
+            <div>
+              <div class="mc-name">Llama 3.2 3B Instruct</div>
+              <div class="mc-meta">meta-llama/Llama-3.2-3B-Instruct · 4-bit</div>
+            </div>
+            <div class="mc-vram"><span class="vram-pill vram-ok">6 GB ✓</span></div>
+          </div>
+          <div class="model-card unsel" data-model="google/gemma-3-4b-it" onclick="selectModel(this)">
+            <div class="mc-icon">💎</div>
+            <div>
+              <div class="mc-name">Gemma 3 4B</div>
+              <div class="mc-meta">google/gemma-3-4b-it · 4-bit</div>
+            </div>
+            <div class="mc-vram"><span class="vram-pill vram-ok">8 GB ✓</span></div>
+          </div>
+          <div class="model-card unsel" data-model="Qwen/Qwen3-8B" onclick="selectModel(this)">
+            <div class="mc-icon">🐉</div>
+            <div>
+              <div class="mc-name">Qwen3 8B</div>
+              <div class="mc-meta">Qwen/Qwen3-8B · 4-bit</div>
+            </div>
+            <div class="mc-vram"><span class="vram-pill vram-warn">16 GB ⚠</span></div>
+          </div>
+          <div class="model-card unsel" data-model="custom" onclick="selectModel(this)">
+            <div class="mc-icon">🔗</div>
+            <div>
+              <div class="mc-name">Custom HuggingFace ID</div>
+              <div class="mc-meta">Enter any model path</div>
+            </div>
+            <div class="mc-vram"><span class="vram-pill vram-unknown" id="custom-vram-pill">TBD</span></div>
+          </div>
+        </div>
+
+        <!-- Custom model input — shown only when "custom" card is selected -->
+        <div id="custom-model-row" style="display:none; margin-bottom:8px;">
+          <div class="field"><div class="flabel">HuggingFace model ID</div>
+            <div class="custom-model-row">
+              <input id="custom-model-id" class="finput" placeholder="org/model-name" oninput="onCustomModelInput()">
+              <button class="check-btn" onclick="checkCustomVram()">Check VRAM</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="wiz-nav">
+          <button class="nav-back" onclick="prevStep()">← Back</button>
+          <span class="nav-indicator">3 of 7</span>
+          <button class="nav-next" id="step3-next" onclick="goToGpu()">Next →</button>
+        </div>
+      </div><!-- /step-panel-3 -->
+
+      <!-- ══ STEP 4: GPU + Feasibility ══ -->
+      <div class="step-panel" id="step-panel-4">
+        <div class="step-title">Step 4 — GPU Selection</div>
+        <div class="step-sub">Pick the GPU for fine-tuning. Free = no vLLM process running.</div>
+
+        <div class="gpu-grid" id="gpu-cards">
+          <div style="grid-column:span 2; font-size:9px; color:#6b7280; padding:8px 0;">Loading GPU status…</div>
+        </div>
+
+        <div id="feasibility-banner" style="display:none"></div>
+
+        <div class="wiz-nav">
+          <button class="nav-back" onclick="prevStep()">← Back</button>
+          <span class="nav-indicator">4 of 7</span>
+          <button class="nav-next" id="step4-next" onclick="nextStep()">Next →</button>
+        </div>
+      </div><!-- /step-panel-4 -->
+
+      <!-- ══ STEP 5: Fine-tuning Params ══ -->
+      <div class="step-panel" id="step-panel-5">
+        <div class="step-title">Step 5 — Fine-tuning Parameters</div>
+        <div class="step-sub">Defaults work well for most corpora. Adjust if needed.</div>
+
+        <div class="param-section">
+          <div class="param-header">LoRA Config</div>
+          <div class="slider-row">
+            <span class="slider-label">Rank (r)</span>
+            <input type="range" class="slider" min="4" max="64" value="16" id="lora-rank"
+              oninput="document.getElementById('lora-rank-val').textContent=this.value; WIZARD.data.lora_rank=parseInt(this.value);">
+            <span class="slider-val" id="lora-rank-val">16</span>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">Alpha</span>
+            <input type="range" class="slider" min="8" max="128" value="32" id="lora-alpha"
+              oninput="document.getElementById('lora-alpha-val').textContent=this.value; WIZARD.data.lora_alpha=parseInt(this.value);">
+            <span class="slider-val" id="lora-alpha-val">32</span>
+          </div>
+          <div class="slider-row">
+            <span class="slider-label">Dropout</span>
+            <input type="range" class="slider" min="0" max="20" value="5" id="lora-dropout"
+              oninput="document.getElementById('lora-dropout-val').textContent=(this.value/100).toFixed(2); WIZARD.data.lora_dropout=this.value/100;">
+            <span class="slider-val" id="lora-dropout-val">0.05</span>
+          </div>
+        </div>
+
+        <div class="param-section">
+          <div class="param-header">Training</div>
+          <div class="row3">
+            <div class="field"><div class="flabel">Pass 1 epochs</div><input id="epochs-pass1" class="finput" value="3" oninput="WIZARD.data.epochs_pass1=parseInt(this.value)||3"></div>
+            <div class="field"><div class="flabel">Pass 2 epochs</div><input id="epochs-pass2" class="finput" value="2" oninput="WIZARD.data.epochs_pass2=parseInt(this.value)||2"></div>
+            <div class="field"><div class="flabel">Batch size</div><input id="batch-size" class="finput" value="4" oninput="WIZARD.data.batch_size=parseInt(this.value)||4"></div>
+          </div>
+          <div class="field"><div class="flabel">Learning rate</div><input id="learning-rate" class="finput" value="2e-4" oninput="WIZARD.data.learning_rate=this.value"></div>
+        </div>
+
+        <div class="wiz-nav">
+          <button class="nav-back" onclick="prevStep()">← Back</button>
+          <span class="nav-indicator">5 of 7</span>
+          <button class="nav-next" onclick="buildReviewAndNext()">Next →</button>
+        </div>
+      </div><!-- /step-panel-5 -->
+
+      <!-- ══ STEP 6: Review & Launch ══ -->
+      <div class="step-panel" id="step-panel-6">
+        <div class="step-title">Step 6 — Review &amp; Launch</div>
+        <div class="step-sub">Confirm everything looks right, then start the pipeline.</div>
+
+        <div class="review-table" id="review-table">
+          <!-- populated by buildReviewAndNext() -->
+        </div>
+
+        <div style="font-size:9px;color:#6b7280;margin-bottom:8px">
+          Pipeline will run: Index → KV compute → Train (pass 1) → Train (pass 2) → PRS eval → auto-advance phase
+        </div>
+
+        <div class="wiz-nav">
+          <button class="nav-back" onclick="prevStep()">← Back</button>
+          <span class="nav-indicator">6 of 7</span>
+          <button class="nav-next launch" onclick="launchPipeline()">🚀 Launch Pipeline</button>
+        </div>
+      </div><!-- /step-panel-6 -->
+
+      <!-- ══ STEP 7: Live Pipeline ══ -->
+      <div class="step-panel" id="step-panel-7">
+        <div class="step-title">Step 7 — Pipeline Running</div>
+        <div class="step-sub">Live output streamed from the server. You can close this and return anytime.</div>
+
+        <div class="pipe-steps" id="pipe-steps">
+          <div class="pipe-step">
+            <div class="ps-dot ps-pend">·</div>
+            <div><div class="ps-title ps-pend-t">Index</div><div class="ps-meta">waiting to start</div></div>
+          </div>
+          <div class="pipe-step">
+            <div class="ps-dot ps-pend">·</div>
+            <div><div class="ps-title ps-pend-t">Train — Pass 1 (raw chunks)</div><div class="ps-meta">waiting</div></div>
+          </div>
+          <div class="pipe-step">
+            <div class="ps-dot ps-pend">·</div>
+            <div><div class="ps-title ps-pend-t">Train — Pass 2 (Q&amp;A)</div><div class="ps-meta">waiting</div></div>
+          </div>
+          <div class="pipe-step">
+            <div class="ps-dot ps-pend">·</div>
+            <div><div class="ps-title ps-pend-t">PRS Evaluation</div><div class="ps-meta">waiting</div></div>
+          </div>
+          <div class="pipe-step">
+            <div class="ps-dot ps-pend">·</div>
+            <div><div class="ps-title ps-pend-t">Phase auto-advance</div><div class="ps-meta">waiting for PRS ≥ 0.75</div></div>
+          </div>
+        </div>
+
+        <div class="wiz-nav">
+          <span class="nav-back" style="color:#4ec9b0; cursor:pointer;" onclick="window.location.href='/studio'">↗ Open UC page</span>
+          <span class="nav-indicator"></span>
+          <span></span>
+        </div>
+      </div><!-- /step-panel-7 -->
+
+    </div><!-- /wiz-body -->
+  </div><!-- /wiz-frame -->
+</div><!-- /wizard-outer -->
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// WIZARD STATE & NAVIGATION
+// ═══════════════════════════════════════════════════════════
+const WIZARD = { step: 1, data: {} };
+
+const STEP_LABELS = ['Data', 'FAQ', 'Model', 'GPU', 'Train', 'Launch', 'Live'];
+
+function goStep(n) {
+  // Hide all panels
+  document.querySelectorAll('.step-panel').forEach(p => {
+    p.style.display = 'none';
+    p.classList.remove('active');
+  });
+  // Show target panel
+  const target = document.getElementById('step-panel-' + n);
+  if (target) {
+    target.style.display = 'block';
+    target.classList.add('active');
+  }
+
+  // Update progress bar
+  const bars = document.querySelectorAll('#prog-bar .ps');
+  bars.forEach((bar, i) => {
+    bar.className = 'ps ' + (i + 1 < n ? 'done' : i + 1 === n ? 'active' : 'future');
+  });
+
+  // Update progress labels
+  const labels = document.querySelectorAll('#prog-labels span');
+  labels.forEach((lbl, i) => {
+    lbl.className = (i + 1 === n) ? 'cur' : '';
+  });
+
+  WIZARD.step = n;
+  window.scrollTo(0, 0);
+
+  // Side effects per step
+  if (n === 4) loadGpuCards();
+}
+
+function nextStep() { if (WIZARD.step < 7) goStep(WIZARD.step + 1); }
+function prevStep() { if (WIZARD.step > 1) goStep(WIZARD.step - 1); }
+
+// ═══════════════════════════════════════════════════════════
+// STEP 1 — DATA SOURCE SELECTION
+// ═══════════════════════════════════════════════════════════
+let currentSource = 'pdf';
+
+function selectSource(src) {
+  currentSource = src;
+  WIZARD.data.source_type = src;
+
+  document.querySelectorAll('.src-card').forEach(c => {
+    c.className = 'src-card ' + (c.dataset.src === src ? 'sel' : 'unsel');
+  });
+
+  document.getElementById('src-pdf-panel').style.display = (src === 'pdf') ? '' : 'none';
+  document.getElementById('src-vdb-panel').style.display = (src === 'vdb') ? '' : 'none';
+  document.getElementById('src-hf-panel').style.display = (src === 'hf') ? '' : 'none';
+
+  // Reset next button when source type changes
+  const btn = document.getElementById('step1-next');
+  if (src === 'hf') {
+    btn.disabled = false; // HF dataset ID typed by user; allow proceeding
+  } else {
+    btn.disabled = true;
+  }
+}
+
+// ── PDF Upload ──
+async function handlePdfUpload(file) {
+  if (!file) return;
+  const statusEl = document.getElementById('pdf-status');
+  statusEl.textContent = 'Uploading…';
+  statusEl.className = 'status-line status-info';
+
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('uc_id', WIZARD.data.uc_id || 'new-uc');
+  try {
+    const resp = await fetch('/api/wizard/upload-pdf', { method: 'POST', body: fd });
+    const data = await resp.json();
+    WIZARD.data.pdf = data;
+    statusEl.textContent = `✓ ${data.filename} · ~${data.estimated_chunks} chunks estimated`;
+    statusEl.className = 'status-line status-ok';
+    document.getElementById('step1-next').disabled = false;
+  } catch (e) {
+    statusEl.textContent = `Upload failed: ${e.message}`;
+    statusEl.className = 'status-line status-err';
+  }
+}
+
+// Drag-and-drop for PDF
+(function setupPdfDropZone() {
+  const zone = document.getElementById('pdf-drop-zone');
+  if (!zone) return;
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) handlePdfUpload(file);
+  });
+})();
+
+// ── VDB Type Selection ──
+let currentVdb = 'qdrant';
+
+function selectVdb(type) {
+  currentVdb = type;
+  WIZARD.data.vdb_type = type;
+
+  document.querySelectorAll('#vdb-grid .vdb-tile').forEach(t => {
+    t.className = 'vdb-tile' + (t.dataset.vdb === type ? ' sel' : '');
+  });
+
+  const allFields = document.querySelectorAll('.vdb-fields');
+  allFields.forEach(f => f.classList.remove('visible'));
+
+  const target = document.getElementById('vdb-fields-' + type);
+  if (target) target.classList.add('visible');
+
+  // Reset connection result
+  document.getElementById('vdb-test-result').textContent = '';
+  document.getElementById('step1-next').disabled = true;
+}
+
+// ── VDB Connection Test ──
+async function testVdbConnection() {
+  const vdbType = currentVdb;
+  const config = { type: vdbType };
+
+  if (vdbType === 'qdrant') {
+    config.host = document.getElementById('vdb-host').value;
+    config.port = parseInt(document.getElementById('vdb-port').value) || 6333;
+    config.api_key = document.getElementById('vdb-apikey').value;
+    config.collection = document.getElementById('vdb-collection').value;
+  } else if (vdbType === 'pinecone') {
+    config.api_key = document.getElementById('vdb-apikey-pc').value;
+    config.index_name = document.getElementById('vdb-collection-pc').value;
+  } else if (vdbType === 'faiss') {
+    config.index_path = document.getElementById('vdb-path').value;
+  } else if (vdbType === 'weaviate') {
+    config.url = document.getElementById('vdb-host-wv').value;
+    config.api_key = document.getElementById('vdb-apikey-wv').value;
+  } else if (vdbType === 'chroma') {
+    config.host = document.getElementById('vdb-host-ch').value;
+    config.port = parseInt(document.getElementById('vdb-port-ch').value);
+    config.collection = document.getElementById('vdb-collection-ch').value;
+  } else if (vdbType === 'milvus') {
+    config.host = document.getElementById('vdb-host-mv').value;
+    config.port = parseInt(document.getElementById('vdb-port-mv').value);
+    config.collection = document.getElementById('vdb-collection-mv').value;
+  } else if (vdbType === 'generic') {
+    config.base_url = document.getElementById('vdb-host-gn').value;
+    config.auth_header_key = document.getElementById('vdb-auth-key').value;
+    config.auth_header_value = document.getElementById('vdb-auth-val').value;
+  }
+
+  WIZARD.data.vdb = config;
+
+  const resultEl = document.getElementById('vdb-test-result');
+  resultEl.textContent = 'Testing…';
+  resultEl.className = 'status-line status-info';
+
+  try {
+    const resp = await fetch('/api/wizard/validate-vdb', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config),
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      resultEl.textContent = `✓ Connected · ${data.collection_count != null ? data.collection_count + ' collections' : 'ready'}`;
+      resultEl.className = 'status-line status-ok';
+      document.getElementById('step1-next').disabled = false;
+    } else {
+      resultEl.textContent = `✗ ${data.error}`;
+      resultEl.className = 'status-line status-err';
+    }
+  } catch (e) {
+    resultEl.textContent = `Error: ${e.message}`;
+    resultEl.className = 'status-line status-err';
+  }
+}
+
+// ── FAQ upload (step 2) ──
+function handleFaqUpload(file) {
+  if (!file) return;
+  WIZARD.data.faq_file = file.name;
+  const statusEl = document.getElementById('faq-upload-status');
+  statusEl.textContent = `✓ ${file.name} selected`;
+  statusEl.className = 'status-line status-ok';
+}
+
+// ── FAQ generation mode ──
+function selectGenMode(mode, el) {
+  document.querySelectorAll('.gen-opt').forEach(o => o.className = 'gen-opt unsel');
+  el.className = 'gen-opt sel';
+  WIZARD.data.gen_mode = mode;
+  document.getElementById('gen-upload-panel').style.display = mode === 'upload' ? '' : 'none';
+  document.getElementById('gen-local-panel').style.display = mode === 'local' ? '' : 'none';
+  document.getElementById('gen-cloud-panel').style.display = mode === 'cloud' ? '' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════════
+// STEP 3 — MODEL SELECTION
+// ═══════════════════════════════════════════════════════════
+function selectModel(card) {
+  document.querySelectorAll('.model-card').forEach(c => {
+    c.className = 'model-card unsel';
+  });
+  card.className = 'model-card sel';
+
+  const modelId = card.dataset.model;
+  const isCustom = modelId === 'custom';
+  document.getElementById('custom-model-row').style.display = isCustom ? '' : 'none';
+
+  if (!isCustom) {
+    WIZARD.data.model_id = modelId;
+  }
+}
+
+function onCustomModelInput() {
+  const val = document.getElementById('custom-model-id').value.trim();
+  if (val) WIZARD.data.model_id = val;
+}
+
+// STEP 3 → STEP 4: trigger VRAM check if custom, then navigate
+function goToGpu() {
+  nextStep();
+}
+
+// ── VRAM check for custom model ──
+async function checkCustomVram() {
+  const modelId = document.getElementById('custom-model-id').value.trim();
+  if (!modelId) return;
+  WIZARD.data.model_id = modelId;
+
+  const pill = document.getElementById('custom-vram-pill');
+  pill.textContent = '…';
+  pill.className = 'vram-pill vram-unknown';
+
+  try {
+    const resp = await fetch('/api/wizard/estimate-vram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model_id: modelId, lora_rank: 16 }),
+    });
+    const data = await resp.json();
+    if (data.error) {
+      pill.textContent = 'Unknown';
+      pill.className = 'vram-pill vram-unknown';
+    } else {
+      pill.textContent = `${data.vram_required_gb} GB`;
+      pill.className = `vram-pill vram-${data.fits ? 'ok' : data.fits_with_reduced_batch ? 'warn' : 'bad'}`;
+      WIZARD.data.model_id = modelId;
+      WIZARD.data.vram = data;
+    }
+  } catch (e) {
+    pill.textContent = 'Error';
+    pill.className = 'vram-pill vram-unknown';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// STEP 4 — GPU CARDS
+// ═══════════════════════════════════════════════════════════
+async function loadGpuCards() {
+  const container = document.getElementById('gpu-cards');
+  if (!container) return;
+
+  try {
+    const resp = await fetch('/api/gpu/realtime');
+    const data = await resp.json();
+
+    if (!data.gpus || data.gpus.length === 0) {
+      container.innerHTML = '<div class="gpu-error" style="grid-column:span 2">No GPUs detected.</div>';
+      return;
+    }
+
+    container.innerHTML = data.gpus.map(g => {
+      const usedPct = g.total_gb > 0 ? Math.round((g.used_gb / g.total_gb) * 100) : 0;
+      const isFree = g.status === 'free';
+      const statusClass = isFree ? 'free' : 'busy';
+      return `
+        <div class="gpu-card ${statusClass}" data-gpu-id="${g.id}" onclick="selectGpu(${g.id}, this)">
+          <div class="gpu-hd">
+            <span class="gpu-id">GPU ${g.id}</span>
+            <span class="gpu-badge">${isFree ? 'Free' : 'Busy'}</span>
+          </div>
+          <div class="vbar"><div class="vfill" style="width:${usedPct}%"></div></div>
+          <div class="gpu-mem">${g.used_gb} / ${g.total_gb} GB used</div>
+          <div class="gpu-model-text">${g.name || ''}</div>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    container.innerHTML = `<div class="gpu-error" style="grid-column:span 2">GPU data unavailable: ${e.message}</div>`;
+  }
+}
+
+function selectGpu(id, el) {
+  if (el.classList.contains('busy')) return; // don't select busy GPU
+  document.querySelectorAll('.gpu-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  WIZARD.data.gpu_id = id;
+  updateFeasibilityBanner();
+}
+
+function updateFeasibilityBanner() {
+  const banner = document.getElementById('feasibility-banner');
+  if (!banner) return;
+  const vramData = WIZARD.data.vram;
+  if (!vramData || WIZARD.data.gpu_id == null) {
+    banner.style.display = 'none';
+    return;
+  }
+  banner.style.display = '';
+  if (vramData.fits) {
+    banner.className = 'feasibility feas-ok';
+    banner.innerHTML = `
+      <div class="feas-icon">✅</div>
+      <div>
+        <div class="feas-title">Fits — ${vramData.vram_required_gb} GB required · headroom available</div>
+        <div class="feas-sub">Model: ${WIZARD.data.model_id || '—'} · GPU ${WIZARD.data.gpu_id}</div>
+      </div>`;
+  } else if (vramData.fits_with_reduced_batch) {
+    banner.className = 'feasibility feas-warn';
+    banner.innerHTML = `
+      <div class="feas-icon">⚠️</div>
+      <div>
+        <div class="feas-title">Fits with reduced batch — ${vramData.vram_required_gb} GB required</div>
+        <div class="feas-sub">Model: ${WIZARD.data.model_id || '—'} · GPU ${WIZARD.data.gpu_id}</div>
+      </div>`;
+  } else {
+    banner.className = 'feasibility feas-warn';
+    banner.innerHTML = `
+      <div class="feas-icon">⛔</div>
+      <div>
+        <div class="feas-title">May not fit — ${vramData.vram_required_gb} GB required</div>
+        <div class="feas-sub">Consider a smaller model or a GPU with more VRAM.</div>
+      </div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// STEP 5/6 — REVIEW & LAUNCH
+// ═══════════════════════════════════════════════════════════
+function buildReviewAndNext() {
+  // Collect training params from DOM
+  WIZARD.data.lora_rank = parseInt(document.getElementById('lora-rank').value) || 16;
+  WIZARD.data.lora_alpha = parseInt(document.getElementById('lora-alpha').value) || 32;
+  WIZARD.data.lora_dropout = parseFloat((document.getElementById('lora-dropout').value / 100).toFixed(2));
+  WIZARD.data.epochs_pass1 = parseInt(document.getElementById('epochs-pass1').value) || 3;
+  WIZARD.data.epochs_pass2 = parseInt(document.getElementById('epochs-pass2').value) || 2;
+  WIZARD.data.batch_size = parseInt(document.getElementById('batch-size').value) || 4;
+  WIZARD.data.learning_rate = document.getElementById('learning-rate').value || '2e-4';
+
+  // Build review table
+  const d = WIZARD.data;
+  let srcLabel = '—';
+  if (d.source_type === 'pdf' && d.pdf) srcLabel = `PDF · ~${d.pdf.estimated_chunks} chunks`;
+  else if (d.source_type === 'vdb' && d.vdb) srcLabel = `${d.vdb.type} (VDB)`;
+  else if (d.source_type === 'hf') srcLabel = `HuggingFace · ${document.getElementById('hf-dataset-id').value || '—'}`;
+
+  const rows = [
+    ['Data source', srcLabel],
+    ['Q&amp;A mode', d.gen_mode || 'upload'],
+    ['Model', d.model_id || '—'],
+    ['GPU', d.gpu_id != null ? `GPU ${d.gpu_id}` : 'not selected'],
+    ['LoRA rank / alpha', `r=${d.lora_rank} · α=${d.lora_alpha}`],
+    ['Passes / epochs', `2 passes · ${d.epochs_pass1}+${d.epochs_pass2} epochs`],
+    ['Batch / LR', `batch=${d.batch_size} · lr=${d.learning_rate}`],
+  ];
+
+  document.getElementById('review-table').innerHTML = rows.map(([k, v]) =>
+    `<div class="review-row"><span class="review-key">${k}</span><span class="review-val">${v}</span></div>`
+  ).join('');
+
+  nextStep(); // go to step 6
+}
+
+async function launchPipeline() {
+  // Advance to step 7 immediately to show live view
+  nextStep();
+  // Fire the launch API if available
+  try {
+    await fetch('/api/wizard/launch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(WIZARD.data),
+    });
+  } catch (_) {
+    // Non-blocking — step 7 shows status
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+// Initialise defaults
+WIZARD.data.gen_mode = 'upload';
+WIZARD.data.lora_rank = 16;
+WIZARD.data.lora_alpha = 32;
+WIZARD.data.source_type = 'pdf';
+
+// Start on step 1
+goStep(1);
+</script>
+</body>
+</html>
