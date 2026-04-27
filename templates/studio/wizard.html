@@ -60,6 +60,7 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
 .uz-btn { display: inline-block; background: #264f7822; border: 1px solid #264f78; color: #9cdcfe; padding: 3px 10px; border-radius: 4px; font-size: 9px; margin-top: 5px; cursor: pointer; }
 .status-line { font-size: 9px; margin-bottom: 6px; min-height: 14px; }
 .status-ok { color: #4ec9b0; }
+.status-ok { color: #4ec9b0; }
 .status-err { color: #f87171; }
 .status-info { color: #9cdcfe; }
 
@@ -261,6 +262,13 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
               <div class="src-sub">Any dataset ID from hub.huggingface.co</div>
             </div>
           </div>
+          <div class="src-card unsel" data-src="existing" onclick="selectSource('existing')">
+            <div class="src-icon">🗄</div>
+            <div>
+              <div class="src-title">Already Indexed VDB</div>
+              <div class="src-sub">Skip indexing — generate FAQs &amp; fine-tune an existing collection</div>
+            </div>
+          </div>
         </div>
 
         <!-- PDF Upload sub-panel -->
@@ -350,6 +358,17 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
           <div class="field"><div class="flabel">Split (optional)</div><input id="hf-split" class="finput" placeholder="train" value="train"></div>
         </div>
 
+        <!-- Existing VDB sub-panel -->
+        <div id="src-existing-panel" style="display:none">
+          <div class="field">
+            <div class="flabel">Select use case</div>
+            <select id="existing-uc-select" class="finput" style="width:100%;background:#111827;color:#d4d4d4;border:1px solid #2d2d2d;border-radius:4px;padding:4px 6px;" onchange="selectExistingUC(this.value)">
+              <option value="">Loading use cases…</option>
+            </select>
+          </div>
+          <div class="status-line" id="existing-uc-status"></div>
+        </div>
+
         <div class="wiz-nav">
           <button class="nav-back" disabled onclick="prevStep()">← Back</button>
           <span class="nav-indicator">1 of 7</span>
@@ -363,9 +382,9 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
         <div class="step-sub">Upload an existing dataset or generate synthetic Q&amp;A from your corpus.</div>
 
         <div class="gen-toggle">
-          <div class="gen-opt sel" onclick="selectGenMode('upload', this)">⬆ Upload existing</div>
-          <div class="gen-opt unsel" onclick="selectGenMode('local', this)">🖥 Generate local</div>
-          <div class="gen-opt unsel" onclick="selectGenMode('cloud', this)">☁ Generate cloud</div>
+          <div class="gen-opt sel" data-mode="upload" onclick="selectGenMode('upload', this)">⬆ Upload existing</div>
+          <div class="gen-opt unsel" data-mode="local" onclick="selectGenMode('local', this)">🖥 Generate local</div>
+          <div class="gen-opt unsel" data-mode="cloud" onclick="selectGenMode('cloud', this)">☁ Generate cloud</div>
         </div>
 
         <div id="gen-upload-panel">
@@ -569,26 +588,7 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
         <div class="step-sub">Live output streamed from the server. You can close this and return anytime.</div>
 
         <div class="pipe-steps" id="pipe-steps">
-          <div class="pipe-step">
-            <div class="pipeline-dot pipeline-dot-pending ps-dot ps-pend" id="pipeline-step-index" data-status="pending">·</div>
-            <div><div class="ps-title ps-pend-t">Index</div><div class="ps-meta">waiting to start</div></div>
-          </div>
-          <div class="pipe-step">
-            <div class="pipeline-dot pipeline-dot-pending ps-dot ps-pend" id="pipeline-step-sleep-faq" data-status="pending">·</div>
-            <div><div class="ps-title ps-pend-t">Sleep FAQ generation</div><div class="ps-meta">waiting</div></div>
-          </div>
-          <div class="pipe-step">
-            <div class="pipeline-dot pipeline-dot-pending ps-dot ps-pend" id="pipeline-step-train" data-status="pending">·</div>
-            <div><div class="ps-title ps-pend-t">LoRA Training</div><div class="ps-meta">waiting</div></div>
-          </div>
-          <div class="pipe-step">
-            <div class="pipeline-dot pipeline-dot-pending ps-dot ps-pend" id="pipeline-step-recompute" data-status="pending">·</div>
-            <div><div class="ps-title ps-pend-t">KV Recompute</div><div class="ps-meta">waiting</div></div>
-          </div>
-          <div class="pipe-step">
-            <div class="pipeline-dot pipeline-dot-pending ps-dot ps-pend" id="pipeline-step-prs-eval" data-status="pending">·</div>
-            <div><div class="ps-title ps-pend-t">PRS Evaluation</div><div class="ps-meta">waiting for PRS ≥ 0.75</div></div>
-          </div>
+          <!-- Built dynamically by buildPipelineSteps() before launch -->
         </div>
 
         <div id="pipeline-log" style="background:#111;border:1px solid #2d2d2d;border-radius:4px;padding:6px 8px;font-family:monospace;font-size:8px;color:#4ec9b0;max-height:120px;overflow-y:auto;margin-top:8px;"></div>
@@ -643,6 +643,11 @@ function goStep(n) {
   window.scrollTo(0, 0);
 
   // Side effects per step
+  if (n === 2 && WIZARD.data.existing_uc) {
+    // Auto-select cloud generation for existing VDB use cases
+    const cloudOpt = document.querySelector('.gen-opt[data-mode="cloud"]');
+    if (cloudOpt) selectGenMode('cloud', cloudOpt);
+  }
   if (n === 4) loadGpuCards();
   if (n === 6) buildReview();
 }
@@ -658,6 +663,7 @@ let currentSource = 'pdf';
 function selectSource(src) {
   currentSource = src;
   WIZARD.data.source_type = src;
+  WIZARD.data.existing_uc = (src === 'existing');
 
   document.querySelectorAll('.src-card').forEach(c => {
     c.className = 'src-card ' + (c.dataset.src === src ? 'sel' : 'unsel');
@@ -666,13 +672,53 @@ function selectSource(src) {
   document.getElementById('src-pdf-panel').style.display = (src === 'pdf') ? '' : 'none';
   document.getElementById('src-vdb-panel').style.display = (src === 'vdb') ? '' : 'none';
   document.getElementById('src-hf-panel').style.display = (src === 'hf') ? '' : 'none';
+  document.getElementById('src-existing-panel').style.display = (src === 'existing') ? '' : 'none';
 
   // Reset next button when source type changes
   const btn = document.getElementById('step1-next');
   if (src === 'hf') {
     btn.disabled = false; // HF dataset ID typed by user; allow proceeding
+  } else if (src === 'existing') {
+    btn.disabled = true; // enabled after UC is selected
+    loadExistingUCs();
   } else {
     btn.disabled = true;
+  }
+}
+
+async function loadExistingUCs() {
+  const sel = document.getElementById('existing-uc-select');
+  if (!sel) return;
+  try {
+    const resp = await fetch('/api/registry');
+    if (!resp.ok) throw new Error('Failed to load use cases');
+    const data = await resp.json();
+    const ucs = data.use_cases || data || [];
+    sel.innerHTML = '<option value="">— choose a use case —</option>' +
+      ucs.map(uc => {
+        const id = uc.id || uc;
+        const name = uc.display_name || uc.name || id;
+        return `<option value="${id}">${name} (${id})</option>`;
+      }).join('');
+  } catch (e) {
+    sel.innerHTML = '<option value="">Error loading use cases</option>';
+  }
+}
+
+function selectExistingUC(ucId) {
+  if (!ucId) {
+    WIZARD.data.uc_id = null;
+    document.getElementById('step1-next').disabled = true;
+    document.getElementById('existing-uc-status').textContent = '';
+    return;
+  }
+  WIZARD.data.uc_id = ucId;
+  WIZARD.data.existing_uc = true;
+  document.getElementById('step1-next').disabled = false;
+  const status = document.getElementById('existing-uc-status');
+  if (status) {
+    status.textContent = `✓ "${ucId}" selected — indexing will be skipped`;
+    status.className = 'status-line status-ok';
   }
 }
 
@@ -981,9 +1027,10 @@ function collectLoraParams() {
 function buildReview() {
   const d = WIZARD.data;
   document.getElementById('review-source').textContent =
-    d.pdf ? `PDF · ${d.pdf.filename} · ~${d.pdf.estimated_chunks} chunks`
-          : d.vdb ? `VDB · ${d.vdb.type} · ${d.vdb.host || d.vdb.base_url || ''}`
-                  : `HuggingFace · ${d.hf_repo || 'not configured'}`;
+    d.existing_uc ? `Existing VDB · ${d.uc_id} (skip indexing)`
+    : d.pdf        ? `PDF · ${d.pdf.filename} · ~${d.pdf.estimated_chunks} chunks`
+    : d.vdb        ? `VDB · ${d.vdb.type} · ${d.vdb.host || d.vdb.base_url || ''}`
+                   : `HuggingFace · ${d.hf_repo || 'not configured'}`;
   document.getElementById('review-model').textContent = d.model_id || '—';
   document.getElementById('review-gpu').textContent = d.gpu_id != null ? `GPU ${d.gpu_id}` : '—';
   document.getElementById('review-faq').textContent = d.faq_mode || d.gen_mode || 'not configured';
@@ -998,41 +1045,80 @@ function buildReview() {
 // ═══════════════════════════════════════════════════════════
 async function launchPipeline() {
   const btn = document.getElementById('launch-btn');
-  btn.textContent = 'Creating use case…';
   btn.disabled = true;
 
-  const ucName = document.getElementById('uc-name') ?
-    document.getElementById('uc-name').value.trim() : 'new-uc';
-  WIZARD.data.uc_id = (ucName || 'new-uc').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-
-  try {
-    const createResp = await fetch('/api/uc/new', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        name: ucName || 'new-uc',
-        model_id: WIZARD.data.model_id,
-        gpu_id: WIZARD.data.gpu_id,
-        lora: WIZARD.data.lora,
-        vdb: WIZARD.data.vdb,
-      }),
-    });
-    if (!createResp.ok) throw new Error(await createResp.text());
-
+  if (WIZARD.data.existing_uc) {
+    // ── Existing UC: skip creation + indexing, go straight to FAQ generation ──
+    btn.textContent = 'Launching…';
     _currentStepIdx = 0;
+    const steps = ['faq-gen-cloud', 'train', 'recompute', 'prs-eval'];
+    buildPipelineSteps(steps);
     goStep(7);
-    await startPipelineStep('index');
-  } catch (e) {
-    btn.textContent = '✗ Failed — ' + e.message;
-    btn.disabled = false;
+    await startPipelineStep(steps[0]).catch(err => {
+      const el = document.getElementById(`pipeline-step-${steps[0]}`);
+      if (el) el.dataset.status = 'failed';
+      updateStepDots();
+    });
+  } else {
+    // ── New UC: create use case then run full pipeline ──
+    btn.textContent = 'Creating use case…';
+    const ucNameEl = document.getElementById('uc-name');
+    const ucName = ucNameEl ? ucNameEl.value.trim() : '';
+    const ucId = (ucName || 'new-uc').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    WIZARD.data.uc_id = ucId;
+
+    try {
+      const createResp = await fetch('/api/uc/new', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ id: ucId, display_name: ucName || ucId }),
+      });
+      if (!createResp.ok) throw new Error(await createResp.text());
+
+      _currentStepIdx = 0;
+      const steps = ['index', 'faq-gen-cloud', 'train', 'recompute', 'prs-eval'];
+      buildPipelineSteps(steps);
+      goStep(7);
+      await startPipelineStep(steps[0]).catch(err => {
+        const el = document.getElementById(`pipeline-step-${steps[0]}`);
+        if (el) el.dataset.status = 'failed';
+        updateStepDots();
+      });
+    } catch (e) {
+      const errMsg = e.message.length > 80 ? e.message.slice(0, 80) + '…' : e.message;
+      btn.textContent = '✗ Failed — ' + errMsg;
+      btn.disabled = false;
+    }
   }
 }
 
 // ═══════════════════════════════════════════════════════════
 // STEP 7 — SSE PIPELINE STREAMING
 // ═══════════════════════════════════════════════════════════
-const PIPELINE_STEPS = ['index', 'sleep-faq', 'train', 'recompute', 'prs-eval'];
+let PIPELINE_STEPS = ['index', 'faq-gen-cloud', 'train', 'recompute', 'prs-eval'];
 let _currentStepIdx = 0;
+
+const _STEP_META = {
+  'index':         { label: 'Index VDB',         meta: 'chunking, embedding, upsert' },
+  'faq-gen-cloud': { label: 'Generate FAQs',      meta: 'synthetic Q&A from corpus via cloud LLM' },
+  'sleep-faq':     { label: 'FAQ Generation',     meta: 'generate synthetic Q&A' },
+  'train':         { label: 'LoRA Training',      meta: 'fine-tune on curated Q&A pairs' },
+  'recompute':     { label: 'KV Recompute',       meta: 'rebuild KV tensors with new weights' },
+  'prs-eval':      { label: 'PRS Evaluation',     meta: 'measure parametric readiness (target ≥ 0.75)' },
+};
+
+function buildPipelineSteps(steps) {
+  PIPELINE_STEPS = steps;
+  const container = document.getElementById('pipe-steps');
+  if (!container) return;
+  container.innerHTML = steps.map(step => {
+    const m = _STEP_META[step] || { label: step, meta: 'waiting' };
+    return `<div class="pipe-step">
+      <div class="pipeline-dot pipeline-dot-pending ps-dot step-dot" id="pipeline-step-${step}" data-status="pending">·</div>
+      <div><div class="ps-title ps-pend-t">${m.label}</div><div class="ps-meta">${m.meta}</div></div>
+    </div>`;
+  }).join('');
+}
 
 async function startPipelineStep(step) {
   const stepEl = document.getElementById(`pipeline-step-${step}`);
@@ -1095,7 +1181,15 @@ function updateStepDots() {
     const el = document.getElementById(`pipeline-step-${step}`);
     if (!el) return;
     const status = el.dataset.status || 'pending';
-    el.className = `pipeline-dot pipeline-dot-${status}`;
+    el.className = `pipeline-dot pipeline-dot-${status} ps-dot step-dot`;
+    const title = el.nextElementSibling && el.nextElementSibling.querySelector('.ps-title');
+    if (title) {
+      title.className = `ps-title ${status === 'done' ? 'ps-done-t' : status === 'running' ? 'ps-run-t' : status === 'failed' ? 'ps-fail-t' : 'ps-pend-t'}`;
+    }
+    const meta = el.nextElementSibling && el.nextElementSibling.querySelector('.ps-meta');
+    if (meta && status === 'running') meta.textContent = 'running…';
+    if (meta && status === 'done') meta.textContent = 'done ✓';
+    if (meta && status === 'failed') meta.textContent = 'failed ✗';
   });
 }
 
