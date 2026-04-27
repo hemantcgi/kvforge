@@ -45,10 +45,15 @@ def studio_hub():
     return (TEMPLATES / "hub.html").read_text()
 
 
+@router.get("/wizard", response_class=HTMLResponse)
+def wizard_page():
+    return (TEMPLATES / "wizard.html").read_text()
+
+
 @router.get("/uc/{uc_id}", response_class=HTMLResponse)
 def uc_detail(uc_id: str):
     _ensure_migrated()
-    return (TEMPLATES / "hub.html").read_text()
+    return (TEMPLATES / "uc_detail.html").read_text()
 
 
 # ── SSE stream ────────────────────────────────────────────────────────────────
