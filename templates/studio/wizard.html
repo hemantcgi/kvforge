@@ -190,6 +190,13 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
 .review-row:last-child { border-bottom:none; }
 .review-key { color:#6b7280; }
 .review-val { color:#d4d4d4; font-family:monospace; }
+
+/* Pipeline dot status */
+.pipeline-dot { width:18px; height:18px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:9px; margin-top:1px; }
+.pipeline-dot-pending { background:#1e1e1e; border:1px solid #2d2d2d; color:#404040; }
+.pipeline-dot-running { background:#1a2a3a; color:#9cdcfe; box-shadow:0 0 6px #264f7855; }
+.pipeline-dot-done { background:#1a3a2a; color:#4ec9b0; }
+.pipeline-dot-failed { background:#3a1a1a; color:#f87171; }
 </style>
 </head>
 <body>
@@ -480,19 +487,19 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
           <div class="slider-row">
             <span class="slider-label">Rank (r)</span>
             <input type="range" class="slider" min="4" max="64" value="16" id="lora-rank"
-              oninput="document.getElementById('lora-rank-val').textContent=this.value; WIZARD.data.lora_rank=parseInt(this.value);">
+              oninput="document.getElementById('lora-rank-val').textContent=this.value;">
             <span class="slider-val" id="lora-rank-val">16</span>
           </div>
           <div class="slider-row">
             <span class="slider-label">Alpha</span>
             <input type="range" class="slider" min="8" max="128" value="32" id="lora-alpha"
-              oninput="document.getElementById('lora-alpha-val').textContent=this.value; WIZARD.data.lora_alpha=parseInt(this.value);">
+              oninput="document.getElementById('lora-alpha-val').textContent=this.value;">
             <span class="slider-val" id="lora-alpha-val">32</span>
           </div>
           <div class="slider-row">
             <span class="slider-label">Dropout</span>
             <input type="range" class="slider" min="0" max="20" value="5" id="lora-dropout"
-              oninput="document.getElementById('lora-dropout-val').textContent=(this.value/100).toFixed(2); WIZARD.data.lora_dropout=this.value/100;">
+              oninput="document.getElementById('lora-dropout-val').textContent=(this.value/100).toFixed(2);">
             <span class="slider-val" id="lora-dropout-val">0.05</span>
           </div>
         </div>
@@ -500,17 +507,28 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
         <div class="param-section">
           <div class="param-header">Training</div>
           <div class="row3">
-            <div class="field"><div class="flabel">Pass 1 epochs</div><input id="epochs-pass1" class="finput" value="3" oninput="WIZARD.data.epochs_pass1=parseInt(this.value)||3"></div>
-            <div class="field"><div class="flabel">Pass 2 epochs</div><input id="epochs-pass2" class="finput" value="2" oninput="WIZARD.data.epochs_pass2=parseInt(this.value)||2"></div>
-            <div class="field"><div class="flabel">Batch size</div><input id="batch-size" class="finput" value="4" oninput="WIZARD.data.batch_size=parseInt(this.value)||4"></div>
+            <div class="field"><div class="flabel">Epochs</div><input type="range" class="slider" min="1" max="20" value="3" id="lora-epochs" oninput="document.getElementById('lora-epochs-val').textContent=this.value;"><span class="slider-val" id="lora-epochs-val">3</span></div>
+            <div class="field"><div class="flabel">Batch size</div><input type="range" class="slider" min="1" max="32" value="4" id="lora-batch" oninput="document.getElementById('lora-batch-val').textContent=this.value;"><span class="slider-val" id="lora-batch-val">4</span></div>
+            <div class="field"><div class="flabel">Learning rate</div><input id="lora-lr" class="finput" value="2e-4"></div>
           </div>
-          <div class="field"><div class="flabel">Learning rate</div><input id="learning-rate" class="finput" value="2e-4" oninput="WIZARD.data.learning_rate=this.value"></div>
+          <div class="param-header" style="margin-top:6px;">Passes</div>
+          <div style="display:flex;gap:12px;margin-top:4px;font-size:9px;">
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+              <input type="radio" name="passes" value="1+2" checked> Both pass 1 &amp; 2
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+              <input type="radio" name="passes" value="1"> Pass 1 only
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+              <input type="radio" name="passes" value="2"> Pass 2 only
+            </label>
+          </div>
         </div>
 
         <div class="wiz-nav">
           <button class="nav-back" onclick="prevStep()">← Back</button>
           <span class="nav-indicator">5 of 7</span>
-          <button class="nav-next" onclick="buildReviewAndNext()">Next →</button>
+          <button class="nav-next" onclick="collectLoraParams()">Next →</button>
         </div>
       </div><!-- /step-panel-5 -->
 
@@ -520,7 +538,11 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
         <div class="step-sub">Confirm everything looks right, then start the pipeline.</div>
 
         <div class="review-table" id="review-table">
-          <!-- populated by buildReviewAndNext() -->
+          <div class="review-row"><span class="review-key">Data source</span><span class="review-val" id="review-source">—</span></div>
+          <div class="review-row"><span class="review-key">Model</span><span class="review-val" id="review-model">—</span></div>
+          <div class="review-row"><span class="review-key">GPU</span><span class="review-val" id="review-gpu">—</span></div>
+          <div class="review-row"><span class="review-key">Q&amp;A / FAQ</span><span class="review-val" id="review-faq">—</span></div>
+          <div class="review-row"><span class="review-key">LoRA</span><span class="review-val" id="review-lora">—</span></div>
         </div>
 
         <div style="font-size:9px;color:#6b7280;margin-bottom:8px">
@@ -530,7 +552,7 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
         <div class="wiz-nav">
           <button class="nav-back" onclick="prevStep()">← Back</button>
           <span class="nav-indicator">6 of 7</span>
-          <button class="nav-next launch" onclick="launchPipeline()">🚀 Launch Pipeline</button>
+          <button class="nav-next launch" id="launch-btn" onclick="launchPipeline()">🚀 Launch Pipeline</button>
         </div>
       </div><!-- /step-panel-6 -->
 
@@ -541,26 +563,30 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
 
         <div class="pipe-steps" id="pipe-steps">
           <div class="pipe-step">
-            <div class="ps-dot ps-pend">·</div>
+            <div class="pipeline-dot pipeline-dot-pending ps-dot ps-pend" id="pipeline-step-index" data-status="pending">·</div>
             <div><div class="ps-title ps-pend-t">Index</div><div class="ps-meta">waiting to start</div></div>
           </div>
           <div class="pipe-step">
-            <div class="ps-dot ps-pend">·</div>
-            <div><div class="ps-title ps-pend-t">Train — Pass 1 (raw chunks)</div><div class="ps-meta">waiting</div></div>
+            <div class="pipeline-dot pipeline-dot-pending ps-dot ps-pend" id="pipeline-step-sleep-faq" data-status="pending">·</div>
+            <div><div class="ps-title ps-pend-t">Sleep FAQ generation</div><div class="ps-meta">waiting</div></div>
           </div>
           <div class="pipe-step">
-            <div class="ps-dot ps-pend">·</div>
-            <div><div class="ps-title ps-pend-t">Train — Pass 2 (Q&amp;A)</div><div class="ps-meta">waiting</div></div>
+            <div class="pipeline-dot pipeline-dot-pending ps-dot ps-pend" id="pipeline-step-train" data-status="pending">·</div>
+            <div><div class="ps-title ps-pend-t">LoRA Training</div><div class="ps-meta">waiting</div></div>
           </div>
           <div class="pipe-step">
-            <div class="ps-dot ps-pend">·</div>
-            <div><div class="ps-title ps-pend-t">PRS Evaluation</div><div class="ps-meta">waiting</div></div>
+            <div class="pipeline-dot pipeline-dot-pending ps-dot ps-pend" id="pipeline-step-recompute" data-status="pending">·</div>
+            <div><div class="ps-title ps-pend-t">KV Recompute</div><div class="ps-meta">waiting</div></div>
           </div>
           <div class="pipe-step">
-            <div class="ps-dot ps-pend">·</div>
-            <div><div class="ps-title ps-pend-t">Phase auto-advance</div><div class="ps-meta">waiting for PRS ≥ 0.75</div></div>
+            <div class="pipeline-dot pipeline-dot-pending ps-dot ps-pend" id="pipeline-step-prs-eval" data-status="pending">·</div>
+            <div><div class="ps-title ps-pend-t">PRS Evaluation</div><div class="ps-meta">waiting for PRS ≥ 0.75</div></div>
           </div>
         </div>
+
+        <div id="pipeline-log" style="background:#111;border:1px solid #2d2d2d;border-radius:4px;padding:6px 8px;font-family:monospace;font-size:8px;color:#4ec9b0;max-height:120px;overflow-y:auto;margin-top:8px;"></div>
+
+        <button id="finish-btn" class="nav-next" style="display:none;margin-top:8px;width:100%;">Open UC Dashboard</button>
 
         <div class="wiz-nav">
           <span class="nav-back" style="color:#4ec9b0; cursor:pointer;" onclick="window.location.href='/studio'">↗ Open UC page</span>
@@ -611,6 +637,7 @@ function goStep(n) {
 
   // Side effects per step
   if (n === 4) loadGpuCards();
+  if (n === 6) buildReview();
 }
 
 function nextStep() { if (WIZARD.step < 7) goStep(WIZARD.step + 1); }
@@ -926,67 +953,137 @@ function updateFeasibilityBanner() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// STEP 5/6 — REVIEW & LAUNCH
+// STEP 5 — COLLECT LORA PARAMS
 // ═══════════════════════════════════════════════════════════
-function buildReviewAndNext() {
-  // Collect training params from DOM
-  WIZARD.data.lora_rank = parseInt(document.getElementById('lora-rank').value) || 16;
-  WIZARD.data.lora_alpha = parseInt(document.getElementById('lora-alpha').value) || 32;
-  WIZARD.data.lora_dropout = parseFloat((document.getElementById('lora-dropout').value / 100).toFixed(2));
-  WIZARD.data.epochs_pass1 = parseInt(document.getElementById('epochs-pass1').value) || 3;
-  WIZARD.data.epochs_pass2 = parseInt(document.getElementById('epochs-pass2').value) || 2;
-  WIZARD.data.batch_size = parseInt(document.getElementById('batch-size').value) || 4;
-  WIZARD.data.learning_rate = document.getElementById('learning-rate').value || '2e-4';
-
-  // Build review table
-  const d = WIZARD.data;
-  let srcLabel = '—';
-  if (d.source_type === 'pdf' && d.pdf) srcLabel = `PDF · ~${d.pdf.estimated_chunks} chunks`;
-  else if (d.source_type === 'vdb' && d.vdb) srcLabel = `${d.vdb.type} (VDB)`;
-  else if (d.source_type === 'hf') srcLabel = `HuggingFace · ${document.getElementById('hf-dataset-id').value || '—'}`;
-
-  const rows = [
-    ['Data source', srcLabel],
-    ['Q&amp;A mode', d.gen_mode || 'upload'],
-    ['Model', d.model_id || '—'],
-    ['GPU', d.gpu_id != null ? `GPU ${d.gpu_id}` : 'not selected'],
-    ['LoRA rank / alpha', `r=${d.lora_rank} · α=${d.lora_alpha}`],
-    ['Passes / epochs', `2 passes · ${d.epochs_pass1}+${d.epochs_pass2} epochs`],
-    ['Batch / LR', `batch=${d.batch_size} · lr=${d.learning_rate}`],
-  ];
-
-  document.getElementById('review-table').innerHTML = rows.map(([k, v]) =>
-    `<div class="review-row"><span class="review-key">${k}</span><span class="review-val">${v}</span></div>`
-  ).join('');
-
-  nextStep(); // go to step 6
+function collectLoraParams() {
+  WIZARD.data.lora = {
+    rank:       parseInt(document.getElementById('lora-rank').value),
+    alpha:      parseInt(document.getElementById('lora-alpha').value),
+    dropout:    parseFloat(document.getElementById('lora-dropout').value) / 100,
+    epochs:     parseInt(document.getElementById('lora-epochs').value),
+    batch_size: parseInt(document.getElementById('lora-batch').value),
+    lr:         parseFloat(document.getElementById('lora-lr').value),
+    passes:     document.querySelector('input[name="passes"]:checked')?.value || '1+2',
+  };
+  nextStep();
 }
 
-async function launchPipeline() {
-  const launchBtn = document.querySelector('#step-panel-6 .nav-next.launch');
-  const statusEl = document.querySelector('#step-panel-6 .step-sub');
-  try {
-    const resp = await fetch('/api/wizard/launch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(WIZARD.data),
-    });
-    if (!resp.ok) {
-      if (statusEl) {
-        statusEl.textContent = `Launch failed: server error ${resp.status}`;
-        statusEl.style.color = '#f87171';
-      }
-      if (launchBtn) launchBtn.disabled = false;
-      return;
-    }
-    goStep(7);
-  } catch (e) {
-    if (statusEl) {
-      statusEl.textContent = `Launch failed: ${e.message}`;
-      statusEl.style.color = '#f87171';
-    }
-    if (launchBtn) launchBtn.disabled = false;
+// ═══════════════════════════════════════════════════════════
+// STEP 6 — REVIEW TABLE
+// ═══════════════════════════════════════════════════════════
+function buildReview() {
+  const d = WIZARD.data;
+  document.getElementById('review-source').textContent =
+    d.pdf ? `PDF · ${d.pdf.filename} · ~${d.pdf.estimated_chunks} chunks`
+          : `VDB · ${d.vdb?.type} · ${d.vdb?.host || d.vdb?.base_url || ''}`;
+  document.getElementById('review-model').textContent = d.model_id || '—';
+  document.getElementById('review-gpu').textContent = d.gpu_id != null ? `GPU ${d.gpu_id}` : '—';
+  document.getElementById('review-faq').textContent = d.faq_mode || d.gen_mode || 'not configured';
+  if (d.lora) {
+    document.getElementById('review-lora').textContent =
+      `rank=${d.lora.rank} alpha=${d.lora.alpha} lr=${d.lora.lr} epochs=${d.lora.epochs} passes=${d.lora.passes}`;
   }
+}
+
+// ═══════════════════════════════════════════════════════════
+// STEP 6 — LAUNCH PIPELINE
+// ═══════════════════════════════════════════════════════════
+async function launchPipeline() {
+  const btn = document.getElementById('launch-btn');
+  btn.textContent = 'Creating use case…';
+  btn.disabled = true;
+
+  const ucName = document.getElementById('uc-name') ?
+    document.getElementById('uc-name').value.trim() : 'new-uc';
+  WIZARD.data.uc_id = (ucName || 'new-uc').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+  try {
+    const createResp = await fetch('/api/uc/new', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        name: ucName || 'new-uc',
+        model_id: WIZARD.data.model_id,
+        gpu_id: WIZARD.data.gpu_id,
+        lora: WIZARD.data.lora,
+        vdb: WIZARD.data.vdb,
+      }),
+    });
+    if (!createResp.ok) throw new Error(await createResp.text());
+
+    _currentStepIdx = 0;
+    goStep(7);
+    await startPipelineStep('index');
+  } catch (e) {
+    btn.textContent = '✗ Failed — ' + e.message;
+    btn.disabled = false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// STEP 7 — SSE PIPELINE STREAMING
+// ═══════════════════════════════════════════════════════════
+const PIPELINE_STEPS = ['index', 'sleep-faq', 'train', 'recompute', 'prs-eval'];
+let _currentStepIdx = 0;
+
+async function startPipelineStep(step) {
+  const stepEl = document.getElementById(`pipeline-step-${step}`);
+  if (stepEl) stepEl.dataset.status = 'running';
+  updateStepDots();
+
+  const resp = await fetch('/api/run-step', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({uc_id: WIZARD.data.uc_id, step}),
+  });
+  if (!resp.ok) {
+    if (stepEl) stepEl.dataset.status = 'failed';
+    updateStepDots();
+    return;
+  }
+  const {job_id} = await resp.json();
+
+  const logEl = document.getElementById('pipeline-log');
+  const es = new EventSource(`/studio/api/stream/${job_id}`);
+  es.onmessage = e => {
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    line.textContent = e.data;
+    if (logEl) {
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+  };
+  es.addEventListener('done', () => {
+    es.close();
+    if (stepEl) stepEl.dataset.status = 'done';
+    updateStepDots();
+    _currentStepIdx++;
+    const next = PIPELINE_STEPS[_currentStepIdx];
+    if (next) {
+      startPipelineStep(next);
+    } else {
+      const finishBtn = document.getElementById('finish-btn');
+      if (finishBtn) {
+        finishBtn.style.display = '';
+        finishBtn.onclick = () => { window.location.href = `/studio/uc/${WIZARD.data.uc_id}`; };
+      }
+    }
+  });
+  es.addEventListener('error', () => {
+    es.close();
+    if (stepEl) stepEl.dataset.status = 'failed';
+    updateStepDots();
+  });
+}
+
+function updateStepDots() {
+  PIPELINE_STEPS.forEach(step => {
+    const el = document.getElementById(`pipeline-step-${step}`);
+    if (!el) return;
+    const status = el.dataset.status || 'pending';
+    el.className = `pipeline-dot pipeline-dot-${status}`;
+  });
 }
 
 // ═══════════════════════════════════════════════════════════
