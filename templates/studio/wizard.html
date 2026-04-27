@@ -206,13 +206,13 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
     <!-- Progress bar — updated by goStep() -->
     <div class="wiz-prog">
       <div class="prog-bar" id="prog-bar">
-        <div class="ps active" data-idx="0"></div>
-        <div class="ps future" data-idx="1"></div>
-        <div class="ps future" data-idx="2"></div>
-        <div class="ps future" data-idx="3"></div>
-        <div class="ps future" data-idx="4"></div>
-        <div class="ps future" data-idx="5"></div>
-        <div class="ps future" data-idx="6"></div>
+        <div class="ps step-dot active" data-idx="0"></div>
+        <div class="ps step-dot future" data-idx="1"></div>
+        <div class="ps step-dot future" data-idx="2"></div>
+        <div class="ps step-dot future" data-idx="3"></div>
+        <div class="ps step-dot future" data-idx="4"></div>
+        <div class="ps step-dot future" data-idx="5"></div>
+        <div class="ps step-dot future" data-idx="6"></div>
       </div>
       <div class="prog-labels" id="prog-labels">
         <span data-idx="0">Data</span>
@@ -595,9 +595,9 @@ function goStep(n) {
   }
 
   // Update progress bar
-  const bars = document.querySelectorAll('#prog-bar .ps');
+  const bars = document.querySelectorAll('.step-dot');
   bars.forEach((bar, i) => {
-    bar.className = 'ps ' + (i + 1 < n ? 'done' : i + 1 === n ? 'active' : 'future');
+    bar.className = 'ps step-dot ' + (i + 1 < n ? 'done' : i + 1 === n ? 'active' : 'future');
   });
 
   // Update progress labels
