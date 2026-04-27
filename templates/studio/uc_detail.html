@@ -410,7 +410,7 @@ svg.prs-chart { width: 100%; height: 130px; display: block; overflow: visible; }
       </div>
 
       <div class="gpu-footer">
-        <span class="gpu-footer-item">Total VRAM: <span>58.6 / 88.0 GB</span></span>
+        <span class="gpu-footer-item">Total VRAM: <span id="total-vram">58.6 / 88.0 GB</span></span>
         <span class="gpu-footer-item">Avg Util: <span id="avg-util">69%</span></span>
         <span class="gpu-footer-item">Max Temp: <span id="max-temp">71°C</span></span>
         <span class="gpu-footer-item" style="margin-left:auto">Refreshes every 3s · click GPU row to expand processes</span>
@@ -837,6 +837,7 @@ async function loadCurationStatus() {
 // ── GPU Monitor ──
 let gpuOverlayOpen = false;
 let gpuRefreshInterval = null;
+let gpuTickInterval = null;
 let gpuSecondsAgo = 0;
 
 function barClass(util) {
@@ -852,7 +853,8 @@ function memColor(used, total) {
 
 async function refreshGpuData() {
   gpuSecondsAgo = 0;
-  document.getElementById('gpu-refresh-badge').textContent = '↻ live · 0s ago';
+  const badge = document.getElementById('gpu-refresh-badge');
+  if (badge) badge.textContent = '↻ live · 0s ago';
 
   let result;
   try {
@@ -863,7 +865,8 @@ async function refreshGpuData() {
     // Network/fetch error — show error state in pill and badge
     const pill = document.getElementById('gpu-pill-btn');
     if (pill) { pill.textContent = 'GPU — error'; pill.style.background = '#1a1a1a'; pill.style.color = '#6b7280'; pill.style.borderColor = '#374151'; }
-    document.getElementById('gpu-refresh-badge').textContent = '↻ error';
+    const errBadge = document.getElementById('gpu-refresh-badge');
+    if (errBadge) errBadge.textContent = '↻ error';
     return;
   }
 
@@ -871,7 +874,8 @@ async function refreshGpuData() {
   if (result.error && (!result.gpus || result.gpus.length === 0)) {
     const pill = document.getElementById('gpu-pill-btn');
     if (pill) { pill.textContent = 'No GPU available'; pill.style.background = '#1a1a1a'; pill.style.color = '#6b7280'; pill.style.borderColor = '#374151'; }
-    document.getElementById('gpu-refresh-badge').textContent = '↻ unavailable';
+    const unavailBadge = document.getElementById('gpu-refresh-badge');
+    if (unavailBadge) unavailBadge.textContent = '↻ unavailable';
     // Show error message in gpu-table area
     const table = document.getElementById('gpu-table');
     if (table) {
@@ -952,14 +956,19 @@ async function refreshGpuData() {
   });
 
   const gpuCount = result.gpus.length || 1;
-  document.getElementById('avg-util').textContent = Math.round(totalUtil / gpuCount) + '%';
-  document.getElementById('max-temp').textContent = maxTemp + '°C';
+  const avgUtilEl = document.getElementById('avg-util');
+  if (avgUtilEl) avgUtilEl.textContent = Math.round(totalUtil / gpuCount) + '%';
+  const maxTempEl = document.getElementById('max-temp');
+  if (maxTempEl) maxTempEl.textContent = maxTemp + '°C';
+  const vramEl = document.getElementById('total-vram');
+  if (vramEl) vramEl.textContent = totalMem.toFixed(1) + ' / ' + totalTotal.toFixed(1) + ' GB';
 }
 
 function tickRefreshBadge() {
   gpuSecondsAgo++;
   if (gpuSecondsAgo < 4) {
-    document.getElementById('gpu-refresh-badge').textContent = `↻ live · ${gpuSecondsAgo}s ago`;
+    const tickBadge = document.getElementById('gpu-refresh-badge');
+    if (tickBadge) tickBadge.textContent = `↻ live · ${gpuSecondsAgo}s ago`;
   }
 }
 
@@ -968,24 +977,30 @@ function toggleProcs(id) {
   procs.classList.toggle('open');
 }
 
+async function scheduleNextRefresh() {
+  await refreshGpuData();
+  if (gpuOverlayOpen) {
+    gpuRefreshInterval = setTimeout(scheduleNextRefresh, 3000);
+  }
+}
+
 function toggleGpuOverlay() {
   if (gpuOverlayOpen) { closeGpuOverlay(); return; }
   gpuOverlayOpen = true;
   document.getElementById('gpu-overlay').classList.add('visible');
   document.getElementById('gpu-pill-btn').classList.add('open');
-  refreshGpuData();
-  gpuRefreshInterval = setInterval(() => {
-    refreshGpuData();
-  }, 3000);
-  setInterval(tickRefreshBadge, 1000);
+  scheduleNextRefresh();
+  gpuTickInterval = setInterval(tickRefreshBadge, 1000);
 }
 
 function closeGpuOverlay() {
   gpuOverlayOpen = false;
   document.getElementById('gpu-overlay').classList.remove('visible');
   document.getElementById('gpu-pill-btn').classList.remove('open');
-  clearInterval(gpuRefreshInterval);
+  clearTimeout(gpuRefreshInterval);
   gpuRefreshInterval = null;
+  clearInterval(gpuTickInterval);
+  gpuTickInterval = null;
 }
 </script>
 <script src="/helper.js"></script>
