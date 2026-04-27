@@ -466,7 +466,7 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
         <div class="wiz-nav">
           <button class="nav-back" onclick="prevStep()">← Back</button>
           <span class="nav-indicator">4 of 7</span>
-          <button class="nav-next" id="step4-next" onclick="nextStep()">Next →</button>
+          <button class="nav-next" id="step4-next" disabled onclick="nextStep()">Next →</button>
         </div>
       </div><!-- /step-panel-4 -->
 
@@ -654,6 +654,7 @@ async function handlePdfUpload(file) {
   fd.append('uc_id', WIZARD.data.uc_id || 'new-uc');
   try {
     const resp = await fetch('/api/wizard/upload-pdf', { method: 'POST', body: fd });
+    if (!resp.ok) throw new Error(`Server error ${resp.status}`);
     const data = await resp.json();
     WIZARD.data.pdf = data;
     statusEl.textContent = `✓ ${data.filename} · ~${data.estimated_chunks} chunks estimated`;
@@ -721,11 +722,11 @@ async function testVdbConnection() {
     config.api_key = document.getElementById('vdb-apikey-wv').value;
   } else if (vdbType === 'chroma') {
     config.host = document.getElementById('vdb-host-ch').value;
-    config.port = parseInt(document.getElementById('vdb-port-ch').value);
+    config.port = parseInt(document.getElementById('vdb-port-ch').value) || 8000;
     config.collection = document.getElementById('vdb-collection-ch').value;
   } else if (vdbType === 'milvus') {
     config.host = document.getElementById('vdb-host-mv').value;
-    config.port = parseInt(document.getElementById('vdb-port-mv').value);
+    config.port = parseInt(document.getElementById('vdb-port-mv').value) || 19530;
     config.collection = document.getElementById('vdb-collection-mv').value;
   } else if (vdbType === 'generic') {
     config.base_url = document.getElementById('vdb-host-gn').value;
@@ -745,6 +746,7 @@ async function testVdbConnection() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(config),
     });
+    if (!resp.ok) throw new Error(`Server error ${resp.status}`);
     const data = await resp.json();
     if (data.ok) {
       resultEl.textContent = `✓ Connected · ${data.collection_count != null ? data.collection_count + ' collections' : 'ready'}`;
@@ -823,6 +825,7 @@ async function checkCustomVram() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model_id: modelId, lora_rank: 16 }),
     });
+    if (!resp.ok) throw new Error(`Server error ${resp.status}`);
     const data = await resp.json();
     if (data.error) {
       pill.textContent = 'Unknown';
@@ -848,6 +851,7 @@ async function loadGpuCards() {
 
   try {
     const resp = await fetch('/api/gpu/realtime');
+    if (!resp.ok) throw new Error(`Server error ${resp.status}`);
     const data = await resp.json();
 
     if (!data.gpus || data.gpus.length === 0) {
@@ -880,6 +884,8 @@ function selectGpu(id, el) {
   document.querySelectorAll('.gpu-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
   WIZARD.data.gpu_id = id;
+  const btn = document.getElementById('step4-next');
+  if (btn) btn.disabled = false;
   updateFeasibilityBanner();
 }
 
@@ -957,17 +963,29 @@ function buildReviewAndNext() {
 }
 
 async function launchPipeline() {
-  // Advance to step 7 immediately to show live view
-  nextStep();
-  // Fire the launch API if available
+  const launchBtn = document.querySelector('#step-panel-6 .nav-next.launch');
+  const statusEl = document.querySelector('#step-panel-6 .step-sub');
   try {
-    await fetch('/api/wizard/launch', {
+    const resp = await fetch('/api/wizard/launch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(WIZARD.data),
     });
-  } catch (_) {
-    // Non-blocking — step 7 shows status
+    if (!resp.ok) {
+      if (statusEl) {
+        statusEl.textContent = `Launch failed: server error ${resp.status}`;
+        statusEl.style.color = '#f87171';
+      }
+      if (launchBtn) launchBtn.disabled = false;
+      return;
+    }
+    goStep(7);
+  } catch (e) {
+    if (statusEl) {
+      statusEl.textContent = `Launch failed: ${e.message}`;
+      statusEl.style.color = '#f87171';
+    }
+    if (launchBtn) launchBtn.disabled = false;
   }
 }
 
