@@ -1,12 +1,15 @@
 # studio/ab_runner.py
 import asyncio
+import re
 import time
-from pathlib import Path
 import httpx
 
-ROOT = Path(__file__).resolve().parent.parent
-
 _VLLM_URL = "http://localhost:8090/v1/chat/completions"
+_AB_TIMEOUT = 45.0
+
+
+def _sanitize_error(msg: str) -> str:
+    return re.sub(r"sk-[A-Za-z0-9\-]{6,}", "sk-***", msg)
 
 
 async def run_ab_query(
@@ -15,10 +18,18 @@ async def run_ab_query(
     model_a_settings: dict,
     model_b_settings: dict,
 ) -> dict:
-    result_a, result_b = await asyncio.gather(
-        _query_local(query, model_a_settings),
-        _query_cloud(query, model_b_settings),
-    )
+    # uc_id is reserved for future per-UC vLLM port routing
+    try:
+        result_a, result_b = await asyncio.wait_for(
+            asyncio.gather(
+                _query_local(query, model_a_settings),
+                _query_cloud(query, model_b_settings),
+            ),
+            timeout=_AB_TIMEOUT,
+        )
+    except asyncio.TimeoutError:
+        timeout_err = {"text": "", "latency_ms": int(_AB_TIMEOUT * 1000), "error": "Query timed out"}
+        return {"response_a": timeout_err, "response_b": timeout_err}
     return {"response_a": result_a, "response_b": result_b}
 
 
@@ -47,7 +58,7 @@ async def _query_local(query: str, settings: dict) -> dict:
             "confidence": data.get("confidence"),
         }
     except Exception as e:
-        return {"text": "", "latency_ms": 0, "source": "local-vllm", "error": str(e)}
+        return {"text": "", "latency_ms": 0, "source": "local-vllm", "error": _sanitize_error(str(e))}
 
 
 async def _query_cloud(query: str, settings: dict) -> dict:
@@ -76,7 +87,7 @@ async def _query_cloud(query: str, settings: dict) -> dict:
             "cost_est_usd": cost,
         }
     except Exception as e:
-        return {"text": "", "latency_ms": 0, "source": provider, "error": str(e)}
+        return {"text": "", "latency_ms": 0, "source": provider, "error": _sanitize_error(str(e))}
 
 
 async def _call_anthropic(api_key, model, query, system_prompt, temperature, max_tokens) -> tuple[str, float]:
