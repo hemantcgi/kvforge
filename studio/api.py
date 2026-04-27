@@ -12,6 +12,7 @@ from studio.migration import migrate_existing_use_cases, load_registry, add_to_r
 from studio.gpu_monitor import get_gpu_status, stop_vllm_process, get_gpu_realtime
 from studio.job_manager import get_manager, DuplicateJobError
 from studio import settings_manager
+from studio import curation_manager
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -234,3 +235,47 @@ async def save_settings_endpoint(request: Request):
 @api_router.get("/gpu/realtime")
 def gpu_realtime_endpoint():
     return JSONResponse(get_gpu_realtime())
+
+
+# ── PRS history ────────────────────────────────────────────────────────────────
+
+@api_router.get("/uc/{uc_id}/prs-history")
+def prs_history_endpoint(uc_id: str):
+    version_path = _uc_path(uc_id) / "version.json"
+    if not version_path.exists():
+        return JSONResponse([])
+    try:
+        v = json.loads(version_path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return JSONResponse([])
+    raw = v.get("prs_history", [])
+    result = []
+    for entry in raw:
+        if isinstance(entry, dict):
+            result.append({
+                "label": f"LoRA v{entry.get('round', '?')}",
+                "round": entry.get("round"),
+                "prs": entry.get("prs"),
+            })
+        elif isinstance(entry, (int, float)):
+            result.append({"label": f"LoRA v{len(result)+1}", "round": len(result)+1, "prs": entry})
+    return JSONResponse(result)
+
+
+# ── Auto-curation ──────────────────────────────────────────────────────────────
+
+@api_router.post("/uc/{uc_id}/ab-curate")
+async def ab_curate_endpoint(uc_id: str, request: Request):
+    body = await request.json()
+    question = body.get("question", "")
+    answer = body.get("answer", "")
+    source_model = body.get("source_model", "model_b")
+    if not question or not answer:
+        raise HTTPException(400, "question and answer are required")
+    status = curation_manager.append(uc_id, question, answer, source_model)
+    return JSONResponse(status)
+
+
+@api_router.get("/uc/{uc_id}/curation-status")
+def curation_status_endpoint(uc_id: str):
+    return JSONResponse(curation_manager.get_status(uc_id))

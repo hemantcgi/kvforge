@@ -71,3 +71,81 @@ def test_gpu_realtime_handles_no_nvidia_smi():
     assert result["error"] == "nvidia-smi not found"
     assert result["gpus"] == []
     assert result["has_free_gpu"] is False
+
+
+# ── PRS history ────────────────────────────────────────────────────────────────
+
+def test_prs_history_returns_list(tmp_path):
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    uc_dir = tmp_path / "examples" / "uc-test"
+    uc_dir.mkdir(parents=True)
+    version_data = {
+        "phase": 3,
+        "current_lora_version": 2,
+        "prs_history": [
+            {"round": 1, "prs": 0.72},
+            {"round": 2, "prs": 0.8531},
+        ],
+    }
+    (uc_dir / "version.json").write_text(json.dumps(version_data))
+    with patch("studio.api.ROOT", tmp_path):
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        resp = client.get("/api/uc/uc-test/prs-history")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 2
+    assert data[1]["prs"] == 0.8531
+    assert "label" in data[1]
+
+
+def test_prs_history_missing_version_json(tmp_path):
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    (tmp_path / "examples" / "uc-empty").mkdir(parents=True)
+    with patch("studio.api.ROOT", tmp_path):
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        resp = client.get("/api/uc/uc-empty/prs-history")
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
+# ── Curation ───────────────────────────────────────────────────────────────────
+
+def test_ab_curate_appends_record(tmp_path):
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    (tmp_path / "examples" / "uc-test").mkdir(parents=True)
+    import studio.curation_manager as cur
+    with patch.object(cur, "ROOT", tmp_path), \
+         patch("studio.api.curation_manager.ROOT", tmp_path):
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        resp = client.post("/api/uc/uc-test/ab-curate",
+                           json={"question": "Q?", "answer": "A.", "source_model": "model_b"})
+    assert resp.status_code == 200
+    assert resp.json()["count"] == 1
+
+
+def test_curation_status_empty(tmp_path):
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    (tmp_path / "examples" / "uc-empty2").mkdir(parents=True)
+    import studio.curation_manager as cur
+    with patch.object(cur, "ROOT", tmp_path):
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        resp = client.get("/api/uc/uc-empty2/curation-status")
+    assert resp.status_code == 200
+    assert resp.json()["count"] == 0
+    assert resp.json()["at_threshold"] is False
