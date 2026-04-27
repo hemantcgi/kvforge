@@ -161,6 +161,11 @@ svg.prs-chart { width: 100%; height: 130px; display: block; overflow: visible; }
 .ab-meta-item { font-size: 8px; color: #374151; }
 .ab-meta-item b { color: #6b7280; }
 
+/* Verdict buttons */
+.verdict-btn { font-size:9px; padding:3px 10px; border-radius:4px; cursor:pointer; transition: opacity .15s; }
+.verdict-btn-a { background:#1a2a3a; border:1px solid #264f78; color:#9cdcfe; }
+.verdict-btn-b { background:#1a3020; border:1px solid #1e5c4f; color:#4ec9b0; }
+
 /* Status bar */
 .statusbar { background: #181818; border-top: 1px solid #2d2d2d; padding: 5px 14px; display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
 .sb-item { display: flex; align-items: center; gap: 5px; font-size: 9px; }
@@ -489,21 +494,21 @@ svg.prs-chart { width: 100%; height: 130px; display: block; overflow: visible; }
           <span class="ab-models">Model A = KVForge Llama 3.2 3B LoRA v3 &nbsp;·&nbsp; Model B = Claude Haiku 4.5 (FloTorch)</span>
         </div>
         <div class="ab-query-row">
-          <input class="ab-input" id="ab-query-input" value="What are the default quota limits for Amazon Bedrock on-demand throughput?" placeholder="Enter your question…">
+          <input class="ab-input" id="ab-query-input" value="What are the default quota limits for Amazon Bedrock on-demand throughput?" placeholder="Enter your question…" onkeydown="if(event.key==='Enter') runQuery()">
           <div class="ab-run" id="ab-run-btn" onclick="runQuery()">▶ Run both</div>
         </div>
         <div class="ab-cols">
           <div class="ab-col ab-col-a">
             <div class="ab-col-label">Model A · KVForge LoRA<span class="ab-badge" id="ab-badge-a">0.81 s · Phase 3</span></div>
             <div class="ab-text" id="ab-text-a">Amazon Bedrock enforces default service quotas per AWS region. On-demand throughput is limited to 60 requests per minute with up to 100 concurrent invocations per model. You can request quota increases via the AWS Service Quotas console.</div>
-            <div class="ab-meta"><div class="ab-meta-item"><b>Latency</b> <span id="ab-latency-a">0.81 s</span></div><div class="ab-meta-item"><b>Source</b> <span id="ab-source-a">parametric weights</span></div><div class="ab-meta-item"><b>Confidence</b> 0.88</div></div>
-            <div style="margin-top:8px"><button onclick="verdict('a')" style="background:#1a2a3a;border:1px solid #264f78;color:#9cdcfe;font-size:9px;padding:3px 10px;border-radius:4px;cursor:pointer">▲ Prefer A</button></div>
+            <div class="ab-meta"><div class="ab-meta-item"><b>Latency</b> <span id="ab-latency-a">0.81 s</span></div><div class="ab-meta-item"><b>Source</b> <span id="ab-source-a">parametric weights</span></div><div class="ab-meta-item"><b>Confidence</b> —</div></div>
+            <div style="margin-top:8px"><button id="verdict-btn-a" onclick="verdict('a')" class="verdict-btn verdict-btn-a" style="opacity:0.3;pointer-events:none">▲ Prefer A</button></div>
           </div>
           <div class="ab-col ab-col-b">
             <div class="ab-col-label">Model B · Haiku 4.5<span class="ab-badge" id="ab-badge-b">1.24 s · API</span></div>
             <div class="ab-text" id="ab-text-b">Amazon Bedrock quota limits vary by model and AWS region. Default limits include restrictions on requests per minute and tokens per minute per foundation model. View or request increases via Service Quotas in the AWS Management Console.</div>
-            <div class="ab-meta"><div class="ab-meta-item"><b>Latency</b> <span id="ab-latency-b">1.24 s</span></div><div class="ab-meta-item"><b>Source</b> <span id="ab-source-b">API call</span></div><div class="ab-meta-item"><b>Cost</b> ~$0.0003</div></div>
-            <div style="margin-top:8px"><button onclick="verdict('b')" style="background:#1a3020;border:1px solid #1e5c4f;color:#4ec9b0;font-size:9px;padding:3px 10px;border-radius:4px;cursor:pointer">▲ Prefer B</button></div>
+            <div class="ab-meta"><div class="ab-meta-item"><b>Latency</b> <span id="ab-latency-b">1.24 s</span></div><div class="ab-meta-item"><b>Source</b> <span id="ab-source-b">API call</span></div><div class="ab-meta-item"><b>Cost</b> —</div></div>
+            <div style="margin-top:8px"><button id="verdict-btn-b" onclick="verdict('b')" class="verdict-btn verdict-btn-b" style="opacity:0.3;pointer-events:none">▲ Prefer B</button></div>
           </div>
         </div>
         <div style="margin-top:8px;font-size:8px;color:#374151">Curation: <span id="curate-count">—</span> / <span id="curate-threshold">—</span> pairs curated <span id="curate-at-threshold" style="display:none;color:#4ec9b0;margin-left:6px">✓ threshold reached</span></div>
@@ -715,6 +720,8 @@ async function runQuery() {
   const srcA = document.getElementById('ab-source-a');
   const srcB = document.getElementById('ab-source-b');
   const btn = document.getElementById('ab-run-btn');
+  const btnA = document.getElementById('verdict-btn-a');
+  const btnB = document.getElementById('verdict-btn-b');
 
   textA.textContent = 'Querying…';
   textB.textContent = 'Querying…';
@@ -750,8 +757,15 @@ async function runQuery() {
       latB.textContent = s + ' s';
       badgeB.textContent = s + ' s · ' + (rb.source || 'cloud');
     }
+    // Source updates are unconditional — applied whenever present, regardless of latency
     if (ra.source) srcA.textContent = ra.source;
     if (rb.source) srcB.textContent = rb.source;
+
+    // Enable verdict buttons now that a query result is available
+    btnA.style.opacity = '1';
+    btnA.style.pointerEvents = 'auto';
+    btnB.style.opacity = '1';
+    btnB.style.pointerEvents = 'auto';
   } catch (err) {
     textA.textContent = 'Error: ' + err.message;
     textB.textContent = 'Error: ' + err.message;
@@ -763,6 +777,13 @@ async function runQuery() {
 
 async function verdict(choice) {
   if (!lastQuery) return;
+  const btnA = document.getElementById('verdict-btn-a');
+  const btnB = document.getElementById('verdict-btn-b');
+  // In-flight guard: disable both buttons and dim them to prevent duplicate votes
+  btnA.disabled = true;
+  btnB.disabled = true;
+  btnA.style.opacity = '0.5';
+  btnB.style.opacity = '0.5';
   const answer = choice === 'a' ? lastResponseA : lastResponseB;
   const source_model = 'model_' + choice;
   try {
@@ -781,6 +802,19 @@ async function verdict(choice) {
     }
   } catch (err) {
     console.error('Curate error:', err);
+    // Show brief error in the curation count area, then restore after 3s
+    const countEl = document.getElementById('curate-count');
+    if (countEl) {
+      const prev = countEl.textContent;
+      countEl.textContent = 'Vote failed — try again';
+      setTimeout(() => { countEl.textContent = prev; }, 3000);
+    }
+  } finally {
+    // Restore buttons
+    btnA.disabled = false;
+    btnB.disabled = false;
+    btnA.style.opacity = '1';
+    btnB.style.opacity = '1';
   }
 }
 
