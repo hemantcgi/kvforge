@@ -87,22 +87,42 @@ def _build_cmd(uc_id: str, step: str) -> list[str]:
         else:
             cmd += ["--count", "50"]
     if step == "faq-gen-cloud":
-        from studio.settings_manager import get_setting
+        import json as _json
         output = str(ROOT / "examples" / uc_id / "faqs.json")
         cmd += ["--output", output]
         uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
-        provider = "anthropic"
         count = 50
         if uc_cfg_path.exists():
             try:
-                uc_cfg = json.loads(uc_cfg_path.read_text())
-                provider = uc_cfg.get("llm", {}).get("cloud_provider", "anthropic")
-                count = int(uc_cfg.get("llm", {}).get("sleep_faq_count", 50))
+                uc_cfg = _json.loads(uc_cfg_path.read_text())
+                raw_count = uc_cfg.get("llm", {}).get("sleep_faq_count", 50)
+                parsed = int(raw_count)
+                if parsed > 0:
+                    count = parsed
+            except (TypeError, ValueError, KeyError):
+                pass
             except Exception:
                 pass
-        api_key = get_setting(f"{provider}_api_key") or ""
-        cmd += ["--provider", provider, "--api-key", api_key, "--count", str(count)]
+        cmd += ["--count", str(count)]
     return cmd
+
+
+_SECRET_FLAGS = {"--api-key", "--token", "--password", "--secret"}
+
+
+def _redact_cmd(cmd: list[str]) -> str:
+    parts = []
+    skip_next = False
+    for part in cmd:
+        if skip_next:
+            parts.append("[REDACTED]")
+            skip_next = False
+        elif part in _SECRET_FLAGS:
+            parts.append(part)
+            skip_next = True
+        else:
+            parts.append(part)
+    return " ".join(parts)
 
 
 async def run_step_streaming(uc_id: str, step: str, job_id: str, job_manager):
@@ -122,7 +142,7 @@ async def run_step_streaming(uc_id: str, step: str, job_id: str, job_manager):
 
     cmd = _build_cmd(uc_id, step)
     env = _build_env(uc_id, step)
-    yield _sse({"type": "start", "cmd": " ".join(cmd)})
+    yield _sse({"type": "start", "cmd": _redact_cmd(cmd)})
 
     try:
         proc = await asyncio.create_subprocess_exec(
@@ -167,6 +187,27 @@ def _build_env(uc_id: str, step: str) -> dict:
             except Exception:
                 pass
         env["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
+    if step == "faq-gen-cloud":
+        from studio.settings_manager import get_setting
+        import json as _json
+        _PROVIDER_KEY_MAP = {
+            "claude": ("anthropic_api_key", "ANTHROPIC_API_KEY"),
+            "anthropic": ("anthropic_api_key", "ANTHROPIC_API_KEY"),
+            "openai": ("openai_api_key", "OPENAI_API_KEY"),
+            "gemini": ("gemini_api_key", "GEMINI_API_KEY"),
+        }
+        uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
+        provider = "claude"
+        if uc_cfg_path.exists():
+            try:
+                uc_cfg = _json.loads(uc_cfg_path.read_text())
+                provider = uc_cfg.get("llm", {}).get("cloud_provider", "claude")
+            except Exception:
+                pass
+        settings_key, env_var = _PROVIDER_KEY_MAP.get(provider, ("anthropic_api_key", "ANTHROPIC_API_KEY"))
+        api_key = get_setting(settings_key) or ""
+        if api_key:
+            env[env_var] = api_key
     return env
 
 
