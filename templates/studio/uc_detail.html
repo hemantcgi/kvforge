@@ -556,14 +556,37 @@ async function loadUCState() {
 
 loadUCState();
 
-const PRS_POINTS = [
-  { version: 'LoRA v1', date: 'Apr 25 09:14', prs: 0.72, train: 'Raw chunks only · pass 1', loss: '1.559', note: 'First fine-tune. Domain grounding from 2,520 Qdrant chunks. Below Phase 3 threshold.' },
-  { version: 'LoRA v2', date: 'Apr 25 14:38', prs: 0.78, train: 'Raw chunks + 50 Q&A pairs', loss: '1.821', note: 'Added instruction pass using the 50-item test set. Approaching threshold.' },
-  { version: 'LoRA v3a', date: 'Apr 26 01:22', prs: 0.83, train: 'Full 1,027 Q&A · pass 1+2', loss: '1.967', note: 'First eval after retraining on full Qwen3-generated corpus. Crossed 0.75 threshold.' },
-  { version: 'LoRA v3b', date: 'Apr 26 13:51', prs: 0.8531, train: 'Full corpus · confirmed', loss: '1.967', note: 'Confirmed eval. Phase 3 auto-activated. PRS stable — no further retraining needed.' },
-];
+const PRS_POINTS = [];  // populated by loadPRSHistory()
+
+async function loadPRSHistory() {
+  try {
+    const resp = await fetch(`/api/uc/${UC_ID}/prs-history`);
+    if (!resp.ok) return;
+    const data = await resp.json();
+    PRS_POINTS.length = 0;
+    data.forEach(entry => PRS_POINTS.push({
+      version: entry.label || `LoRA v${entry.round}`,
+      date: entry.date || `Round ${entry.round}`,
+      prs: entry.prs,
+      train: entry.train || '—',
+      loss: entry.loss || '—',
+      note: entry.note || '',
+    }));
+    if (PRS_POINTS.length > 0) {
+      drawChart();
+      const latest = PRS_POINTS[PRS_POINTS.length - 1];
+      const bigEl = document.querySelector('.prs-big');
+      if (bigEl && latest.prs != null) bigEl.textContent = latest.prs.toFixed(4);
+    }
+  } catch (e) {
+    console.warn('PRS history load failed:', e);
+  }
+}
+
+loadPRSHistory();
 
 function drawChart() {
+  if (PRS_POINTS.length === 0) return;
   const svg = document.getElementById('prs-svg');
   const W = 280, H = 120;
   const PAD = { top: 14, right: 20, bottom: 28, left: 28 };
@@ -667,8 +690,6 @@ function drawChart() {
     });
   });
 }
-
-drawChart();
 
 // ── GPU Monitor ──
 let gpuOverlayOpen = false;
