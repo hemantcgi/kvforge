@@ -363,12 +363,58 @@ function toggleSidebar() {
 }
 
 // ── Registry / UC list ──────────────────────────────────────────────────────
+const _MODS = ['data', 'vdb', 'llm', 'sleep-faq', 'train', 'eval'];
+
+function _saveOpenPanels() {
+  const open = [];
+  document.querySelectorAll('.mod-panel-wrap.open').forEach(wrap => {
+    for (const mod of _MODS) {
+      if (wrap.id.endsWith('-' + mod)) {
+        const ucId = wrap.id.slice('panel-'.length, -(mod.length + 1));
+        open.push({ ucId, mod });
+        break;
+      }
+    }
+  });
+  return open;
+}
+
+async function _restoreOpenPanels(open) {
+  for (const { ucId, mod } of open) {
+    const wrap = document.getElementById(`panel-${ucId}-${mod}`);
+    if (!wrap) continue;
+    if (!STATE.configs[ucId]) {
+      try {
+        const r = await fetch(`/studio/api/uc/${ucId}/config`);
+        STATE.configs[ucId] = await r.json();
+      } catch(e) { STATE.configs[ucId] = {}; }
+    }
+    const body = document.getElementById(`panel-body-${ucId}-${mod}`);
+    if (body) body.innerHTML = renderPanelContent(ucId, mod, STATE.configs[ucId]);
+    wrap.classList.add('open');
+    const chip = document.getElementById(`chip-${ucId}-${mod}`);
+    if (chip) {
+      chip.classList.add('open');
+      const arrow = chip.querySelector('.chip-arrow');
+      if (arrow) arrow.style.transform = 'rotate(180deg)';
+    }
+    if (mod === 'train') {
+      const uc = STATE.ucs.find(u => u.id === ucId);
+      if (uc && uc.active_job && !STATE.activeStreams[ucId]) {
+        attachStream(ucId, uc.active_job.job_id);
+      }
+    }
+  }
+}
+
 async function loadRegistry() {
+  const openPanels = _saveOpenPanels();
   const res = await fetch('/studio/api/registry');
   const data = await res.json();
   STATE.ucs = data.use_cases || [];
   renderUcList();
   renderUcCards();
+  await _restoreOpenPanels(openPanels);
   // Wire connectivity polling to first UC that has a dashboard port
   var firstWithPort = STATE.ucs.find(function(u) { return u.dashboard_port; });
   if (firstWithPort && !_connPort) {
@@ -1072,7 +1118,6 @@ function attachStream(ucId, jobId) {
   STATE.activeStreams[ucId] = jobId;
 
   const es = new EventSource(`/studio/api/stream/${jobId}`);
-  const pollInterval = setInterval(() => loadRegistry(), 5000);
 
   es.onmessage = (e) => {
     const msg = JSON.parse(e.data);
@@ -1084,13 +1129,12 @@ function attachStream(ucId, jobId) {
     }
     if (msg.type === 'done' || msg.type === 'error') {
       es.close();
-      clearInterval(pollInterval);
       delete STATE.activeStreams[ucId];
       _setRunningUI(ucId, false);
-      loadRegistry();
+      loadRegistry();  // reload once on completion to update phase/PRS badges
     }
   };
-  es.onerror = () => { es.close(); clearInterval(pollInterval); delete STATE.activeStreams[ucId]; };
+  es.onerror = () => { es.close(); delete STATE.activeStreams[ucId]; };
 }
 
 async function stopJob(ucId) {
