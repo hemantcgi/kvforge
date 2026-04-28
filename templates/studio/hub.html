@@ -961,13 +961,16 @@ async function refreshGpuPanel(ucId) {
 async function runNextStep(ucId) {
   const uc = STATE.ucs.find(u => u.id === ucId);
   const phase = uc ? (uc.phase || 1) : 1;
+  // Step selection: prefer train if FAQs exist, sleep-faq if indexed but no FAQs,
+  // index only if nothing is set up yet. Never auto-select index for an existing UC
+  // that already has VDB data — indexing requires a source file argument from the wizard.
   let step;
-  if (phase < 2 && !uc.prs) {
-    step = 'index';
-  } else if (phase < 2) {
-    step = 'train';
+  if (uc && uc.has_faqs) {
+    step = 'train';                    // FAQs ready → train
+  } else if (phase >= 2) {
+    step = 'train';                    // Already trained → next round
   } else {
-    step = 'train';  // Round 2
+    step = 'sleep-faq';               // Indexed but no FAQs → generate them
   }
 
   const runBtn = document.getElementById(`run-btn-${ucId}`);
