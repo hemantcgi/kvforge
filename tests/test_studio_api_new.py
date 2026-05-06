@@ -349,3 +349,97 @@ def test_eval_summary_happy_path(tmp_path):
     assert data["speed_gain_pct"] > 0
     assert data["avg_sem_a"] == 0.7
     assert data["avg_sem_b"] == 0.6
+
+
+# ── uc_logs disk fallback ─────────────────────────────────────────────────────
+
+def test_uc_logs_from_job_manager(tmp_path):
+    """When job exists in job manager, returns its data directly."""
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    (tmp_path / "examples" / "uc-logs").mkdir(parents=True)
+    fake_job = {"last_lines": ["line1", "line2"], "status": "running", "step": "train", "job_id": "job-abc"}
+    mock_jm = MagicMock()
+    mock_jm.last_for_uc.return_value = fake_job
+    with patch("studio.api.ROOT", tmp_path), patch("studio.api.get_manager", return_value=mock_jm):
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        resp = client.get("/api/uc/uc-logs/logs")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["lines"] == ["line1", "line2"]
+    assert data["status"] == "running"
+    assert data["step"] == "train"
+    assert data["job_id"] == "job-abc"
+
+
+def test_uc_logs_disk_fallback_done(tmp_path):
+    """Falls back to last_run.log when job manager has no record, parses step, status=done."""
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    uc_dir = tmp_path / "examples" / "uc-logs2"
+    uc_dir.mkdir(parents=True)
+    log_content = "[studio] step=prs-eval job=job-xyz\nRunning evaluation…\n[studio] done (exit 0)"
+    (uc_dir / "last_run.log").write_text(log_content)
+    mock_jm = MagicMock()
+    mock_jm.last_for_uc.return_value = None
+    with patch("studio.api.ROOT", tmp_path), patch("studio.api.get_manager", return_value=mock_jm), \
+         patch("studio.pipeline_runner.ROOT", tmp_path):
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        resp = client.get("/api/uc/uc-logs2/logs")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["step"] == "prs-eval"
+    assert data["status"] == "done"
+    assert data["job_id"] is None
+    assert "[studio] step=prs-eval job=job-xyz" in data["lines"]
+
+
+def test_uc_logs_disk_fallback_failed(tmp_path):
+    """Disk fallback sets status=failed when last line contains [studio] failed."""
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    uc_dir = tmp_path / "examples" / "uc-fail"
+    uc_dir.mkdir(parents=True)
+    log_content = "[studio] step=train job=job-fail\nTraining…\n[studio] failed (exit 1)"
+    (uc_dir / "last_run.log").write_text(log_content)
+    mock_jm = MagicMock()
+    mock_jm.last_for_uc.return_value = None
+    with patch("studio.api.ROOT", tmp_path), patch("studio.api.get_manager", return_value=mock_jm), \
+         patch("studio.pipeline_runner.ROOT", tmp_path):
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        resp = client.get("/api/uc/uc-fail/logs")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "failed"
+    assert data["step"] == "train"
+
+
+def test_uc_logs_empty_when_no_job_and_no_disk(tmp_path):
+    """Returns empty response when no job in memory and no last_run.log on disk."""
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    (tmp_path / "examples" / "uc-none").mkdir(parents=True)
+    mock_jm = MagicMock()
+    mock_jm.last_for_uc.return_value = None
+    with patch("studio.api.ROOT", tmp_path), patch("studio.api.get_manager", return_value=mock_jm), \
+         patch("studio.pipeline_runner.ROOT", tmp_path):
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        resp = client.get("/api/uc/uc-none/logs")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["lines"] == []
+    assert data["status"] is None
+    assert data["step"] is None
+    assert data["job_id"] is None
