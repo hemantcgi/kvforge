@@ -287,3 +287,65 @@ def test_wizard_estimate_vram_unknown_model():
                        json={"model_id": "unknown/UnknownModel-999B", "lora_rank": 16})
     assert resp.status_code == 200
     assert resp.json()["fits"] is False or resp.json().get("error") is not None
+
+
+# ── eval-summary ──────────────────────────────────────────────────────────────
+
+def _eval_client(tmp_path):
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    (tmp_path / "examples" / "uc-eval").mkdir(parents=True)
+    app = FastAPI()
+    app.include_router(api_router)
+    return TestClient(app), tmp_path
+
+
+def test_eval_summary_no_file(tmp_path):
+    """Returns has_results=False when ab_eval_results.json is absent."""
+    client, root = _eval_client(tmp_path)
+    with patch("studio.api.ROOT", root):
+        resp = client.get("/api/uc/uc-eval/eval-summary")
+    assert resp.status_code == 200
+    assert resp.json()["has_results"] is False
+
+
+def test_eval_summary_empty_list(tmp_path):
+    """Returns has_results=False when file exists but is an empty list."""
+    client, root = _eval_client(tmp_path)
+    (root / "examples" / "uc-eval" / "ab_eval_results.json").write_text("[]")
+    with patch("studio.api.ROOT", root):
+        resp = client.get("/api/uc/uc-eval/eval-summary")
+    assert resp.json()["has_results"] is False
+
+
+def test_eval_summary_bad_json(tmp_path):
+    """Returns has_results=False on parse error."""
+    client, root = _eval_client(tmp_path)
+    (root / "examples" / "uc-eval" / "ab_eval_results.json").write_text("{bad json")
+    with patch("studio.api.ROOT", root):
+        resp = client.get("/api/uc/uc-eval/eval-summary")
+    assert resp.json()["has_results"] is False
+
+
+def test_eval_summary_happy_path(tmp_path):
+    """Aggregates metrics correctly from a list of eval records."""
+    client, root = _eval_client(tmp_path)
+    records = [
+        {"latency_a_ms": 200, "latency_b_ms": 400, "sem_sim_a": 0.8, "sem_sim_b": 0.7, "prs_score": 0.80},
+        {"latency_a_ms": 300, "latency_b_ms": 600, "sem_sim_a": 0.6, "sem_sim_b": 0.5, "prs_score": 0.70},
+    ]
+    (root / "examples" / "uc-eval" / "ab_eval_results.json").write_text(json.dumps(records))
+    with patch("studio.api.ROOT", root):
+        resp = client.get("/api/uc/uc-eval/eval-summary")
+    data = resp.json()
+    assert data["has_results"] is True
+    assert data["total"] == 2
+    assert data["wins"] == 1          # only prs_score >= 0.75
+    assert data["win_rate"] == 50.0
+    assert data["avg_lat_a_ms"] == 250
+    assert data["avg_lat_b_ms"] == 500
+    # KVForge (A) is faster → speed_gain_pct should be positive
+    assert data["speed_gain_pct"] > 0
+    assert data["avg_sem_a"] == 0.7
+    assert data["avg_sem_b"] == 0.6
