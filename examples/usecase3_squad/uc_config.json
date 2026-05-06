@@ -2,7 +2,7 @@
   "id": "usecase3_squad",
   "display_name": "SQuAD",
   "type": "example",
-  "created_at": "2026-04-23T12:56:02.081548+00:00",
+  "created_at": "2026-04-27T12:18:39.736671+00:00",
   "data": {
     "source_type": "huggingface",
     "source_path": "",

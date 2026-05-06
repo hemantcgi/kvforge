@@ -561,6 +561,10 @@ async function togglePanel(ucId, mod) {
         attachStream(ucId, uc.active_job.job_id);
       }
     }
+    // Load eval stats when eval panel opens
+    if (mod === 'eval') {
+      loadEvalStats(ucId);
+    }
   }
 
   wrap.classList.toggle('open', !isOpen);
@@ -764,7 +768,7 @@ function renderTrainPanel(ucId, cfg) {
     <div class="btn btn-danger" id="stop-btn-${ucId}" style="${isRunning ? '' : 'display:none'}" onclick="stopJob('${ucId}')">&#9632; Stop</div>
     <div class="btn btn-ghost" onclick="togglePanel('${ucId}','train')">&#9650; Collapse</div>
     <div class="btn btn-ghost" id="logs-btn-${ucId}" onclick="toggleLogs('${ucId}')">&#128203; View Logs</div>
-    <div class="btn btn-primary" id="run-btn-${ucId}" style="${isRunning ? 'display:none' : ''}" onclick="runNextStep('${ucId}')">&#9654; Run Pipeline</div>
+    <div class="btn btn-primary" id="run-btn-${ucId}" style="${isRunning ? 'display:none' : ''}" onclick="runNextStep('${ucId}')">&#9654; ${_STEP_LABELS[_nextStepForUc(uc)] || 'Run Pipeline'}</div>
   </div>`;
 }
 
@@ -792,9 +796,11 @@ function renderPipelineSteps(ucId, cfg) {
 
 function renderEvalPanel(ucId, cfg) {
   const uc = STATE.ucs.find(u => u.id === ucId) || {};
+  const isRunning = uc.active_job && uc.active_job.step === 'ab-eval';
   return `<div class="panel-top">
     <span>&#9638;</span>
     <span class="panel-title">Evaluation Results</span>
+    <span class="status-pill" id="eval-status-${ucId}">${isRunning ? '&#9654; Running…' : ''}</span>
     <div class="collapse-sm" onclick="togglePanel('${ucId}','eval')">&#9650; Collapse</div>
   </div>
   <div class="eval-stats">
@@ -819,8 +825,10 @@ function renderEvalPanel(ucId, cfg) {
       <div class="cmp-bar"><span class="bar-name bar-name-b">3rd Party</span><div class="bar-track"><div class="bar-b" id="cmp-lat-b-${ucId}" style="width:0%"></div></div><span class="bar-val" id="cmp-lat-bv-${ucId}">—</span></div>
     </div>
   </div>
+  <div class="plog" id="eval-log-${ucId}" style="display:none"></div>
   <div class="btn-row">
-    <div class="btn btn-ghost" onclick="runAbEval('${ucId}')">&#8635; Re-run Eval</div>
+    <div class="btn btn-ghost" id="eval-logs-btn-${ucId}" onclick="toggleEvalLogs('${ucId}')">&#128203; View Logs</div>
+    <div class="btn btn-ghost" id="eval-run-btn-${ucId}" style="${isRunning ? 'display:none' : ''}" onclick="runAbEval('${ucId}')">&#8635; Re-run Eval</div>
     <div class="btn btn-primary" onclick="window.open('/ab-eval/${ucId}','_blank')">&#10138; Full A/B Report</div>
   </div>`;
 }
@@ -1004,20 +1012,26 @@ async function refreshGpuPanel(ucId) {
 }
 
 // ── Pipeline run ──────────────────────────────────────────────────────────────
+const _STEP_LABELS = {
+  'sleep-faq': 'Generate FAQs',
+  'train':     'Train LoRA',
+  'prs-eval':  'Evaluate PRS',
+  'recompute': 'Recompute KV',
+  'index':     'Index Documents',
+};
+
+function _nextStepForUc(uc) {
+  if (!uc || !uc.has_faqs) return 'sleep-faq';
+  const loraVer  = uc.lora_version || 0;
+  const prsRound = uc.prs_round    || 0;
+  if (loraVer === 0)          return 'train';    // never trained
+  if (loraVer > prsRound)     return 'prs-eval'; // trained since last eval
+  return 'train';                                 // PRS up-to-date → next training round
+}
+
 async function runNextStep(ucId) {
   const uc = STATE.ucs.find(u => u.id === ucId);
-  const phase = uc ? (uc.phase || 1) : 1;
-  // Step selection: prefer train if FAQs exist, sleep-faq if indexed but no FAQs,
-  // index only if nothing is set up yet. Never auto-select index for an existing UC
-  // that already has VDB data — indexing requires a source file argument from the wizard.
-  let step;
-  if (uc && uc.has_faqs) {
-    step = 'train';                    // FAQs ready → train
-  } else if (phase >= 2) {
-    step = 'train';                    // Already trained → next round
-  } else {
-    step = 'sleep-faq';               // Indexed but no FAQs → generate them
-  }
+  const step = _nextStepForUc(uc);
 
   const runBtn = document.getElementById(`run-btn-${ucId}`);
   if (runBtn) runBtn.disabled = true;
@@ -1038,13 +1052,130 @@ async function runNextStep(ucId) {
 }
 
 async function runAbEval(ucId) {
+  const runBtn = document.getElementById(`eval-run-btn-${ucId}`);
+  if (runBtn) { runBtn.style.display = 'none'; }
+  const pill = document.getElementById(`eval-status-${ucId}`);
+  if (pill) pill.innerHTML = '&#9654; Running…';
+
   const r = await fetch('/studio/api/run-step', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({uc_id: ucId, step: 'ab-eval'})
   });
-  if (!r.ok) { alert('Failed to start A/B eval'); return; }
+  if (!r.ok) {
+    if (runBtn) runBtn.style.display = '';
+    if (pill) pill.innerHTML = '';
+    const err = await r.json().catch(() => ({}));
+    const detail = err.detail || '';
+    if (detail.toLowerCase().includes('already has a running job')) {
+      alert('A/B eval is already running. Click "View Logs" to watch progress.');
+    } else {
+      alert('Failed to start A/B eval: ' + (detail || r.status));
+    }
+    return;
+  }
   const {job_id} = await r.json();
-  startStreaming(ucId, job_id);
+  _attachEvalStream(ucId, job_id);
+}
+
+function _attachEvalStream(ucId, jobId) {
+  const logDiv = document.getElementById(`eval-log-${ucId}`);
+  if (logDiv) { logDiv.innerHTML = ''; logDiv.style.display = ''; }
+  STATE.activeStreams[ucId] = jobId;
+
+  const es = new EventSource(`/studio/api/stream/${jobId}`);
+  es.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'log' && logDiv) {
+      logDiv.innerHTML += `<div>${escHtml(msg.line)}</div>`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+    if (msg.type === 'done' || msg.type === 'error') {
+      es.close();
+      delete STATE.activeStreams[ucId];
+      const runBtn = document.getElementById(`eval-run-btn-${ucId}`);
+      if (runBtn) runBtn.style.display = '';
+      const pill = document.getElementById(`eval-status-${ucId}`);
+      if (pill) pill.innerHTML = '';
+      loadEvalStats(ucId);
+      loadRegistry();
+    }
+  };
+  es.onerror = () => {
+    es.close();
+    delete STATE.activeStreams[ucId];
+    const runBtn = document.getElementById(`eval-run-btn-${ucId}`);
+    if (runBtn) runBtn.style.display = '';
+    const pill = document.getElementById(`eval-status-${ucId}`);
+    if (pill) pill.innerHTML = '';
+  };
+}
+
+async function loadEvalStats(ucId) {
+  try {
+    const r = await fetch(`/studio/api/uc/${ucId}/eval-summary`);
+    const d = await r.json();
+    if (!d.has_results) return;
+
+    const winEl  = document.getElementById(`eval-win-${ucId}`);
+    const latEl  = document.getElementById(`eval-lat-${ucId}`);
+
+    if (winEl)  winEl.textContent  = `${d.win_rate}%`;
+
+    // Speed gain: show accuracy advantage instead when KVForge is slower
+    if (latEl) {
+      if (d.speed_gain_pct !== null && d.speed_gain_pct > 0) {
+        latEl.textContent = `+${d.speed_gain_pct}%`;
+      } else if (d.speed_gain_pct !== null) {
+        latEl.textContent  = `${d.avg_lat_a_ms}ms`;
+        latEl.style.color  = '#f87171';
+        const sub = latEl.closest('.stat-card')?.querySelector('.stat-sub');
+        if (sub) sub.textContent = `vs ${d.avg_lat_b_ms}ms baseline`;
+      }
+    }
+
+    // Accuracy bars
+    const maxSem = Math.max(d.avg_sem_a, d.avg_sem_b, 0.01);
+    const barAEl   = document.getElementById(`cmp-acc-a-${ucId}`);
+    const barBEl   = document.getElementById(`cmp-acc-b-${ucId}`);
+    const barAVEl  = document.getElementById(`cmp-acc-av-${ucId}`);
+    const barBVEl  = document.getElementById(`cmp-acc-bv-${ucId}`);
+    if (barAEl)  barAEl.style.width  = `${Math.round(d.avg_sem_a / maxSem * 100)}%`;
+    if (barBEl)  barBEl.style.width  = `${Math.round(d.avg_sem_b / maxSem * 100)}%`;
+    if (barAVEl) barAVEl.textContent = d.avg_sem_a.toFixed(3);
+    if (barBVEl) barBVEl.textContent = d.avg_sem_b.toFixed(3);
+
+    // Latency bars (lower = better, so invert)
+    const maxLat = Math.max(d.avg_lat_a_ms, d.avg_lat_b_ms, 1);
+    const latAEl  = document.getElementById(`cmp-lat-a-${ucId}`);
+    const latBEl  = document.getElementById(`cmp-lat-b-${ucId}`);
+    const latAVEl = document.getElementById(`cmp-lat-av-${ucId}`);
+    const latBVEl = document.getElementById(`cmp-lat-bv-${ucId}`);
+    if (latAEl)  latAEl.style.width  = `${Math.round(d.avg_lat_a_ms / maxLat * 100)}%`;
+    if (latBEl)  latBEl.style.width  = `${Math.round(d.avg_lat_b_ms / maxLat * 100)}%`;
+    if (latAVEl) latAVEl.textContent = `${d.avg_lat_a_ms}ms`;
+    if (latBVEl) latBVEl.textContent = `${d.avg_lat_b_ms}ms`;
+  } catch(e) { /* silently ignore */ }
+}
+
+async function toggleEvalLogs(ucId) {
+  const logDiv = document.getElementById(`eval-log-${ucId}`);
+  if (!logDiv) return;
+  if (logDiv.style.display !== 'none') { logDiv.style.display = 'none'; return; }
+  // Fetch logs from API
+  try {
+    const r = await fetch(`/studio/api/uc/${ucId}/logs`);
+    const d = await r.json();
+    logDiv.innerHTML = (d.lines || []).map(l => `<div>${escHtml(l)}</div>`).join('');
+    logDiv.style.display = '';
+    logDiv.scrollTop = logDiv.scrollHeight;
+    // If job is still running and we have a stream, attach it
+    if (d.status === 'running' && d.job_id && !STATE.activeStreams[ucId]) {
+      _attachEvalStream(ucId, d.job_id);
+    }
+  } catch(e) {
+    logDiv.innerHTML = '<div style="color:#94a3b8">Could not load logs.</div>';
+    logDiv.style.display = '';
+  }
 }
 
 function _setRunningUI(ucId, running) {
@@ -1134,7 +1265,22 @@ function attachStream(ucId, jobId) {
       loadRegistry();  // reload once on completion to update phase/PRS badges
     }
   };
-  es.onerror = () => { es.close(); delete STATE.activeStreams[ucId]; };
+  es.onerror = () => {
+    es.close();
+    delete STATE.activeStreams[ucId];
+    // Check if job is still running server-side; reconnect if so
+    fetch(`/studio/api/uc/${ucId}/logs`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.status === 'running') {
+          setTimeout(() => attachStream(ucId, jobId), 2000);
+        } else {
+          _setRunningUI(ucId, false);
+          loadRegistry();
+        }
+      })
+      .catch(() => { _setRunningUI(ucId, false); loadRegistry(); });
+  };
 }
 
 async function stopJob(ucId) {
@@ -1341,11 +1487,14 @@ async function pollConnectivity() {
 setInterval(pollConnectivity, 30000);
 
 // ── Error Assistant ───────────────────────────────────────────────────────────
-var _ERR_PATTERNS = ['traceback','error:','exception:','failed:','errno','attributeerror','importerror','modulenotfounderror','valueerror','runtimeerror'];
+var _ERR_PATTERNS = ['traceback','error:','exception:','errno','attributeerror','importerror','modulenotfounderror','valueerror','runtimeerror','[studio] failed'];
+// Lines that look like errors but are harmless warnings from libraries
+var _BENIGN_PATTERNS = ['[w:onnxruntime','discoverdevices','readfilecontents failed','[transformers]','deprecat'];
 var _errToastTimer = null;
 
 function _looksLikeError(line) {
   var l = line.toLowerCase();
+  if (_BENIGN_PATTERNS.some(function(p) { return l.includes(p); })) return false;
   return _ERR_PATTERNS.some(function(p) { return l.includes(p); });
 }
 

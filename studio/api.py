@@ -46,9 +46,17 @@ def get_registry():
                 uc_data["phase"] = v.get("phase", 1)
                 history = v.get("prs_history", [])
                 uc_data["prs"] = history[-1]["prs"] if history else None
+                uc_data["lora_version"] = v.get("current_lora_version", 0)
+                # Round number of the last PRS evaluation — used by UI to detect
+                # whether training has happened since the last eval
+                last_prs_entry = history[-1] if history else None
+                uc_data["prs_round"] = (
+                    last_prs_entry.get("round") if isinstance(last_prs_entry, dict) else len(history)
+                ) if history else 0
             except Exception:
                 uc_data["phase"] = 1
                 uc_data["prs"] = None
+                uc_data["prs_round"] = 0
         cfg_path = ROOT / "examples" / uc["id"] / "config.json"
         if cfg_path.exists():
             try:
@@ -250,14 +258,33 @@ def uc_logs_endpoint(uc_id: str):
     _uc_path(uc_id)  # path traversal guard
     jm = get_manager()
     job = jm.last_for_uc(uc_id)
-    if not job:
-        return JSONResponse({"lines": [], "status": None, "step": None, "job_id": None})
-    return JSONResponse({
-        "lines": job.get("last_lines", []),
-        "status": job.get("status"),
-        "step": job.get("step"),
-        "job_id": job.get("job_id"),
-    })
+    if job:
+        return JSONResponse({
+            "lines": job.get("last_lines", []),
+            "status": job.get("status"),
+            "step": job.get("step"),
+            "job_id": job.get("job_id"),
+        })
+    # Fallback: read from disk log (survives studio restarts)
+    from studio.pipeline_runner import _log_path
+    log_file = _log_path(uc_id)
+    if log_file.exists():
+        try:
+            lines = log_file.read_text().splitlines()
+            # Parse step/status from header line written by run_step_background
+            step = None
+            status = "done"  # if file exists from a previous run, it completed
+            if lines and lines[0].startswith("[studio] step="):
+                parts = lines[0].split()
+                for p in parts:
+                    if p.startswith("step="):
+                        step = p[5:]
+            if lines and "[studio] failed" in lines[-1]:
+                status = "failed"
+            return JSONResponse({"lines": lines, "status": status, "step": step, "job_id": None})
+        except OSError:
+            pass
+    return JSONResponse({"lines": [], "status": None, "step": None, "job_id": None})
 
 
 # ── PRS history ────────────────────────────────────────────────────────────────
@@ -283,6 +310,50 @@ def prs_history_endpoint(uc_id: str):
         elif isinstance(entry, (int, float)):
             result.append({"label": f"LoRA v{len(result)+1}", "round": len(result)+1, "prs": entry})
     return JSONResponse(result)
+
+
+@api_router.get("/uc/{uc_id}/eval-summary")
+def eval_summary(uc_id: str):
+    results_path = _uc_path(uc_id) / "ab_eval_results.json"
+    if not results_path.exists():
+        return JSONResponse({"has_results": False})
+    try:
+        results = json.loads(results_path.read_text())
+    except Exception:
+        return JSONResponse({"has_results": False})
+    if not results:
+        return JSONResponse({"has_results": False})
+
+    def avg(lst):
+        return round(sum(lst) / len(lst), 4) if lst else None
+
+    lat_a = [r["latency_a_ms"] for r in results if r.get("latency_a_ms", 0) > 0]
+    lat_b = [r["latency_b_ms"] for r in results if r.get("latency_b_ms", 0) > 0]
+    sem_a = [r["sem_sim_a"] for r in results if r.get("sem_sim_a") is not None]
+    sem_b = [r["sem_sim_b"] for r in results if r.get("sem_sim_b") is not None]
+    prs_scores = [r["prs_score"] for r in results if r.get("prs_score") is not None]
+    wins = sum(1 for r in results if r.get("prs_score", 0) >= 0.75)
+
+    avg_lat_a = avg(lat_a) or 0
+    avg_lat_b = avg(lat_b) or 0
+    avg_sem_a = avg(sem_a) or 0
+    avg_sem_b = avg(sem_b) or 0
+
+    # Speed gain: positive = KVForge faster, negative = KVForge slower
+    speed_gain = round((avg_lat_b - avg_lat_a) / avg_lat_b * 100, 1) if avg_lat_b > 0 else None
+
+    return JSONResponse({
+        "has_results": True,
+        "total": len(results),
+        "wins": wins,
+        "win_rate": round(wins / len(results) * 100, 1),
+        "avg_prs": avg(prs_scores),
+        "avg_sem_a": avg_sem_a,
+        "avg_sem_b": avg_sem_b,
+        "avg_lat_a_ms": round(avg_lat_a),
+        "avg_lat_b_ms": round(avg_lat_b),
+        "speed_gain_pct": speed_gain,  # negative means KVForge is slower
+    })
 
 
 # ── Auto-curation ──────────────────────────────────────────────────────────────

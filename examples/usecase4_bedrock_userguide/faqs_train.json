@@ -1,0 +1,1350 @@
+[
+  {
+    "question": "What is Amazon Bedrock?",
+    "answer": "Amazon Bedrock is a fully managed service that offers a choice of industry leading foundation models (FMs) along with a broad set of capabilities that you need to build generative AI applications, simplifying development with security, privacy, and responsible AI. With the comprehensive capabilities of Amazon Bedrock, you can experiment with a variety of top FMs, customize them privately with your data using techniques such as fine-tuning and retrieval-augmented generation (RAG), and create managed agents that execute complex business tasks\u2014from booking travel and processing insurance claims to creating ad campaigns and managing inventory\u2014all without writing any code. Since Amazon Bedrock is serverless, you don't have to manage any infrastructure, and you can securely integrate and deploy generative AI capabilities into your applications using the AWS services you are already familiar with."
+  },
+  {
+    "question": "Which FMs are available on Amazon Bedrock?",
+    "answer": "Amazon Bedrock customers can choose from some of the most cutting-edge FMs available today. Currently we offer 47 models. This includes language and embeddings models from:  AI21: Jamba 1.5 Large, Jamba 1.5 Mini, Jamba-Instruct, Jurassic-2 Mid, Jurassic-2 Ultra Anthropic: Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 3 Opus, Claude 3 Haiku, Claude 3 Sonnet, Claude 2.1, Claude 2.0, Claude Instant Cohere: Command R+, Command R, Command, Command Light, Embed - English, Embed \u2013 Multilingual Meta: Llama 3.2 90B, Llama 3.2 11B, Llama 3.2 3B, Llama 3.2 1B, Llama 3.1 8B, Llama 3.1 70B, Llama 3.1 405B, Llama 3 8B, Llama 3 70B, Llama 2 13B, Llama 2 70B Mistral AI: Mistral Large 2 (24.07), Mistral Large (24.02), Mistral Small (24.02), Mixtral 8x7B, Mistral 7B Stability AI: Stable Image Ultra, Stable Diffusion 3 Large, Stable Image Core, Stable Diffusion XL 1.0 Amazon: Amazon Titan Text Premier, Amazon Titan Text Express, Amazon Titan Text Lite, Amazon Titan Text Embeddings, Amazon Titan Text Embeddings V2, Amazon Titan Multimodal Embeddings, Amazon Titan Image Generator, Amazon Titan Image Generator v2"
+  },
+  {
+    "question": "Why should I use Amazon Bedrock?",
+    "answer": "There are five reasons to use Amazon Bedrock for building generative AI applications.\n\nChoice of leading FMs:\u00a0Amazon Bedrock offers an easy-to-use developer experience to work with a broad range of high-performing FMs from Amazon and leading AI companies like AI21 Labs, Anthropic, Cohere, Meta, Mistral AI, and Stability AI. You can quickly experiment with a variety of FMs in the playground, and use a single API for inference regardless of the models you choose, giving you the flexibility to use FMs from different providers and keep up to date with the latest model versions with minimal code changes.\nEasy model customization with your data: Privately customize FMs with your own data through a visual interface without writing any code. Simply select the training and validation data sets stored in Amazon Simple Storage Service (Amazon S3) and, if required, adjust the hyperparameters to achieve the best possible model performance.\nFully managed agents that can invoke APIs dynamically to execute tasks: Build agents that execute complex business tasks\u2014from booking travel and processing insurance claims to creating ad campaigns, preparing tax filings, and managing your inventory\u2014by dynamically calling your company systems and APIs. Fully managed agents for Amazon Bedrock extend the reasoning capabilities of FMs to break down tasks, create an orchestration plan, and execute it.\nNative support for RAG to extend the power of FMs with proprietary data:\u00a0With Amazon Bedrock Knowledge Bases, you can securely connect FMs to your data sources for retrieval augmentation\u2014from within the managed service\u2014extending the FM\u2019s already powerful capabilities and making it more knowledgeable about your specific domain and organization.\nData security and compliance certifications: Amazon Bedrock offers several capabilities to support security and privacy requirements. Amazon Bedrock is in scope for common compliance standards such as Service and Organization Control (SOC), International Organization for Standardization (ISO), is Health Insurance Portability and Accountability Act (HIPAA) eligible, and customers can use Amazon Bedrock in compliance with the General Data Protection Regulation (GDPR). Amazon Bedrock is CSA Security Trust Assurance and Risk (STAR) Level 2 certified, which validates the use of best practices and the security posture of AWS cloud offerings. With Amazon Bedrock, your content is not used to improve the base models and is not shared with any model providers. Your data in Amazon Bedrock is always encrypted in transit and at rest, and you can optionally encrypt the data using your own keys. You can use AWS PrivateLink with Amazon Bedrock to establish private connectivity between your FMs and your Amazon Virtual Private Cloud (Amazon VPC) without exposing your traffic to the Internet."
+  },
+  {
+    "question": "How can I get started with Amazon Bedrock?",
+    "answer": "With the serverless experience of Amazon Bedrock, you can quickly get started. Navigate to Amazon Bedrock in the AWS Management Console and try out the FMs in the playground. You can also create an agent and test it in the console. Once you\u2019ve identified your use case, you can easily integrate the FMs into your applications using AWS tools without having to manage any infrastructure. Link to Amazon Bedrock getting started course Link to Amazon Bedrock user guide"
+  },
+  {
+    "question": "What are the most common use cases for Amazon Bedrock?",
+    "answer": "You can quickly get started with use cases:\n\nCreate new pieces of original content, such as short stories, essays, social media posts, and web page copy.\nSearch, find, and synthesize information to answer questions from a large corpus of data.\nCreate realistic and artistic images of various subjects, environments, and scenes from language prompts.\nHelp customers find what they\u2019re looking for with more relevant and contextual product recommendations than word matching.\nGet a summary of textual content such as articles, blog posts, books, and documents to get the gist without having to read the full content.\nSuggest products that match shopper preferences and past purchases\n\nExplore more generative AI use cases."
+  },
+  {
+    "question": "What is Amazon Bedrock Playground?",
+    "answer": "Amazon Bedrock offers a playground that allows you to experiment with various FMs using a conversational chat interface. You can provide a prompt and use a web interface inside the console to supply a prompt and use the pretrained models to generate text or images, or alternatively use a fine-tuned model that has been adapted for your use case."
+  },
+  {
+    "question": "In which AWS Regions is Amazon Bedrock available?",
+    "answer": "For a list of AWS Regions where Amazon Bedrock is available, see\u00a0Amazon Bedrock endpoints and quotas in the Amazon Bedrock Reference Guide."
+  },
+  {
+    "question": "How do I customize a model on Amazon Bedrock?",
+    "answer": "You can easily fine-tune FMs on Amazon Bedrock using tagged data or by using continued pre-train feature to customize the model using non-tagged data. To get started, provide the training and validation dataset, configure hyperparameters (epochs, batch size, learning rate, warmup steps) and submit the job. Within a couple of hours, your fine-tuned model can be accessed with the same API (InvokeModel)."
+  },
+  {
+    "question": "Can I train a model and deploy it on Amazon Bedrock?",
+    "answer": "Yes, you can train select publicly available models and import them into the Amazon Bedrock using the Custom Model Import feature. Currently, this feature only supports Llama 2/3, Mistral, and Flan architectures. For additional information, please refer the documentation."
+  },
+  {
+    "question": "What is latency-optimized inference in Amazon Bedrock?",
+    "answer": "Available in public preview, latency-optimized inference in Amazon Bedrock offers reduced latency without compromising accuracy. As verified by Anthropic, with latency-optimized inference on Amazon Bedrock, Claude 3.5 Haiku runs faster on AWS than anywhere else. Additionally, with latency-optimized inference in Bedrock, Llama 3.1 70B and 405B runs faster on AWS than any other major cloud provider. Using purpose-built AI chips like AWS Trainium2 and advanced software optimizations in Amazon Bedrock, customers can access more options to optimize their inference for a particular use case.\nKey Features:\n\nReduces response times for foundation model interactions\nMaintains accuracy while improving speed\nRequires no additional setup or model fine-tuning\n\nSupported Models: Anthropic's Claude 3.5 Haiku and Meta's Llama 3.1 models 405B and 70B\n\u00a0\nAvailability: The US East (Ohio) Region via cross-region inference\n\u00a0\nTo get started, visit the Amazon Bedrock console. For more information visit the Amazon Bedrock documentation."
+  },
+  {
+    "question": "How do we get started with latency-optimized inference in Amazon Bedrock?",
+    "answer": "Accessing the latency-optimized inference in Amazon Bedrock requires no additional setup or model fine-tuning, allowing for immediate enhancement of existing generative AI applications with faster response times. You can toggle on the \u201cLatency optimized\u201d parameter while invoking the Bedrock inference API.\n\u00a0\nTo get started, visit the\u00a0Amazon Bedrock console. For more information visit the\u00a0Amazon Bedrock documentation."
+  },
+  {
+    "question": "What are Amazon Bedrock Agents?",
+    "answer": "Amazon Bedrock\u00a0Agents are fully managed capabilities that make it easier for developers to create generative AI\u2013based applications that can complete complex tasks for a wide range of use cases and deliver up-to-date answers based on proprietary knowledge sources. In just a few short steps, Amazon Bedrock\u00a0Agents automatically break down tasks and create an orchestration plan\u2013without any manual coding. The agent securely connects to company data through an API, automatically converting data into a machine-readable format, and augmenting the request with relevant information to generate the most accurate response. Agents can then automatically call APIs to fulfill a user\u2019s request. For example, a manufacturing company might want to develop a generative AI application that automates tracking inventory levels, sales data, supply chain information and that can recommend optimal reorder points and quantities to maximize efficiency. As fully managed capabilities, Amazon Bedrock\u00a0Agents remove the undifferentiated lifting of managing system integration and infrastructure provisioning, allowing developers to use generative AI to its full extent throughout their organization."
+  },
+  {
+    "question": "How can I connect FMs to my company data sources?",
+    "answer": "You can securely connect FMs to your company data sources using Amazon Bedrock Agents. With a knowledge base, you can use agents to give FMs in Amazon Bedrock access to additional data that helps the model generate more relevant, context-specific, and accurate responses without continually retraining the FM. Based on user input, agents identify the appropriate knowledge base, retrieve the relevant information, and add the information to the input prompt, giving the model more context information to generate a completion."
+  },
+  {
+    "question": "What are some use cases for Amazon Bedrock Agents?",
+    "answer": "Amazon Bedrock Agents can help you increase productivity, improve your customer service experience, and automate workflows (such as processing insurance claims)."
+  },
+  {
+    "question": "How do Amazon Bedrock Agents help improve developer productivity?",
+    "answer": "With agents, developers have seamless support for monitoring, encryption, user permissions, versioning, and API invocation management without writing custom code. Amazon Bedrock\u00a0Agents automate the prompt engineering and orchestration of user-requested tasks. Developers can use the agent-created prompt template as a baseline to further refine it for an enhanced user experience. They can update the user input, orchestration plan, and the FM response. With access to the prompt template developers have better control over the Agent orchestration.\nWith fully managed agents, you don\u2019t have to worry about provisioning or managing infrastructure and can take applications to production faster."
+  },
+  {
+    "question": "Is the content processed by Amazon Bedrock moved outside the AWS Region where I am using Amazon Bedrock?",
+    "answer": "Any customer content processed by Amazon Bedrock is encrypted and stored at rest in the AWS Region where you are using Amazon Bedrock."
+  },
+  {
+    "question": "Are user inputs and model outputs made available to third-party model providers?",
+    "answer": "No. Users' inputs and model outputs are not shared with any model providers."
+  },
+  {
+    "question": "What security and compliance standards does Amazon Bedrock support?",
+    "answer": "Amazon Bedrock offers several capabilities to support security and privacy requirements. Amazon Bedrock is in scope for common compliance standards such as\u00a0Fedramp Moderate, Service and Organization Control (SOC), International Organization for Standardization (ISO), Health Insurance Portability and Accountability Act (HIPAA) eligibility, and customers can use Bedrock in compliance with the General Data Protection Regulation (GDPR). Amazon Bedrock is included in the scope of the SOC 1, 2, 3 reports, allowing customers to gain insights into our security controls. We demonstrate compliance through extensive third-party audits of our AWS controls. Amazon Bedrock is one of the AWS services under ISO Compliance for the ISO 9001, ISO 27001, ISO 27017, ISO 27018, ISO 27701, ISO 22301, and ISO 20000 standards. Amazon Bedrock is CSA Security Trust Assurance and Risk (STAR) Level 2 certified, which validates the use of best practices and the security posture of AWS cloud offerings. With Amazon Bedrock, your content is not used to improve the base models and is not shared with any model providers. You can use AWS PrivateLink to establish private connectivity from Amazon VPC to Amazon Bedrock, without having to expose your data to internet traffic."
+  },
+  {
+    "question": "Will AWS and third-party model providers use customer inputs to or outputs from Amazon Bedrock to train Amazon Titan or any third-party models?",
+    "answer": "No, AWS and the third-party model providers will not use any inputs to or outputs from Amazon Bedrock to train Amazon Titan or any third-party models."
+  },
+  {
+    "question": "What SDKs are supported for Amazon Bedrock?",
+    "answer": "Amazon Bedrock supports SDKs for runtime services. iOS and Android SDKs, as well as Java, JS, Python, CLI, .Net, Ruby, PHP, Go, and C++, support both text and speech input."
+  },
+  {
+    "question": "What SDKs support streaming functionality?",
+    "answer": "Streaming is supported on all the SDKs."
+  },
+  {
+    "question": "How much does Amazon Bedrock cost?",
+    "answer": "Please see the\u00a0Amazon Bedrock pricing page for current pricing information."
+  },
+  {
+    "question": "What support is provided for Amazon Bedrock?",
+    "answer": "Depending on your AWS Support contract, Amazon Bedrock is supported under Developer Support, Business Support and Enterprise Support plans."
+  },
+  {
+    "question": "How can I track the input and output tokens?",
+    "answer": "You can use CloudWatch metrics to track the inputs and output token."
+  },
+  {
+    "question": "How can I securely use my data to customize FMs available through Amazon Bedrock?",
+    "answer": "With Amazon Bedrock, you can privately customize FMs, retaining control over how your data is used and encrypted. Amazon Bedrock makes a separate copy of the base FM and trains this private copy of the model. Your data including prompts, information used to supplement a prompt, and FM responses. Customized FMs remain in the Region where the API call is processed."
+  },
+  {
+    "question": "How does Amazon Bedrock ensure my data used in fine-tuning remains private and confidential?",
+    "answer": "When you\u2019re fine-tuning a model, your data is never exposed to the public internet, never leaves the AWS network, is securely transferred through your VPC, and is encrypted in transit and at rest. Amazon Bedrock also enforces the same AWS access controls that you have with any of our other services."
+  },
+  {
+    "question": "Does Amazon Bedrock support continued pretraining?",
+    "answer": "We launched continued pretraining for Amazon Titan Text Express and Amazon Titan models on Amazon Bedrock. Continued pretraining allows you to continue the pretraining on an Amazon Titan base model using large amounts of unlabeled data. This type of training will adapt the model from a general domain corpus to a more specific domain corpus such as medical, law, finance, and so on, while still preserving most of the capabilities of the Amazon Titan base model."
+  },
+  {
+    "question": "Why should I use continued pretraining in Amazon Bedrock?",
+    "answer": "Enterprises may want to build models for tasks in a specific domain. The base models may not be trained on the technical jargon used in that specific domain. Thus, directly fine-tuning the base model requires large amounts of labeled training records and a long training duration to get accurate results. To ease this burden, the customer can instead provide large amounts of unlabeled data for a continued pretraining job. This job will adapt the Amazon Titan base model to the new domain. Then the customer may fine-tune the newly pretrained custom model to downstream tasks, using significantly fewer labeled training records and with a shorter training duration."
+  },
+  {
+    "question": "How does the continued pretraining feature relate to other AWS services?",
+    "answer": "Amazon Bedrock continued pretraining and fine-tuning have very similar requirements. For this reason, we are choosing to create unified APIs that support both continued pretraining and fine-tuning. Unification of the APIs reduces the learning curve and will help customers use standard features such as Amazon EventBridge to track long running jobs, Amazon S3 integration for fetching training data, resource tags, and model encryption."
+  },
+  {
+    "question": "How do I use continued pre-training?",
+    "answer": "Continued pretraining helps you adapt the Amazon Titan models to your domain specific data while still preserving the base functionality of the Amazon Titan models. To create a continued pretraining job, navigate to the Amazon Bedrock console and click on \"Custom Models.\" You will navigate to the custom model page that has two tabs: Models and Training jobs. Both tabs provide a \u201cCustomize Model\u201d drop-down menu on the right. Select \u201cContinued Pretraining\u201d from the drop-down menu to navigate to \u201cCreate Continued Pretraining Job.\" You will provide the source model, name, model encryption, input data, hyper-parameters and output data. Additionally, you can provide tags, along with details about AWS Identity and Access Management (IAM) roles and resource policies for the job."
+  },
+  {
+    "question": "What are Amazon Titan models?",
+    "answer": "Exclusive to Amazon Bedrock, the Amazon Titan family of models incorporates 25 years of Amazon experience innovating with AI and machine learning across the business. Amazon Titan FMs provide customers with a breadth of high-performing image, multimodal, and text model choices through a fully managed API. Amazon Titan models are created by AWS and pretrained on large datasets, making them powerful, general-purpose models built to support a variety of use cases, while also supporting the responsible use of AI. Use them as is or privately customize them with your own data. Learn more about Amazon Titan."
+  },
+  {
+    "question": "Where can I learn more about the data processed to develop and train Amazon Titan FMs?",
+    "answer": "To learn more about data processed to develop and train Amazon Titan FMs, visit Amazon Titan Model Training and Privacy page."
+  },
+  {
+    "question": "Which data sources can I connect to Amazon Bedrock Knowledge Bases?",
+    "answer": "You can ingest content from various sources, including the web, Amazon Simple Storage Service (Amazon S3), Confluence (preview), Salesforce (preview), and SharePoint (preview). You can also programmatically ingest streaming data or data from unsupported sources. You can also connect to your structured data sources such as Redshift datawarehouse and AWS Glue data catalog."
+  },
+  {
+    "question": "How does Amazon Bedrock Knowledge Base retrieve data from structured data sources?",
+    "answer": "Amazon Bedrock Knowledge Bases provides a managed Natural Language to SQL to convert natural language into actionable SQL queries and retrieve data, allowing you to build application using data from these sources."
+  },
+  {
+    "question": "Does Amazon Bedrock Knowledge Bases support multi-turn conversations?",
+    "answer": "Yes, session context management is built-in, allowing your applications to maintain context across multiple interactions, which is essential for supporting multi-turn conversations."
+  },
+  {
+    "question": "Does Amazon Bedrock Knowledge Bases provide source attribution for retrieved information?",
+    "answer": "Yes, all information retrieved includes citations, improving transparency and minimizing the risk of hallucinations in the generated responses."
+  },
+  {
+    "question": "What multi-modal capabilities does Amazon Bedrock Knowledge Bases offer?",
+    "answer": "Amazon Bedrock Knowledge Bases supports multi-modal data processing, allowing developers to build generative AI applications that analyze both text and visual data, including images, charts, diagrams, and tables. Model responses can leverage insights from visual elements in addition to text, providing. more accurate and contextually relevant answers. Additionally, source attribution for responses includes visual elements, enhancing transparency and trust in the responses."
+  },
+  {
+    "question": "What multi-modal data formats does Amazon Bedrock Knowledge Bases support?",
+    "answer": "Amazon Bedrock Knowledge Bases can process visually rich documents in PDF format, which may contain images, tables, charts, and diagrams. For image-only data, Bedrock Knowledge Bases supports standard image formats like JPEG and PNG, enabling search capabilities where users can retrieve relevant images based on text-based queries."
+  },
+  {
+    "question": "What are the different parsing options available in Amazon Bedrock Knowledge Bases?",
+    "answer": "Customers have three parsing options for Bedrock Knowledge Bases. For text-only processing, the built-in default Bedrock parser is available at no additional cost, ideal for cases where multimodal data processing is not required. Amazon Bedrock Data Automation (BDA) or foundation models can be used to parse multimodal data. For more information, refer to the product documentation."
+  },
+  {
+    "question": "How does Amazon Bedrock Knowledge Bases ensure data security and manage workflow complexities?",
+    "answer": "Amazon Bedrock Knowledge Base handles various workflow complexities such as content comparison, failure handling, throughput control, and encryption, ensuring that your data is securely processed and managed according to AWS\u2019s stringent security standards."
+  },
+  {
+    "question": "What is Model Evaluation on Amazon Bedrock?",
+    "answer": "Model Evaluation on Amazon Bedrock allows you to evaluate, compare, and select the best FM for your use case in just a few short steps. Amazon Bedrock offers a choice of automatic evaluation and human evaluation. You can use automatic evaluation with predefined metrics such as accuracy, robustness, and toxicity. You can use human evaluation workflows for subjective or custom metrics such as friendliness, style, and alignment to brand voice. For human evaluation, you can use your in-house employees or an AWS-managed team as reviewers. Model Evaluation on Amazon Bedrock provides built-in curated datasets or you can bring your own datasets."
+  },
+  {
+    "question": "Against what metrics can I evaluate FMs?",
+    "answer": "You can evaluate variety of predefined metrics such as accuracy, robustness, and toxicity using automatic evaluations. You can also use human evaluation workflows for subjective or custom metrics, such as friendliness, relevance, style, and alignment to brand voice."
+  },
+  {
+    "question": "What is the difference between human-based and automatic evaluations?",
+    "answer": "Automatic evaluations allow you to quickly narrow down the list of available FMs against standard criteria (such as accuracy, toxicity and robustness). Human-based evaluations are often used to evaluate more nuanced or subjective criteria that require human judgment and where automatic evaluations might not exist (such as brand voice, creative intent, friendliness)."
+  },
+  {
+    "question": "How does automatic evaluation work?",
+    "answer": "You can quickly evaluate Amazon Bedrock models for metrics such as accuracy, robustness, and toxicity by using curated built-in data sets or by bringing your own prompt datasets. After your prompt datasets are sent to Amazon Bedrock models for inference, the model responses are scored with evaluation algorithms for each dimension. The backend engine aggregates individual prompt response scores into summary scores and presents them through easy-to-understand visual reports."
+  },
+  {
+    "question": "How does human evaluation work?",
+    "answer": "Amazon Bedrock allows you to set up human review workflows in a few short steps and bring your in-house employees, or use an expert team managed by AWS, to evaluate models. Through Amazon Bedrock\u2019s intuitive interface, humans can review and give feedback on model responses by clicking thumbs up or down, rating on a scale of 1-5, choosing the best of multiple responses, or ranking prompts. For example, a team member can be shown how two models respond to the same prompt, and then be asked to select the model that shows more accurate, relevant, or stylistic outputs. You can specify the evaluation criteria that matter to you by customizing the instructions and buttons to appear on the evaluation UI for your team. You can also provide detailed instructions with examples and the overall goal of model evaluation, so users can align their work accordingly. This method is useful to evaluate subjective criteria that require human judgement or more nuanced subject matter expertise and that cannot be easily judged by automatic evaluations."
+  },
+  {
+    "question": "What is Amazon Bedrock Guardrails?",
+    "answer": "Amazon Bedrock\u00a0Guardrails help you implement safeguards for your generative AI applications based on your use cases and responsible AI policies. Guardrails helps control the interaction between users and FMs by filtering undesirable and harmful content and will soon redact personally identifiable information (PII), enhancing content safety and privacy in generative AI applications. You can create multiple guardrails with different configurations tailored to specific use cases. Additionally, with the guardrails you can continually monitor and analyze user inputs and FM responses that might violate customer-defined policies."
+  },
+  {
+    "question": "What are the safeguards available in Amazon Bedrock Guardrails?",
+    "answer": "Guardrails help you to define a set of policies to help safeguard your generative AI applications. You can configure the following policies in a guardrail.\n\nContextual grounding checks: help detect and filter hallucinations if the responses are not grounded (e.g., factually inaccurate or new information) in the source information and irrelevant to user\u2019s query or instruction.\nAutomated Reasoning checks: help detect factual inaccuracies in generated content, suggest corrections, and explain why responses are accurate by checking against a structured, mathematical representation of knowledge called an Automated Reasoning Policy.\nContent filters: help you configure thresholds to detect and filter harmful text content across categories such as hate, insults, sexual, violence, misconduct, and prompt attacks. Additionally, content filters can detect and filter harmful image content across these categories thereby helping build safe multimodal applications.\nDenied topics: help you define a set of topics that are undesirable in the context of your application. For example, an online banking assistant can be designed to refrain from providing investment advice.\nWord filters: help you define a set of words to block in user inputs and FM\u2013generated responses.\nSensitive information filter: helps you react sensitive information like a set of PII that can be redacted in FM\u2013generated responses. Based on the use case, Guardrails can also help you block a user input if it contains PII."
+  },
+  {
+    "question": "Can I use Guardrails with all available FMs and tools on Amazon Bedrock?",
+    "answer": "Amazon Bedrock Guardrails works with a wide range of models including FMs supported in Amazon Bedrock, fine-tuned models, as well as, self-hosted models outside Amazon Bedrock. User inputs and model outputs can be evaluated independently for third-party and self-hosted models using the ApplyGuardrail API. Amazon Bedrock Guardrails can also be integrated with Amazon Bedrock Agents and Amazon Bedrock Knowledge Bases to build safe and secure generative AI applications aligned with responsible AI policies"
+  },
+  {
+    "question": "Does AWS offer an intellectual property indemnity covering copyright claims for its generative AI services?",
+    "answer": "AWS offers an uncapped intellectual property (IP) indemnity for copyright claims arising from generative output of the following generally available Amazon generative AI services: Amazon Titan models, and other services listed in Section 50.10 of the Service Terms (the \u201cIndemnified Generative AI Services\u201d). This means that customers are protected from third-party claims alleging copyright infringement by the output generated by the Indemnified Generative AI Services in response to inputs or other data provided by the customer. Customers must also use the services responsibly, such as not inputting infringing data or disabling a service\u2019s filtering features."
+  },
+  {
+    "question": "Do you have a list of off-the-shelf (built-in) guardrails, and what can be customized?",
+    "answer": "There are five guardrail policies each with different off-the-shelf protections\n\nContent filters \u2013 This has 6 off the shelf categories (hate, insults, sexual, violence, misconduct (incl. criminal activity) and prompt attack (jailbreak and prompt injection. Each category can have further customized thresholds in terms of aggressiveness of filtering - low/medium/high\u00a0for both text and image content.\nDenied topic \u2013 These are customized topics that customers can define using simple natural language description\nSensitive information filter \u2013 These come with 30+ off the shelf PIIs. It can be further customized by adding customer\u2019s proprietary information that are sensitive.\nWord filters \u2013 It comes with off the shelf profanity filtering and can be further customized with custom words.\nContextual grounding checks \u2013\u00a0It can help detect hallucinations for RAG, summarization, and conversational applications, where source information can be used as reference to validate the model response."
+  },
+  {
+    "question": "What can workers do if they are shown toxic or offensive material during an evaluation?",
+    "answer": "Workers can decline and release tasks or take breaks during the evaluation while accessing the human evaluation tool."
+  },
+  {
+    "question": "What happens to the status of a model evaluation job after it has successfully started?",
+    "answer": "Once the job has successfully started, the status changes to In progress."
+  },
+  {
+    "question": "When evaluating a response, what score should be given if stereotypical content is found?",
+    "answer": "If stereotypical content is found in the response, a score of 1 should be given."
+  },
+  {
+    "question": "What score should be given if a response is purely a rejection of harmful content?",
+    "answer": "If the response is a purely rejection, a score of 0 should be given."
+  },
+  {
+    "question": "What should you enter as the Node name when setting up the prompt node?",
+    "answer": "You should enter MakePlaylist as the Node name when setting up the prompt node."
+  },
+  {
+    "question": "What type should be selected for the Flow input node?",
+    "answer": "Object should be selected as the Type for the Flow input node."
+  },
+  {
+    "question": "What is the value of 'duration_millis'?",
+    "answer": "The value of 'duration_millis' is 30000."
+  },
+  {
+    "question": "Which categories are included in 'iab_categories'?",
+    "answer": "The categories included in 'iab_categories' are Technology & Computing and Renewable Energy."
+  },
+  {
+    "question": "What prompt is used to evaluate the model's response when no ground truth is provided in the prompt dataset?",
+    "answer": "The prompt used to evaluate the model's response when no ground truth is provided is: You are given a task and a candidate response; is this a correct and accurate response to the task?"
+  },
+  {
+    "question": "What are the possible values for '[Answer]' in the format Explanation: [Explanation], Answer: [Answer]?",
+    "answer": "The possible values for '[Answer]' in the format Explanation: [Explanation], Answer: [Answer] are correct, partially correct, and incorrect."
+  },
+  {
+    "question": "What is the model ID used in the example?",
+    "answer": "The model ID used in the example is cohere.command-r-v1:0."
+  },
+  {
+    "question": "What parameters are included in the inference configuration?",
+    "answer": "The inference configuration includes maxTokens, temperature, and topP."
+  },
+  {
+    "question": "What does the .NET Foundation Model Playground application demonstrate?",
+    "answer": "The .NET Foundation Model Playground application demonstrates how to create playgrounds to interact with Amazon Bedrock foundation models through different modalities."
+  },
+  {
+    "question": "Where can instructions be found on how to set up and run the complete source code for the scenarios?",
+    "answer": "Instructions on how to set up and run the code can be found in the complete source code."
+  },
+  {
+    "question": "What should you choose to define the rule detail with when creating a rule to notify you when the state of a job in Amazon Bedrock has changed?",
+    "answer": "You should choose to define the rule detail with an event pattern when creating a rule to notify you when the state of a job in Amazon Bedrock has changed."
+  },
+  {
+    "question": "Which AWS service should you choose as the AWS service when building an event pattern for Amazon Bedrock?",
+    "answer": "You should choose Amazon Bedrock as the AWS service when building an event pattern for Amazon Bedrock."
+  },
+  {
+    "question": "What is the first step in creating an agent?",
+    "answer": "The first step in creating an agent is to sign in to the AWS Management Console using an IAM role with Amazon Bedrock permissions, and open the Amazon Bedrock console."
+  },
+  {
+    "question": "What should a user say to the Conversational builder to associate a knowledge base?",
+    "answer": "A user can say something like \"Associate a knowledge base\" to the Conversational builder."
+  },
+  {
+    "question": "Which search types can be specified in the overrideSearchType field?",
+    "answer": "The search types that can be specified in the overrideSearchType field are HYBRID and SEMANTIC."
+  },
+  {
+    "question": "When is the Hybrid search type option available in the console?",
+    "answer": "The Hybrid search type option is only available if you're using an Amazon OpenSearch Serverless vector store configured with a filterable text field."
+  },
+  {
+    "question": "What are two of the supported regions for fine-tuning in Amazon Bedrock?",
+    "answer": "US East (N. Virginia) and US West (Oregon) are two of the supported regions for fine-tuning in Amazon Bedrock."
+  },
+  {
+    "question": "Which Amazon Titan models are supported for fine-tuning?",
+    "answer": "Amazon Titan Image Generator G1 v2, Amazon Titan Image Generator G1, Amazon Titan Multimodal Embeddings G1, Amazon Titan Text G1 - Express, Amazon Titan Text G1 - Lite, and Amazon Titan Text G1 - Premie are supported for fine-tuning."
+  },
+  {
+    "question": "What does a null value in the 'finish_reasons' field indicate?",
+    "answer": "A null value in the 'finish_reasons' field indicates that the request was successful."
+  },
+  {
+    "question": "What is the data type of the 'images' field in the model invocation response?",
+    "answer": "The 'images' field is a list of generated images in base64 string format."
+  },
+  {
+    "question": "What does the agent predict it should call in the example provided?",
+    "answer": "The agent predicts that it should call the suggestActivities action."
+  },
+  {
+    "question": "How can you safeguard your application from malicious prompt injections?",
+    "answer": "You can safeguard your application from malicious prompt injections by requesting con\ufb01rmation from your application users before invoking the action group function."
+  },
+  {
+    "question": "What is the value of the 'actionEvent' key in the payload structure from orchestration lambda?",
+    "answer": "The value of the 'actionEvent' key in the payload structure from orchestration lambda can be INVOKE_MODEL, INVOKE_TOOL, APPLY_GUARDRAIL, FINISH, or user defined."
+  },
+  {
+    "question": "What is the value of the 'state' key in the START_STATE sent from Amazon Bedrock Agents to the orchestrator Lambda?",
+    "answer": "The value of the 'state' key in the START_STATE sent from Amazon Bedrock Agents to the orchestrator Lambda is START."
+  },
+  {
+    "question": "Which Amazon OpenSearch vector store is currently available to use with the Confluence data source?",
+    "answer": "Currently, only Amazon OpenSearch Serverless vector store is available to use with this data source."
+  },
+  {
+    "question": "What type of data is not supported by Confluence data sources?",
+    "answer": "Confluence data sources don't support multimodal data, such as tables, charts, diagrams, or other images."
+  },
+  {
+    "question": "What type of request is sent to ingest documents directly into a knowledge base?",
+    "answer": "An IngestKnowledgeBaseDocuments request is sent to ingest documents directly into a knowledge base."
+  },
+  {
+    "question": "What happens if you specify a document identifier or S3 location that already exists in the knowledge base when ingesting documents?",
+    "answer": "If you specify a document identifier or S3 location that already exists in the knowledge base, the document will be overwritten with the new content."
+  },
+  {
+    "question": "What is the title of the guide?",
+    "answer": "The title of the guide is Amazon Bedrock User Guide."
+  },
+  {
+    "question": "What is the topic of the Converse API code samples?",
+    "answer": "The Converse API code samples are for custom model import."
+  },
+  {
+    "question": "What is the value of model_max_length?",
+    "answer": "The value of model_max_length is 1000000000000000019884624838656."
+  },
+  {
+    "question": "Which tokenizer class is used?",
+    "answer": "The tokenizer class used is LlamaTokenizer."
+  },
+  {
+    "question": "What does a higher Refusal score indicate regarding generated responses?",
+    "answer": "A higher Refusal score indicates that the generated responses are more evasive on average."
+  },
+  {
+    "question": "What must be done manually when a knowledge base evaluation job is deleted?",
+    "answer": "When a knowledge base evaluation job is deleted, the Amazon S3 bucket that stores your prompts dataset and the bucket or directory that stores the results of the evaluation must be deleted manually."
+  },
+  {
+    "question": "What type of code samples are provided?",
+    "answer": "Converse API code samples are provided."
+  },
+  {
+    "question": "For what purpose are the Converse API code samples provided?",
+    "answer": "The Converse API code samples are provided for custom model import."
+  },
+  {
+    "question": "Which AWS Region is the Bedrock Runtime client built in?",
+    "answer": "The Bedrock Runtime client is built in the US_EAST_1 AWS Region."
+  },
+  {
+    "question": "What is the value assigned to the variable 'modelId'?",
+    "answer": "The variable 'modelId' is assigned the value 'ai21.j2-mid-v1'."
+  },
+  {
+    "question": "What kind of service is Amazon Bedrock?",
+    "answer": "Amazon Bedrock is a fully managed service."
+  },
+  {
+    "question": "What are two techniques that can be used to privately customize foundation models with your data using Amazon Bedrock?",
+    "answer": "Fine-tuning and Retrieval Augmented Generation (RAG) are two techniques that can be used to privately customize foundation models with your data using Amazon Bedrock."
+  },
+  {
+    "question": "What value does epochCount support?",
+    "answer": "epochCount supports the value Auto."
+  },
+  {
+    "question": "What is the minimum value for the number of iterations through the entire training dataset?",
+    "answer": "The minimum value for the number of iterations through the entire training dataset is 1."
+  },
+  {
+    "question": "What is the purpose of the '/send-reminders' API?",
+    "answer": "The '/send-reminders' API sends a reminder to the customer about pending documents for an open claim."
+  },
+  {
+    "question": "What information does the '/send-reminders' API require in its request body?",
+    "answer": "The '/send-reminders' API requires a claim ID and its pending documents in its request body."
+  },
+  {
+    "question": "What key and value should be used to tag an AWS KMS key?",
+    "answer": "An AWS KMS key should be tagged with the key EnableBedrock and a value of true."
+  },
+  {
+    "question": "What appears in Bedrock Studio as pre-selected defaults in the model selector?",
+    "answer": "The default generative model appears in Bedrock Studio as pre-selected defaults in the model selector."
+  },
+  {
+    "question": "What is the title of the document?",
+    "answer": "The title of the document is Amazon Bedrock User Guide."
+  },
+  {
+    "question": "What is the content of control_687?",
+    "answer": "The content of control_687 is [control_687]."
+  },
+  {
+    "question": "What is the data type of the 'model_id' argument in the 'generate_conversation' function?",
+    "answer": "The data type of the 'model_id' argument in the 'generate_conversation' function is a string."
+  },
+  {
+    "question": "Which inference parameter is set to a value of 0.5 in the 'generate_conversation' function?",
+    "answer": "The temperature inference parameter is set to a value of 0.5 in the 'generate_conversation' function."
+  },
+  {
+    "question": "What is the value of the 'special' key for the token with ID '128086'?",
+    "answer": "The value of the 'special' key for the token with ID '128086' is true."
+  },
+  {
+    "question": "What is the value of the 'content' key for the token with ID '128080'?",
+    "answer": "The value of the 'content' key for the token with ID '128080' is <|reserved_special_token_72|>."
+  },
+  {
+    "question": "What rating should be given to the logical coherence of a response when there are no logic gaps?",
+    "answer": "The logical coherence should be rated as 'Yes' when there are no logic gaps."
+  },
+  {
+    "question": "In what format should the output be?",
+    "answer": "The output should be formatted as an XML file."
+  },
+  {
+    "question": "What should be entered for Blocked messaging for prompts that will be displayed when a guardrail is invoked?",
+    "answer": "A message should be entered for Blocked messaging for prompts that will be displayed when a guardrail is invoked."
+  },
+  {
+    "question": "What are the two Guardrail creation options?",
+    "answer": "The two Guardrail creation options are Quick create with toxicity \ufb01lters and Create your own guardrail."
+  },
+  {
+    "question": "Which Amazon Titan text model is listed as 'Express'?",
+    "answer": "Amazon Titan Text G1 is listed as 'Express'."
+  },
+  {
+    "question": "What is one of the Anthropic Claude models listed?",
+    "answer": "Anthropic Claude 2.1 is one of the Anthropic Claude models listed."
+  },
+  {
+    "question": "What is the page number for Converse API code samples for custom model import?",
+    "answer": "Converse API code samples for custom model import is on page 1614."
+  },
+  {
+    "question": "For what are charges incurred when using Amazon Bedrock Guardrails?",
+    "answer": "Charges for Amazon Bedrock Guardrails will be incurred only for the policies con\ufb01gured in the guardrail."
+  },
+  {
+    "question": "In which AWS Regions is Amazon Bedrock Guardrails supported?",
+    "answer": "Amazon Bedrock Guardrails is supported in US East (N. Virginia), US East (Ohio), US West (Oregon), AWS GovCloud (US-East), AWS GovCloud (US-West), Asia Paci\ufb01c (Tokyo), Asia Paci\ufb01c (Seoul), Asia Paci\ufb01c (Mumbai), Asia Paci\ufb01c (Singapore), Asia Paci\ufb01c (Sydney), Canada (Central), Europe (Frankfurt), Europe (Zurich), Europe (Ireland), Europe (London), and Europe (Paris)."
+  },
+  {
+    "question": "Which models support Amazon S3 uploads?",
+    "answer": "Jamba 1.5 Mini, Amazon Nova Pro/ Lite, Amazon Nova Micro, and Anthropic Claude 3 models support Amazon S3 uploads."
+  },
+  {
+    "question": "Do Amazon Titan models support streaming tool use?",
+    "answer": "No, Amazon Titan models do not support streaming tool use."
+  },
+  {
+    "question": "What field in the knowledge base setup corresponds to the ARN of the DB cluster?",
+    "answer": "The resourceArn field in the knowledge base setup corresponds to the ARN of the DB cluster."
+  },
+  {
+    "question": "What must you do if you use Pinecone as a knowledge base for Amazon Bedrock?",
+    "answer": "If you use Pinecone, you agree to authorize AWS to access the designated third-party source on your behalf in order to provide vector store services to you."
+  },
+  {
+    "question": "What type of guide is being referenced in the passage?",
+    "answer": "The passage references the Amazon Bedrock User Guide."
+  },
+  {
+    "question": "What is the content of element 513?",
+    "answer": "The content of element 513 is [control_511]."
+  },
+  {
+    "question": "What is the value of the 'similarityStrength' parameter in the imageVariationParams?",
+    "answer": "The value of the 'similarityStrength' parameter in the imageVariationParams is 0.7."
+  },
+  {
+    "question": "Which task type is specified in the example body?",
+    "answer": "The task type specified in the example body is IMAGE_VARIATION."
+  },
+  {
+    "question": "What is the value for the Claude 3 Haiku model ID?",
+    "answer": "The value for the Claude 3 Haiku model ID is anthropic.claude-3-haiku-20240307-v1:0."
+  },
+  {
+    "question": "Which tool is the weather assistant instructed to use exclusively for weather data?",
+    "answer": "The weather assistant is instructed to use the Weather_Tool exclusively for weather data."
+  },
+  {
+    "question": "What is the extraction type for the product_type field?",
+    "answer": "The extraction type for the product_type field is inferred string."
+  },
+  {
+    "question": "According to the passage, what is considered a medium product size?",
+    "answer": "A medium product size is when the product size is between 30 to 60% of the image."
+  },
+  {
+    "question": "Which action is allowed in the first example policy statement?",
+    "answer": "The action allowed in the first example policy statement is kms:Decrypt."
+  },
+  {
+    "question": "What is the version specified in the second example policy?",
+    "answer": "The version specified in the second example policy is 2012-10-17."
+  },
+  {
+    "question": "What is the value of the constant CLAUDE_REGION?",
+    "answer": "The value of the constant CLAUDE_REGION is us-east-1."
+  },
+  {
+    "question": "What is the user message used to start a conversation?",
+    "answer": "The user message used to start a conversation is \"Describe the purpose of a 'hello world' program in one line.\"."
+  },
+  {
+    "question": "What API can be used to invoke Meta Llama on Amazon Bedrock?",
+    "answer": "Bedrock's Converse API can be used to invoke Meta Llama on Amazon Bedrock."
+  },
+  {
+    "question": "Which AWS SDK developer guides and code examples can be found in a complete list?",
+    "answer": "AWS SDK developer guides and code examples for using Amazon Bedrock with an AWS SDK can be found in a complete list."
+  },
+  {
+    "question": "Which service manages the service keys when using the Amazon S3 SSE-S3 server-side encryption option?",
+    "answer": "The Amazon S3 service manages the service keys when using the Amazon S3 SSE-S3 server-side encryption option."
+  },
+  {
+    "question": "What AWS KMS actions are allowed in the example policy for decrypting data sources in Amazon S3?",
+    "answer": "The AWS KMS actions allowed in the example policy are KMS:GenerateDataKey and KMS:Decrypt."
+  },
+  {
+    "question": "Which two actions does a user role need permissions for to use Rerank directly with a list of sources?",
+    "answer": "To use Rerank directly with a list of sources, the user role needs permissions to use both the bedrock:Rerank and bedrock:InvokeModel actions."
+  },
+  {
+    "question": "What should you do to prevent usage of a reranking model?",
+    "answer": "To prevent usage of a reranking model, you must deny permissions for both the bedrock:Rerank and bedrock:InvokeModel actions."
+  },
+  {
+    "question": "Which API is used to send a text message to Mistral?",
+    "answer": "Bedrock's Converse API is used to send a text message to Mistral."
+  },
+  {
+    "question": "What AWS SDK is used in the code example?",
+    "answer": "The .NET AWS SDK is used in the code example."
+  },
+  {
+    "question": "What is the name of one of the keys included in the fileMetadata?",
+    "answer": "One of the keys included in the fileMetadata is key1."
+  },
+  {
+    "question": "What is the data type of the 'maxTokens' field within 'fixedSizeChunkingConfiguration'?",
+    "answer": "The data type of the 'maxTokens' field within 'fixedSizeChunkingConfiguration' is number."
+  },
+  {
+    "question": "What is the value of schema_type if the length of action_split is 2?",
+    "answer": "If the length of action_split is 2, the value of schema_type is 'FUNCTION'."
+  },
+  {
+    "question": "What is the value assigned to 'invocationType' in parsed_response if schema_type is 'API' and resource_name starts with KNOWLEDGE_STORE_SEARCH_ACTION_PREFIX?",
+    "answer": "If schema_type is 'API' and resource_name starts with KNOWLEDGE_STORE_SEARCH_ACTION_PREFIX, the value assigned to 'invocationType' in parsed_response is 'KNOWLEDGE_BASE'."
+  },
+  {
+    "question": "What can you do on the Retrieve access key page?",
+    "answer": "On the Retrieve access key page, you can choose Show to reveal the value of your user's secret access key, copy the credentials, or download a .csv file."
+  },
+  {
+    "question": "Which AWS managed policy should you choose to attach Amazon Bedrock permissions to a user or role?",
+    "answer": "You should choose the AmazonBedrockFullAccess AWS managed policy to attach Amazon Bedrock permissions to a user or role."
+  },
+  {
+    "question": "What is the maximum number of collaborator agents that can be associated with a supervisor agent?",
+    "answer": "A maximum of 10 collaborator agents can be associated with a supervisor agent at this time."
+  },
+  {
+    "question": "What are the methods available for creating multi-agent collaboration in Amazon Bedrock?",
+    "answer": "You can create multi-agent collaboration in the Amazon Bedrock console, using the APIs, using the AWS CLI, or by using the AWS SDK."
+  },
+  {
+    "question": "Which two API operations can be used to make inference requests to Cohere Command R and Command R+ models?",
+    "answer": "You can make inference requests to Cohere Command R and Command R+ models with InvokeModel or InvokeModelWithResponseStream (streaming)."
+  },
+  {
+    "question": "What should you use for conversational applications according to the text?",
+    "answer": "For conversational applications, the text recommends that you use the Converse API."
+  },
+  {
+    "question": "Which AWS managed policy allows a role to skip the section on model invocation API actions?",
+    "answer": "The AmazonBedrockFullAccess AWS managed policy allows a role to skip the section on model invocation API actions."
+  },
+  {
+    "question": "What are two of the API actions that can be used with all supported resources in Amazon Bedrock when the specified permissions are attached to a role?",
+    "answer": "InvokeModel and InvokeModelWithResponseStream are two of the API actions that can be used with all supported resources in Amazon Bedrock when the specified permissions are attached to a role."
+  },
+  {
+    "question": "What is the value of the 'special' key for the token with content '<|reserved_special_token_166|>'?",
+    "answer": "The value of the 'special' key for the token with content '<|reserved_special_token_166|>' is true."
+  },
+  {
+    "question": "What is the content of the token associated with the key '128174'?",
+    "answer": "The content of the token associated with the key '128174' is <|reserved_special_token_166|>."
+  },
+  {
+    "question": "What is crucial for getting the desired output from a model?",
+    "answer": "Specification of the output is crucial for getting what you want from the model."
+  },
+  {
+    "question": "What style did Charles Mingus Jr. pioneer on seminal recordings like Pithecanthropus Erectus and Mingus Ah Um?",
+    "answer": "Charles Mingus Jr. pioneered the post-bop style on seminal recordings like Pithecanthropus Erectus and Mingus Ah Um."
+  },
+  {
+    "question": "What is the title of the document this passage is from?",
+    "answer": "The title of the document is Amazon Bedrock User Guide."
+  },
+  {
+    "question": "What must you select before you can optimize a prompt in Amazon Bedrock?",
+    "answer": "You must select a model before you can optimize a prompt."
+  },
+  {
+    "question": "After Amazon Bedrock finishes analyzing and optimizing your prompt in Prompt management, how is the optimized prompt displayed?",
+    "answer": "After Amazon Bedrock finishes analyzing and optimizing your prompt, your optimized prompt is displayed as a variant side by side with the original prompt."
+  },
+  {
+    "question": "What type of request is sent to modify the configuration of a knowledge base associated with an agent using the API?",
+    "answer": "An UpdateAgentKnowledgeBase request is sent to modify the configuration of a knowledge base associated with an agent."
+  },
+  {
+    "question": "What must you specify as the agentVersion when modifying the configuration of a knowledge base associated with an agent using the API?",
+    "answer": "You must specify the agentVersion as DRAFT when modifying the configuration of a knowledge base associated with an agent using the API."
+  },
+  {
+    "question": "What can you select when you create a prompt using Prompt management in Amazon Bedrock?",
+    "answer": "When you create a prompt, you can select a model to run inference on it and modify the inference parameters to use."
+  },
+  {
+    "question": "How can you integrate a prompt into your application?",
+    "answer": "You integrate a prompt into your application with the help of Amazon Bedrock Flows."
+  },
+  {
+    "question": "What is the name of the key used to specify the Anthropic version in the JSON body?",
+    "answer": "The key used to specify the Anthropic version in the JSON body is anthropic_version."
+  },
+  {
+    "question": "What is the purpose of the 'max_tokens' parameter in the 'run_multi_modal_prompt' function?",
+    "answer": "The 'max_tokens' parameter specifies the maximum number of tokens to generate."
+  },
+  {
+    "question": "Where can you configure advanced prompts?",
+    "answer": "You can configure advanced prompts in either the AWS Management Console or through the API."
+  },
+  {
+    "question": "What should you enter in the text box to confirm the message that appears when turning off Override template defaults or changing the model?",
+    "answer": "You should enter confirm in the text box to confirm the message that appears."
+  },
+  {
+    "question": "Which SageMaker actions are included in the 'BedrockEndpointInvokingOperations'?",
+    "answer": "The 'BedrockEndpointInvokingOperations' include the SageMaker actions 'sagemaker:InvokeEndpoint' and 'sagemaker:InvokeEndpointWithResponseStream'."
+  },
+  {
+    "question": "What condition is applied to the 'BedrockEndpointInvokingOperations'?",
+    "answer": "The condition applied to the 'BedrockEndpointInvokingOperations' is that 'aws:CalledViaLast' must equal 'bedrock.amazonaws.com'."
+  },
+  {
+    "question": "What are the display dimensions, in pixels, for the computer tool?",
+    "answer": "The display height for the computer tool is 768 pixels and the display width is 1024 pixels."
+  },
+  {
+    "question": "Which types of tools are listed in the additionalModelRequestFields?",
+    "answer": "The types of tools listed in the additionalModelRequestFields are computer_20241022, bash_20241022, and text_editor_20241022."
+  },
+  {
+    "question": "Which API is used to invoke Amazon Titan Text models on Amazon Bedrock?",
+    "answer": "Amazon Titan Text models on Amazon Bedrock are invoked using the Invoke Model API."
+  },
+  {
+    "question": "Where can a complete list of AWS SDK developer guides and code examples be found?",
+    "answer": "A complete list of AWS SDK developer guides and code examples can be found in Using Amazon Bedrock with an AWS SDK."
+  },
+  {
+    "question": "What does the 'Faithfulness' metric in Amazon Bedrock look at?",
+    "answer": "The 'Faithfulness' metric looks at whether the response contains information not found in the prompt, that cannot be inferred easily from the prompt."
+  },
+  {
+    "question": "On what scale are responses graded for the 'Faithfulness' metric?",
+    "answer": "Responses are graded on a 5-point likert scale, and then normalized in the output and the job's report card."
+  },
+  {
+    "question": "What are the possible values for invocationType?",
+    "answer": "The possible values for invocationType are ACTION_GROUP, KNOWLEDGE_BASE, FINISH, or ASK_USER."
+  },
+  {
+    "question": "What are the keys within actionGroupInput?",
+    "answer": "The keys within actionGroupInput are parameters with string values."
+  },
+  {
+    "question": "What should be identified when comparing the candidate response and the reference response?",
+    "answer": "Any crucial information or key points that are present in the reference response but missing from the candidate response should be identified."
+  },
+  {
+    "question": "When evaluating the completeness of a response, what aspect should be the focus, rather than minor details?",
+    "answer": "The main ideas and concepts that directly address the question should be the focus, rather than minor details."
+  },
+  {
+    "question": "What are the two permissions given in the resource-based policy attached to the KMS key?",
+    "answer": "The two permissions are for a role to encrypt model customization artifacts and for a role to use the imported custom model in inference."
+  },
+  {
+    "question": "What is the event type mentioned in the example?",
+    "answer": "The event type mentioned in the example is AwsApiCall."
+  },
+  {
+    "question": "Which AWS service is used by GraphRAG for graph and vector storage?",
+    "answer": "GraphRAG uses Amazon Neptune Analytics for graph and vector storage."
+  },
+  {
+    "question": "What data source does GraphRAG support during preview?",
+    "answer": "During preview, GraphRAG only supports Amazon S3 as the data source."
+  },
+  {
+    "question": "What is the message to reprompt the LLM if the parameter 'question' is missing for the user::askuser function call?",
+    "answer": "The message to reprompt the LLM if the parameter 'question' is missing for the user::askuser function call is: Missing the parameter 'question' for user::askuser function call. Please try again with the correct argument added."
+  },
+  {
+    "question": "What is the format for function calls to the askuser function?",
+    "answer": "The format for function calls to the askuser function must be: <invoke> <tool_name>user::askuser</tool_name><parameters><question>$QUESTION</ question></parameters></invoke>."
+  },
+  {
+    "question": "What are the minimum and maximum values for the prompt strength parameter cfg_scale?",
+    "answer": "The minimum value for the prompt strength parameter cfg_scale is 0 and the maximum is 30."
+  },
+  {
+    "question": "What is the default value for the generation step parameter steps?",
+    "answer": "The default value for the generation step parameter steps is 30."
+  },
+  {
+    "question": "What is the value of the PREPROCESSING_PROMPT_TYPE variable?",
+    "answer": "The value of the PREPROCESSING_PROMPT_TYPE variable is PRE_PROCESSING."
+  },
+  {
+    "question": "What regular expression pattern is compiled into the PRE_PROCESSING_RATIONALE_PATTERN variable?",
+    "answer": "The regular expression pattern compiled into the PRE_PROCESSING_RATIONALE_PATTERN variable is &lt;thinking&gt;(.*?)&lt;/thinking&gt;."
+  },
+  {
+    "question": "Which IAM actions are included in the 'TagResources' statement?",
+    "answer": "The 'TagResources' statement includes the IAM actions 'iam:TagRole' and 'iam:UntagRole'."
+  },
+  {
+    "question": "What condition must be met for the 'TagResources' statement to be effective?",
+    "answer": "The condition that must be met for the 'TagResources' statement to be effective is that 'aws:ResourceTag/AmazonBedrockManaged' must equal 'true'."
+  },
+  {
+    "question": "What identifier is used to delete an imported model?",
+    "answer": "The model name or the model ARN of the imported model is used to delete an imported model."
+  },
+  {
+    "question": "Which API can be used with a Mistral or Llama type instruct model when importing?",
+    "answer": "The Converse or the ConverseStream API can be used with a Mistral or Llama type instruct model when importing."
+  },
+  {
+    "question": "What data type does the 'startsWith' filter support?",
+    "answer": "The 'startsWith' filter supports the string data type."
+  },
+  {
+    "question": "How many filter types can be included in the 'andAll' and 'orAll' lists?",
+    "answer": "Up to 5 filter types can be included in the 'andAll' and 'orAll' lists."
+  },
+  {
+    "question": "What is the format that the candidate response should follow?",
+    "answer": "The candidate response should follow the format Explanation: [Explanation], Answer: [Answer]."
+  },
+  {
+    "question": "What does the completeness metric measure?",
+    "answer": "The completeness metric measures if the model's response answers every question from the prompt."
+  },
+  {
+    "question": "Which actions are included in the MarketplaceModelEndpointNonMutatingAPIs?",
+    "answer": "The actions included in the MarketplaceModelEndpointNonMutatingAPIs are sagemaker:DescribeEndpoint, sagemaker:DescribeEndpointConfig, sagemaker:DescribeModel, and sagemaker:ListTags."
+  },
+  {
+    "question": "What string is required for the aws:CalledViaLast condition in MarketplaceModelEndpointNonMutatingAPIs?",
+    "answer": "The required string for the aws:CalledViaLast condition in MarketplaceModelEndpointNonMutatingAPIs is bedrock.amazonaws.com."
+  },
+  {
+    "question": "What scale is used to grade responses based on readability?",
+    "answer": "Responses are graded a 5-point lickert scale for readability."
+  },
+  {
+    "question": "What does the variable '{prediction}' represent?",
+    "answer": "The variable '{prediction}' represents the generator model's responses."
+  },
+  {
+    "question": "What type of HTTP request is sent to list information about all guardrails?",
+    "answer": "A GET request is sent to list information about all guardrails."
+  },
+  {
+    "question": "What field should be specified to list all versions of a guardrail?",
+    "answer": "The ARN of the guardrail should be specified in the guardrailIdentifier field to list all versions of a guardrail."
+  },
+  {
+    "question": "Which AWS Region supports Rerank?",
+    "answer": "US West (Oregon) supports Rerank."
+  },
+  {
+    "question": "Which AWS Regions support Prompt optimization?",
+    "answer": "US East (N. Virginia), US West (Oregon), and Canada (Central) support Prompt optimization."
+  },
+  {
+    "question": "What type of request is sent to view all the tags for an alias?",
+    "answer": "A ListTagsForResource request is sent to view all the tags for an alias."
+  },
+  {
+    "question": "Which AWS Management Console service must be opened to edit an alias of an agent in Amazon Bedrock?",
+    "answer": "The Amazon Bedrock console must be opened to edit an alias of an agent in Amazon Bedrock."
+  },
+  {
+    "question": "What is the name of the method called in the example code's Main method?",
+    "answer": "The method called in the example code's Main method is ListFoundationModelsAsync."
+  },
+  {
+    "question": "Which AWS Region Endpoint is used to instantiate the AmazonBedrockClient?",
+    "answer": "The AmazonBedrockClient is instantiated with the USWest2 Region Endpoint."
+  },
+  {
+    "question": "What is the name of the JSONL file that should be created?",
+    "answer": "A JSONL file named abc.jsonl should be created."
+  },
+  {
+    "question": "Which service is used to create a client?",
+    "answer": "The boto3 library is used to create a client."
+  },
+  {
+    "question": "What does Amazon Bedrock store alongside the custom model?",
+    "answer": "Amazon Bedrock stores generated ciphertext alongside the custom model to be used as an additional validation check against custom model users."
+  },
+  {
+    "question": "What KMS action decrypts the stored ciphertext to validate role access?",
+    "answer": "The kms:Decrypt action decrypts the stored ciphertext to validate that the role has proper access to the KMS key that encrypts the custom model."
+  },
+  {
+    "question": "What is the source type for the file named 'banking_data'?",
+    "answer": "The source type for the file named 'banking_data' is S3."
+  },
+  {
+    "question": "What is the media type for the 'housing_stats.csv' file?",
+    "answer": "The media type for the 'housing_stats.csv' file is text/csv."
+  },
+  {
+    "question": "What type field should be specified in the dataSourceConfiguration when connecting a knowledge base to a custom data source?",
+    "answer": "The type field in the dataSourceConfiguration should be specified as CUSTOM when connecting a knowledge base to a custom data source."
+  },
+  {
+    "question": "What are the possible values for the dataDeletionPolicy when configuring a data source?",
+    "answer": "The possible values for the dataDeletionPolicy are RETAIN to retain the data in the vector store or DELETE to delete them."
+  },
+  {
+    "question": "Which input modalities are supported by the Anthropic Claude 3 Sonnet model?",
+    "answer": "The Anthropic Claude 3 Sonnet model supports Text and Image input modalities."
+  },
+  {
+    "question": "In which AWS regions is the Anthropic Claude 3 Sonnet model supported?",
+    "answer": "The Anthropic Claude 3 Sonnet model is supported in the following AWS regions: us-east-1, us-west-2, ap-northeast-1*, ap-northeast-2*, ap-south-1, ap-southeast-1 (Gated)*, ap-southeast-2, ca-central-1, and eu-central-1."
+  },
+  {
+    "question": "Which region supports the Stability AI SD3 Large 1.0 model?",
+    "answer": "The Stability AI SD3 Large 1.0 model is supported in the us-west-2 region."
+  },
+  {
+    "question": "What input modalities are supported by the Stability AI Stable Image Ultra 1.1 model?",
+    "answer": "The Stability AI Stable Image Ultra 1.1 model supports Text and Image input modalities."
+  },
+  {
+    "question": "What is the accepted range for the similarityStrength parameter?",
+    "answer": "The accepted range for the similarityStrength parameter is between 0.2 and 1.0, both inclusive."
+  },
+  {
+    "question": "What is the maximum number of images that can be included in the 'images' list?",
+    "answer": "You can include 1 to 5 images in the 'images' list."
+  },
+  {
+    "question": "What is the working draft in Amazon Bedrock?",
+    "answer": "The working draft is a version of the flow that you can iteratively build and test."
+  },
+  {
+    "question": "What are three things Amazon Bedrock verifies when you test a flow?",
+    "answer": "Amazon Bedrock verifies connectivity between all flow nodes, that at least one flow output node is configured, and that input and output variable types are matched as required."
+  },
+  {
+    "question": "Which AWS Management Console should be used to create a new knowledge base?",
+    "answer": "The AWS Management Console for Amazon Bedrock should be used to create a new knowledge base."
+  },
+  {
+    "question": "What are the possible logging destinations when configuring log delivery details for a knowledge base?",
+    "answer": "The possible logging destinations when configuring log delivery details for a knowledge base are CloudWatch Logs, Amazon S3, and Amazon Data Firehose."
+  },
+  {
+    "question": "What is the data type of the 'name' field within the 'wordPolicy' section?",
+    "answer": "The data type of the 'name' field within the 'wordPolicy' section is string."
+  },
+  {
+    "question": "What are the possible keys within the 'contentPolicy' filters?",
+    "answer": "The possible keys within the 'contentPolicy' filters are 'type', 'confidence', 'filterStrength', and 'action'."
+  },
+  {
+    "question": "Which API is used to send a text message to Amazon Titan Text?",
+    "answer": "Bedrock's Converse API is used to send a text message to Amazon Titan Text."
+  },
+  {
+    "question": "What AWS Region is used to create a Bedrock Runtime client in the example?",
+    "answer": "The AWS Region used to create a Bedrock Runtime client in the example is USEast1."
+  },
+  {
+    "question": "Which API is used to send a text message and process the response stream in real-time?",
+    "answer": "The Invoke Model API is used to send a text message and process the response stream in real-time."
+  },
+  {
+    "question": "What is the AWS Region specified in the example code?",
+    "answer": "The AWS Region specified in the example code is us-east-1."
+  },
+  {
+    "question": "What should be returned when using Amazon Bedrock?",
+    "answer": "Only a pure XML string surrounded by triple backticks should be returned."
+  },
+  {
+    "question": "According to the document, what score is assigned to 'Not generally'?",
+    "answer": "The score assigned to 'Not generally' is 1.0."
+  },
+  {
+    "question": "Which request parameter can be included when submitting a CreateModelCustomizationJob request to specify the VPC subnets and security groups to use?",
+    "answer": "A VpcConfig can be included as a request parameter when submitting a CreateModelCustomizationJob request to specify the VPC subnets and security groups to use."
+  },
+  {
+    "question": "How can a model be imported into Amazon Bedrock?",
+    "answer": "A model can be imported into Amazon Bedrock by submitting a model import job in the Amazon Bedrock console, using the API, using the AWS CLI, or using AWS SDK."
+  },
+  {
+    "question": "Which field within embeddingConfig allows specification of the output embeddings vector length?",
+    "answer": "The outputEmbeddingLength field within embeddingConfig allows specification of the output embeddings vector length."
+  },
+  {
+    "question": "What does the inputTextTokenCount field represent in the response body?",
+    "answer": "The inputTextTokenCount field represents the number of tokens in the text input."
+  },
+  {
+    "question": "What does AWS provide to cryptographically sign requests when accessing AWS programmatically?",
+    "answer": "AWS provides a software development kit (SDK) and a command line interface (CLI) to cryptographically sign your requests by using your credentials."
+  },
+  {
+    "question": "What is the sign-in identity called that has complete access to all AWS services and resources in the account when you create an AWS account?",
+    "answer": "This identity is called the AWS account root user and is accessed by signing in with the email address and password that you used to create the account."
+  },
+  {
+    "question": "What is the value of the 'add_bos_token' parameter?",
+    "answer": "The value of the 'add_bos_token' parameter is true."
+  },
+  {
+    "question": "What is the tokenizer class?",
+    "answer": "The tokenizer class is LlamaTokenizer."
+  },
+  {
+    "question": "Which regions support the Anthropic Claude 3 Haiku 200k model?",
+    "answer": "The Anthropic Claude 3 Haiku 200k model is supported in the us-east-1, us-west-2, ap-southeast-2, eu-central-2, and eu-west-3 regions."
+  },
+  {
+    "question": "What is the model ID for the Anthropic Claude 2.1 200k model when using provisioned throughput?",
+    "answer": "The model ID for the Anthropic Claude 2.1 200k model when using provisioned throughput is anthropic.claude-v 2:1:200k."
+  },
+  {
+    "question": "What is the value of CfgScale used in the ImageGenerationConfig?",
+    "answer": "The value of CfgScale used in the ImageGenerationConfig is 8.0."
+  },
+  {
+    "question": "What is the model ID used to invoke the Titan Image model?",
+    "answer": "The model ID used to invoke the Titan Image model is amazon.titan-image-generator-v1."
+  },
+  {
+    "question": "Which action is allowed by the 'WriteToS3Bucket' statement?",
+    "answer": "The 'WriteToS3Bucket' statement allows the 's3:PutObject' action."
+  },
+  {
+    "question": "What condition is specified for the 'WriteToS3Bucket' statement?",
+    "answer": "The 'WriteToS3Bucket' statement specifies a condition where 'aws:ResourceAccount' must equal '${account-id}'."
+  },
+  {
+    "question": "What is the metric name associated with a Likert scale in the provided example?",
+    "answer": "The metric name associated with a Likert scale in the provided example is Toxicity."
+  },
+  {
+    "question": "What is the identity provider type in the worker metadata?",
+    "answer": "The identity provider type in the worker metadata is Cognito."
+  },
+  {
+    "question": "Which API operations allow the use of an inference profile when running inference from any Region included in it?",
+    "answer": "InvokeModel, InvokeModelWithResponseStream, Converse, ConverseStream, RetrieveAndGenerate, CreateEvaluationJob, and CreatePrompt are the API operations that allow the use of an inference profile when running inference from any Region included in it."
+  },
+  {
+    "question": "When using an inference profile with the RetrieveAndGenerate API, which field should the ARN of the inference profile be specified in?",
+    "answer": "When using an inference profile with the RetrieveAndGenerate API, the ARN of the inference profile should be specified in the modelArn field."
+  },
+  {
+    "question": "Which API actions must access be denied to prevent a user from invoking foundation models?",
+    "answer": "To prevent a user from invoking foundation models, you need to deny access to API actions that invoke models directly."
+  },
+  {
+    "question": "What does the example identity-based policy deny access to?",
+    "answer": "The example shows a identity-based policy that denies access to running inference on a speci\ufb01c model."
+  },
+  {
+    "question": "In the Kotlin SDK example, what AWS region is specified for the BedrockClient?",
+    "answer": "In the Kotlin SDK example, the AWS region specified for the BedrockClient is \"us-east-1\"."
+  },
+  {
+    "question": "What is returned by the `listFoundationModels()` function?",
+    "answer": "The `listFoundationModels()` function returns a list of `FoundationModelSummary` objects, which may be null."
+  },
+  {
+    "question": "What is the name of the collaborator agent associated with the supervisor agent?",
+    "answer": "The name of the collaborator agent associated with the supervisor agent is agentCollaboratorName."
+  },
+  {
+    "question": "What is the input for the collaborator agent?",
+    "answer": "The input for the collaborator agent is a string."
+  },
+  {
+    "question": "What request parameter is used to pass the definition of a tool to the Converse operation?",
+    "answer": "The toolConfig (ToolCon\ufb01guration) request parameter is used to pass the definition of a tool to the Converse operation."
+  },
+  {
+    "question": "What is the name of the tool in the example schema?",
+    "answer": "The name of the tool in the example schema is top_song."
+  },
+  {
+    "question": "What must you do if you add access to Anthropic models?",
+    "answer": "If you add access to Anthropic models, you must describe your use case details."
+  },
+  {
+    "question": "What happens to the Access status if your request is successful?",
+    "answer": "If your request is successful, the Access status changes to Access granted or Available."
+  },
+  {
+    "question": "Which data stores can Amazon Bedrock Knowledge Bases access through the Amazon Redshift query engine?",
+    "answer": "Amazon Bedrock Knowledge Bases is able to access data stored in Amazon Redshift and AWS Glue Data Catalog through the Amazon Redshift query engine."
+  },
+  {
+    "question": "What are the authentication methods that can be used to access the query engine when creating a knowledge base?",
+    "answer": "The authentication methods that can be used to access the query engine are IAM, temporary credentials user name, and AWS Secrets Manager."
+  },
+  {
+    "question": "How many tool-calls are supported by the model at once?",
+    "answer": "This model only supports single tool-calls at once."
+  },
+  {
+    "question": "What tag is used when a built-in tool is called?",
+    "answer": "The tag \"<|python_tag|>\" is used when a built-in tool is called."
+  },
+  {
+    "question": "What key is associated with the text within a generated response part?",
+    "answer": "The key associated with the text within a generated response part is 'text'."
+  },
+  {
+    "question": "What key is associated with the references within a generated response part?",
+    "answer": "The key associated with the references within a generated response part is 'references'."
+  },
+  {
+    "question": "Which Amazon Bedrock model is available in both the US East (N. Virginia) and US West (Oregon) regions?",
+    "answer": "Meta Llama 2 70B is available in both the US East (N. Virginia) and US West (Oregon) regions."
+  },
+  {
+    "question": "What is one prerequisite for allowing a role to copy a model?",
+    "answer": "Depending on the role's permissions and the model's configuration, you might have to set up permissions to allow a role to copy a model."
+  },
+  {
+    "question": "What is the job description for the evaluation job?",
+    "answer": "The job description for the evaluation job is 'two different task types'."
+  },
+  {
+    "question": "Which Amazon Resource Name (ARN) is specified as the model identifier for the first bedrock model?",
+    "answer": "The Amazon Resource Name (ARN) specified as the model identifier for the first bedrock model is 'arn:aws:bedrock:us-west-2::foundation-model/ amazon.titan-text-lite-v1'."
+  },
+  {
+    "question": "What is the maximum number of key-value pairs that can be provided in the request metadata?",
+    "answer": "A maximum of 16 key-value pairs can be provided."
+  },
+  {
+    "question": "In what format must the request metadata be provided?",
+    "answer": "The request metadata must be provided in the JSON key:value format."
+  },
+  {
+    "question": "Which values are acceptable for the 'answer' field in the JSON schema?",
+    "answer": "The acceptable values for the 'answer' field in the JSON schema are 'Not at all', 'Not generally', 'Neutral/Mixed', 'Generally yes', and 'Yes'."
+  },
+  {
+    "question": "What are the required properties in the output JSON schema?",
+    "answer": "The required properties in the output JSON schema are 'reasoning' and 'answer'."
+  },
+  {
+    "question": "Which operations have the same responses?",
+    "answer": "The CreateMarketplaceModelEndpoint, UpdateMarketplaceModelEndpoint and RegisterMarketplaceModelEndpoint operations have the same responses."
+  },
+  {
+    "question": "Where can you modify the endpoint?",
+    "answer": "You can modify the endpoint in both Amazon Bedrock Marketplace and Amazon SageMaker AI."
+  },
+  {
+    "question": "What is the value of completionReason when a flow emits a FlowCompletionEvent event?",
+    "answer": "The value of completionReason is SUCCESS."
+  },
+  {
+    "question": "What type of event does the flow also emit?",
+    "answer": "The flow also emits a FlowCompletionEvent event."
+  },
+  {
+    "question": "What are the two methods for connecting to a Salesforce instance for an Amazon Bedrock knowledge base?",
+    "answer": "You can connect to your Salesforce instance for your Amazon Bedrock knowledge base by using either the AWS Management Console for Amazon Bedrock or the CreateDataSource API."
+  },
+  {
+    "question": "What is Salesforce?",
+    "answer": "Salesforce is a customer relationship management (CRM) tool for managing support, sales, and marketing teams."
+  },
+  {
+    "question": "What is the effect of the first policy statement?",
+    "answer": "The effect of the first policy statement is Allow."
+  },
+  {
+    "question": "Which action is allowed by the second policy statement?",
+    "answer": "The action allowed by the second policy statement is ec2:CreateNetworkInterface."
+  },
+  {
+    "question": "What is invoked for every record in a JSON line dataset?",
+    "answer": "The model will be invoked for every record in a JSON line dataset."
+  },
+  {
+    "question": "What can be used to create an automatic model evaluation job?",
+    "answer": "You can create an automatic model evaluation job using the AWS Management Console, AWS CLI, or a supported AWS SDK."
+  },
+  {
+    "question": "What action is allowed by the policy with the Sid 'ApplicationInferenceProfile'?",
+    "answer": "The policy with the Sid 'ApplicationInferenceProfile' allows the action 'bedrock:InvokeModel'."
+  },
+  {
+    "question": "What permissions should be attached to an IAM role for model customization when using a custom role?",
+    "answer": "Permissions to access your training and validation data in S3, permissions to write your output data to S3, and optionally, permissions to decrypt the KMS key if resources are encrypted should be attached to an IAM role for model customization when using a custom role."
+  },
+  {
+    "question": "What must you ensure regarding an IAM identity to perform batch inference?",
+    "answer": "You must ensure that an IAM identity has the necessary permissions to submit and manage batch inference jobs to perform batch inference."
+  },
+  {
+    "question": "Which AWS managed policy can you attach to grant proper permissions to an IAM role for batch inference?",
+    "answer": "You can attach the AmazonBedrockFullAccess policy to grant the proper permissions to the role."
+  },
+  {
+    "question": "Which AWS service logs data events for all human-based model evaluation jobs?",
+    "answer": "Amazon SageMaker AI logs data events for all human-based model evaluation jobs."
+  },
+  {
+    "question": "What Amazon Bedrock data events are logged during the model evaluation job?",
+    "answer": "Data events for all model inference run during the model evaluation job are logged."
+  },
+  {
+    "question": "What type of forests do red pandas inhabit?",
+    "answer": "Red pandas inhabit coniferous forests as well as temperate broadleaf and mixed forests."
+  },
+  {
+    "question": "When do red pandas mate?",
+    "answer": "Red pandas mate in early spring."
+  },
+  {
+    "question": "What is the format of the logging level?",
+    "answer": "The format of the logging level is '%(levelname)s: %(message)s'."
+  },
+  {
+    "question": "Which model ID is used in the example?",
+    "answer": "The model ID used in the example is 'meta.llama3-8b-instruct-v1:0'."
+  },
+  {
+    "question": "What is the output of a prompt node?",
+    "answer": "The output of a prompt node is the generated response from the model."
+  },
+  {
+    "question": "What are the inputs to the prompt node?",
+    "answer": "The inputs to the prompt node are values to fill in the variables."
+  },
+  {
+    "question": "What are the possible values for the role of the message author in AI21 Labs Jamba models?",
+    "answer": "The role of the message author in AI21 Labs Jamba models can be user or assistant."
+  },
+  {
+    "question": "What is the maximum total size for the list of messages in AI21 Labs Jamba models?",
+    "answer": "The maximum total size for the list of messages in AI21 Labs Jamba models is about 256K tokens."
+  },
+  {
+    "question": "What is the value of the 'clean_up_tokenization_spaces' parameter?",
+    "answer": "The value of the 'clean_up_tokenization_spaces' parameter is true."
+  },
+  {
+    "question": "What are the values listed for 'model_input_names'?",
+    "answer": "The values listed for 'model_input_names' are 'input_ids' and 'attention_mask'."
+  },
+  {
+    "question": "What is the content type of the request?",
+    "answer": "The content type of the request is application/json."
+  },
+  {
+    "question": "Which class is used to create a request with the model ID and the model's native request payload?",
+    "answer": "InvokeModelRequest is used to create a request with the model ID and the model's native request payload."
+  },
+  {
+    "question": "What is the purpose of the agentResourceRoleArn field?",
+    "answer": "The agentResourceRoleArn field is used to specify an ARN of the service role with permissions to call API operations on the agent."
+  },
+  {
+    "question": "What does the idleSessionTTLInSeconds field specify?",
+    "answer": "The idleSessionTTLInSeconds field specifies the duration after which the agent ends the session and deletes any stored information."
+  },
+  {
+    "question": "What file type will you create with multiple JSON lines for both the training and validation datasets?",
+    "answer": "You will create .jsonl files with multiple JSON lines for both the training and validation datasets."
+  },
+  {
+    "question": "What are the two versions of the Amazon Titan Image Generator G1 model?",
+    "answer": "The two versions of the Amazon Titan Image Generator G1 model are v1 and v2."
+  },
+  {
+    "question": "What score does a refusal response receive?",
+    "answer": "A refusal response receives a score of 1."
+  },
+  {
+    "question": "Under what circumstance is a response not considered a refusal, even if it initially refuses?",
+    "answer": "If a response initially refuses but later provides an answer, it is not considered a refusal."
+  },
+  {
+    "question": "Which field of an InvokeModel or InvokeModelWithResponseStream request is the request body passed in?",
+    "answer": "The request body is passed in the body field of an InvokeModel or InvokeModelWithResponseStream request."
+  },
+  {
+    "question": "What parameter provides the model with a prompt for generating a response?",
+    "answer": "The inputText parameter provides the model with a prompt for generating a response."
+  },
+  {
+    "question": "What must you do if you are importing your model from an Amazon S3 bucket and using cross-account Amazon S3?",
+    "answer": "If you are importing your model from Amazon S3 bucket and using cross-account Amazon S3 you will need to grant permissions to users in the bucket owner's account for accessing the bucket."
+  },
+  {
+    "question": "In the example bucket policy, which AWS account is granted access?",
+    "answer": "In the example bucket policy, a user in bucket owner's account 123456789123 is granted access."
+  },
+  {
+    "question": "What is the name of the IAM role created in the code example?",
+    "answer": "The name of the IAM role created in the code example is MyCustomizationRole."
+  },
+  {
+    "question": "Which AWS service is used in the code example to create the IAM role and policy?",
+    "answer": "The AWS Identity and Access Management (IAM) service is used in the code example to create the IAM role and policy."
+  },
+  {
+    "question": "What is the title of the document described in the passage?",
+    "answer": "The title of the document is Amazon Bedrock User Guide."
+  },
+  {
+    "question": "What is the page number associated with Converse API code samples for custom model import?",
+    "answer": "Converse API code samples for custom model import is associated with page number 1726."
+  },
+  {
+    "question": "Which service name is used when creating a Bedrock client?",
+    "answer": "The service name 'bedrock-runtime' is used when creating a Bedrock client."
+  },
+  {
+    "question": "What is the purpose of the generate_text function?",
+    "answer": "The generate_text function generates text using a Mistral AI model."
+  },
+  {
+    "question": "What happens to the data from a data source that is converted into vector embeddings when the data deletion policy is set to 'Delete' and a knowledge base or data source resource is deleted?",
+    "answer": "All data from your data source that\u2019s converted into vector embeddings is deleted upon deletion of a knowledge base or data source resource."
+  },
+  {
+    "question": "What must you do if you want to change the chunking configuration for a data source?",
+    "answer": "You must re-create the data source."
+  },
+  {
+    "question": "Which AWS Region is used to create the Bedrock Runtime client in the example?",
+    "answer": "The AWS Region used to create the Bedrock Runtime client in the example is US_EAST_1."
+  },
+  {
+    "question": "What does contextual grounding check detect and filter in model responses?",
+    "answer": "Contextual grounding check detects and filters hallucinations in model responses when a reference source and a user query is provided."
+  },
+  {
+    "question": "Which AWS Management Console function is supported, but not supported by API and SDK operations?",
+    "answer": "You can only upload documents and objects using the AWS Management Console, but API and SDK operations only support text."
+  },
+  {
+    "question": "What happens when you make changes to a blueprint and publish it again?",
+    "answer": "When you make changes to the blueprint and publish again a new version will be created."
+  },
+  {
+    "question": "What does the document class serve as when you classify documents with BDA?",
+    "answer": "The document class serves as a high-level categorization of the document type."
+  },
+  {
+    "question": "What is the name of the API used to invoke Cohere Command on Amazon Bedrock?",
+    "answer": "The Converse API is used to invoke Cohere Command on Amazon Bedrock."
+  },
+  {
+    "question": "Which AWS SDK developer guides and code examples include information about using Amazon Bedrock?",
+    "answer": "A complete list of AWS SDK developer guides and code examples that include information about using Amazon Bedrock can be found in Using Amazon Bedrock with an AWS SDK."
+  },
+  {
+    "question": "What two modalities can be combined in a single multimodal prompt?",
+    "answer": "A multimodal prompt combines images and text."
+  },
+  {
+    "question": "What is the maximum number of images that can be included in the content field?",
+    "answer": "You can include up to 20 images in the content field."
+  },
+  {
+    "question": "Which API is used to send a text message?",
+    "answer": "The Invoke Model API is used to send a text message."
+  },
+  {
+    "question": "In which AWS Region should a Bedrock Runtime client be created?",
+    "answer": "A Bedrock Runtime client should be created in the AWS Region you want to use."
+  },
+  {
+    "question": "Which Anthropic Claude foundation models currently support the Messages API?",
+    "answer": "Claude v2, Claude v3 and v3.5 currently support the Messages API."
+  },
+  {
+    "question": "What is the name of the AWS SDK API to see for API details?",
+    "answer": "InvokeModel in AWS SDK for SAP ABAP API reference is the API to see for API details."
+  },
+  {
+    "question": "What AWS CLI command creates a no-commitment Provisioned Throughput?",
+    "answer": "The AWS CLI command aws bedrock create-provisioned-model-throughput creates a no-commitment Provisioned Throughput."
+  },
+  {
+    "question": "Which command is used to check the status of a provisioned model?",
+    "answer": "The command aws bedrock get-provisioned-model-throughput is used to check the status of a provisioned model."
+  }
+]

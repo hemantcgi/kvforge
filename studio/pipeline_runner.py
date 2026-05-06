@@ -5,6 +5,7 @@ import asyncio
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -63,9 +64,21 @@ def _build_cmd(uc_id: str, step: str) -> list[str]:
         if faqs_path.exists():
             cmd += ["--faqs", str(faqs_path)]
         else:
-            # Fall back to train data if no faqs generated yet
             source_path = ROOT / "examples" / uc_id / "data" / "train.jsonl"
             cmd += ["--faqs", str(source_path)]
+        # Read prs_eval_sample from uc_config; default 20 (5 inference calls × 20 FAQs ≈ 30 min)
+        uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
+        sample = 20
+        if uc_cfg_path.exists():
+            try:
+                uc_cfg = json.loads(uc_cfg_path.read_text())
+                raw = uc_cfg.get("prs_eval_sample", 20)
+                parsed = int(raw)
+                if parsed > 0:
+                    sample = parsed
+            except Exception:
+                pass
+        cmd += ["--sample", str(sample)]
     if step == "sleep-faq":
         # --output is dynamic (depends on uc_id)
         output = str(ROOT / "examples" / uc_id / "faqs.json")
@@ -104,6 +117,17 @@ def _build_cmd(uc_id: str, step: str) -> list[str]:
             except Exception:
                 pass
         cmd += ["--count", str(count)]
+    if step == "ab-eval":
+        # ab_evaluator requires --dashboard-url pointing to the per-UC monitoring dashboard
+        cfg_path = ROOT / "examples" / uc_id / "config.json"
+        port = 8081  # fallback
+        if cfg_path.exists():
+            try:
+                cfg = json.loads(cfg_path.read_text())
+                port = int(cfg.get("dashboard_port", 8081))
+            except Exception:
+                pass
+        cmd += ["--dashboard-url", f"http://localhost:{port}"]
     return cmd
 
 
@@ -125,11 +149,16 @@ def _redact_cmd(cmd: list[str]) -> str:
     return " ".join(parts)
 
 
+def _log_path(uc_id: str) -> Path:
+    """Disk log file for the most recent run of a UC — survives studio restarts."""
+    return ROOT / "examples" / uc_id / "last_run.log"
+
+
 async def run_step_background(uc_id: str, step: str, job_id: str, job_manager) -> None:
     """
     Run pipeline step subprocess as a background task, independent of any SSE
-    connection. Buffers all output in job_manager so clients can connect/
-    disconnect freely without affecting the subprocess.
+    connection. Buffers all output in job_manager AND writes to disk so logs
+    survive studio restarts.
     """
     from studio.gpu_monitor import get_gpu_status
 
@@ -141,7 +170,22 @@ async def run_step_background(uc_id: str, step: str, job_id: str, job_manager) -
 
     cmd = _build_cmd(uc_id, step)
     env = _build_env(uc_id, step)
-    job_manager.append_log(job_id, f"[studio] starting: {_redact_cmd(cmd)}")
+
+    def _append(line: str):
+        job_manager.append_log(job_id, line)
+        try:
+            with open(_log_path(uc_id), "a") as f:
+                f.write(line + "\n")
+        except OSError:
+            pass
+
+    # Truncate log file for new run
+    try:
+        _log_path(uc_id).write_text(f"[studio] step={step} job={job_id}\n")
+    except OSError:
+        pass
+
+    _append(f"[studio] starting: {_redact_cmd(cmd)}")
 
     try:
         proc = await asyncio.create_subprocess_exec(
@@ -155,27 +199,32 @@ async def run_step_background(uc_id: str, step: str, job_id: str, job_manager) -
 
         async for raw_line in proc.stdout:
             line = raw_line.decode("utf-8", errors="replace").rstrip()
-            job_manager.append_log(job_id, line)
+            _append(line)
 
         exit_code = await proc.wait()
         if exit_code == 0:
             job_manager.complete(job_id, exit_code)
-            job_manager.append_log(job_id, f"[studio] done (exit 0)")
+            _append("[studio] done (exit 0)")
         else:
             job_manager.fail(job_id, f"Process exited with code {exit_code}")
-            job_manager.append_log(job_id, f"[studio] failed (exit {exit_code})")
+            _append(f"[studio] failed (exit {exit_code})")
 
     except Exception as e:
         job_manager.fail(job_id, str(e))
-        job_manager.append_log(job_id, f"[studio] error: {e}")
+        _append(f"[studio] error: {e}")
 
+
+_SSE_HEARTBEAT_INTERVAL = 15  # seconds between SSE keepalive comments
 
 async def run_step_streaming(uc_id: str, step: str, job_id: str, job_manager):
     """
     SSE relay: replays buffered log lines then tails new ones until the job
     finishes. Does NOT spawn a subprocess — call run_step_background for that.
+    Sends SSE comment heartbeats every 15s so browsers don't time out during
+    silent inference phases.
     """
     offset = 0
+    last_heartbeat = time.monotonic()
     while True:
         job = job_manager.get(job_id)
         if not job:
@@ -186,6 +235,7 @@ async def run_step_streaming(uc_id: str, step: str, job_id: str, job_manager):
         while offset < len(lines):
             yield _sse({"type": "log", "line": lines[offset]})
             offset += 1
+            last_heartbeat = time.monotonic()  # data counts as activity
 
         status = job.get("status")
         if status != "running":
@@ -196,12 +246,18 @@ async def run_step_streaming(uc_id: str, step: str, job_id: str, job_manager):
                              "message": job.get("error", "failed")})
             return
 
+        now = time.monotonic()
+        if now - last_heartbeat >= _SSE_HEARTBEAT_INTERVAL:
+            yield ": heartbeat\n\n"
+            last_heartbeat = now
+
         await asyncio.sleep(0.3)
 
 
 def _build_env(uc_id: str, step: str) -> dict:
     """Return subprocess env with CUDA_VISIBLE_DEVICES set for GPU steps."""
     env = os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "1"  # ensure print() output streams immediately through the pipe
     if step in GPU_REQUIRED_STEPS:
         uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
         gpu_id = 0  # default
