@@ -117,3 +117,19 @@ def test_s3_prefix_stripped_from_file_name(tmp_path):
                            access_key_id="AK", secret_access_key="SK")
         files = conn.list_files()
     assert files[0].name == "file.docx"  # just the filename, not the full key
+
+
+def test_s3_local_mirror_file_id_is_relative_path(tmp_path):
+    from connectors.s3_connector import S3Connector
+    subdir = tmp_path / "sub"
+    subdir.mkdir()
+    (subdir / "report.docx").write_bytes(b"content")
+    (tmp_path / "top.docx").write_bytes(b"content2")
+    conn = S3Connector(bucket="b", prefix="", region="us-east-1",
+                       access_key_id="", secret_access_key="",
+                       local_mirror_path=str(tmp_path))
+    files = conn.list_files()
+    ids = {f.id for f in files}
+    # IDs should be relative paths, not just filenames — no collision
+    assert "sub/report.docx" in ids or "sub\\report.docx" in ids  # handle Windows sep
+    assert "top.docx" in ids

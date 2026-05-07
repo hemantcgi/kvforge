@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -43,21 +43,21 @@ class S3Connector:
 
     def _list_files_local(self) -> list[SourceFile]:
         """List files from local mirror path."""
-        mirror_path = Path(self.local_mirror_path)
+        root = Path(self.local_mirror_path)
         files = []
 
-        if not mirror_path.exists():
+        if not root.exists():
             return files
 
-        for file_path in mirror_path.rglob("*"):
+        for file_path in root.rglob("*"):
             if file_path.is_file():
                 stat = file_path.stat()
                 # Convert timestamp to UTC datetime
-                modified_at = datetime.fromtimestamp(stat.st_mtime, tz=datetime.now().astimezone().tzinfo)
+                modified_at = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc)
 
                 files.append(
                     SourceFile(
-                        id=file_path.name,
+                        id=str(file_path.relative_to(root)),
                         name=file_path.name,
                         path=str(file_path),
                         size=stat.st_size,
@@ -122,7 +122,11 @@ class S3Connector:
     def _download_s3(self, file: SourceFile) -> bytes:
         """Download file from S3."""
         response = self._client.get_object(Bucket=self.bucket, Key=file.id)
-        return response["Body"].read()
+        body = response["Body"]
+        try:
+            return body.read()
+        finally:
+            body.close()
 
     def get_modified_at(self, file: SourceFile) -> datetime:
         """Return modification time of the file."""
