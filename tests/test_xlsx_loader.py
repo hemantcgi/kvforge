@@ -107,16 +107,14 @@ def test_xlsx_header_only_sheet_returns_empty(tmp_path):
     assert chunks == []
 
 
-def test_xlsx_chunks_from_same_sheet_share_section_hash(tmp_path):
-    # 12 rows with rows_per_chunk=5 → 3 chunks, all from "Sheet1" → should have same sheet-level hash
+def test_xlsx_section_hash_is_64_chars_per_chunk(tmp_path):
+    # 12 rows with rows_per_chunk=5 → 3 chunks, all from "Sheet1"
     rows = [["Col"]] + [[f"row{i}"] for i in range(12)]
     path = _make_xlsx(tmp_path, {"Sheet1": rows})
     from ingestion.xlsx_loader import XlsxLoader
     chunks = XlsxLoader(rows_per_chunk=5).load(path)
     assert len(chunks) >= 2
-    hashes = {c["metadata"]["section_hash"] for c in chunks}
-    # Each window chunk gets its own hash (based on the window text), not the full-sheet hash
-    # This test just verifies hashes are present and 64 chars; unique-per-window is acceptable
+    # Each chunk gets its own section_hash based on chunk text
     for c in chunks:
         assert len(c["metadata"]["section_hash"]) == 64
 
@@ -177,3 +175,9 @@ def test_xlsx_column_headers_in_metadata(tmp_path):
     assert headers[0] == "Name"
     assert headers[1] == ""   # None converted to ""
     assert headers[2] == "Score"
+
+
+def test_xlsx_rows_per_chunk_zero_raises():
+    from ingestion.xlsx_loader import XlsxLoader
+    with pytest.raises(ValueError, match="rows_per_chunk"):
+        XlsxLoader(rows_per_chunk=0)

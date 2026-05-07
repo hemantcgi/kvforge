@@ -24,6 +24,8 @@ class XlsxLoader:
     """
 
     def __init__(self, rows_per_chunk: int = 50):
+        if rows_per_chunk < 1:
+            raise ValueError("rows_per_chunk must be >= 1")
         self.rows_per_chunk = rows_per_chunk
 
     def load(self, source: str) -> list[dict]:
