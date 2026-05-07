@@ -443,3 +443,46 @@ def test_uc_logs_empty_when_no_job_and_no_disk(tmp_path):
     assert data["status"] is None
     assert data["step"] is None
     assert data["job_id"] is None
+
+
+# ── registry has_index ────────────────────────────────────────────────────────
+
+def test_registry_has_index_true_when_version_json_exists(tmp_path):
+    """has_index is True when version.json is present (kv_indexer creates it)."""
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    uc_dir = tmp_path / "examples" / "uc-indexed"
+    uc_dir.mkdir(parents=True)
+    (uc_dir / "version.json").write_text(json.dumps({"phase": 1, "current_lora_version": 0, "prs_history": []}))
+    with patch("studio.api.ROOT", tmp_path), \
+         patch("studio.api.load_registry", return_value=[{"id": "uc-indexed", "display_name": "Test"}]), \
+         patch("studio.api.get_manager") as mock_jm:
+        mock_jm.return_value.list_active.return_value = []
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        resp = client.get("/api/registry")
+    assert resp.status_code == 200
+    ucs = resp.json()["use_cases"]
+    assert ucs[0]["has_index"] is True
+
+
+def test_registry_has_index_false_when_no_version_json(tmp_path):
+    """has_index is False when version.json is absent (UC not yet indexed)."""
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    uc_dir = tmp_path / "examples" / "uc-new"
+    uc_dir.mkdir(parents=True)
+    with patch("studio.api.ROOT", tmp_path), \
+         patch("studio.api.load_registry", return_value=[{"id": "uc-new", "display_name": "New"}]), \
+         patch("studio.api.get_manager") as mock_jm:
+        mock_jm.return_value.list_active.return_value = []
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        resp = client.get("/api/registry")
+    assert resp.status_code == 200
+    ucs = resp.json()["use_cases"]
+    assert ucs[0]["has_index"] is False

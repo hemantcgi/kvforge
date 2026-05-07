@@ -1021,12 +1021,13 @@ const _STEP_LABELS = {
 };
 
 function _nextStepForUc(uc) {
-  if (!uc || !uc.has_faqs) return 'sleep-faq';
+  if (!uc || !uc.has_index)  return 'index';     // not yet indexed
+  if (!uc.has_faqs)          return 'sleep-faq';
   const loraVer  = uc.lora_version || 0;
   const prsRound = uc.prs_round    || 0;
-  if (loraVer === 0)          return 'train';    // never trained
-  if (loraVer > prsRound)     return 'prs-eval'; // trained since last eval
-  return 'train';                                 // PRS up-to-date → next training round
+  if (loraVer === 0)         return 'train';      // never trained
+  if (loraVer > prsRound)    return 'prs-eval';   // trained since last eval
+  return 'train';                                  // PRS up-to-date → next round
 }
 
 async function runNextStep(ucId) {

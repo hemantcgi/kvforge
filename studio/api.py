@@ -65,6 +65,7 @@ def get_registry():
                     uc_data["dashboard_port"] = cfg["dashboard_port"]
             except Exception:
                 pass
+        uc_data["has_index"] = version_path.exists()
         faqs_path = ROOT / "examples" / uc["id"] / "faqs.json"
         uc_data["has_faqs"] = faqs_path.exists()
         jm = get_manager()
