@@ -32,20 +32,43 @@ def test_chunk_payload_has_timestamp_fields():
 
 
 def test_chunk_payload_source_version_from_metadata():
-    """Test that source_version captures the modified field from chunk metadata."""
+    """Test that source_version is populated from chunk metadata when modified is present."""
     from pipeline.kv_indexer import build_payload
 
     kv_array = np.zeros((32, 2, 8, 128), dtype=np.float16)
 
-    # This test directly tests build_payload signature and behavior
-    # Note: current implementation doesn't yet accept metadata dict
-    # but we're testing what the future state should be
+    # Test with source_version explicitly passed
     payload = build_payload(
         text="Test content",
         page=1,
         source_file="doc.pdf",
         kv_array=kv_array,
+        source_version="2026-01-15T10:30:00+00:00",
     )
 
-    # At minimum, source_version field should exist
     assert "source_version" in payload, "source_version field missing"
+    assert payload["source_version"] == "2026-01-15T10:30:00+00:00", (
+        f"source_version should be '2026-01-15T10:30:00+00:00', got '{payload['source_version']}'"
+    )
+
+
+def test_effective_from_is_utc_iso8601():
+    """Test that effective_from is a UTC ISO 8601 datetime string."""
+    from pipeline.kv_indexer import build_payload
+    from datetime import datetime
+
+    kv_array = np.zeros((32, 2, 8, 128), dtype=np.float16)
+
+    payload = build_payload(
+        text="Test content",
+        page=1,
+        source_file="doc.pdf",
+        kv_array=kv_array,
+        source_version="",
+    )
+
+    # Should be parseable as ISO 8601 datetime
+    dt = datetime.fromisoformat(payload["effective_from"])
+    # Check that it's timezone-aware (UTC)
+    assert dt.tzinfo is not None, "effective_from must be timezone-aware (UTC)"
+    assert dt.tzname() == "UTC", f"effective_from should be UTC, got {dt.tzname()}"

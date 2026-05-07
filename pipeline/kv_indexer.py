@@ -87,6 +87,7 @@ def build_payload(
     source_file: str,
     kv_array: np.ndarray,
     indexed_at: int | None = None,
+    source_version: str = "",
 ) -> dict:
     """Construct the full vector store payload dict for a newly indexed chunk.
 
@@ -100,6 +101,9 @@ def build_payload(
         kv_array: Pre-computed KV array from ``compute_kv_for_chunk``.
         indexed_at: Unix timestamp to record as the indexing time.  Defaults
             to the current time if ``None``.
+        source_version: ISO 8601 timestamp string from chunk metadata's ``modified``
+            field, indicating when the source document was last modified.  Defaults
+            to empty string if not provided.
 
     Returns:
         Dict suitable for use as a ``Point.payload`` argument.
@@ -118,7 +122,7 @@ def build_payload(
         "tier": "frozen",
         "effective_from": datetime.now(timezone.utc).isoformat(),
         "superseded_at": None,
-        "source_version": "",
+        "source_version": source_version,
     }
 
 
@@ -164,6 +168,7 @@ def cmd_index(pdf_path: Path, cfg: dict) -> None:
             page=chunk["page"],
             source_file=pdf_path.name,
             kv_array=kv_arr,
+            source_version=chunk.get("metadata", {}).get("modified", ""),
         )
         points.append(Point(id=chunk["chunk_id"], vector=vec, payload=payload))
         if (i + 1) % 50 == 0:
