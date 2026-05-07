@@ -195,6 +195,16 @@ class DatasourceConfig(BaseModel):
     clip_model: str = "openai/clip-vit-base-patch32"
     image_kv_inference: bool = False
 
+    # ── Enterprise Phase 1 ────────────────────────────────────────────────
+    tenant_id: str = "default"
+    sync_interval_minutes: int = 60
+    hitl_mode: Literal["blocking", "non-blocking", "auto"] = "auto"
+    hitl_sensitivity: Literal["high", "normal"] = "normal"
+    pii_detection_enabled: bool = True
+    allowed_pii_categories: list[str] = Field(default_factory=list)
+    pii_rejection_threshold: int = 3
+    local_mirror_path: str = ""
+
 
 def load_config(path: str) -> DatasourceConfig:
     """Load and validate a datasource config from a JSON file.
