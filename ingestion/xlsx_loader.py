@@ -65,7 +65,9 @@ class XlsxLoader:
                     continue
 
                 # First row is headers, rest are data
-                headers = rows[0]
+                # Convert None headers to empty strings and strip whitespace
+                headers_row = rows[0]
+                headers = [str(h) if h is not None else "" for h in headers_row]
                 data_rows = rows[1:]
 
                 # Skip sheets with only headers and no data
@@ -82,8 +84,8 @@ class XlsxLoader:
                     for row in chunk_data_rows:
                         formatted_cells = []
                         for header, value in zip(headers, row):
-                            # Skip None/empty values
-                            if value is not None and str(value).strip():
+                            # Skip columns where header is empty OR value is empty
+                            if header and value is not None and str(value).strip():
                                 formatted_cells.append(f"{header}: {value}")
                         if formatted_cells:  # Only add non-empty rows
                             formatted_rows.append(" | ".join(formatted_cells))

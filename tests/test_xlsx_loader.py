@@ -119,3 +119,43 @@ def test_xlsx_chunks_from_same_sheet_share_section_hash(tmp_path):
     # This test just verifies hashes are present and 64 chars; unique-per-window is acceptable
     for c in chunks:
         assert len(c["metadata"]["section_hash"]) == 64
+
+
+def test_xlsx_row_range_end(tmp_path):
+    # 12 data rows, rows_per_chunk=5 → 3 chunks
+    # Chunk 0: rows 2-6, Chunk 1: rows 7-11, Chunk 2: rows 12-13
+    rows = [["Col"]] + [[f"row{i}"] for i in range(12)]
+    path = _make_xlsx(tmp_path, {"Sheet1": rows})
+    from ingestion.xlsx_loader import XlsxLoader
+    chunks = XlsxLoader(rows_per_chunk=5).load(path)
+    assert len(chunks) == 3
+    assert chunks[0]["metadata"]["row_range"] == {"start": 2, "end": 6}
+    assert chunks[1]["metadata"]["row_range"] == {"start": 7, "end": 11}
+    assert chunks[2]["metadata"]["row_range"] == {"start": 12, "end": 13}
+
+
+def test_xlsx_row_pipe_format(tmp_path):
+    path = _make_xlsx(tmp_path, {"Data": [["Name", "Score", "Grade"], ["Alice", 90, "A"]]})
+    from ingestion.xlsx_loader import XlsxLoader
+    chunks = XlsxLoader().load(path)
+    assert len(chunks) == 1
+    # Verify the exact pipe-separated format
+    assert chunks[0]["text"] == "Name: Alice | Score: 90 | Grade: A"
+
+
+def test_xlsx_none_header_column_skipped(tmp_path):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Data"
+    ws.append(["Name", None, "Score"])   # None header in column 2
+    ws.append(["Alice", "ignored", 90])
+    path = tmp_path / "none_header.xlsx"
+    wb.save(str(path))
+    from ingestion.xlsx_loader import XlsxLoader
+    chunks = XlsxLoader().load(str(path))
+    assert len(chunks) == 1
+    # "None: ignored" must NOT appear
+    assert "None" not in chunks[0]["text"]
+    # Other columns should still appear
+    assert "Name: Alice" in chunks[0]["text"]
+    assert "Score: 90" in chunks[0]["text"]
