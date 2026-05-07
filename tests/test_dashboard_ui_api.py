@@ -81,3 +81,38 @@ def test_dashboard_html_has_flywheel_section(tmp_path):
     assert "flywheel-chart" in dm.DASHBOARD_HTML
     assert "fw-rounds" in dm.DASHBOARD_HTML
     assert "fw-tbody" in dm.DASHBOARD_HTML
+
+
+def test_set_model_b_config_with_base_url(tmp_path):
+    """POST /api/set_model_b_config accepts and stores base_url."""
+    import pipeline.monitoring_dashboard as dm
+    client = _make_client(tmp_path)
+    resp = client.post("/api/set_model_b_config", json={
+        "provider": "openai",
+        "model": "gpt-4o",
+        "api_key": "sk-test-1234",
+        "base_url": "http://localhost:8090/v1",
+    })
+    assert resp.status_code == 200
+    assert dm._model_b_config["base_url"] == "http://localhost:8090/v1"
+    assert dm._model_b_config["provider"] == "openai"
+
+
+def test_set_model_b_config_base_url_optional(tmp_path):
+    """base_url defaults to empty string when omitted."""
+    import pipeline.monitoring_dashboard as dm
+    client = _make_client(tmp_path)
+    resp = client.post("/api/set_model_b_config", json={
+        "provider": "gemini",
+        "model": "gemini-2.5-flash",
+        "api_key": "my-key",
+    })
+    assert resp.status_code == 200
+    assert dm._model_b_config.get("base_url", "") == ""
+
+
+def test_dashboard_html_has_base_url_input(tmp_path):
+    """Dashboard HTML contains the base_url input field for OpenAI-compatible endpoints."""
+    import pipeline.monitoring_dashboard as dm
+    assert "b_base_url" in dm.DASHBOARD_HTML
+    assert "Base URL" in dm.DASHBOARD_HTML

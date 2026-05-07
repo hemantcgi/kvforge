@@ -1317,6 +1317,10 @@ PRS = 0.5 × Accuracy
         <label>API Key <span id="api-key-warning" style="color:#f87171;font-size:0.8em;display:none">⚠ required</span></label>
         <input id="b_api_key" type="password" placeholder="Paste API key…" oninput="onApiKeyInput()"/>
       </div>
+      <div class="param-group" id="base-url-group" style="display:none">
+        <label>Base URL <span style="color:#888;font-size:0.8em">(OpenAI-compatible)</span></label>
+        <input id="b_base_url" type="text" placeholder="http://localhost:8090/v1" oninput="saveAndSyncModelB()"/>
+      </div>
       <div class="param-group">
         <label>Max output tokens</label>
         <input id="b_max_output_tokens" type="number" min="128" max="65536" value="4096"/>
@@ -1388,13 +1392,17 @@ function saveAndSyncModelB() {
   const provider = document.getElementById('b_provider').value;
   const model = document.getElementById('b_model').value;
   const apiKey = document.getElementById('b_api_key').value;
+  const baseUrl = (document.getElementById('b_base_url') || {}).value || '';
   localStorage.setItem('modelb_provider', provider);
   localStorage.setItem(`modelb_${provider}_model`, model);
   localStorage.setItem(`modelb_${provider}_key`, apiKey);
+  localStorage.setItem(`modelb_${provider}_base_url`, baseUrl);
+  const baseUrlGroup = document.getElementById('base-url-group');
+  if (baseUrlGroup) baseUrlGroup.style.display = provider === 'openai' ? '' : 'none';
   fetch('/api/set_model_b_config', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({provider, model, api_key: apiKey}),
+    body: JSON.stringify({provider, model, api_key: apiKey, base_url: baseUrl}),
   }).catch(e => console.error('[ModelB config sync failed]', e));
   const label = PROVIDER_LABELS[provider] || provider;
   document.getElementById('label-b').textContent = `Answer B — ${label} RAG`;
@@ -1435,6 +1443,11 @@ async function loadConfig() {
     document.getElementById('api-key-warning').style.display = 'inline';
     document.getElementById('b_api_key').style.borderColor = '#f87171';
   }
+  const savedBaseUrl = localStorage.getItem(`modelb_${savedProvider}_base_url`) || '';
+  const baseUrlInput = document.getElementById('b_base_url');
+  if (baseUrlInput) baseUrlInput.value = savedBaseUrl;
+  const baseUrlGroup = document.getElementById('base-url-group');
+  if (baseUrlGroup) baseUrlGroup.style.display = savedProvider === 'openai' ? '' : 'none';
   saveAndSyncModelB();
   try {
     const cfg = await fetch('/api/config').then(r => r.json());
