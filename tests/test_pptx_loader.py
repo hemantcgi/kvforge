@@ -132,3 +132,39 @@ def test_pptx_notes_only_no_empty_body_chunk(tmp_path):
     assert len(body_chunks) == 0
     assert len(notes_chunks) == 1
     assert "Only notes here." in notes_chunks[0]["text"]
+
+
+def test_pptx_picture_excluded_from_body(tmp_path):
+    import io, struct, zlib
+    # Minimal 1x1 white PNG from raw bytes (no Pillow needed)
+    def _tiny_png() -> bytes:
+        def chunk(name, data):
+            c = struct.pack('>I', len(data)) + name + data
+            return c + struct.pack('>I', zlib.crc32(name + data) & 0xffffffff)
+        png = b'\x89PNG\r\n\x1a\n'
+        png += chunk(b'IHDR', struct.pack('>IIBBBBB', 1, 1, 8, 2, 0, 0, 0))
+        png += chunk(b'IDAT', zlib.compress(b'\x00\xff\xff\xff'))
+        png += chunk(b'IEND', b'')
+        return png
+
+    img_path = tmp_path / "pixel.png"
+    img_path.write_bytes(_tiny_png())
+
+    prs = Presentation()
+    layout = prs.slide_layouts[1]
+    slide = prs.slides.add_slide(layout)
+    slide.shapes.title.text = "Slide With Picture"
+    slide.placeholders[1].text = "Text body here."
+    slide.shapes.add_picture(str(img_path), Inches(1), Inches(1), Inches(1), Inches(1))
+    path = tmp_path / "with_pic.pptx"
+    prs.save(str(path))
+
+    from ingestion.pptx_loader import PptxLoader
+    chunks = PptxLoader().load(str(path))
+    body_chunk = next(c for c in chunks if not c["metadata"]["is_speaker_notes"])
+    # Body text must contain the actual text
+    assert "Text body here." in body_chunk["text"]
+    # The picture must NOT add any text content (pictures have no text frame)
+    # Verifying the chunk count and text content is the meaningful check
+    body_texts = [c["text"] for c in chunks if not c["metadata"]["is_speaker_notes"]]
+    assert len(body_texts) == 1  # still exactly one body chunk per slide
