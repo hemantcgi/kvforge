@@ -159,3 +159,21 @@ def test_xlsx_none_header_column_skipped(tmp_path):
     # Other columns should still appear
     assert "Name: Alice" in chunks[0]["text"]
     assert "Score: 90" in chunks[0]["text"]
+
+
+def test_xlsx_column_headers_in_metadata(tmp_path):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Data"
+    ws.append(["Name", None, "Score"])  # None header in column 2
+    ws.append(["Alice", "x", 90])
+    path = tmp_path / "headers_meta.xlsx"
+    wb.save(str(path))
+    from ingestion.xlsx_loader import XlsxLoader
+    chunks = XlsxLoader().load(str(path))
+    assert len(chunks) == 1
+    headers = chunks[0]["metadata"]["column_headers"]
+    assert isinstance(headers, list)
+    assert headers[0] == "Name"
+    assert headers[1] == ""   # None converted to ""
+    assert headers[2] == "Score"
