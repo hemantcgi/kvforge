@@ -61,9 +61,10 @@ def get_loader(cfg: dict):
         return PptxLoader()
     if name == "xlsx":
         from ingestion.xlsx_loader import XlsxLoader
-        return XlsxLoader(
-            rows_per_chunk=cfg.get("rows_per_chunk", 50),
-        )
+        kwargs = {}
+        if "rows_per_chunk" in cfg:
+            kwargs["rows_per_chunk"] = cfg["rows_per_chunk"]
+        return XlsxLoader(**kwargs)
     if name == "zip":
         from ingestion.zip_loader import ZipLoader
         return ZipLoader(

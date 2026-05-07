@@ -209,23 +209,27 @@ def test_directory_loader_picks_up_xlsx(tmp_path):
 
 def test_registry_docx_loader():
     from ingestion.registry import get_loader
+    from ingestion.docx_loader import DocxLoader
     loader = get_loader({"loader": "docx"})
-    assert hasattr(loader, "load")
+    assert isinstance(loader, DocxLoader)
 
 
 def test_registry_pptx_loader():
     from ingestion.registry import get_loader
+    from ingestion.pptx_loader import PptxLoader
     loader = get_loader({"loader": "pptx"})
-    assert hasattr(loader, "load")
+    assert isinstance(loader, PptxLoader)
 
 
 def test_registry_xlsx_loader():
     from ingestion.registry import get_loader
+    from ingestion.xlsx_loader import XlsxLoader
     loader = get_loader({"loader": "xlsx"})
-    assert hasattr(loader, "load")
+    assert isinstance(loader, XlsxLoader)
 
 
 def test_registry_zip_loader():
     from ingestion.registry import get_loader
+    from ingestion.zip_loader import ZipLoader
     loader = get_loader({"loader": "zip"})
-    assert hasattr(loader, "load")
+    assert isinstance(loader, ZipLoader)
