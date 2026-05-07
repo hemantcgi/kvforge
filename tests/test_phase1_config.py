@@ -74,3 +74,13 @@ def test_pii_rejection_threshold_default(tmp_path):
 def test_hitl_sensitivity_default_normal(tmp_path):
     cfg = _cfg(tmp_path)
     assert cfg.hitl_sensitivity == "normal"
+
+
+def test_hitl_mode_rejects_invalid(tmp_path):
+    import pytest
+    try:
+        from pydantic import ValidationError
+    except ImportError:
+        from pydantic.v1 import ValidationError
+    with pytest.raises((ValidationError, ValueError)):
+        _cfg(tmp_path, {"hitl_mode": "garbage"})
