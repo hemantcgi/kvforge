@@ -26,17 +26,21 @@ class DocxLoader:
     def load(self, source: str) -> list[dict]:
         doc = Document(source)
         props = doc.core_properties
+        path = Path(source)
 
         current_heading_text = ""
         current_heading_level = None
         section_paragraphs: list[str] = []
         chunks: list[dict] = []
+        chunk_id = 0
 
         def flush_section():
+            nonlocal chunk_id
             if not section_paragraphs:
                 return
             full_text = "\n".join(section_paragraphs)
             words = full_text.split()
+            step = max(self.chunk_size - self.chunk_overlap, 1)
             start = 0
             while start < len(words):
                 window = words[start: start + self.chunk_size]
@@ -49,11 +53,13 @@ class DocxLoader:
                         "is_table": False,
                         "author": props.author or "",
                         "modified": props.modified.isoformat() if props.modified else "",
-                        "source_file": source,
+                        "source": path.name,
+                        "chunk_id": chunk_id,
                         "section_hash": _section_hash(full_text),
                     },
                 })
-                start += self.chunk_size - self.chunk_overlap
+                chunk_id += 1
+                start += step
 
         body = doc.element.body
         for child in body:
@@ -104,10 +110,12 @@ class DocxLoader:
                             "table_position": {"row": row_idx, "col": 0},
                             "author": props.author or "",
                             "modified": props.modified.isoformat() if props.modified else "",
-                            "source_file": source,
+                            "source": path.name,
+                            "chunk_id": chunk_id,
                             "section_hash": table_hash,
                         },
                     })
+                    chunk_id += 1
 
         flush_section()
         return chunks

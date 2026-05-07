@@ -74,7 +74,21 @@ def test_docx_source_file_metadata(tmp_path):
     path = _make_docx(tmp_path, [("Normal", "Some text.")])
     from ingestion.docx_loader import DocxLoader
     chunks = DocxLoader().load(path)
-    assert chunks[0]["metadata"]["source_file"] == path
+    assert chunks[0]["metadata"]["source"] == Path(path).name
+
+
+def test_docx_chunk_id_present(tmp_path):
+    path = _make_docx(tmp_path, [
+        ("Heading 1", "Chapter"),
+        ("Normal", "Text one. Text two."),
+    ])
+    from ingestion.docx_loader import DocxLoader
+    chunks = DocxLoader().load(path)
+    # Every chunk should have a chunk_id
+    assert all("chunk_id" in c["metadata"] for c in chunks)
+    # chunk_id should be 0-indexed and increment
+    for i, chunk in enumerate(chunks):
+        assert chunk["metadata"]["chunk_id"] == i
 
 
 def test_docx_section_hash_present(tmp_path):
