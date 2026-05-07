@@ -170,3 +170,62 @@ def test_docx_same_section_hash_across_windows(tmp_path):
     # All chunks from the same section must share the same section_hash
     hashes = {c["metadata"]["section_hash"] for c in chunks}
     assert len(hashes) == 1
+
+
+def test_directory_loader_picks_up_docx(tmp_path):
+    from docx import Document
+    doc = Document()
+    doc.add_paragraph("Dir loader test.")
+    doc.save(str(tmp_path / "test.docx"))
+    from ingestion.directory_loader import DirectoryLoader
+    chunks = DirectoryLoader().load(str(tmp_path))
+    assert any("Dir loader test." in c["text"] for c in chunks)
+
+
+def test_directory_loader_picks_up_pptx(tmp_path):
+    from pptx import Presentation
+    prs = Presentation()
+    layout = prs.slide_layouts[1]
+    slide = prs.slides.add_slide(layout)
+    slide.shapes.title.text = "Test"
+    slide.placeholders[1].text = "Pptx dir test."
+    prs.save(str(tmp_path / "test.pptx"))
+    from ingestion.directory_loader import DirectoryLoader
+    chunks = DirectoryLoader().load(str(tmp_path))
+    assert any("Pptx dir test." in c["text"] for c in chunks)
+
+
+def test_directory_loader_picks_up_xlsx(tmp_path):
+    import openpyxl
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["Col"])
+    ws.append(["xlsx_dir_test"])
+    wb.save(str(tmp_path / "test.xlsx"))
+    from ingestion.directory_loader import DirectoryLoader
+    chunks = DirectoryLoader().load(str(tmp_path))
+    assert any("xlsx_dir_test" in c["text"] for c in chunks)
+
+
+def test_registry_docx_loader():
+    from ingestion.registry import get_loader
+    loader = get_loader({"loader": "docx"})
+    assert hasattr(loader, "load")
+
+
+def test_registry_pptx_loader():
+    from ingestion.registry import get_loader
+    loader = get_loader({"loader": "pptx"})
+    assert hasattr(loader, "load")
+
+
+def test_registry_xlsx_loader():
+    from ingestion.registry import get_loader
+    loader = get_loader({"loader": "xlsx"})
+    assert hasattr(loader, "load")
+
+
+def test_registry_zip_loader():
+    from ingestion.registry import get_loader
+    loader = get_loader({"loader": "zip"})
+    assert hasattr(loader, "load")

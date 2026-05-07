@@ -16,12 +16,13 @@ def get_loader(cfg: dict):
         cfg: Datasource configuration dictionary.  Relevant keys:
 
             * ``loader`` — one of ``pdf``, ``markdown``, ``jsonl``, ``html``,
-              ``directory``.
+              ``directory``, ``docx``, ``pptx``, ``xlsx``, ``zip``.
             * ``chunk_size`` — word-count target per chunk (default 600).
             * ``chunk_overlap`` — word overlap between consecutive chunks
               (default 60).
             * ``jsonl_text_key`` — field name for the text in each JSONL object
               (default ``'text'``).
+            * ``rows_per_chunk`` — rows per chunk for xlsx loader (default 50).
 
     Returns:
         A ``DocumentLoader``-protocol-compatible instance.
@@ -49,6 +50,26 @@ def get_loader(cfg: dict):
     if name == "directory":
         from ingestion.directory_loader import DirectoryLoader
         return DirectoryLoader(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+    if name == "docx":
+        from ingestion.docx_loader import DocxLoader
+        return DocxLoader(
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+        )
+    if name == "pptx":
+        from ingestion.pptx_loader import PptxLoader
+        return PptxLoader()
+    if name == "xlsx":
+        from ingestion.xlsx_loader import XlsxLoader
+        return XlsxLoader(
+            rows_per_chunk=cfg.get("rows_per_chunk", 50),
+        )
+    if name == "zip":
+        from ingestion.zip_loader import ZipLoader
+        return ZipLoader(
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+        )
     raise ValueError(
-        f"Unknown loader '{name}'. Choose: pdf, markdown, jsonl, html, directory"
+        f"Unknown loader '{name}'. Choose: pdf, markdown, jsonl, html, directory, docx, pptx, xlsx, zip"
     )
