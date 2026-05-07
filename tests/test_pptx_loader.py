@@ -94,3 +94,41 @@ def test_pptx_chunk_id_present(tmp_path):
     chunks = PptxLoader().load(path)
     ids = [c["metadata"]["chunk_id"] for c in chunks]
     assert ids == list(range(len(chunks)))
+
+
+def test_pptx_body_and_notes_share_section_hash(tmp_path):
+    path = _make_pptx(tmp_path, [{"title": "T", "body": "Body content.", "notes": "Speaker notes."}])
+    from ingestion.pptx_loader import PptxLoader
+    chunks = PptxLoader().load(path)
+    body_chunk = next(c for c in chunks if not c["metadata"]["is_speaker_notes"])
+    notes_chunk = next(c for c in chunks if c["metadata"]["is_speaker_notes"])
+    assert body_chunk["metadata"]["section_hash"] == notes_chunk["metadata"]["section_hash"]
+
+
+def test_pptx_title_excluded_from_body(tmp_path):
+    path = _make_pptx(tmp_path, [{"title": "SECRET TITLE", "body": "Actual body content."}])
+    from ingestion.pptx_loader import PptxLoader
+    chunks = PptxLoader().load(path)
+    body_chunk = next(c for c in chunks if not c["metadata"]["is_speaker_notes"])
+    assert "SECRET TITLE" not in body_chunk["text"]
+    assert "Actual body content." in body_chunk["text"]
+
+
+def test_pptx_notes_only_no_empty_body_chunk(tmp_path):
+    prs = Presentation()
+    layout = prs.slide_layouts[1]
+    slide = prs.slides.add_slide(layout)
+    slide.shapes.title.text = "Title Only"
+    # Leave body placeholder empty
+    slide.placeholders[1].text = ""
+    slide.notes_slide.notes_text_frame.text = "Only notes here."
+    path = tmp_path / "notes_only.pptx"
+    prs.save(str(path))
+    from ingestion.pptx_loader import PptxLoader
+    chunks = PptxLoader().load(str(path))
+    body_chunks = [c for c in chunks if not c["metadata"]["is_speaker_notes"]]
+    notes_chunks = [c for c in chunks if c["metadata"]["is_speaker_notes"]]
+    # No empty body chunk should be emitted
+    assert len(body_chunks) == 0
+    assert len(notes_chunks) == 1
+    assert "Only notes here." in notes_chunks[0]["text"]
