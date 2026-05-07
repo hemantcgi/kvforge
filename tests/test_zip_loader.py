@@ -94,7 +94,7 @@ def test_zip_nested_zip_skipped(tmp_path):
     assert chunks == []  # nested ZIPs not recursed
 
 
-def test_zip_chunk_ids_are_sequential(tmp_path):
+def test_zip_chunks_have_chunk_id_metadata(tmp_path):
     doc = Document()
     doc.add_paragraph("Para one.")
     doc.add_paragraph("Para two.")
@@ -104,7 +104,7 @@ def test_zip_chunk_ids_are_sequential(tmp_path):
     from ingestion.zip_loader import ZipLoader
     chunks = ZipLoader().load(zip_path)
     assert len(chunks) >= 1
-    # chunk_ids come from the delegated loaders — just verify they exist
+    # chunk_ids come from delegated loaders (each restarts at 0 per file, so not globally sequential)
     for c in chunks:
         assert "chunk_id" in c["metadata"]
 
