@@ -92,7 +92,7 @@ class ZipLoader:
             return DocxLoader(**self.loader_kwargs)
         elif loader_class_name == "PptxLoader":
             from ingestion.pptx_loader import PptxLoader
-            return PptxLoader()
+            return PptxLoader(**self.loader_kwargs)
         elif loader_class_name == "XlsxLoader":
             from ingestion.xlsx_loader import XlsxLoader
             return XlsxLoader(**self.loader_kwargs)

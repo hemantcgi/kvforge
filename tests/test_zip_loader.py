@@ -107,3 +107,53 @@ def test_zip_chunk_ids_are_sequential(tmp_path):
     # chunk_ids come from the delegated loaders — just verify they exist
     for c in chunks:
         assert "chunk_id" in c["metadata"]
+
+
+def test_zip_forwards_loader_kwargs(tmp_path):
+    # DocxLoader accepts chunk_size kwarg — verify it's forwarded
+    doc = Document()
+    doc.add_heading("Section", level=1)
+    # 200 words — with chunk_size=50, should produce multiple chunks
+    doc.add_paragraph(" ".join(f"word{i}" for i in range(200)))
+    docx_path = tmp_path / "big.docx"
+    doc.save(str(docx_path))
+    zip_path = _make_zip(tmp_path, {"big.docx": docx_path})
+    from ingestion.zip_loader import ZipLoader
+    chunks_small = ZipLoader(chunk_size=50).load(zip_path)
+    chunks_large = ZipLoader(chunk_size=1000).load(zip_path)
+    # Smaller chunk_size → more chunks
+    assert len(chunks_small) > len(chunks_large)
+
+
+def test_zip_temp_dir_cleaned_up(tmp_path):
+    import tempfile
+    import unittest.mock as mock
+    doc = Document()
+    doc.add_paragraph("Some content.")
+    docx_path = tmp_path / "doc.docx"
+    doc.save(str(docx_path))
+    zip_path = _make_zip(tmp_path, {"doc.docx": docx_path})
+
+    # Track temp dirs created
+    created_dirs = []
+    original_tmpdir = tempfile.TemporaryDirectory
+
+    class TrackingTmpDir:
+        def __init__(self):
+            self._real = original_tmpdir()
+            self.name = self._real.name
+            created_dirs.append(self.name)
+        def __enter__(self):
+            self._real.__enter__()
+            return self.name  # Return the string path, not self
+        def __exit__(self, *args):
+            self._real.__exit__(*args)
+
+    from ingestion.zip_loader import ZipLoader
+    import tempfile as tf
+    with mock.patch.object(tf, "TemporaryDirectory", TrackingTmpDir):
+        ZipLoader().load(zip_path)
+
+    # After load(), all created temp dirs should be gone
+    for d in created_dirs:
+        assert not Path(d).exists(), f"Temp dir {d} was not cleaned up"
