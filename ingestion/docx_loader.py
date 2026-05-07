@@ -80,6 +80,16 @@ class DocxLoader:
                 if not table.rows:
                     continue
                 headers = [cell.text.strip() for cell in table.rows[0].cells]
+                # Compute table_hash over all rows' formatted text joined with newlines
+                all_row_texts = []
+                for row in table.rows[1:]:
+                    cells = [cell.text.strip() for cell in row.cells]
+                    row_text = " | ".join(
+                        f"{h}: {v}" for h, v in zip(headers, cells)
+                    )
+                    all_row_texts.append(row_text)
+                table_hash = _section_hash("\n".join(all_row_texts))
+
                 for row_idx, row in enumerate(table.rows[1:], start=1):
                     cells = [cell.text.strip() for cell in row.cells]
                     row_text = " | ".join(
@@ -95,7 +105,7 @@ class DocxLoader:
                             "author": props.author or "",
                             "modified": props.modified.isoformat() if props.modified else "",
                             "source_file": source,
-                            "section_hash": _section_hash(row_text),
+                            "section_hash": table_hash,
                         },
                     })
 
