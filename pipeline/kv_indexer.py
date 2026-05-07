@@ -22,6 +22,7 @@ import argparse
 import json
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -115,6 +116,9 @@ def build_payload(
         "avg_retrieval_rank": None,
         "parametric_hit_count": 0,
         "tier": "frozen",
+        "effective_from": datetime.now(timezone.utc).isoformat(),
+        "superseded_at": None,
+        "source_version": "",
     }
 
 
