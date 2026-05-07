@@ -86,7 +86,7 @@ def test_span_count_increments_per_match():
     assert result.span_count >= 2
 
 
-def test_multiple_allowed_categories(tmp_path):
+def test_multiple_allowed_categories():
     from core.pii_detector import PIIDetector
     d = PIIDetector(use_ner=False, allowed_categories=["SSN", "EMAIL"])
     result = d.scan("SSN 123-45-6789 and alice@example.com")
@@ -129,3 +129,11 @@ def test_ner_graceful_degradation_without_model():
     result = d.scan("Contact alice@example.com.")
     assert result.has_pii
     assert "EMAIL" in result.categories
+
+
+def test_span_count_two_ssns():
+    from core.pii_detector import PIIDetector
+    d = PIIDetector(use_ner=False)
+    result = d.scan("First SSN 123-45-6789 and second SSN 987-65-4321")
+    assert result.span_count == 2
+    assert result.categories == ["SSN"]
