@@ -31,11 +31,36 @@ def test_source_file_mime_type_optional():
     assert sf.mime_type == "application/pdf"
 
 
+def test_source_file_extra_field():
+    from connectors.base import SourceFile
+    sf = SourceFile(
+        id="x", name="f.docx", path="/f.docx", size=100,
+        modified_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        extra={"etag": "abc123"},
+    )
+    assert sf.extra == {"etag": "abc123"}
+
+
 def test_source_connector_protocol_is_runtime_checkable():
-    from connectors.base import SourceConnector
-    from typing import runtime_checkable, Protocol
-    # Protocol should be @runtime_checkable
-    assert issubclass(SourceConnector, Protocol)
+    from connectors.base import SourceConnector, SourceFile
+    from datetime import datetime, timezone
+
+    # A duck-typed class that implements all required methods
+    class StubConnector:
+        def list_files(self) -> list:
+            return []
+        def download(self, file) -> bytes:
+            return b""
+        def get_modified_at(self, file) -> datetime:
+            return datetime.now(timezone.utc)
+        def supports_delta(self) -> bool:
+            return False
+        def get_delta(self, token):
+            return [], ""
+
+    stub = StubConnector()
+    # @runtime_checkable means isinstance() works via structural typing
+    assert isinstance(stub, SourceConnector)
 
 
 def test_source_connector_protocol_methods():

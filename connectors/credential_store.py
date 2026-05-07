@@ -27,7 +27,10 @@ class LocalFileCredentialStore:
         return json.loads(self._path.read_text())
 
     def _save(self, data: dict) -> None:
-        self._path.write_text(json.dumps(data, indent=2))
+        import tempfile, os
+        tmp = self._path.parent / (self._path.name + ".tmp")
+        tmp.write_text(json.dumps(data, indent=2))
+        tmp.replace(self._path)
 
     def get(self, key: str) -> str | None:
         return self._load().get(key)
