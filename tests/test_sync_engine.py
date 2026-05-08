@@ -201,3 +201,40 @@ def test_sync_engine_reindexes_only_changed_section(tmp_path):
     engine2.run()
 
     assert 0 < len(indexed) < first_run_count
+
+
+def test_phase_regression_triggered_on_large_change(tmp_path):
+    import json
+    from core.sync_engine import SyncEngine, SyncStateDB, check_regression_threshold
+    from unittest.mock import MagicMock, patch
+
+    db = SyncStateDB(str(tmp_path / "sync.db"))
+    # Simulate 20% of chunks changed (above 10% default threshold)
+    regressed = []
+    with patch("core.sync_engine.trigger_phase_regression",
+               side_effect=lambda uc_name, cfg: regressed.append(uc_name)):
+        check_regression_threshold(
+            uc_name="uc1",
+            cfg=MagicMock(sync_regression_mode="pct",
+                          sync_regression_pct_threshold=0.10),
+            chunks_superseded=20,
+            total_chunks=100,
+        )
+    assert "uc1" in regressed
+
+
+def test_phase_regression_not_triggered_on_small_change(tmp_path):
+    from core.sync_engine import check_regression_threshold, trigger_phase_regression
+    from unittest.mock import MagicMock, patch
+
+    regressed = []
+    with patch("core.sync_engine.trigger_phase_regression",
+               side_effect=lambda uc_name, cfg: regressed.append(uc_name)):
+        check_regression_threshold(
+            uc_name="uc1",
+            cfg=MagicMock(sync_regression_mode="pct",
+                          sync_regression_pct_threshold=0.10),
+            chunks_superseded=5,
+            total_chunks=100,
+        )
+    assert len(regressed) == 0

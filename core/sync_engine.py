@@ -290,3 +290,43 @@ class SyncEngine:
     def _handle_deletion(self, source_id: str) -> None:
         now = datetime.now(timezone.utc).isoformat()
         self.db.record_deleted_doc(self.uc_name, source_id, now)
+
+
+def trigger_phase_regression(uc_name: str, cfg) -> None:
+    """Downgrade the UC from Phase 3 to Phase 2 due to significant corpus change."""
+    from core.version import load, save
+    data = load()
+    if data.get("phase", 1) >= 3:
+        data["phase"] = 2
+        save(data)
+        print(f"⚠️  Phase regression: 3 → 2 ({uc_name}: significant sync-time change)")
+
+
+def check_regression_threshold(
+    uc_name: str,
+    cfg,
+    chunks_superseded: int,
+    total_chunks: int,
+    hot_warm_superseded: int = 0,
+    total_hot_warm: int = 0,
+) -> bool:
+    """Return True and trigger regression if change exceeds configured threshold."""
+    mode = getattr(cfg, "sync_regression_mode", "pct")
+    should_regress = False
+
+    if mode in ("pct", "either") and total_chunks > 0:
+        pct = chunks_superseded / total_chunks
+        threshold = getattr(cfg, "sync_regression_pct_threshold", 0.10)
+        if pct >= threshold:
+            should_regress = True
+
+    if mode in ("tier", "either") and total_hot_warm > 0:
+        tier_pct = hot_warm_superseded / total_hot_warm
+        threshold = getattr(cfg, "sync_regression_tier_threshold", 0.15)
+        if tier_pct >= threshold:
+            should_regress = True
+
+    if should_regress:
+        trigger_phase_regression(uc_name, cfg)
+
+    return should_regress
