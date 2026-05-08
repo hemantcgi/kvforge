@@ -1004,5 +1004,53 @@ function closeGpuOverlay() {
 }
 </script>
 <script src="/helper.js"></script>
+
+<details id="sync-history-panel" style="margin-top:16px">
+  <summary style="cursor:pointer;color:#7af;font-size:0.9em">Sync History</summary>
+  <div id="sync-history-body" style="margin-top:8px;font-size:0.82em">
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="color:#888">
+          <th style="text-align:left;padding:4px 8px">Started</th>
+          <th style="text-align:right;padding:4px 8px">Checked</th>
+          <th style="text-align:right;padding:4px 8px">Changed</th>
+          <th style="text-align:right;padding:4px 8px">Added</th>
+          <th style="text-align:right;padding:4px 8px">Superseded</th>
+          <th style="text-align:right;padding:4px 8px">PII</th>
+          <th style="text-align:left;padding:4px 8px">Errors</th>
+        </tr>
+      </thead>
+      <tbody id="sync-history-rows"></tbody>
+    </table>
+  </div>
+</details>
+
+<script>
+(function loadSyncHistory() {
+  const panel = document.getElementById('sync-history-panel');
+  if (!panel) return;
+  panel.addEventListener('toggle', function() {
+    if (!panel.open) return;
+    const ucName = window.__UC_NAME__ || location.pathname.split('/').pop();
+    fetch(`/studio/api/uc/${ucName}/sync-history`)
+      .then(r => r.json())
+      .then(data => {
+        const tbody = document.getElementById('sync-history-rows');
+        tbody.innerHTML = (data.runs || []).map(r =>
+          `<tr>
+            <td style="padding:4px 8px;color:#aaa">${r.started_at ? r.started_at.slice(0,19).replace('T',' ') : '—'}</td>
+            <td style="text-align:right;padding:4px 8px">${r.files_checked ?? 0}</td>
+            <td style="text-align:right;padding:4px 8px;color:${r.files_changed > 0 ? '#fa7' : '#666'}">${r.files_changed ?? 0}</td>
+            <td style="text-align:right;padding:4px 8px;color:#4f9">${r.chunks_added ?? 0}</td>
+            <td style="text-align:right;padding:4px 8px;color:#f87">${r.chunks_superseded ?? 0}</td>
+            <td style="text-align:right;padding:4px 8px;color:${r.pii_detections > 0 ? '#f87' : '#666'}">${r.pii_detections ?? 0}</td>
+            <td style="padding:4px 8px;color:#f87;max-width:200px;overflow:hidden;text-overflow:ellipsis">${r.errors || ''}</td>
+          </tr>`
+        ).join('');
+      })
+      .catch(() => {});
+  });
+})();
+</script>
 </body>
 </html>

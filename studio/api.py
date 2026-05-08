@@ -313,6 +313,21 @@ def prs_history_endpoint(uc_id: str):
     return JSONResponse(result)
 
 
+@api_router.get("/uc/{uc_name}/sync-history")
+def get_sync_history(uc_name: str):
+    import sqlite3
+    db_path = ROOT / "examples" / uc_name / "sync.db"
+    if not db_path.exists():
+        return {"runs": []}
+    conn = sqlite3.connect(str(db_path))
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute(
+        "SELECT * FROM sync_runs ORDER BY id DESC LIMIT 30"
+    ).fetchall()
+    conn.close()
+    return {"runs": [dict(r) for r in rows]}
+
+
 @api_router.get("/uc/{uc_id}/eval-summary")
 def eval_summary(uc_id: str):
     results_path = _uc_path(uc_id) / "ab_eval_results.json"

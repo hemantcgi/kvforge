@@ -486,3 +486,49 @@ def test_registry_has_index_false_when_no_version_json(tmp_path):
     assert resp.status_code == 200
     ucs = resp.json()["use_cases"]
     assert ucs[0]["has_index"] is False
+
+
+def test_sync_history_endpoint_no_db(tmp_path):
+    """Returns empty list when no sync DB exists yet."""
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    (tmp_path / "examples" / "uc-sync").mkdir(parents=True)
+    with patch("studio.api.ROOT", tmp_path):
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        resp = client.get("/api/uc/uc-sync/sync-history")
+    assert resp.status_code == 200
+    assert resp.json()["runs"] == []
+
+
+def test_sync_history_endpoint_with_runs(tmp_path):
+    """Returns sync run records from the sync DB."""
+    import sqlite3
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    uc_dir = tmp_path / "examples" / "uc-hist"
+    uc_dir.mkdir(parents=True)
+    db_path = uc_dir / "sync.db"
+    conn = sqlite3.connect(str(db_path))
+    conn.execute("""CREATE TABLE sync_runs (
+        id INTEGER PRIMARY KEY, uc_name TEXT, started_at TEXT,
+        finished_at TEXT, files_checked INTEGER, files_changed INTEGER,
+        chunks_added INTEGER, chunks_superseded INTEGER,
+        pii_detections INTEGER, errors TEXT
+    )""")
+    conn.execute(
+        "INSERT INTO sync_runs VALUES (1,'uc-hist','2026-05-01T10:00:00+00:00','2026-05-01T10:01:00+00:00',100,5,12,3,0,'')"
+    )
+    conn.commit()
+    conn.close()
+    with patch("studio.api.ROOT", tmp_path):
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        resp = client.get("/api/uc/uc-hist/sync-history")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["runs"][0]["files_checked"] == 100
