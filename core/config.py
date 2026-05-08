@@ -204,6 +204,9 @@ class DatasourceConfig(BaseModel):
     allowed_pii_categories: list[str] = Field(default_factory=list)
     pii_rejection_threshold: int = 3
     local_mirror_path: str = ""
+    sync_regression_mode: str = "pct"
+    sync_regression_pct_threshold: float = 0.10
+    sync_regression_tier_threshold: float = 0.15
 
 
 def load_config(path: str) -> DatasourceConfig:

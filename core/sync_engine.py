@@ -239,6 +239,15 @@ class SyncEngine:
                 except Exception as e:
                     stats["errors"] += f"{source_file.name}: {e}\n"
 
+        total_chunks = stats["chunks_added"] + stats["chunks_superseded"]
+        if total_chunks > 0:
+            check_regression_threshold(
+                uc_name=self.uc_name,
+                cfg=self.cfg,
+                chunks_superseded=stats["chunks_superseded"],
+                total_chunks=total_chunks,
+            )
+
         self.db.record_sync_run(self.uc_name, started_at=started_at,
                                 finished_at=datetime.now(timezone.utc).isoformat(), **stats)
         return stats
@@ -294,12 +303,15 @@ class SyncEngine:
 
 def trigger_phase_regression(uc_name: str, cfg) -> None:
     """Downgrade the UC from Phase 3 to Phase 2 due to significant corpus change."""
-    from core.version import load, save
-    data = load()
-    if data.get("phase", 1) >= 3:
-        data["phase"] = 2
-        save(data)
-        print(f"⚠️  Phase regression: 3 → 2 ({uc_name}: significant sync-time change)")
+    from core.version import init as version_init, load, save
+    version_file = getattr(cfg, "version_file", None)
+    if version_file:
+        version_init({"version_file": str(version_file)})
+    state = load()
+    if state.get("phase", 1) >= 3:
+        state["phase"] = 2
+        save(state)
+        print(f"[regression] {uc_name}: phase downgraded 3→2 due to corpus change")
 
 
 def check_regression_threshold(
@@ -312,6 +324,8 @@ def check_regression_threshold(
 ) -> bool:
     """Return True and trigger regression if change exceeds configured threshold."""
     mode = getattr(cfg, "sync_regression_mode", "pct")
+    if mode not in ("pct", "tier", "either"):
+        raise ValueError(f"Unknown sync_regression_mode: {mode!r}")
     should_regress = False
 
     if mode in ("pct", "either") and total_chunks > 0:

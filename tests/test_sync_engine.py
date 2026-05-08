@@ -132,7 +132,9 @@ def test_sync_engine_indexes_new_file(tmp_path):
     indexed_chunks = []
     mock_indexer = MagicMock(side_effect=lambda cfg, chunks: indexed_chunks.extend(chunks))
 
-    engine = SyncEngine(uc_name="uc1", db=db, connector=connector, cfg=MagicMock(), indexer=mock_indexer)
+    engine = SyncEngine(uc_name="uc1", db=db, connector=connector,
+                        cfg=MagicMock(sync_regression_mode="pct", sync_regression_pct_threshold=0.10),
+                        indexer=mock_indexer)
     stats = engine.run()
 
     assert stats["files_changed"] == 1
@@ -148,7 +150,9 @@ def test_sync_engine_skips_unchanged_file(tmp_path):
     indexed_chunks = []
     mock_indexer = MagicMock(side_effect=lambda cfg, chunks: indexed_chunks.extend(chunks))
 
-    engine = SyncEngine(uc_name="uc1", db=db, connector=connector, cfg=MagicMock(), indexer=mock_indexer)
+    engine = SyncEngine(uc_name="uc1", db=db, connector=connector,
+                        cfg=MagicMock(sync_regression_mode="pct", sync_regression_pct_threshold=0.10),
+                        indexer=mock_indexer)
     engine.run()  # first run — indexes everything
     indexed_chunks.clear()
     engine.run()  # second run — same content, nothing should be re-indexed
@@ -163,12 +167,13 @@ def test_sync_engine_detects_deletion(tmp_path):
 
     # First run with the file present
     connector = _mock_connector([{"id": "doc1", "name": "doc1.docx", "content": content}])
-    engine = SyncEngine(uc_name="uc1", db=db, connector=connector, cfg=MagicMock(), indexer=MagicMock())
+    _cfg = MagicMock(sync_regression_mode="pct", sync_regression_pct_threshold=0.10)
+    engine = SyncEngine(uc_name="uc1", db=db, connector=connector, cfg=_cfg, indexer=MagicMock())
     engine.run()
 
     # Second run with the file gone
     connector2 = _mock_connector([])
-    engine2 = SyncEngine(uc_name="uc1", db=db, connector=connector2, cfg=MagicMock(), indexer=MagicMock())
+    engine2 = SyncEngine(uc_name="uc1", db=db, connector=connector2, cfg=_cfg, indexer=MagicMock())
     stats2 = engine2.run()
 
     assert stats2["files_deleted"] >= 1
@@ -187,7 +192,8 @@ def test_sync_engine_reindexes_only_changed_section(tmp_path):
     connector = _mock_connector([{"id": "doc1", "name": "doc1.docx", "content": content_v1}])
     indexed = []
     mock_indexer = MagicMock(side_effect=lambda cfg, chunks, supersede_ids=None: indexed.extend(chunks))
-    engine = SyncEngine(uc_name="uc1", db=db, connector=connector, cfg=MagicMock(), indexer=mock_indexer)
+    _cfg = MagicMock(sync_regression_mode="pct", sync_regression_pct_threshold=0.10)
+    engine = SyncEngine(uc_name="uc1", db=db, connector=connector, cfg=_cfg, indexer=mock_indexer)
     engine.run()
     first_run_count = len(indexed)
     indexed.clear()
@@ -197,19 +203,16 @@ def test_sync_engine_reindexes_only_changed_section(tmp_path):
         ("Heading 1", "Section B"), ("Normal", "Section B body UPDATED."),
     ])
     connector2 = _mock_connector([{"id": "doc1", "name": "doc1.docx", "content": content_v2}])
-    engine2 = SyncEngine(uc_name="uc1", db=db, connector=connector2, cfg=MagicMock(), indexer=mock_indexer)
+    engine2 = SyncEngine(uc_name="uc1", db=db, connector=connector2, cfg=_cfg, indexer=mock_indexer)
     engine2.run()
 
     assert 0 < len(indexed) < first_run_count
 
 
 def test_phase_regression_triggered_on_large_change(tmp_path):
-    import json
-    from core.sync_engine import SyncEngine, SyncStateDB, check_regression_threshold
+    from core.sync_engine import check_regression_threshold
     from unittest.mock import MagicMock, patch
 
-    db = SyncStateDB(str(tmp_path / "sync.db"))
-    # Simulate 20% of chunks changed (above 10% default threshold)
     regressed = []
     with patch("core.sync_engine.trigger_phase_regression",
                side_effect=lambda uc_name, cfg: regressed.append(uc_name)):
