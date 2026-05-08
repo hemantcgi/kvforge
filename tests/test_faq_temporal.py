@@ -37,3 +37,10 @@ def test_faq_not_stale_if_chunks_active():
     faq = {"question": "Q", "answer": "A", "source_chunk_ids": ["chunk_active"]}
     superseded_ids = {"chunk_old"}
     assert is_faq_stale(faq, superseded_ids) is False
+
+
+def test_faq_not_stale_if_only_some_chunks_superseded():
+    from pipeline.sleep_faq_generator import is_faq_stale
+    faq = {"question": "Q", "answer": "A", "source_chunk_ids": ["c1", "c2"]}
+    superseded_ids = {"c1"}  # only c1 is superseded, c2 is still active
+    assert is_faq_stale(faq, superseded_ids) is False
