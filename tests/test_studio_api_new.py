@@ -532,3 +532,15 @@ def test_sync_history_endpoint_with_runs(tmp_path):
     assert resp.status_code == 200
     data = resp.json()
     assert data["runs"][0]["files_checked"] == 100
+
+
+def test_sync_history_rejects_path_traversal(tmp_path):
+    from fastapi.testclient import TestClient
+    from studio.api import api_router
+    from fastapi import FastAPI
+    with patch("studio.api.ROOT", tmp_path):
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        resp = client.get("/api/uc/../../../etc/passwd/sync-history")
+    assert resp.status_code in (400, 403, 404)

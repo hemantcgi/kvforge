@@ -1027,28 +1027,31 @@ function closeGpuOverlay() {
 
 <script>
 (function loadSyncHistory() {
+  function escHtml(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
   const panel = document.getElementById('sync-history-panel');
   if (!panel) return;
   panel.addEventListener('toggle', function() {
     if (!panel.open) return;
-    const ucName = window.__UC_NAME__ || location.pathname.split('/').pop();
+    const ucName = UC_ID;
     fetch(`/studio/api/uc/${ucName}/sync-history`)
       .then(r => r.json())
       .then(data => {
         const tbody = document.getElementById('sync-history-rows');
         tbody.innerHTML = (data.runs || []).map(r =>
           `<tr>
-            <td style="padding:4px 8px;color:#aaa">${r.started_at ? r.started_at.slice(0,19).replace('T',' ') : '—'}</td>
+            <td style="padding:4px 8px;color:#aaa">${escHtml(r.started_at ? r.started_at.slice(0,19).replace('T',' ') : '—')}</td>
             <td style="text-align:right;padding:4px 8px">${r.files_checked ?? 0}</td>
             <td style="text-align:right;padding:4px 8px;color:${r.files_changed > 0 ? '#fa7' : '#666'}">${r.files_changed ?? 0}</td>
             <td style="text-align:right;padding:4px 8px;color:#4f9">${r.chunks_added ?? 0}</td>
             <td style="text-align:right;padding:4px 8px;color:#f87">${r.chunks_superseded ?? 0}</td>
             <td style="text-align:right;padding:4px 8px;color:${r.pii_detections > 0 ? '#f87' : '#666'}">${r.pii_detections ?? 0}</td>
-            <td style="padding:4px 8px;color:#f87;max-width:200px;overflow:hidden;text-overflow:ellipsis">${r.errors || ''}</td>
+            <td style="padding:4px 8px;color:#f87;max-width:200px;overflow:hidden;text-overflow:ellipsis">${escHtml(r.errors || '')}</td>
           </tr>`
         ).join('');
       })
-      .catch(() => {});
+      .catch(err => console.error('sync-history fetch failed:', err));
   });
 })();
 </script>
