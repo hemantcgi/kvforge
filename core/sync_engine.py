@@ -4,8 +4,15 @@ SyncStateDB manages the SQLite state for the sync engine.
 SyncEngine (added in a subsequent commit) orchestrates polling, diffing, and re-indexing.
 """
 from __future__ import annotations
+import hashlib
+import json
 import sqlite3
+import tempfile
 from datetime import datetime, timezone
+from pathlib import Path
+
+from connectors.base import SourceConnector, SourceFile
+from ingestion.directory_loader import EXTENSION_MAP
 
 
 class SyncStateDB:
@@ -51,12 +58,17 @@ class SyncStateDB:
                     finished_at  TEXT,
                     files_checked  INTEGER DEFAULT 0,
                     files_changed  INTEGER DEFAULT 0,
+                    files_deleted  INTEGER DEFAULT 0,
                     chunks_added   INTEGER DEFAULT 0,
                     chunks_superseded INTEGER DEFAULT 0,
                     pii_detections INTEGER DEFAULT 0,
                     errors       TEXT DEFAULT ''
                 );
             """)
+            try:
+                conn.execute("ALTER TABLE sync_runs ADD COLUMN files_deleted INTEGER DEFAULT 0")
+            except sqlite3.OperationalError:
+                pass  # column already exists
 
     def upsert_doc_hash(self, uc_name: str, source_id: str, doc_hash: str, modified_at: str) -> None:
         with self._conn() as conn:
@@ -101,14 +113,15 @@ class SyncStateDB:
             cur = conn.execute(
                 """INSERT INTO sync_runs
                    (uc_name, started_at, finished_at, files_checked, files_changed,
-                    chunks_added, chunks_superseded, pii_detections, errors)
-                   VALUES (?,?,?,?,?,?,?,?,?)""",
+                    files_deleted, chunks_added, chunks_superseded, pii_detections, errors)
+                   VALUES (?,?,?,?,?,?,?,?,?,?)""",
                 (
                     uc_name,
                     stats.get("started_at", datetime.now(timezone.utc).isoformat()),
                     stats.get("finished_at"),
                     stats.get("files_checked", 0),
                     stats.get("files_changed", 0),
+                    stats.get("files_deleted", 0),
                     stats.get("chunks_added", 0),
                     stats.get("chunks_superseded", 0),
                     stats.get("pii_detections", 0),
@@ -127,8 +140,10 @@ class SyncStateDB:
 
     def record_deleted_doc(self, uc_name: str, source_id: str, deleted_at: str) -> None:
         with self._conn() as conn:
+            conn.execute("DELETE FROM document_hashes WHERE uc_name=? AND source_id=?", (uc_name, source_id))
+            conn.execute("DELETE FROM section_hashes WHERE uc_name=? AND source_id=?", (uc_name, source_id))
             conn.execute(
-                "INSERT INTO deleted_docs VALUES (?,?,?)",
+                "INSERT INTO deleted_docs (uc_name, source_id, deleted_at) VALUES (?,?,?)",
                 (uc_name, source_id, deleted_at),
             )
 
@@ -139,15 +154,6 @@ class SyncStateDB:
                 (uc_name,),
             ).fetchall()
             return [dict(r) for r in rows]
-
-
-import hashlib
-import json
-import tempfile
-from pathlib import Path
-
-from connectors.base import SourceConnector, SourceFile
-from ingestion.directory_loader import EXTENSION_MAP
 
 
 def _file_hash(data: bytes) -> str:
@@ -177,12 +183,15 @@ def _get_sections(file_name: str, data: bytes, tmp_dir: str) -> list[tuple[str, 
         section_map[sh].append(chunk)
 
     results = []
+    heading_counts: dict[str, int] = {}
     for section_hash, section_chunks in section_map.items():
         meta = section_chunks[0].get("metadata", {})
         if "slide_number" in meta:
             section_id = f"slide:{meta['slide_number']}"
         elif "heading_text" in meta:
-            section_id = f"heading:{meta['heading_text']}"
+            h = meta["heading_text"]
+            heading_counts[h] = heading_counts.get(h, 0) + 1
+            section_id = f"heading:{h}:{heading_counts[h]}"
         elif "sheet_name" in meta:
             section_id = f"sheet:{meta['sheet_name']}:row:{meta.get('row_range', {}).get('start', 0)}"
         else:
@@ -196,12 +205,13 @@ class SyncEngine:
     """Orchestrate polling, section-hash diffing, and re-indexing for one UC."""
 
     def __init__(self, uc_name: str, db: SyncStateDB, connector: SourceConnector,
-                 cfg, indexer):
+                 cfg, indexer, superseder=None):
         self.uc_name = uc_name
         self.db = db
         self.connector = connector
         self.cfg = cfg
         self.indexer = indexer  # callable(cfg, chunks)
+        self.superseder = superseder or (lambda chunk_ids: None)
 
     def run(self) -> dict:
         started_at = datetime.now(timezone.utc).isoformat()
@@ -242,6 +252,9 @@ class SyncEngine:
         if stored and stored["doc_hash"] == doc_hash:
             return False
 
+        self.db.upsert_doc_hash(self.uc_name, source_file.id, doc_hash,
+                                source_file.modified_at.isoformat())
+
         sections = _get_sections(source_file.name, data, tmp_dir)
         if not sections:
             return False
@@ -269,25 +282,11 @@ class SyncEngine:
                 json.dumps(new_chunk_ids), now,
             )
 
-        self.db.upsert_doc_hash(self.uc_name, source_file.id, doc_hash,
-                                source_file.modified_at.isoformat())
         return True
 
     def _supersede_chunks(self, chunk_ids: list[str]) -> None:
-        pass  # indexer is responsible for setting superseded_at on old chunk IDs
+        self.superseder(chunk_ids)
 
     def _handle_deletion(self, source_id: str) -> None:
         now = datetime.now(timezone.utc).isoformat()
-        with self.db._conn() as conn:
-            conn.execute(
-                "DELETE FROM document_hashes WHERE uc_name=? AND source_id=?",
-                (self.uc_name, source_id),
-            )
-            conn.execute(
-                "DELETE FROM section_hashes WHERE uc_name=? AND source_id=?",
-                (self.uc_name, source_id),
-            )
-            conn.execute(
-                "INSERT INTO deleted_docs VALUES (?,?,?)",
-                (self.uc_name, source_id, now),
-            )
+        self.db.record_deleted_doc(self.uc_name, source_id, now)

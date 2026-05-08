@@ -174,3 +174,30 @@ def test_sync_engine_detects_deletion(tmp_path):
     assert stats2["files_deleted"] >= 1
     remaining = db.list_source_ids("uc1")
     assert "doc1" not in remaining
+
+
+def test_sync_engine_reindexes_only_changed_section(tmp_path):
+    from core.sync_engine import SyncEngine, SyncStateDB
+    db = SyncStateDB(str(tmp_path / "sync.db"))
+
+    content_v1 = _make_docx_bytes([
+        ("Heading 1", "Section A"), ("Normal", "Section A body."),
+        ("Heading 1", "Section B"), ("Normal", "Section B body."),
+    ])
+    connector = _mock_connector([{"id": "doc1", "name": "doc1.docx", "content": content_v1}])
+    indexed = []
+    mock_indexer = MagicMock(side_effect=lambda cfg, chunks, supersede_ids=None: indexed.extend(chunks))
+    engine = SyncEngine(uc_name="uc1", db=db, connector=connector, cfg=MagicMock(), indexer=mock_indexer)
+    engine.run()
+    first_run_count = len(indexed)
+    indexed.clear()
+
+    content_v2 = _make_docx_bytes([
+        ("Heading 1", "Section A"), ("Normal", "Section A body."),
+        ("Heading 1", "Section B"), ("Normal", "Section B body UPDATED."),
+    ])
+    connector2 = _mock_connector([{"id": "doc1", "name": "doc1.docx", "content": content_v2}])
+    engine2 = SyncEngine(uc_name="uc1", db=db, connector=connector2, cfg=MagicMock(), indexer=mock_indexer)
+    engine2.run()
+
+    assert 0 < len(indexed) < first_run_count
