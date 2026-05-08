@@ -2,12 +2,11 @@
 from __future__ import annotations
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
 import msal
 import requests
 
-from connectors.base import SourceConnector, SourceFile
+from connectors.base import SourceFile
 
 
 _GRAPH_BASE = "https://graph.microsoft.com/v1.0"
@@ -28,7 +27,6 @@ class SharePointConnector:
         self.site_id = site_id
         self.drive_id = drive_id
         self.local_mirror_path = local_mirror_path
-        self._delta_link: str | None = None
 
         if not local_mirror_path:
             authority = f"https://login.microsoftonline.com/{tenant_id}"
@@ -74,7 +72,7 @@ class SharePointConnector:
         url = f"{self._drive_url()}/root/children?$top=999"
         files: list[SourceFile] = []
         while url:
-            resp = requests.get(url, headers=self._headers())
+            resp = requests.get(url, headers=self._headers(), timeout=30)
             resp.raise_for_status()
             data = resp.json()
             for item in data.get("value", []):
@@ -86,9 +84,9 @@ class SharePointConnector:
 
     def download(self, file: SourceFile) -> bytes:
         if self.local_mirror_path:
-            return Path(self.local_mirror_path, file.name).read_bytes()
+            return Path(file.path).read_bytes()
         url = f"{self._drive_url()}/items/{file.id}/content"
-        resp = requests.get(url, headers=self._headers())
+        resp = requests.get(url, headers=self._headers(), timeout=30)
         resp.raise_for_status()
         return resp.content
 
@@ -99,11 +97,13 @@ class SharePointConnector:
         return not bool(self.local_mirror_path)
 
     def get_delta(self, token: str | None) -> tuple[list[SourceFile], str]:
+        if self.local_mirror_path:
+            return self._list_local(), ""
         url = token or f"{self._drive_url()}/root/delta"
         files: list[SourceFile] = []
         data = {}
         while url:
-            resp = requests.get(url, headers=self._headers())
+            resp = requests.get(url, headers=self._headers(), timeout=30)
             resp.raise_for_status()
             data = resp.json()
             for item in data.get("value", []):
