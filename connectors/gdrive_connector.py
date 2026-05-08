@@ -52,7 +52,13 @@ class GDriveConnector:
         files: list[SourceFile] = []
         page_token = None
         while True:
-            kwargs = {"q": query, "fields": fields, "pageSize": 1000}
+            kwargs = {
+                "q": query,
+                "fields": fields,
+                "pageSize": 1000,
+                "supportsAllDrives": True,
+                "includeItemsFromAllDrives": True,
+            }
             if page_token:
                 kwargs["pageToken"] = page_token
             result = self._service.files().list(**kwargs).execute()
@@ -67,7 +73,7 @@ class GDriveConnector:
 
     def download(self, file: SourceFile) -> bytes:
         if self.local_mirror_path:
-            return Path(self.local_mirror_path, file.name).read_bytes()
+            return Path(file.path).read_bytes()
         mime = file.mime_type or ""
         export_mime = _EXPORT_MAP.get(mime)
         if export_mime:

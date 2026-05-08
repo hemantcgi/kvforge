@@ -53,6 +53,21 @@ def test_gdrive_download_binary():
     assert data == b"binary content"
 
 
+def test_gdrive_download_workspace_doc():
+    """Google Workspace mime type should use export_media, not get_media."""
+    from connectors.gdrive_connector import GDriveConnector
+    from connectors.base import SourceFile
+    with patch("connectors.gdrive_connector.build", return_value=_mock_drive_service([])), \
+         patch("connectors.gdrive_connector.service_account.Credentials.from_service_account_file",
+               return_value=MagicMock()):
+        conn = GDriveConnector(service_account_file="fake.json", folder_id="folder1")
+        sf = SourceFile(id="doc1", name="report.docx", path="/report.docx",
+                        size=10, modified_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+                        mime_type="application/vnd.google-apps.document")
+        data = conn.download(sf)
+    assert data == b"exported content"
+
+
 def test_gdrive_local_mirror_fallback(tmp_path):
     from connectors.gdrive_connector import GDriveConnector
     (tmp_path / "notes.docx").write_bytes(b"notes")
