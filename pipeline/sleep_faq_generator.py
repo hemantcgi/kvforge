@@ -267,3 +267,37 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def tag_faq_with_chunk_ids(faq: dict, chunk_ids: list[str]) -> dict:
+    """Return a copy of faq with source_chunk_ids added."""
+    return {**faq, "source_chunk_ids": chunk_ids}
+
+
+def build_faq_prompt(chunk: dict) -> str:
+    """Build the FAQ generation prompt with temporal grounding."""
+    effective_from = chunk.get("metadata", {}).get("effective_from", "")
+    date_str = ""
+    if effective_from:
+        try:
+            from datetime import datetime
+            dt = datetime.fromisoformat(effective_from)
+            date_str = dt.strftime("%Y-%m-%d")
+        except (ValueError, TypeError):
+            date_str = effective_from[:10]
+
+    context_header = f"Context (as of {date_str}):\n" if date_str else "Context:\n"
+    return (
+        f"{context_header}"
+        f"{chunk['text']}\n\n"
+        f"Generate one FAQ question and answer based on the above context."
+        + (f" The answer should reflect information current as of {date_str}." if date_str else "")
+    )
+
+
+def is_faq_stale(faq: dict, superseded_chunk_ids: set[str]) -> bool:
+    """Return True if all source chunks for this FAQ have been superseded."""
+    source_ids = faq.get("source_chunk_ids", [])
+    if not source_ids:
+        return False
+    return all(cid in superseded_chunk_ids for cid in source_ids)
