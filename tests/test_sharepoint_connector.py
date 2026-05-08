@@ -53,7 +53,7 @@ def test_sharepoint_download(tmp_path):
     with patch("connectors.sharepoint_connector.msal.ConfidentialClientApplication",
                return_value=_mock_msal_app()), \
          patch("connectors.sharepoint_connector.requests.get",
-               side_effect=[_mock_graph_response([]), download_resp]):
+               return_value=download_resp):
         conn = SharePointConnector(
             tenant_id="t", client_id="c", client_secret="s",
             site_id="site1", drive_id="drive1",

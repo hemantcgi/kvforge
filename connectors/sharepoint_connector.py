@@ -37,10 +37,6 @@ class SharePointConnector:
                 authority=authority,
                 client_credential=client_secret,
             )
-            # Eagerly fetch drive root metadata to validate credentials and
-            # cache the drive URL; this also ensures the token is warm.
-            _root_url = f"{_GRAPH_BASE}/sites/{self.site_id}/drives/{self.drive_id}/root/children?$top=999"
-            requests.get(_root_url, headers=self._headers())
 
     def _token(self) -> str:
         scopes = ["https://graph.microsoft.com/.default"]
