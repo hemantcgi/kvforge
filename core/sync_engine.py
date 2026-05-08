@@ -1,13 +1,11 @@
 """Sync engine: section-hash diffing and deletion detection.
 
 SyncStateDB manages the SQLite state for the sync engine.
-SyncEngine orchestrates polling, diffing, and re-indexing.
+SyncEngine (added in a subsequent commit) orchestrates polling, diffing, and re-indexing.
 """
 from __future__ import annotations
-import json
 import sqlite3
 from datetime import datetime, timezone
-from pathlib import Path
 
 
 class SyncStateDB:
@@ -63,7 +61,7 @@ class SyncStateDB:
     def upsert_doc_hash(self, uc_name: str, source_id: str, doc_hash: str, modified_at: str) -> None:
         with self._conn() as conn:
             conn.execute(
-                "INSERT OR REPLACE INTO document_hashes VALUES (?,?,?,?)",
+                "INSERT OR REPLACE INTO document_hashes (uc_name, source_id, doc_hash, modified_at) VALUES (?,?,?,?)",
                 (uc_name, source_id, doc_hash, modified_at),
             )
 
@@ -79,7 +77,7 @@ class SyncStateDB:
                              content_hash: str, chunk_ids: str, indexed_at: str) -> None:
         with self._conn() as conn:
             conn.execute(
-                "INSERT OR REPLACE INTO section_hashes VALUES (?,?,?,?,?,?)",
+                "INSERT OR REPLACE INTO section_hashes (uc_name, source_id, section_id, content_hash, chunk_ids, indexed_at) VALUES (?,?,?,?,?,?)",
                 (uc_name, source_id, section_id, content_hash, chunk_ids, indexed_at),
             )
 
@@ -124,5 +122,20 @@ class SyncStateDB:
             rows = conn.execute(
                 "SELECT * FROM sync_runs WHERE uc_name=? ORDER BY id DESC LIMIT ?",
                 (uc_name, limit),
+            ).fetchall()
+            return [dict(r) for r in rows]
+
+    def record_deleted_doc(self, uc_name: str, source_id: str, deleted_at: str) -> None:
+        with self._conn() as conn:
+            conn.execute(
+                "INSERT INTO deleted_docs VALUES (?,?,?)",
+                (uc_name, source_id, deleted_at),
+            )
+
+    def get_deleted_docs(self, uc_name: str) -> list[dict]:
+        with self._conn() as conn:
+            rows = conn.execute(
+                "SELECT * FROM deleted_docs WHERE uc_name=? ORDER BY deleted_at DESC",
+                (uc_name,),
             ).fetchall()
             return [dict(r) for r in rows]
