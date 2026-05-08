@@ -534,13 +534,21 @@ def test_sync_history_endpoint_with_runs(tmp_path):
     assert data["runs"][0]["files_checked"] == 100
 
 
-def test_sync_history_rejects_path_traversal(tmp_path):
-    from fastapi.testclient import TestClient
-    from studio.api import api_router
-    from fastapi import FastAPI
+def test_uc_path_rejects_traversal(tmp_path):
+    """_uc_path must reject any uc_id that escapes the examples/ directory."""
+    import pytest
+    from fastapi import HTTPException
+    from studio.api import _uc_path
     with patch("studio.api.ROOT", tmp_path):
-        app = FastAPI()
-        app.include_router(api_router)
-        client = TestClient(app)
-        resp = client.get("/api/uc/../../../etc/passwd/sync-history")
-    assert resp.status_code in (400, 403, 404)
+        (tmp_path / "examples").mkdir()
+        with pytest.raises(HTTPException) as exc:
+            _uc_path("../examples_evil")
+        assert exc.value.status_code == 400
+
+
+def test_uc_path_accepts_valid_id(tmp_path):
+    from studio.api import _uc_path
+    with patch("studio.api.ROOT", tmp_path):
+        (tmp_path / "examples" / "my-uc").mkdir(parents=True)
+        path = _uc_path("my-uc")
+        assert path.name == "my-uc"

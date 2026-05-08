@@ -26,7 +26,7 @@ api_router = APIRouter(prefix="/api")
 def _uc_path(uc_id: str) -> Path:
     """Return the UC directory path, raising 400 on path traversal attempts."""
     path = (ROOT / "examples" / uc_id).resolve()
-    if not str(path).startswith(str((ROOT / "examples").resolve())):
+    if not path.is_relative_to((ROOT / "examples").resolve()):
         raise HTTPException(400, "Invalid use case ID")
     return path
 
@@ -319,7 +319,11 @@ def get_sync_history(uc_id: str):
     db_path = _uc_path(uc_id) / "sync.db"
     if not db_path.exists():
         return {"runs": []}
-    return {"runs": SyncStateDB(str(db_path)).get_sync_runs(uc_id)}
+    try:
+        runs = SyncStateDB(str(db_path)).get_sync_runs(uc_id)
+    except Exception:
+        runs = []
+    return {"runs": runs}
 
 
 @api_router.get("/uc/{uc_id}/eval-summary")

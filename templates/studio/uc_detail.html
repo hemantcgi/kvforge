@@ -1028,14 +1028,13 @@ function closeGpuOverlay() {
 <script>
 (function loadSyncHistory() {
   function escHtml(s) {
-    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
   const panel = document.getElementById('sync-history-panel');
   if (!panel) return;
   panel.addEventListener('toggle', function() {
     if (!panel.open) return;
-    const ucName = UC_ID;
-    fetch(`/studio/api/uc/${ucName}/sync-history`)
+    fetch(`/studio/api/uc/${UC_ID}/sync-history`)
       .then(r => r.json())
       .then(data => {
         const tbody = document.getElementById('sync-history-rows');
