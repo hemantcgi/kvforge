@@ -3,7 +3,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
-def test_scheduler_runs_job(tmp_path):
+def test_scheduler_runs_job():
     from core.sync_scheduler import APSchedulerBackend
     results = []
     sched = APSchedulerBackend()
@@ -15,7 +15,7 @@ def test_scheduler_runs_job(tmp_path):
     assert len(results) >= 1
 
 
-def test_scheduler_cancel_job(tmp_path):
+def test_scheduler_cancel_job():
     from core.sync_scheduler import APSchedulerBackend
     results = []
     sched = APSchedulerBackend()
@@ -27,7 +27,7 @@ def test_scheduler_cancel_job(tmp_path):
     sched.stop()
 
 
-def test_scheduler_list_jobs(tmp_path):
+def test_scheduler_list_jobs():
     from core.sync_scheduler import APSchedulerBackend
     sched = APSchedulerBackend()
     sched.start()
