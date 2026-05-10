@@ -3,9 +3,29 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+
+
+# ── Corpus health stubs (replaced at runtime or patched in tests) ──────────
+
+def get_archival_candidates() -> list[dict]:
+    """Return pending archival recommendations. Override in production."""
+    return []
+
+
+def execute_archive(chunk_id: str) -> None:
+    """Execute archival for chunk_id. Override in production."""
+
+
+def get_reinstatement_candidates() -> list[dict]:
+    """Return reinstatement recommendations. Override in production."""
+    return []
+
+
+def execute_reinstate(chunk_id: str) -> None:
+    """Execute reinstatement for chunk_id. Override in production."""
 
 
 def make_router(config_path: str, templates: Jinja2Templates) -> APIRouter:
@@ -85,5 +105,35 @@ def make_router(config_path: str, templates: Jinja2Templates) -> APIRouter:
                 "config_path": str(cfg_path),
             },
         )
+
+    @router.get("/api/corpus/archival-candidates")
+    async def archival_candidates():
+        import dashboard.routes as _self
+        candidates = _self.get_archival_candidates()
+        return {"candidates": candidates}
+
+    @router.post("/api/corpus/confirm-archive")
+    async def confirm_archive(body: dict):
+        import dashboard.routes as _self
+        chunk_id = body.get("chunk_id")
+        if not chunk_id:
+            raise HTTPException(status_code=400, detail="chunk_id required")
+        _self.execute_archive(chunk_id)
+        return {"status": "ok", "chunk_id": chunk_id}
+
+    @router.get("/api/corpus/reinstatement-candidates")
+    async def reinstatement_candidates():
+        import dashboard.routes as _self
+        candidates = _self.get_reinstatement_candidates()
+        return {"candidates": candidates}
+
+    @router.post("/api/corpus/confirm-reinstate")
+    async def confirm_reinstate(body: dict):
+        import dashboard.routes as _self
+        chunk_id = body.get("chunk_id")
+        if not chunk_id:
+            raise HTTPException(status_code=400, detail="chunk_id required")
+        _self.execute_reinstate(chunk_id)
+        return {"status": "ok", "chunk_id": chunk_id}
 
     return router

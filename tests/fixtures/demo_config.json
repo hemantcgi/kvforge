@@ -1,0 +1,7 @@
+{
+  "use_case_name": "Demo UC",
+  "collection": "demo-col",
+  "version_file": "/tmp/kvforge_demo_version.json",
+  "addons": ["corpus_intelligence"],
+  "addon_config": {}
+}
