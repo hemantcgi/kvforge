@@ -19,6 +19,7 @@ import core.kv_utils as kv_utils
 import pipeline.kv_background as kv_background
 import core.model_loader as model_loader
 import core.version as ver
+from core.kv_utils import deserialize_kv, load_token_kv
 from pipeline.bedrock_rag import _run_search, Config
 from fastembed import TextEmbedding
 from vectorstore.registry import get_store
@@ -53,6 +54,48 @@ def get_stale_chunk_ids(chunks: list[dict], current_lora_version: int) -> list[i
         c["chunk_id"] for c in chunks
         if c.get("kv_version") is None or c["kv_version"] < current_lora_version
     ]
+
+
+def route_chunk_injection(chunk: dict, cfg: dict, tq_config=None, vector_store=None) -> dict:
+    """Route a single chunk to the correct injection path.
+
+    Returns a dict with keys: path ("enhanced"/"active"/"archive"), kv_arr, text.
+    """
+    payload = chunk.get("payload", chunk)
+    status = payload.get("status", "active")
+    kv_token_path = payload.get("kv_token_path")
+
+    if kv_token_path and status != "archived":
+        arr = load_token_kv(kv_token_path, tq_config=tq_config)
+        return {"path": "enhanced", "kv_arr": arr, "text": None}
+
+    if status == "archived":
+        text = _fetch_archive_text(payload.get("archive_path", ""), payload.get("text", ""))
+        count = payload.get("archive_retrieval_count", 0) + 1
+        if vector_store is not None:
+            vector_store.update_payload(
+                collection=cfg.get("collection", ""),
+                point_id=chunk.get("id"),
+                payload={"archive_retrieval_count": count},
+            )
+        return {"path": "archive", "kv_arr": None, "text": text}
+
+    shape = (cfg["kv_num_layers"], 2, cfg["kv_num_heads"], cfg["kv_head_dim"])
+    arr = deserialize_kv(payload["kv_cache"], shape)
+    return {"path": "active", "kv_arr": arr, "text": None}
+
+
+def _fetch_archive_text(archive_path: str, fallback_text: str = "") -> str:
+    """Return text from archive_path if it exists, else fallback_text."""
+    if not archive_path:
+        return fallback_text
+    try:
+        p = Path(archive_path)
+        if p.exists():
+            return p.read_text(encoding="utf-8")
+    except Exception:
+        pass
+    return fallback_text
 
 
 # ── Inference paths ───────────────────────────────────────────────────────
