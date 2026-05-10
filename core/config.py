@@ -1,233 +1,170 @@
-"""Pydantic configuration model for a KVForge datasource.
+"""Lean core configuration model for a single KVForge use case.
 
-A single ``DatasourceConfig`` object captures every tunable parameter for one
-corpus: which vector store to use, which embedder, which LLM, LoRA hyper-
-parameters, phase-gating thresholds, and monitoring settings.  Instances are
-normally created by calling ``load_config`` with a JSON file path.
+All component-specific configuration lives in addon_config, keyed by addon name.
+The full configuration for a pipeline component is produced by get_merged_config().
+
+Example JSON format::
+
+    {
+      "use_case_name": "Customer Support RAG",
+      "collection": "customer-support",
+      "version_file": "examples/usecase1/version.json",
+      "addons": ["indexing", "inference", "training", "background", "sync", "monitoring"],
+      "addon_config": {
+        "indexing": {
+          "loader": "jsonl",
+          "embed_model": "BAAI/bge-small-en-v1.5",
+          "vector_dim": 384,
+          "vector_store": "qdrant",
+          "qdrant_host": "localhost",
+          "qdrant_port": 6333
+        },
+        "inference": {
+          "llm_model": "meta-llama/Llama-3.2-3B-Instruct",
+          "top_k": 5,
+          "gate_threshold": 0.75
+        },
+        "training": {
+          "lora_rank": 16,
+          "checkpoint_dir": "examples/usecase1/lora_checkpoints/",
+          "replay_db": "examples/usecase1/replay.db"
+        },
+        "background": {"flush_seconds": 300, "flush_queries": 50},
+        "sync": {"interval_minutes": 60},
+        "monitoring": {"port": 8081}
+      }
+    }
 """
+from __future__ import annotations
+
 import json
-from typing import Literal
 from pydantic import BaseModel, Field
 
 
-class DatasourceConfig(BaseModel):
-    """All runtime parameters for a single KVForge datasource.
+class KVForgeConfig(BaseModel):
+    """Lean core configuration for one KVForge use case.
 
-    Fields are grouped by concern below.  Required fields (those with no
-    default) must be supplied in the JSON config file.
+    Contains only the five fields that are truly universal. Everything else
+    lives inside addon_config, validated lazily by each addon's own schema
+    when the addon is activated.
 
     Attributes:
-        qdrant_host: Hostname of the Qdrant server (used when
-            ``vector_store='qdrant'``).
-        qdrant_port: Port of the Qdrant server.
-        vector_store: Which vector store backend to use.  One of
-            ``'qdrant'``, ``'chroma'``, ``'faiss'``.
-        chroma_persist_dir: Local directory for ChromaDB data files
-            (used when ``vector_store='chroma'``).
-        faiss_persist_dir: Local directory for FAISS index files
-            (used when ``vector_store='faiss'``).
-        collection: Name of the vector store collection for this datasource.
-            **Required.**
-        loader: Document loader format.  One of ``'pdf'``, ``'markdown'``,
-            ``'jsonl'``, ``'html'``, ``'directory'``.
-        chunk_size: Target chunk size in words for PDF and directory loaders.
-        chunk_overlap: Word overlap between consecutive chunks.
-        embed_batch: Number of texts to embed in a single batch.
-        upsert_batch: Number of points to upsert per batch call.
-        top_k: Default number of nearest neighbours to retrieve.
-        jsonl_text_key: Field name that holds the text in each JSONL object.
-        embedder_backend: Embedding backend.  One of ``'fastembed'``,
-            ``'sentence_transformers'``, ``'openai'``.
-        embed_model: Model name or identifier for the embedder backend.
-            **Required.**
-        vector_dim: Dimensionality of the embedding vectors.  **Required.**
-        llm_model: HuggingFace model ID for the language model.  **Required.**
-        hf_token: HuggingFace access token for gated models (optional).
-        max_new_tokens: Maximum tokens the LLM generates per response.
-        model_library: Optional registry mapping model IDs to their KV shape
-            (``kv_num_layers``, ``kv_num_heads``, ``kv_head_dim``).  Overrides
-            auto-detection when present.
-        lora_rank: LoRA rank ``r`` used in ``LoraConfig``.
-        lora_alpha: LoRA scaling factor ``alpha``.
-        lora_target_modules: List of module name suffixes to apply LoRA to
-            (e.g. ``['q_proj', 'k_proj', 'v_proj']``).
-        lora_dropout: Dropout probability applied to LoRA layers.
-        lora_epochs: Number of training epochs per LoRA round.
-        lora_lr: Learning rate for LoRA fine-tuning.
-        checkpoint_dir: Directory where LoRA checkpoint sub-folders are saved.
-            **Required.**
+        use_case_name: Human-readable display name for this use case.
+        collection: Vector store collection name. Shared across all addons.
         version_file: Path to the JSON file tracking LoRA version and phase.
-            **Required.**
-        replay_db: Path to the SQLite replay-buffer database.  **Required.**
-        gate_threshold: Confidence-gate threshold; queries above this score
-            are answered parametrically (Phase 3 only).
-        prs_threshold: Minimum PRS required for phase transitions.
-        prs_weights: Weights for the three PRS components: ``'accuracy'``,
-            ``'calibration'``, ``'consistency'``.
-        faq_question_key: Key name for the question field in FAQ JSON files.
-        faq_answer_key: Key name for the answer field in FAQ JSON files.
-        access_flush_seconds: Background access-tracker flush interval in
-            seconds.
-        access_flush_queries: Background access-tracker flush query-count
-            trigger.
-        dashboard_port: Port for the monitoring dashboard FastAPI server.
-        prs_advancement_threshold: PRS score above which a phase advancement
-            is triggered (default 0.72).
-        prs_regression_threshold: PRS score below which a phase regression
-            is triggered. Should be below 0.75 (the hardcoded advancement
-            floor in ``append_prs``) to avoid a phantom advance→regress flip
-            in a single call. No automatic validation is performed.
+            Shared by inference, training, and background addons.
+        addons: List of addon names to activate. Order does not matter.
+            Each name must match a registered AddonManifest.name.
+        addon_config: Per-addon configuration dicts, keyed by addon name.
+            Each dict is validated by the corresponding addon's config_schema
+            when get_validated_addon_config() is called.
     """
 
-    # Vector store connection
-    qdrant_host: str = "localhost"
-    qdrant_port: int = 6333
-    vector_store: Literal["qdrant", "chroma", "faiss", "pinecone", "pgvector", "weaviate", "milvus"] = "qdrant"
-
-    # ChromaDB (in-process)
-    chroma_persist_dir: str = ".chroma"
-
-    # FAISS (in-process)
-    faiss_persist_dir: str = ".faiss"
-
-    # Collection & ingestion
+    use_case_name: str
     collection: str
-    loader: Literal["pdf", "markdown", "jsonl", "html", "directory"] = "pdf"
-    chunk_size: int = 600
-    chunk_overlap: int = 60
-    embed_batch: int = 64
-    upsert_batch: int = 128
-    top_k: int = 5
-    jsonl_text_key: str = "text"
-
-    # Embedding
-    embedder_backend: Literal["fastembed", "sentence_transformers", "openai"] = "fastembed"
-    embed_model: str
-    vector_dim: int
-
-    # Language model
-    llm_model: str
-    hf_token: str | None = None
-    max_new_tokens: int = 256
-    model_library: dict = Field(default_factory=dict)
-
-    # LoRA
-    lora_rank: int = 16
-    lora_alpha: int = 32
-    lora_target_modules: list[str] = Field(
-        default_factory=lambda: ["q_proj", "k_proj", "v_proj"]
-    )
-    lora_dropout: float = 0.05
-    lora_epochs: int = 3
-    lora_lr: float = 0.0002
-
-    # State files
-    checkpoint_dir: str
     version_file: str
-    replay_db: str
+    addons: list[str] = Field(default_factory=list)
+    addon_config: dict[str, dict] = Field(default_factory=dict)
 
-    # Phase gating
-    gate_threshold: float = 0.75
-    prs_threshold: float = 0.75
-    prs_weights: dict = Field(
-        default_factory=lambda: {"accuracy": 0.5, "calibration": 0.3, "consistency": 0.2}
-    )
+    def has_addon(self, name: str) -> bool:
+        """Return True if ``name`` is in the active addons list."""
+        return name in self.addons
 
-    # FAQ schema
-    faq_question_key: str = "question"
-    faq_answer_key: str = "answer"
+    def get_merged_config(self, *addon_names: str) -> dict:
+        """Merge core fields + one or more addon configs into a flat dict.
 
-    # Dashboard
-    access_flush_seconds: int = 300
-    access_flush_queries: int = 50
-    dashboard_port: int = 8080
+        This is the bridge between the new nested config format and the
+        existing pipeline code, which accepts plain dicts via cfg.get().
+        Core fields (collection, version_file, use_case_name) are always
+        included. Addon configs are merged in the order given; later addons
+        override earlier ones on key conflict.
 
-    # Dynamic PRS — deployment and cluster settings
-    deployment_mode: Literal["greenfield", "brownfield", "auto"] = "auto"
-    difficulty_estimator: str = "intra_cluster_distance"
-    cluster_k_range: list[int] = Field(default_factory=lambda: [3, 20])
-    min_cluster_samples_for_adaptation: int = 10
-    prs_stability_window: int = 3
-    prs_advancement_threshold: float = 0.72
-    prs_regression_threshold: float = 0.60
-    prs_auto_weight: bool = True
-    prs_signal_weights: dict = Field(
-        default_factory=lambda: {"faq": 0.4, "vdb": 0.4, "realtime": 0.2}
-    )
-    brownfield_routing_threshold: float = 0.85
-    brownfield_confidence_floor: float = 0.80
-    brownfield_coverage_target: float = 0.70
-    realtime_requery_window_minutes: int = 10
-    query_log_db: str = "query_log.db"
+        Args:
+            *addon_names: Names of addons whose config_dicts to merge.
+                Unknown addon names produce no keys (no KeyError).
 
-    # Flywheel Analytics
-    analytics_db: str = ""
-    cost_per_1k_tokens: float = 5.0
-    tokens_per_ms_baseline: float = 0.8
+        Returns:
+            Flat dict suitable for passing directly to pipeline functions.
 
-    # VDB Expansion — backend-specific connection fields
-    pinecone_api_key: str = ""
-    pinecone_cloud: str = "aws"
-    pinecone_region: str = "us-east-1"
-    pgvector_dsn: str = ""
-    pgvector_table: str = ""
-    weaviate_url: str = "http://localhost:8080"
-    weaviate_api_key: str = ""
-    milvus_uri: str = "http://localhost:19530"
-    milvus_token: str = ""
+        Example::
 
-    # ModelScout
-    model_registry_path: str = "core/model_registry.json"
-    model_scout_program: str = "model_scout_program.md"
-    model_scout_results: str = "model_scout_results.tsv"
-    scout_initial_corpus_chunks: int = 200
-    scout_initial_faq_count: int = 20
-    scout_initial_lora_steps: int = 500
-    scout_initial_lora_rank: int = 16
-    scout_max_lora_steps: int = 2000
-    scout_max_corpus_chunks: int = 2000
-    scout_max_faq_count: int = 100
+            merged = cfg.get_merged_config("inference", "training")
+            # merged["collection"] == cfg.collection
+            # merged["llm_model"] == cfg.addon_config["inference"]["llm_model"]
+            # merged["lora_rank"] == cfg.addon_config["training"]["lora_rank"]
+        """
+        result: dict = {
+            "collection": self.collection,
+            "version_file": self.version_file,
+            "use_case_name": self.use_case_name,
+        }
+        for name in addon_names:
+            result.update(self.addon_config.get(name, {}))
+        return result
 
-    # Multimodal / image support
-    image_collection_suffix: str = "_images"
-    image_store_dir: str = ""
-    multimodal_model: str = "llava-hf/llava-1.5-7b-hf"
-    clip_model: str = "openai/clip-vit-base-patch32"
-    image_kv_inference: bool = False
+    def get_validated_addon_config(self, addon_name: str):
+        """Return the addon's config as its typed Pydantic model.
 
-    # ── Enterprise Phase 1 ────────────────────────────────────────────────
-    tenant_id: str = "default"
-    sync_interval_minutes: int = 60
-    hitl_mode: Literal["blocking", "non-blocking", "auto"] = "auto"
-    hitl_sensitivity: Literal["high", "normal"] = "normal"
-    pii_detection_enabled: bool = True
-    allowed_pii_categories: list[str] = Field(default_factory=list)
-    pii_rejection_threshold: int = 3
-    local_mirror_path: str = ""
-    sync_regression_mode: str = "pct"
-    sync_regression_pct_threshold: float = 0.10
-    sync_regression_tier_threshold: float = 0.15
+        Looks up the registered AddonManifest for addon_name, then validates
+        addon_config[addon_name] against the manifest's config_schema.
+
+        Args:
+            addon_name: Must be registered in AddonRegistry.
+
+        Returns:
+            Instance of the addon's config_schema Pydantic model.
+
+        Raises:
+            KeyError: If addon_name is not registered.
+            pydantic.ValidationError: If addon_config[addon_name] is invalid.
+        """
+        from addons.registry import AddonRegistry
+        manifest = AddonRegistry.get(addon_name)
+        raw = self.addon_config.get(addon_name, {})
+        return manifest.config_schema(**raw)
+
+    def validate_addon_deps(self) -> None:
+        """Check that all addon dependency requirements are satisfied.
+
+        For every addon in self.addons, looks up its AddonManifest and
+        verifies that each name in manifest.requires is also present in
+        self.addons.
+
+        Raises:
+            ValueError: First unsatisfied dependency found, with a clear message.
+            KeyError: If an addon name is not registered in AddonRegistry.
+        """
+        from addons.registry import AddonRegistry
+        active = set(self.addons)
+        for name in self.addons:
+            manifest = AddonRegistry.get(name)
+            for req in manifest.requires:
+                if req not in active:
+                    raise ValueError(
+                        f"Addon '{name}' requires addon '{req}', "
+                        f"but '{req}' is not in the active addons list. "
+                        f"Add '{req}' to the addons list in your config."
+                    )
 
 
-def load_config(path: str) -> DatasourceConfig:
-    """Load and validate a datasource config from a JSON file.
+def load_config(path: str) -> KVForgeConfig:
+    """Load and validate a KVForgeConfig from a JSON file.
 
-    Template annotation keys that begin with ``_`` (e.g. ``_comment``,
-    ``_vector_store_options``) are stripped before validation so that
-    annotated template files can be used directly.
+    Keys starting with ``_`` (e.g. ``_comment``) are stripped before
+    validation so annotated template files can be used directly.
 
     Args:
         path: Path to the JSON config file.
 
     Returns:
-        A validated ``DatasourceConfig`` instance.
+        Validated KVForgeConfig instance.
 
     Raises:
-        pydantic.ValidationError: If any required field is missing or a value
-            fails type/constraint validation.
+        pydantic.ValidationError: If required fields are missing or invalid.
+        FileNotFoundError: If the file does not exist.
+        json.JSONDecodeError: If the file is not valid JSON.
     """
     with open(path) as f:
         data = json.load(f)
-    # Strip _comment and _*_options keys (template annotations, not fields)
     data = {k: v for k, v in data.items() if not k.startswith("_")}
-    return DatasourceConfig(**data)
+    return KVForgeConfig(**data)
