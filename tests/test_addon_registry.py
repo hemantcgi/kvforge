@@ -25,14 +25,19 @@ def test_register_duplicate_raises():
     from addons.registry import AddonRegistry, AddonManifest
     AddonRegistry.reset()
 
-    class DummyConfig(BaseModel):
+    class SchemaA(BaseModel):
         x: int = 1
 
-    m = AddonManifest(name="dup", display_name="D", description="D",
-                      config_schema=DummyConfig)
-    AddonRegistry.register(m)
+    class SchemaB(BaseModel):
+        y: str = "hello"
+
+    m1 = AddonManifest(name="dup", display_name="D", description="D",
+                       config_schema=SchemaA)
+    m2 = AddonManifest(name="dup", display_name="D2", description="D2",
+                       config_schema=SchemaB)
+    AddonRegistry.register(m1)
     with pytest.raises(ValueError, match="already registered"):
-        AddonRegistry.register(m)
+        AddonRegistry.register(m2)
 
 
 def test_get_unknown_raises():

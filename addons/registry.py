@@ -48,13 +48,16 @@ class AddonRegistry:
     def register(cls, manifest: AddonManifest) -> None:
         """Register an addon manifest.
 
-        Raises:
-            ValueError: If an addon with the same name is already registered.
+        Idempotent: re-registering the same name with the same config_schema is a no-op
+        (safe for module reloads). Raises ValueError if a *different* config_schema
+        tries to claim the same name.
         """
         if manifest.name in cls._manifests:
+            existing = cls._manifests[manifest.name]
+            if existing.config_schema is manifest.config_schema:
+                return  # same schema — idempotent re-registration
             raise ValueError(
-                f"Addon '{manifest.name}' already registered. "
-                f"Each addon name must be unique."
+                f"Addon '{manifest.name}' already registered with a different config schema."
             )
         cls._manifests[manifest.name] = manifest
 
@@ -79,20 +82,31 @@ class AddonRegistry:
 
     @classmethod
     def load_builtins(cls) -> None:
-        """Import all built-in addon packages so they self-register.
+        """Import (or reload) all built-in addon packages so they self-register.
 
-        Safe to call multiple times — addons guard against duplicate registration.
+        Uses importlib.reload() on already-cached modules so that test code calling
+        reset() + load_builtins() gets fresh registration even within a single process.
         """
-        import addons.indexing    # noqa: F401
-        import addons.inference   # noqa: F401
-        import addons.training    # noqa: F401
-        import addons.background  # noqa: F401
-        import addons.sync        # noqa: F401
-        import addons.monitoring  # noqa: F401
-        import addons.mcp         # noqa: F401
-        import addons.model_scout # noqa: F401
-        import addons.multimodal  # noqa: F401
-        import addons.analytics   # noqa: F401
+        import importlib
+        import sys
+
+        _builtin_modules = [
+            "addons.indexing",
+            "addons.inference",
+            "addons.training",
+            "addons.background",
+            "addons.sync",
+            "addons.monitoring",
+            "addons.mcp",
+            "addons.model_scout",
+            "addons.multimodal",
+            "addons.analytics",
+        ]
+        for mod_name in _builtin_modules:
+            if mod_name in sys.modules:
+                importlib.reload(sys.modules[mod_name])
+            else:
+                importlib.import_module(mod_name)
 
     @classmethod
     def reset(cls) -> None:

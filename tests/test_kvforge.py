@@ -25,9 +25,9 @@ def test_cmd_init_creates_config(tmp_path, monkeypatch):
     assert cfg_path.exists()
     cfg = json.loads(cfg_path.read_text())
     assert cfg["collection"] == "test-corpus"
-    assert cfg["vector_dim"] == 384
-    assert cfg["loader"] == "pdf"
-    assert (tmp_path / "lora_checkpoints" / "test-corpus").is_dir()
+    assert cfg["addon_config"]["indexing"]["vector_dim"] == 384
+    assert cfg["addon_config"]["indexing"]["loader"] == "pdf"
+    assert (tmp_path / "test-corpus").is_dir()
 
 
 def test_cmd_init_refuses_overwrite_without_force(tmp_path, monkeypatch):
@@ -58,7 +58,7 @@ def test_cmd_init_force_overwrites(tmp_path, monkeypatch):
     cmd_init(args)
     cmd_init(args)  # should not raise
     cfg = json.loads((tmp_path / "datasource_myds.json").read_text())
-    assert cfg["loader"] == "markdown"
+    assert cfg["addon_config"]["indexing"]["loader"] == "markdown"
 
 
 def test_cmd_search_calls_store_query(tmp_path, monkeypatch):
