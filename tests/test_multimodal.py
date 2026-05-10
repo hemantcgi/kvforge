@@ -4,15 +4,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def test_datasource_config_has_image_fields():
-    from core.config import DatasourceConfig
-    cfg = DatasourceConfig(
-        collection="test",
-        embed_model="BAAI/bge-small-en-v1.5",
-        vector_dim=384,
-        llm_model="meta-llama/Llama-2-7b-hf",
-        checkpoint_dir="/tmp/ckpt",
-        version_file="/tmp/version.json",
-        replay_db="/tmp/replay.db",
+    from addons.multimodal.config import MultimodalConfig
+    cfg = MultimodalConfig(
+        image_kv_inference=False,
+        multimodal_model="llava-hf/llava-1.5-7b-hf",
     )
     assert cfg.image_collection_suffix == "_images"
     assert cfg.image_store_dir == ""
