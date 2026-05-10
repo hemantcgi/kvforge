@@ -129,3 +129,58 @@ def test_kvforge_config_missing_collection_raises():
     from pydantic import ValidationError
     with pytest.raises(ValidationError):
         KVForgeConfig(use_case_name="UC", version_file="v.json")
+
+
+def test_validate_addon_deps_raises_on_missing_require():
+    from core.config import KVForgeConfig
+    from addons.registry import AddonRegistry
+    AddonRegistry.load_builtins()
+
+    cfg = KVForgeConfig(
+        use_case_name="UC",
+        collection="col",
+        version_file="v.json",
+        # inference requires indexing — but indexing is absent
+        addons=["inference"],
+        addon_config={"inference": {"llm_model": "llama"}},
+    )
+    with pytest.raises(ValueError, match="requires addon 'indexing'"):
+        cfg.validate_addon_deps()
+
+
+def test_validate_addon_deps_passes_when_all_satisfied():
+    from core.config import KVForgeConfig
+    from addons.registry import AddonRegistry
+    AddonRegistry.load_builtins()
+
+    cfg = KVForgeConfig(
+        use_case_name="UC",
+        collection="col",
+        version_file="v.json",
+        addons=["indexing", "inference", "training"],
+        addon_config={
+            "indexing": {"embed_model": "BAAI/bge-small-en-v1.5", "vector_dim": 384},
+            "inference": {"llm_model": "llama"},
+            "training": {"checkpoint_dir": "ckpts/", "replay_db": "r.db"},
+        },
+    )
+    cfg.validate_addon_deps()  # must not raise
+
+
+def test_get_validated_addon_config_returns_typed_model():
+    from core.config import KVForgeConfig
+    from addons.registry import AddonRegistry
+    from addons.background.config import BackgroundConfig
+    AddonRegistry.load_builtins()
+
+    cfg = KVForgeConfig(
+        use_case_name="UC",
+        collection="col",
+        version_file="v.json",
+        addons=["background"],
+        addon_config={"background": {"flush_seconds": 120, "flush_queries": 25}},
+    )
+    bc = cfg.get_validated_addon_config("background")
+    assert isinstance(bc, BackgroundConfig)
+    assert bc.flush_seconds == 120
+    assert bc.flush_queries == 25
