@@ -23,11 +23,11 @@ from pathlib import Path
 
 
 def cmd_init(args) -> None:
-    """Scaffold a new datasource config JSON file with sensible defaults.
+    """Scaffold a new KVForgeConfig JSON file with sensible defaults.
 
-    Writes a validated ``DatasourceConfig`` JSON to
-    ``datasource_<name>.json``.  Exits with an error message if the file
-    already exists and ``--force`` is not set.
+    Writes the new addon-based config to ``datasource_<name>.json``.
+    Exits with an error message if the file already exists and ``--force``
+    is not set.
 
     Args:
         args: Parsed argument namespace.  Expected attributes: ``name``,
@@ -35,61 +35,91 @@ def cmd_init(args) -> None:
             ``force``.
     """
     name = args.name
-    config_path = f"datasource_{name}.json"
+    safe = name.replace(" ", "-").lower()
+    config_path = f"datasource_{safe}.json"
     if Path(config_path).exists() and not args.force:
         print(f"Config already exists: {config_path}. Use --force to overwrite.")
         sys.exit(1)
 
-    cfg = {
-        "collection": name,
-        "qdrant_host": "localhost",
-        "qdrant_port": 6333,
-        "vector_store": "qdrant",
-        "loader": args.loader,
-        "embed_model": args.embed_model,
-        "embedder_backend": "fastembed",
-        "vector_dim": args.vector_dim,
-        "llm_model": args.llm_model,
-        "chunk_size": 600,
-        "chunk_overlap": 60,
-        "embed_batch": 64,
-        "upsert_batch": 128,
-        "top_k": 5,
-        "model_library": {},
-        "lora_rank": 16,
-        "lora_alpha": 32,
-        "lora_target_modules": ["q_proj", "k_proj", "v_proj"],
-        "lora_dropout": 0.05,
-        "lora_epochs": 3,
-        "lora_lr": 0.0002,
-        "checkpoint_dir": f"lora_checkpoints/{name}/",
-        "version_file": f"{name}_version.json",
-        "replay_db": f"{name}_replay.db",
-        "gate_threshold": 0.75,
-        "prs_threshold": 0.75,
-        "prs_weights": {"accuracy": 0.5, "calibration": 0.3, "consistency": 0.2},
-        "faq_question_key": "question",
-        "faq_answer_key": "answer",
-        "access_flush_seconds": 300,
-        "access_flush_queries": 50,
-        "dashboard_port": 8080,
+    template = {
+        "_comment": f"KVForge config for '{name}' — edit addon_config before running 'kvforge start'",
+        "use_case_name": name,
+        "collection": safe,
+        "version_file": f"{safe}/version.json",
+        "addons": ["indexing", "inference", "training", "background", "monitoring"],
+        "addon_config": {
+            "indexing": {
+                "loader": args.loader,
+                "chunk_size": 600,
+                "chunk_overlap": 60,
+                "embed_batch": 64,
+                "upsert_batch": 128,
+                "embed_model": args.embed_model,
+                "embedder_backend": "fastembed",
+                "vector_dim": args.vector_dim,
+                "vector_store": "qdrant",
+                "qdrant_host": "localhost",
+                "qdrant_port": 6333,
+            },
+            "inference": {
+                "top_k": 5,
+                "llm_model": args.llm_model,
+                "quantization": "4bit",
+                "vllm_url": "http://localhost:8091",
+                "max_new_tokens": 256,
+                "gate_threshold": 0.75,
+            },
+            "training": {
+                "lora_rank": 16,
+                "lora_alpha": 32,
+                "lora_target_modules": ["q_proj", "k_proj", "v_proj"],
+                "lora_dropout": 0.05,
+                "lora_epochs": 3,
+                "lora_lr": 0.0002,
+                "checkpoint_dir": f"{safe}/lora_checkpoints/",
+                "replay_db": f"{safe}/replay.db",
+                "prs_threshold": 0.75,
+                "faq_question_key": "question",
+                "faq_answer_key": "answer",
+            },
+            "background": {"flush_seconds": 300, "flush_queries": 50},
+            "monitoring": {"port": 8082},
+        },
     }
 
-    # Validate before writing
-    from core.config import DatasourceConfig
-    DatasourceConfig(**cfg)  # raises ValidationError if invalid
-
-    # Create checkpoint dir
-    os.makedirs(cfg["checkpoint_dir"], exist_ok=True)
+    os.makedirs(safe, exist_ok=True)
 
     with open(config_path, "w") as f:
-        json.dump(cfg, f, indent=2)
+        json.dump(template, f, indent=2)
 
     print(f"Created {config_path}")
-    print(f"Next steps:")
-    print(f"  1. Index your source:  python kvforge.py index --config {config_path} --source <path>")
-    print(f"  2. Generate FAQs:      python tools/generate_faqs.py --config {config_path} --output {name}_faqs.json")
-    print(f"  3. Train:              python -m pipeline.index_and_train --config {config_path} --source <path> --faqs {name}_faqs.json")
+    print(f"Next: edit addon_config fields, then run: kvforge start --config {config_path}")
+
+
+def cmd_start(args) -> None:
+    """Launch the per-use-case KVForge Dashboard.
+
+    Args:
+        args: Parsed argument namespace.  Expected attributes: ``config``,
+            ``port``.
+    """
+    import uvicorn
+    from dashboard.app import create_app
+
+    port = args.port
+    if Path(args.config).exists():
+        try:
+            from core.config import load_config
+            cfg = load_config(args.config)
+            if cfg.has_addon("monitoring"):
+                port = cfg.addon_config.get("monitoring", {}).get("port", port)
+        except Exception:
+            pass  # fall back to --port arg if config is malformed
+
+    app = create_app(config_path=args.config)
+    print(f"KVForge Dashboard starting at http://localhost:{port}")
+    print(f"Config: {args.config}")
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
 
 def cmd_index(args) -> None:
@@ -177,6 +207,13 @@ def main() -> None:
                          default="meta-llama/Llama-3.2-3B-Instruct")
     p_init.add_argument("--force", action="store_true")
 
+    # start
+    p_start = sub.add_parser("start", help="Launch the per-use-case KVForge Dashboard")
+    p_start.add_argument("--config", default="config.json",
+                         help="Path to KVForgeConfig JSON (default: config.json)")
+    p_start.add_argument("--port", type=int, default=8080,
+                         help="Dashboard port (default: 8080; overridden by monitoring.port in config)")
+
     # index
     p_idx = sub.add_parser("index", help="Index a source into the collection")
     p_idx.add_argument("--config", required=True)
@@ -190,6 +227,8 @@ def main() -> None:
     args = parser.parse_args()
     if args.command == "init":
         cmd_init(args)
+    elif args.command == "start":
+        cmd_start(args)
     elif args.command == "index":
         cmd_index(args)
     elif args.command == "search":
