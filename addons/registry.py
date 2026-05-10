@@ -101,12 +101,17 @@ class AddonRegistry:
             "addons.model_scout",
             "addons.multimodal",
             "addons.analytics",
+            "addons.turboquant",
+            "addons.corpus_intelligence",
         ]
         for mod_name in _builtin_modules:
-            if mod_name in sys.modules:
-                importlib.reload(sys.modules[mod_name])
-            else:
-                importlib.import_module(mod_name)
+            try:
+                if mod_name in sys.modules:
+                    importlib.reload(sys.modules[mod_name])
+                else:
+                    importlib.import_module(mod_name)
+            except ModuleNotFoundError:
+                pass  # addon package not installed yet — skip silently
 
     @classmethod
     def reset(cls) -> None:
