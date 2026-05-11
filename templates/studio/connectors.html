@@ -1,0 +1,136 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>KVForge Studio — Connectors</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#111;color:#e0e0e0;font-family:sans-serif;padding:24px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+h1{color:#4ec9b0;font-size:18px}
+.btn-primary{background:rgba(78,201,176,.15);border:1px solid rgba(78,201,176,.3);color:#4ec9b0;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer}
+.conn-list{display:grid;gap:10px;margin-bottom:24px}
+.conn-row{display:flex;align-items:center;gap:14px;background:#1e1e1e;border:1px solid #2a2a2a;border-radius:8px;padding:12px 16px}
+.conn-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+.conn-info{flex:1}
+.conn-name{font-size:13px;font-weight:700;color:#e0e0e0}
+.conn-meta{font-size:11px;color:#555;margin-top:2px}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#444}
+.status-ok{background:#4ec9b0;box-shadow:0 0 5px rgba(78,201,176,.5)}
+.status-err{background:#ce9178}
+.status-text{font-size:11px;color:#777}
+.conn-actions{display:flex;gap:6px;margin-left:10px}
+.btn-sm{font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px;cursor:pointer;border:1px solid #333;background:transparent;color:#888}
+.btn-sm:hover{border-color:#4ec9b0;color:#4ec9b0}
+.btn-add{background:rgba(78,201,176,.05);border:1.5px dashed rgba(78,201,176,.3);color:#4ec9b0;border-radius:8px;padding:12px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;width:100%}
+.section-title{font-size:11px;font-weight:700;color:#555;letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px}
+.history-table{width:100%;border-collapse:collapse;font-size:12px}
+.history-table th{text-align:left;font-size:10px;color:#444;text-transform:uppercase;letter-spacing:.06em;padding:6px 8px;border-bottom:1px solid #252525}
+.history-table td{padding:7px 8px;border-bottom:1px solid #1e1e1e;color:#999}
+.run-ok{color:#4ec9b0;font-weight:700}
+.run-err{color:#ce9178;font-weight:700}
+.run-running{color:#9cdcfe;font-weight:700}
+.tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px}
+.tag-manual{background:rgba(156,220,254,.1);color:#9cdcfe}
+.tag-scheduled{background:rgba(78,201,176,.1);color:#4ec9b0}
+.tag-webhook{background:rgba(206,145,120,.1);color:#ce9178}
+</style>
+</head><body>
+<div class="header">
+  <h1>Connectors</h1>
+  <button class="btn-primary" onclick="showAddForm()">+ Add Connector</button>
+</div>
+
+<div id="conn-list" class="conn-list"></div>
+
+<div style="margin-top:24px">
+  <div class="section-title">Sync Run History</div>
+  <table class="history-table">
+    <thead><tr><th>Connector</th><th>Trigger</th><th>Result</th><th>Files</th><th>Duration</th></tr></thead>
+    <tbody id="history-tbody"></tbody>
+  </table>
+</div>
+
+<script>
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+const ICONS = {gdrive:{abbr:'GD',bg:'#0F9D58'}, s3:{abbr:'S3',bg:'#FF9900'}, sharepoint:{abbr:'SP',bg:'#0078D4'}};
+
+async function load() {
+  const r = await fetch('/studio/api/connectors', {credentials:'include'});
+  const connectors = await r.json();
+  const list = document.getElementById('conn-list');
+  if (!connectors.length) { list.innerHTML='<div style="color:#555;font-size:13px">No connectors configured yet.</div>'; return; }
+  list.innerHTML = connectors.map(c => {
+    const ic = ICONS[c.type] || {abbr:esc(c.type.toUpperCase().slice(0,2)), bg:'#555'};
+    const dot = c.last_error ? 'status-err' : 'status-ok';
+    const statusText = c.last_error ? 'Error' : 'Healthy';
+    return `<div class="conn-row" id="conn-${esc(c.id)}">
+      <div class="conn-icon" style="background:${ic.bg}">${ic.abbr}</div>
+      <div class="conn-info">
+        <div class="conn-name">${esc(c.name)}</div>
+        <div class="conn-meta">${esc(c.type)} · ${esc(c.schedule_cron || 'manual only')}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="status-dot ${dot}"></div>
+        <div class="status-text">${statusText}</div>
+      </div>
+      <div class="conn-actions">
+        <button class="btn-sm" onclick="syncNow('${esc(c.id)}')">&#8635; Sync Now</button>
+        <button class="btn-sm" onclick="deleteConn('${esc(c.id)}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('') + '<button class="btn-add" onclick="showAddForm()">+ Add Connector</button>';
+
+  loadHistory();
+}
+
+async function loadHistory() {
+  const r = await fetch('/studio/api/sync-runs', {credentials:'include'});
+  if (!r.ok) return;
+  const runs = await r.json();
+  document.getElementById('history-tbody').innerHTML = runs.slice(0,50).map(run => {
+    const cls = run.status==='ok'?'run-ok':run.status==='error'?'run-err':'run-running';
+    const sym = run.status==='ok'?'&#10003; ok':run.status==='error'?'&#10007; error':'&#9679; running';
+    const dur = run.finished_at
+      ? ((new Date(run.finished_at)-new Date(run.started_at))/1000).toFixed(1)+'s'
+      : ((Date.now()-new Date(run.started_at))/1000).toFixed(0)+'s…';
+    return `<tr>
+      <td>${esc(run.connector_name||run.connector_id)}</td>
+      <td><span class="tag tag-${esc(run.trigger)}">${esc(run.trigger)}</span></td>
+      <td><span class="${cls}">${sym}</span></td>
+      <td>${esc(String(run.files_done))} new</td>
+      <td style="font-family:monospace">${esc(dur)}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function syncNow(cid) {
+  const r = await fetch(`/studio/api/connectors/${cid}/sync`, {method:'POST', credentials:'include'});
+  const d = await r.json();
+  if (d.run_id) alert('Sync started: ' + d.run_id);
+  setTimeout(load, 2000);
+}
+
+async function deleteConn(cid) {
+  if (!confirm('Delete this connector and all its scopes?')) return;
+  await fetch(`/studio/api/connectors/${cid}`, {method:'DELETE', credentials:'include'});
+  load();
+}
+
+function showAddForm() {
+  const t = prompt('Connector type (gdrive/s3/sharepoint):');
+  if (!t) return;
+  const n = prompt('Connector name:');
+  if (!n) return;
+  const creds = prompt('Credentials JSON (paste):');
+  if (!creds) return;
+  let parsed;
+  try { parsed = JSON.parse(creds); } catch(e) { alert('Invalid JSON'); return; }
+  fetch('/studio/api/connectors', {
+    method:'POST', credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({type:t, name:n, credentials: parsed})
+  }).then(()=>load());
+}
+
+load();
+setInterval(loadHistory, 5000);
+</script>
+</body></html>

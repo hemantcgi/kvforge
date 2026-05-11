@@ -56,6 +56,15 @@ def uc_detail(uc_id: str):
     return (TEMPLATES / "uc_detail.html").read_text()
 
 
+@router.get("/connectors", response_class=HTMLResponse)
+def connectors_page(request: Request):
+    u = getattr(request.state, "user", None)
+    if not u or u.role not in ("admin", "editor"):
+        from fastapi.responses import Response
+        return Response("<h1>403 Forbidden</h1>", status_code=403, media_type="text/html")
+    return (TEMPLATES / "connectors.html").read_text()
+
+
 # ── SSE stream ────────────────────────────────────────────────────────────────
 
 @router.get("/api/stream/{job_id}")
