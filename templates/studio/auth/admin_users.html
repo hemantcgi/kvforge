@@ -20,13 +20,14 @@ td{padding:8px;border-bottom:1px solid #1e1e1e;color:#ccc}
 <tbody id="users-tbody"></tbody>
 </table>
 <script>
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 async function load(){
-  const r=await fetch('/studio/api/users');
+  const r=await fetch('/auth/studio-users', {credentials:'include'});
   const users=await r.json();
   document.getElementById('users-tbody').innerHTML=users.map(u=>`
-    <tr><td>${u.email}</td>
-    <td><span class="badge ${u.role}">${u.role}</span></td>
-    <td>${u.provider}</td><td>${u.created_at||''}</td></tr>`).join('');
+    <tr><td>${esc(u.email)}</td>
+    <td><span class="badge ${esc(u.role)}">${esc(u.role)}</span></td>
+    <td>${esc(u.provider)}</td><td>${esc(u.created_at||'')}</td></tr>`).join('');
 }
 async function inviteUser(){
   const email=prompt('Email to invite:');if(!email)return;

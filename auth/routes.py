@@ -1,4 +1,5 @@
 # auth/routes.py
+import html as _html
 import os, uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -45,7 +46,7 @@ def _render(name: str, **ctx) -> str:
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(error: str = ""):
     env = os.environ
-    err_html = f'<div class="err">{error}</div>' if error else ""
+    err_html = f'<div class="err">{_html.escape(error)}</div>' if error else ""
     google_btn = '<a class="oauth-btn" href="/auth/oauth/google">Sign in with Google</a>' if env.get("GOOGLE_CLIENT_ID") else ""
     ms_btn = '<a class="oauth-btn" href="/auth/oauth/microsoft">Sign in with Microsoft</a>' if env.get("MICROSOFT_CLIENT_ID") else ""
     aws_btn = '<a class="oauth-btn" href="/auth/oauth/aws">Sign in with AWS</a>' if env.get("AWS_COGNITO_CLIENT_ID") else ""
@@ -111,7 +112,11 @@ async def signup_page(token: str = ""):
     ) if token else None
     if not inv:
         return HTMLResponse("<h1 style='color:#ce9178;font-family:sans-serif;padding:40px'>Invalid or expired invite link</h1>", status_code=400)
-    return HTMLResponse(_render("signup.html", email=inv["email"], role=inv["role"], token=token))
+    return HTMLResponse(_render("signup.html",
+        email=_html.escape(inv["email"]),
+        role=_html.escape(inv["role"]),
+        token=_html.escape(token)
+    ))
 
 
 @router.post("/signup")
