@@ -1,0 +1,36 @@
+/usr/local/anaconda3/lib/python3.13/site-packages/pytest_asyncio/plugin.py:247: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+============================= test session starts ==============================
+platform darwin -- Python 3.13.5, pytest-8.3.4, pluggy-1.5.0 -- /usr/local/anaconda3/bin/python3.13
+cachedir: .pytest_cache
+rootdir: /Users/hemant/Downloads/RoPE/KVForge
+configfile: pytest.ini
+plugins: anyio-4.12.1, playwright-0.7.2, asyncio-1.3.0, base-url-2.1.0, requests-mock-1.12.1
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 21 items
+
+tests/ui/test_auth.py::test_login_shows_form PASSED                      [  4%]
+tests/ui/test_auth.py::test_login_page_title PASSED                      [  9%]
+tests/ui/test_auth.py::test_login_invalid_password PASSED                [ 14%]
+tests/ui/test_auth.py::test_unauthenticated_studio_redirects PASSED      [ 19%]
+tests/ui/test_auth.py::test_logout_clears_session PASSED                 [ 23%]
+tests/ui/test_auth.py::test_viewer_cannot_access_connectors_page PASSED  [ 28%]
+tests/ui/test_auth.py::test_admin_can_access_connectors_page PASSED      [ 33%]
+tests/ui/test_auth.py::test_unauthenticated_api_returns_401 PASSED       [ 38%]
+tests/ui/test_auth.py::test_admin_user_management_page PASSED            [ 42%]
+tests/ui/test_connectors.py::test_connectors_page_loads PASSED           [ 47%]
+tests/ui/test_connectors.py::test_add_gdrive_connector_via_api PASSED    [ 52%]
+tests/ui/test_connectors.py::test_credentials_masked_in_api_response PASSED [ 57%]
+tests/ui/test_connectors.py::test_add_uc_scope PASSED                    [ 61%]
+tests/ui/test_connectors.py::test_viewer_cannot_create_connector PASSED  [ 66%]
+tests/ui/test_connectors.py::test_manual_sync_trigger PASSED             [ 71%]
+tests/ui/test_connectors.py::test_sync_history_recorded PASSED           [ 76%]
+tests/ui/test_connectors.py::test_delete_connector PASSED                [ 80%]
+tests/ui/test_monitoring.py::test_studio_hub_loads PASSED                [ 85%]
+tests/ui/test_monitoring.py::test_uc_detail_page_loads PASSED            [ 90%]
+tests/ui/test_monitoring.py::test_sync_runs_api_accessible PASSED        [ 95%]
+tests/ui/test_monitoring.py::test_sync_history_table_renders_on_connectors_page PASSED [100%]
+
+============================= 21 passed in 17.03s ==============================
