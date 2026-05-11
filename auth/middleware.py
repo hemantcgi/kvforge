@@ -1,6 +1,7 @@
 # auth/middleware.py
 import os
 from datetime import datetime, timezone
+from urllib.parse import quote
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse, RedirectResponse
@@ -26,7 +27,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if user is None:
             if any(path.startswith(p) for p in _API_PREFIXES):
                 return JSONResponse({"detail": "not authenticated"}, status_code=401)
-            return RedirectResponse(f"/auth/login?next={path}", status_code=302)
+            return RedirectResponse(f"/auth/login?next={quote(path, safe='/')}", status_code=302)
 
         request.state.user = user
         return await call_next(request)
