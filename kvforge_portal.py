@@ -105,11 +105,13 @@ app.add_middleware(AuthMiddleware)
 app.add_middleware(SessionMiddleware, secret_key=os.environ.get("KVFORGE_SECRET_KEY", "dev-secret"))
 
 from studio.routes import router as _studio_router
+from sync.progress import progress_router
 app.include_router(_studio_router, prefix="/studio")
 app.include_router(_auth_router)
 app.include_router(_oauth_router)
 app.include_router(connector_router)
 app.include_router(_sync_runs_router)
+app.include_router(progress_router)
 
 
 @app.get("/api/status")
