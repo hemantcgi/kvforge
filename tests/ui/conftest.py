@@ -291,7 +291,7 @@ _MANIFEST_PATH = ROOT / "tests" / "walkthrough_manifest.json"
 _manifest: list[dict] = []
 
 
-def capture(page: Page, test_name: str, step_index: int, step_slug: str, description: str) -> str:
+def capture(page: Page, test_name: str, step_index: int, step_slug: str, description: str, *, action: str = "") -> str:
     """Take a screenshot and record metadata to the walkthrough manifest."""
     filename = f"{test_name}__{step_index:02d}_{step_slug}.png"
     path = SCREENSHOTS / filename
@@ -301,6 +301,7 @@ def capture(page: Page, test_name: str, step_index: int, step_slug: str, descrip
         "step": step_index,
         "slug": step_slug,
         "description": description,
+        "action": action,
         "file": filename,
     })
     return str(path)

@@ -3,119 +3,136 @@
     "test": "walkthrough_login_to_dashboard",
     "step": 1,
     "slug": "redirect_to_login",
-    "description": "Navigating to /studio/ without a session redirects to the login page.",
+    "description": "Login page shown \u2014 unauthenticated users are automatically redirected here when they try to open /studio/.",
+    "action": "Navigated to /studio/ without a session cookie.",
     "file": "walkthrough_login_to_dashboard__01_redirect_to_login.png"
   },
   {
     "test": "walkthrough_login_to_dashboard",
     "step": 2,
     "slug": "login_form_filled_wrong",
-    "description": "Login form filled with invalid credentials, before submitting.",
+    "description": "Login form with invalid credentials typed in \u2014 the 'Sign In' button has not been clicked yet.",
+    "action": "Filled email='wrong@example.com' and password='badpassword' in the login form.",
     "file": "walkthrough_login_to_dashboard__02_login_form_filled_wrong.png"
   },
   {
     "test": "walkthrough_login_to_dashboard",
     "step": 3,
     "slug": "login_error_shown",
-    "description": "Server returns login page with an error message after wrong credentials.",
+    "description": "Login page reloaded with an error message \u2014 the server rejected the credentials and rendered the error template variable.",
+    "action": "Submitted the login form. Server returned 200 with an error message.",
     "file": "walkthrough_login_to_dashboard__03_login_error_shown.png"
   },
   {
     "test": "walkthrough_login_to_dashboard",
     "step": 4,
     "slug": "studio_hub_authenticated",
-    "description": "Studio hub landing page after successful authentication as admin.",
+    "description": "Studio hub (new Atlassian-style design) \u2014 the main dashboard showing configured use-cases, system status cards, and the sidebar with navigation.",
+    "action": "Injected a valid admin JWT cookie, then navigated to /studio/.",
     "file": "walkthrough_login_to_dashboard__04_studio_hub_authenticated.png"
   },
   {
     "test": "walkthrough_login_to_dashboard",
     "step": 5,
     "slug": "admin_users_page",
-    "description": "Admin user management page \u2014 shows all registered users and their roles.",
+    "description": "Admin user management page \u2014 lists all registered users with their email, role badge, and provider. Admin-only page (403 for non-admins).",
+    "action": "Navigated to /studio/admin/users as an authenticated admin user.",
     "file": "walkthrough_login_to_dashboard__05_admin_users_page.png"
   },
   {
     "test": "walkthrough_create_connector_and_sync",
     "step": 1,
     "slug": "connectors_page_initial",
-    "description": "Connectors dashboard \u2014 showing existing connectors or 'no connectors yet' state.",
+    "description": "Connectors dashboard \u2014 the starting state before any connector has been added. May show an empty list or connectors from prior test runs.",
+    "action": "Navigated to /studio/connectors as an authenticated admin.",
     "file": "walkthrough_create_connector_and_sync__01_connectors_page_initial.png"
   },
   {
     "test": "walkthrough_create_connector_and_sync",
     "step": 2,
     "slug": "connector_added_in_list",
-    "description": "New connector 'My GDrive 8b0946' appears in the connector list with type badge and health dot.",
+    "description": "The new connector 'My GDrive 431908' now appears in the connectors list with its type badge (GDrive) and a health status dot.",
+    "action": "Created connector via POST /studio/api/connectors with type='gdrive', then reloaded the page.",
     "file": "walkthrough_create_connector_and_sync__02_connector_added_in_list.png"
   },
   {
     "test": "walkthrough_create_connector_and_sync",
     "step": 3,
     "slug": "sync_triggered",
-    "description": "Sync triggered via POST /studio/api/connectors/{id}/sync \u2014 returns ok:true. Background task starts; sync_runs record created immediately.",
+    "description": "Connectors page after sync was triggered \u2014 the page still shows the connector list. The sync run was started in the background (a background task was created).",
+    "action": "Called POST /studio/api/connectors/{id}/sync \u2014 received ok:true. Also added a UC scope via POST /studio/api/connectors/{id}/scopes.",
     "file": "walkthrough_create_connector_and_sync__03_sync_triggered.png"
   },
   {
     "test": "walkthrough_create_connector_and_sync",
     "step": 4,
     "slug": "sync_history_populated",
-    "description": "After sync completes (success or error), the sync run history table shows the run with connector name, trigger type, result status, and duration.",
+    "description": "Sync history table now shows the completed run \u2014 includes connector name, trigger type ('manual'), result status, and duration. The table auto-refreshes.",
+    "action": "Waited 2 seconds for the background sync task to complete, then reloaded the page.",
     "file": "walkthrough_create_connector_and_sync__04_sync_history_populated.png"
   },
   {
     "test": "walkthrough_role_enforcement",
     "step": 1,
     "slug": "admin_sees_connectors",
-    "description": "Admin user can access the /studio/connectors page \u2014 sees full UI with Add button.",
+    "description": "Admin user sees the full connectors UI \u2014 the 'Add Connector' button is visible. Only admin and editor roles can access this page.",
+    "action": "Authenticated as admin role, navigated to /studio/connectors.",
     "file": "walkthrough_role_enforcement__01_admin_sees_connectors.png"
   },
   {
     "test": "walkthrough_role_enforcement",
     "step": 2,
     "slug": "after_logout",
-    "description": "After logout, session is cleared and user is redirected to the login page.",
+    "description": "Login page shown after logout \u2014 the session cookie was cleared. User is redirected to /auth/login.",
+    "action": "Navigated to /auth/logout \u2014 server deleted the session cookie and redirected here.",
     "file": "walkthrough_role_enforcement__02_after_logout.png"
   },
   {
     "test": "walkthrough_role_enforcement",
     "step": 3,
     "slug": "viewer_gets_403_on_connectors",
-    "description": "Viewer role is denied access to /studio/connectors \u2014 server returns 403 Forbidden.",
+    "description": "403 Forbidden response \u2014 the server rejected the viewer's request to access /studio/connectors. The middleware checks role before rendering the page.",
+    "action": "Injected a viewer-role JWT cookie, then navigated to /studio/connectors.",
     "file": "walkthrough_role_enforcement__03_viewer_gets_403_on_connectors.png"
   },
   {
     "test": "walkthrough_role_enforcement",
     "step": 4,
     "slug": "viewer_can_see_hub",
-    "description": "Viewer can still access the studio hub \u2014 role restriction applies only to sensitive pages (connectors) not the general dashboard.",
+    "description": "Studio hub accessible to viewer \u2014 the main dashboard loads successfully. The hub is accessible to all authenticated roles; only admin/editor-only pages return 403.",
+    "action": "Navigated to /studio/ as a viewer. Same viewer cookie from the previous step.",
     "file": "walkthrough_role_enforcement__04_viewer_can_see_hub.png"
   },
   {
     "test": "walkthrough_monitoring",
     "step": 1,
     "slug": "studio_hub_overview",
-    "description": "Studio hub \u2014 shows all configured use-cases with their current phase, LoRA version, and PRS score. Entry point for monitoring each UC.",
+    "description": "Studio hub \u2014 the main entry point. Shows the system status bar (Active UCs, Queries Today, GPU, System Health) and UC cards with phase badges and metrics.",
+    "action": "Navigated to /studio/ as an authenticated admin.",
     "file": "walkthrough_monitoring__01_studio_hub_overview.png"
   },
   {
     "test": "walkthrough_monitoring",
     "step": 2,
     "slug": "uc_detail_page",
-    "description": "Use-case detail page for 'usecase1_customer_support' \u2014 shows pipeline phase, PRS history chart, LoRA training controls, and live sync status.",
+    "description": "UC detail page for 'usecase1_customer_support' \u2014 shows the use-case's current pipeline phase, PRS score history, training controls, and live sync status.",
+    "action": "Navigated to /studio/uc/usecase1_customer_support \u2014 the UC ID was fetched from GET /studio/api/registry.",
     "file": "walkthrough_monitoring__02_uc_detail_page.png"
   },
   {
     "test": "walkthrough_monitoring",
     "step": 3,
     "slug": "connectors_with_sync_history",
-    "description": "Connectors page showing both the connector list and the sync run history table. History auto-refreshes every 5 seconds via SSE polling.",
+    "description": "Connectors page with both sections visible \u2014 the connector list at top and the sync run history table below. The history table polls every 5 seconds.",
+    "action": "Navigated to /studio/connectors, waited 2 seconds for the JS to fetch and render the history table.",
     "file": "walkthrough_monitoring__03_connectors_with_sync_history.png"
   },
   {
     "test": "walkthrough_monitoring",
     "step": 4,
     "slug": "sync_runs_api_raw",
-    "description": "Raw JSON from GET /studio/api/sync-runs \u2014 the data source powering the sync history table. Each record has connector_id, trigger, status, files_done, duration.",
+    "description": "Raw JSON response from GET /studio/api/sync-runs \u2014 the data source that powers the sync history table. Each record has connector_id, trigger, status, files_done, and duration.",
+    "action": "Navigated directly to /studio/api/sync-runs in the browser \u2014 Chromium renders JSON as plain text.",
     "file": "walkthrough_monitoring__04_sync_runs_api_raw.png"
   }
 ]

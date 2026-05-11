@@ -31,17 +31,20 @@ def test_walkthrough_login_to_dashboard(app_server, db_path, _browser):
     page.goto(f"{base_url}/studio/")
     page.wait_for_load_state("networkidle")
     capture(page, TN, 1, "redirect_to_login",
-            "Navigating to /studio/ without a session redirects to the login page.")
+            "Login page shown — unauthenticated users are automatically redirected here when they try to open /studio/.",
+            action="Navigated to /studio/ without a session cookie.")
 
     # Step 2: Attempt login with bad credentials
     page.fill("input[name='email']", "wrong@example.com")
     page.fill("input[name='password']", "badpassword")
     capture(page, TN, 2, "login_form_filled_wrong",
-            "Login form filled with invalid credentials, before submitting.")
+            "Login form with invalid credentials typed in — the 'Sign In' button has not been clicked yet.",
+            action="Filled email='wrong@example.com' and password='badpassword' in the login form.")
     page.click("button[type='submit']")
     page.wait_for_load_state("networkidle")
     capture(page, TN, 3, "login_error_shown",
-            "Server returns login page with an error message after wrong credentials.")
+            "Login page reloaded with an error message — the server rejected the credentials and rendered the error template variable.",
+            action="Submitted the login form. Server returned 200 with an error message.")
 
     # Step 3: Seed an admin user and inject cookie
     tok = _seed_user(db_path, f"walkthrough-admin-{uuid.uuid4()}@ui.com", "admin", secret)
@@ -54,13 +57,15 @@ def test_walkthrough_login_to_dashboard(app_server, db_path, _browser):
     page.goto(f"{base_url}/studio/")
     page.wait_for_load_state("networkidle")
     capture(page, TN, 4, "studio_hub_authenticated",
-            "Studio hub landing page after successful authentication as admin.")
+            "Studio hub (new Atlassian-style design) — the main dashboard showing configured use-cases, system status cards, and the sidebar with navigation.",
+            action="Injected a valid admin JWT cookie, then navigated to /studio/.")
 
     # Step 5: Navigate to user management page
     page.goto(f"{base_url}/studio/admin/users")
     page.wait_for_load_state("networkidle")
     capture(page, TN, 5, "admin_users_page",
-            "Admin user management page — shows all registered users and their roles.")
+            "Admin user management page — lists all registered users with their email, role badge, and provider. Admin-only page (403 for non-admins).",
+            action="Navigated to /studio/admin/users as an authenticated admin user.")
 
     ctx.close()
 
@@ -90,7 +95,8 @@ def test_walkthrough_create_connector_and_sync(app_server, db_path, _browser):
     page.wait_for_load_state("networkidle")
     page.wait_for_timeout(1000)  # let JS load the list
     capture(page, TN, 1, "connectors_page_initial",
-            "Connectors dashboard — showing existing connectors or 'no connectors yet' state.")
+            "Connectors dashboard — the starting state before any connector has been added. May show an empty list or connectors from prior test runs.",
+            action="Navigated to /studio/connectors as an authenticated admin.")
 
     # Step 2: Create a connector via the REST API (simulates what the Add button does)
     conn_name = f"My GDrive {uuid.uuid4().hex[:6]}"
@@ -108,7 +114,8 @@ def test_walkthrough_create_connector_and_sync(app_server, db_path, _browser):
     page.wait_for_load_state("networkidle")
     page.wait_for_timeout(1500)
     capture(page, TN, 2, "connector_added_in_list",
-            f"New connector '{conn_name}' appears in the connector list with type badge and health dot.")
+            f"The new connector '{conn_name}' now appears in the connectors list with its type badge (GDrive) and a health status dot.",
+            action=f"Created connector via POST /studio/api/connectors with type='gdrive', then reloaded the page.")
 
     # Step 4: Add a UC scope via API
     with httpx.Client(base_url=base_url, cookies={"kvforge_session": tok}, timeout=10) as client:
@@ -123,8 +130,8 @@ def test_walkthrough_create_connector_and_sync(app_server, db_path, _browser):
         assert r2.json()["ok"] is True
 
     capture(page, TN, 3, "sync_triggered",
-            "Sync triggered via POST /studio/api/connectors/{id}/sync — returns ok:true. "
-            "Background task starts; sync_runs record created immediately.")
+            "Connectors page after sync was triggered — the page still shows the connector list. The sync run was started in the background (a background task was created).",
+            action="Called POST /studio/api/connectors/{id}/sync — received ok:true. Also added a UC scope via POST /studio/api/connectors/{id}/scopes.")
 
     # Step 6: Wait for background sync task and reload
     time.sleep(2.0)
@@ -132,8 +139,8 @@ def test_walkthrough_create_connector_and_sync(app_server, db_path, _browser):
     page.wait_for_load_state("networkidle")
     page.wait_for_timeout(2000)  # let JS fetch history
     capture(page, TN, 4, "sync_history_populated",
-            "After sync completes (success or error), the sync run history table shows the run "
-            "with connector name, trigger type, result status, and duration.")
+            "Sync history table now shows the completed run — includes connector name, trigger type ('manual'), result status, and duration. The table auto-refreshes.",
+            action="Waited 2 seconds for the background sync task to complete, then reloaded the page.")
 
     ctx.close()
 
@@ -164,13 +171,15 @@ def test_walkthrough_role_enforcement(app_server, db_path, _browser):
     page.wait_for_load_state("networkidle")
     page.wait_for_timeout(1000)
     capture(page, TN, 1, "admin_sees_connectors",
-            "Admin user can access the /studio/connectors page — sees full UI with Add button.")
+            "Admin user sees the full connectors UI — the 'Add Connector' button is visible. Only admin and editor roles can access this page.",
+            action="Authenticated as admin role, navigated to /studio/connectors.")
 
     # Step 2: Logout
     page.goto(f"{base_url}/auth/logout")
     page.wait_for_load_state("networkidle")
     capture(page, TN, 2, "after_logout",
-            "After logout, session is cleared and user is redirected to the login page.")
+            "Login page shown after logout — the session cookie was cleared. User is redirected to /auth/login.",
+            action="Navigated to /auth/logout — server deleted the session cookie and redirected here.")
 
     # Step 3: Inject viewer cookie
     page.context.add_cookies([{
@@ -182,14 +191,15 @@ def test_walkthrough_role_enforcement(app_server, db_path, _browser):
     page.goto(f"{base_url}/studio/connectors")
     page.wait_for_load_state("networkidle")
     capture(page, TN, 3, "viewer_gets_403_on_connectors",
-            "Viewer role is denied access to /studio/connectors — server returns 403 Forbidden.")
+            "403 Forbidden response — the server rejected the viewer's request to access /studio/connectors. The middleware checks role before rendering the page.",
+            action="Injected a viewer-role JWT cookie, then navigated to /studio/connectors.")
 
     # Step 5: Show studio hub is still accessible to viewer
     page.goto(f"{base_url}/studio/")
     page.wait_for_load_state("networkidle")
     capture(page, TN, 4, "viewer_can_see_hub",
-            "Viewer can still access the studio hub — role restriction applies only to "
-            "sensitive pages (connectors) not the general dashboard.")
+            "Studio hub accessible to viewer — the main dashboard loads successfully. The hub is accessible to all authenticated roles; only admin/editor-only pages return 403.",
+            action="Navigated to /studio/ as a viewer. Same viewer cookie from the previous step.")
 
     ctx.close()
 
@@ -217,8 +227,8 @@ def test_walkthrough_monitoring(app_server, db_path, _browser):
     page.goto(f"{base_url}/studio/")
     page.wait_for_load_state("networkidle")
     capture(page, TN, 1, "studio_hub_overview",
-            "Studio hub — shows all configured use-cases with their current phase, "
-            "LoRA version, and PRS score. Entry point for monitoring each UC.")
+            "Studio hub — the main entry point. Shows the system status bar (Active UCs, Queries Today, GPU, System Health) and UC cards with phase badges and metrics.",
+            action="Navigated to /studio/ as an authenticated admin.")
 
     # Step 2: Navigate to UC detail
     # Get a valid UC ID from the registry API
@@ -231,22 +241,22 @@ def test_walkthrough_monitoring(app_server, db_path, _browser):
     page.goto(f"{base_url}/studio/uc/{uc_id}")
     page.wait_for_load_state("networkidle")
     capture(page, TN, 2, "uc_detail_page",
-            f"Use-case detail page for '{uc_id}' — shows pipeline phase, PRS history chart, "
-            "LoRA training controls, and live sync status.")
+            f"UC detail page for '{uc_id}' — shows the use-case's current pipeline phase, PRS score history, training controls, and live sync status.",
+            action=f"Navigated to /studio/uc/{uc_id} — the UC ID was fetched from GET /studio/api/registry.")
 
     # Step 3: Connectors page showing sync history
     page.goto(f"{base_url}/studio/connectors")
     page.wait_for_load_state("networkidle")
     page.wait_for_timeout(2000)  # wait for JS to fetch history
     capture(page, TN, 3, "connectors_with_sync_history",
-            "Connectors page showing both the connector list and the sync run history table. "
-            "History auto-refreshes every 5 seconds via SSE polling.")
+            "Connectors page with both sections visible — the connector list at top and the sync run history table below. The history table polls every 5 seconds.",
+            action="Navigated to /studio/connectors, waited 2 seconds for the JS to fetch and render the history table.")
 
     # Step 4: Sync runs API response (show raw data the dashboard uses)
     page.goto(f"{base_url}/studio/api/sync-runs")
     page.wait_for_load_state("networkidle")
     capture(page, TN, 4, "sync_runs_api_raw",
-            "Raw JSON from GET /studio/api/sync-runs — the data source powering the "
-            "sync history table. Each record has connector_id, trigger, status, files_done, duration.")
+            "Raw JSON response from GET /studio/api/sync-runs — the data source that powers the sync history table. Each record has connector_id, trigger, status, files_done, and duration.",
+            action="Navigated directly to /studio/api/sync-runs in the browser — Chromium renders JSON as plain text.")
 
     ctx.close()
