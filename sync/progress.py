@@ -9,8 +9,6 @@ from collections import defaultdict
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse, JSONResponse
 
-_queues: dict[str, asyncio.Queue] = defaultdict(asyncio.Queue)
-
 progress_router = APIRouter(tags=["sync-progress"])
 
 
@@ -18,7 +16,7 @@ class ProgressBus:
     """Thin wrapper so tests can instantiate an isolated bus."""
 
     def __init__(self):
-        self._queues: dict[str, asyncio.Queue] = defaultdict(asyncio.Queue)
+        self._queues: dict[str, asyncio.Queue] = defaultdict(lambda: asyncio.Queue(maxsize=200))
 
     async def publish(self, connector_id: str, event: dict) -> None:
         await self._queues[connector_id].put(event)
