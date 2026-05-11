@@ -3,8 +3,10 @@ import asyncio
 import db.store as store
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-from connectors.registry import ConnectorRegistry, _UNSET
+from connectors.registry import ConnectorRegistry
 
+# webhook_secret is stored in plaintext (not Fernet-encrypted) because webhook
+# verification requires the raw HMAC secret for signature comparison at runtime.
 connector_router = APIRouter(prefix="/studio/api/connectors", tags=["connectors"])
 _registry = ConnectorRegistry()
 
@@ -32,6 +34,12 @@ async def create_connector(request: Request):
     if err := _require_role(request, _ADMIN_ONLY):
         return err
     body = await request.json()
+    missing = [f for f in ("type", "name") if f not in body]
+    if missing:
+        return JSONResponse({"detail": f"missing required fields: {missing}"}, status_code=400)
+    valid_types = ("gdrive", "s3", "sharepoint")
+    if body["type"] not in valid_types:
+        return JSONResponse({"detail": f"type must be one of {valid_types}"}, status_code=400)
     cfg = _registry.create(
         connector_type=body["type"],
         name=body["name"],
@@ -67,6 +75,8 @@ async def update_connector(cid: str, request: Request):
 async def delete_connector(cid: str, request: Request):
     if err := _require_role(request, _ADMIN_ONLY):
         return err
+    if _registry.get(cid) is None:
+        return JSONResponse({"detail": "not found"}, status_code=404)
     _registry.delete(cid)
     return {"ok": True}
 
@@ -78,18 +88,23 @@ async def test_connector(cid: str, request: Request):
     try:
         creds = _registry.get_credentials(cid)
         cfg = _registry.get(cid)
+        if cfg is None:
+            return JSONResponse({"detail": "not found"}, status_code=404)
         result = await asyncio.wait_for(_run_test(cfg["type"], creds), timeout=10.0)
         return result
     except asyncio.TimeoutError:
         return JSONResponse({"ok": False, "error": "timeout after 10s"}, status_code=200)
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
+    except Exception:
+        return {"ok": False, "error": "connectivity check failed"}
 
 
 async def _run_test(connector_type: str, creds: dict) -> dict:
     if connector_type == "gdrive":
-        from google.oauth2.service_account import Credentials
-        from googleapiclient.discovery import build
+        try:
+            from google.oauth2.service_account import Credentials
+            from googleapiclient.discovery import build
+        except ImportError:
+            return {"ok": False, "error": "google-auth is not installed on this server"}
         import json
         info = json.loads(creds.get("service_account_json", "{}"))
         sa_creds = Credentials.from_service_account_info(
@@ -98,7 +113,10 @@ async def _run_test(connector_type: str, creds: dict) -> dict:
         files = svc.files().list(pageSize=1).execute()
         return {"ok": True, "detail": f"Connected — {len(files.get('files', []))} files visible"}
     elif connector_type == "s3":
-        import boto3
+        try:
+            import boto3
+        except ImportError:
+            return {"ok": False, "error": "boto3 is not installed on this server"}
         s3 = boto3.client(
             "s3",
             aws_access_key_id=creds.get("access_key_id"),
@@ -108,7 +126,11 @@ async def _run_test(connector_type: str, creds: dict) -> dict:
         s3.head_bucket(Bucket=creds.get("bucket", ""))
         return {"ok": True, "detail": "S3 bucket reachable"}
     elif connector_type == "sharepoint":
-        import msal, httpx
+        try:
+            import msal
+            import httpx
+        except ImportError:
+            return {"ok": False, "error": "msal or httpx is not installed on this server"}
         msal_app = msal.ConfidentialClientApplication(
             creds["client_id"],
             authority=f"https://login.microsoftonline.com/{creds['tenant_id']}",
@@ -139,6 +161,10 @@ async def add_scope(cid: str, request: Request):
     if err := _require_role(request, _EDITOR_UP):
         return err
     body = await request.json()
+    if "uc_id" not in body:
+        return JSONResponse({"detail": "missing required field: uc_id"}, status_code=400)
+    if _registry.get(cid) is None:
+        return JSONResponse({"detail": "connector not found"}, status_code=404)
     _registry.upsert_scope(cid, body["uc_id"], body.get("scope_config", {}))
     return {"ok": True}
 
