@@ -1,0 +1,26 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>KVForge Studio — Complete Signup</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#111;color:#e0e0e0;font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.card{background:#1e1e1e;border:1px solid #2a2a2a;border-radius:10px;padding:32px;width:340px}
+h1{font-size:16px;color:#4ec9b0;margin-bottom:4px}
+.sub{font-size:12px;color:#555;margin-bottom:20px}
+.field-label{font-size:11px;color:#777;margin-bottom:4px}
+input{width:100%;background:#252525;border:1px solid #333;border-radius:6px;padding:8px 12px;font-size:13px;color:#ccc;margin-bottom:10px;box-sizing:border-box}
+input[readonly]{color:#555}
+button{width:100%;background:#4ec9b0;border:none;border-radius:6px;padding:9px;font-size:13px;font-weight:700;color:#111;cursor:pointer}
+</style></head><body>
+<div class="card">
+  <h1>Complete your account</h1>
+  <div class="sub">You were invited as <strong>{{role}}</strong></div>
+  <form method="post" action="/auth/signup">
+    <input type="hidden" name="token" value="{{token}}">
+    <div class="field-label">Email</div>
+    <input name="email" type="email" value="{{email}}" readonly>
+    <div class="field-label">Set Password</div>
+    <input name="password" type="password" placeholder="Min 8 characters" required>
+    <button type="submit">Create Account</button>
+  </form>
+</div>
+</body></html>
