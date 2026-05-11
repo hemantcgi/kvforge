@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, Response, StreamingResponse
 
 from studio.migration import migrate_existing_use_cases
 from studio.api import api_router
@@ -60,7 +60,6 @@ def uc_detail(uc_id: str):
 def connectors_page(request: Request):
     u = getattr(request.state, "user", None)
     if not u or u.role not in ("admin", "editor"):
-        from fastapi.responses import Response
         return Response("<h1>403 Forbidden</h1>", status_code=403, media_type="text/html")
     return (TEMPLATES / "connectors.html").read_text()
 

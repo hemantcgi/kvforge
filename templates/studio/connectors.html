@@ -50,11 +50,16 @@ h1{color:#4ec9b0;font-size:18px}
 
 <script>
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+// ICONS.bg values are hardcoded CSS color literals — never sourced from API data — safe for inline style
 const ICONS = {gdrive:{abbr:'GD',bg:'#0F9D58'}, s3:{abbr:'S3',bg:'#FF9900'}, sharepoint:{abbr:'SP',bg:'#0078D4'}};
 
 async function load() {
-  const r = await fetch('/studio/api/connectors', {credentials:'include'});
-  const connectors = await r.json();
+  let connectors;
+  try {
+    const r = await fetch('/studio/api/connectors', {credentials:'include'});
+    if (!r.ok) { document.getElementById('conn-list').innerHTML = '<div style="color:#ce9178">Failed to load connectors ('+r.status+')</div>'; return; }
+    connectors = await r.json();
+  } catch(e) { document.getElementById('conn-list').innerHTML = '<div style="color:#ce9178">Network error</div>'; return; }
   const list = document.getElementById('conn-list');
   if (!connectors.length) { list.innerHTML='<div style="color:#555;font-size:13px">No connectors configured yet.</div>'; return; }
   list.innerHTML = connectors.map(c => {
@@ -102,16 +107,22 @@ async function loadHistory() {
 }
 
 async function syncNow(cid) {
-  const r = await fetch(`/studio/api/connectors/${cid}/sync`, {method:'POST', credentials:'include'});
-  const d = await r.json();
-  if (d.run_id) alert('Sync started: ' + d.run_id);
-  setTimeout(load, 2000);
+  try {
+    const r = await fetch(`/studio/api/connectors/${cid}/sync`, {method:'POST', credentials:'include'});
+    if (!r.ok) { alert('Sync failed: ' + r.status); return; }
+    const d = await r.json();
+    if (d.run_id) alert('Sync started: ' + d.run_id);
+    setTimeout(load, 2000);
+  } catch(e) { alert('Sync error: ' + e.message); }
 }
 
 async function deleteConn(cid) {
   if (!confirm('Delete this connector and all its scopes?')) return;
-  await fetch(`/studio/api/connectors/${cid}`, {method:'DELETE', credentials:'include'});
-  load();
+  try {
+    const r = await fetch(`/studio/api/connectors/${cid}`, {method:'DELETE', credentials:'include'});
+    if (!r.ok) { alert('Delete failed: ' + r.status); return; }
+    load();
+  } catch(e) { alert('Delete error: ' + e.message); }
 }
 
 function showAddForm() {
