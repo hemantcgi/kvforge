@@ -281,3 +281,33 @@ def pytest_runtest_makereport(item, call):
     outcome = yield
     rep = outcome.get_result()
     setattr(item, f"rep_{rep.when}", rep)
+
+
+# ── Walkthrough screenshot helpers ────────────────────────────────────────────
+
+import json as _json
+
+_MANIFEST_PATH = ROOT / "tests" / "walkthrough_manifest.json"
+_manifest: list[dict] = []
+
+
+def capture(page: Page, test_name: str, step_index: int, step_slug: str, description: str) -> str:
+    """Take a screenshot and record metadata to the walkthrough manifest."""
+    filename = f"{test_name}__{step_index:02d}_{step_slug}.png"
+    path = SCREENSHOTS / filename
+    page.screenshot(path=str(path), full_page=True)
+    _manifest.append({
+        "test": test_name,
+        "step": step_index,
+        "slug": step_slug,
+        "description": description,
+        "file": filename,
+    })
+    return str(path)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _write_manifest():
+    _manifest.clear()
+    yield
+    _MANIFEST_PATH.write_text(_json.dumps(_manifest, indent=2))

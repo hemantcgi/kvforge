@@ -1,0 +1,121 @@
+[
+  {
+    "test": "walkthrough_login_to_dashboard",
+    "step": 1,
+    "slug": "redirect_to_login",
+    "description": "Navigating to /studio/ without a session redirects to the login page.",
+    "file": "walkthrough_login_to_dashboard__01_redirect_to_login.png"
+  },
+  {
+    "test": "walkthrough_login_to_dashboard",
+    "step": 2,
+    "slug": "login_form_filled_wrong",
+    "description": "Login form filled with invalid credentials, before submitting.",
+    "file": "walkthrough_login_to_dashboard__02_login_form_filled_wrong.png"
+  },
+  {
+    "test": "walkthrough_login_to_dashboard",
+    "step": 3,
+    "slug": "login_error_shown",
+    "description": "Server returns login page with an error message after wrong credentials.",
+    "file": "walkthrough_login_to_dashboard__03_login_error_shown.png"
+  },
+  {
+    "test": "walkthrough_login_to_dashboard",
+    "step": 4,
+    "slug": "studio_hub_authenticated",
+    "description": "Studio hub landing page after successful authentication as admin.",
+    "file": "walkthrough_login_to_dashboard__04_studio_hub_authenticated.png"
+  },
+  {
+    "test": "walkthrough_login_to_dashboard",
+    "step": 5,
+    "slug": "admin_users_page",
+    "description": "Admin user management page \u2014 shows all registered users and their roles.",
+    "file": "walkthrough_login_to_dashboard__05_admin_users_page.png"
+  },
+  {
+    "test": "walkthrough_create_connector_and_sync",
+    "step": 1,
+    "slug": "connectors_page_initial",
+    "description": "Connectors dashboard \u2014 showing existing connectors or 'no connectors yet' state.",
+    "file": "walkthrough_create_connector_and_sync__01_connectors_page_initial.png"
+  },
+  {
+    "test": "walkthrough_create_connector_and_sync",
+    "step": 2,
+    "slug": "connector_added_in_list",
+    "description": "New connector 'My GDrive 8b0946' appears in the connector list with type badge and health dot.",
+    "file": "walkthrough_create_connector_and_sync__02_connector_added_in_list.png"
+  },
+  {
+    "test": "walkthrough_create_connector_and_sync",
+    "step": 3,
+    "slug": "sync_triggered",
+    "description": "Sync triggered via POST /studio/api/connectors/{id}/sync \u2014 returns ok:true. Background task starts; sync_runs record created immediately.",
+    "file": "walkthrough_create_connector_and_sync__03_sync_triggered.png"
+  },
+  {
+    "test": "walkthrough_create_connector_and_sync",
+    "step": 4,
+    "slug": "sync_history_populated",
+    "description": "After sync completes (success or error), the sync run history table shows the run with connector name, trigger type, result status, and duration.",
+    "file": "walkthrough_create_connector_and_sync__04_sync_history_populated.png"
+  },
+  {
+    "test": "walkthrough_role_enforcement",
+    "step": 1,
+    "slug": "admin_sees_connectors",
+    "description": "Admin user can access the /studio/connectors page \u2014 sees full UI with Add button.",
+    "file": "walkthrough_role_enforcement__01_admin_sees_connectors.png"
+  },
+  {
+    "test": "walkthrough_role_enforcement",
+    "step": 2,
+    "slug": "after_logout",
+    "description": "After logout, session is cleared and user is redirected to the login page.",
+    "file": "walkthrough_role_enforcement__02_after_logout.png"
+  },
+  {
+    "test": "walkthrough_role_enforcement",
+    "step": 3,
+    "slug": "viewer_gets_403_on_connectors",
+    "description": "Viewer role is denied access to /studio/connectors \u2014 server returns 403 Forbidden.",
+    "file": "walkthrough_role_enforcement__03_viewer_gets_403_on_connectors.png"
+  },
+  {
+    "test": "walkthrough_role_enforcement",
+    "step": 4,
+    "slug": "viewer_can_see_hub",
+    "description": "Viewer can still access the studio hub \u2014 role restriction applies only to sensitive pages (connectors) not the general dashboard.",
+    "file": "walkthrough_role_enforcement__04_viewer_can_see_hub.png"
+  },
+  {
+    "test": "walkthrough_monitoring",
+    "step": 1,
+    "slug": "studio_hub_overview",
+    "description": "Studio hub \u2014 shows all configured use-cases with their current phase, LoRA version, and PRS score. Entry point for monitoring each UC.",
+    "file": "walkthrough_monitoring__01_studio_hub_overview.png"
+  },
+  {
+    "test": "walkthrough_monitoring",
+    "step": 2,
+    "slug": "uc_detail_page",
+    "description": "Use-case detail page for 'usecase1_customer_support' \u2014 shows pipeline phase, PRS history chart, LoRA training controls, and live sync status.",
+    "file": "walkthrough_monitoring__02_uc_detail_page.png"
+  },
+  {
+    "test": "walkthrough_monitoring",
+    "step": 3,
+    "slug": "connectors_with_sync_history",
+    "description": "Connectors page showing both the connector list and the sync run history table. History auto-refreshes every 5 seconds via SSE polling.",
+    "file": "walkthrough_monitoring__03_connectors_with_sync_history.png"
+  },
+  {
+    "test": "walkthrough_monitoring",
+    "step": 4,
+    "slug": "sync_runs_api_raw",
+    "description": "Raw JSON from GET /studio/api/sync-runs \u2014 the data source powering the sync history table. Each record has connector_id, trigger, status, files_done, duration.",
+    "file": "walkthrough_monitoring__04_sync_runs_api_raw.png"
+  }
+]
