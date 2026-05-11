@@ -2,15 +2,29 @@
 import json, os, uuid
 from base64 import urlsafe_b64encode
 from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives import hashes
 import db.store as store
 
 _MASK = "●●●●●●"
+_UNSET = object()
+_SALT = b"kvforge-connector-creds-v1"
 
 
 def _fernet() -> Fernet:
-    raw = os.environ.get("KVFORGE_SECRET_KEY", "dev-secret-change-me")
-    key_bytes = raw.encode()[:32].ljust(32, b"0")
-    return Fernet(urlsafe_b64encode(key_bytes))
+    raw = os.environ.get("KVFORGE_SECRET_KEY", "")
+    if not raw:
+        raise RuntimeError(
+            "KVFORGE_SECRET_KEY env var is not set. "
+            "Set it to a random secret before starting KVForge Studio."
+        )
+    key = HKDF(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=_SALT,
+        info=b"fernet",
+    ).derive(raw.encode())
+    return Fernet(urlsafe_b64encode(key))
 
 
 def _encrypt(data: dict) -> str:
@@ -49,19 +63,22 @@ class ConnectorRegistry:
         row = store.fetchone("SELECT credentials_json FROM connector_configs WHERE id=?", (cid,))
         if not row:
             raise KeyError(f"connector {cid} not found")
-        return _decrypt(row["credentials_json"])
+        try:
+            return _decrypt(row["credentials_json"])
+        except Exception as exc:
+            raise ValueError(f"failed to decrypt credentials for connector {cid}") from exc
 
     def update(self, cid: str,
                credentials: dict | None = None,
-               schedule_cron: str | None = ...,
-               webhook_secret: str | None = ...,
+               schedule_cron=_UNSET,
+               webhook_secret=_UNSET,
                name: str | None = None) -> dict:
         row = store.fetchone("SELECT * FROM connector_configs WHERE id=?", (cid,))
         if not row:
             raise KeyError(f"connector {cid} not found")
-        new_enc = _encrypt(credentials) if credentials else row["credentials_json"]
-        new_cron = row["schedule_cron"] if schedule_cron is ... else schedule_cron
-        new_ws = row["webhook_secret"] if webhook_secret is ... else webhook_secret
+        new_enc = _encrypt(credentials) if credentials is not None else row["credentials_json"]
+        new_cron = row["schedule_cron"] if schedule_cron is _UNSET else schedule_cron
+        new_ws = row["webhook_secret"] if webhook_secret is _UNSET else webhook_secret
         new_name = name or row["name"]
         store.execute(
             "UPDATE connector_configs SET name=?,credentials_json=?,schedule_cron=?,webhook_secret=? WHERE id=?",
@@ -75,10 +92,10 @@ class ConnectorRegistry:
         store.commit()
 
     def upsert_scope(self, connector_id: str, uc_id: str, scope_config: dict) -> None:
-        enc = json.dumps(scope_config)
+        scope_json = json.dumps(scope_config)
         store.execute(
             "INSERT OR REPLACE INTO connector_uc_scopes(connector_id,uc_id,scope_config_json) VALUES(?,?,?)",
-            (connector_id, uc_id, enc)
+            (connector_id, uc_id, scope_json)
         )
         store.commit()
 

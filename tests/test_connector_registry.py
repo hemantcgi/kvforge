@@ -1,9 +1,11 @@
 # tests/test_connector_registry.py
 import os, pytest
-os.environ["KVFORGE_SECRET_KEY"] = "test-secret-32bytesXXXXXXXXXXXX"
-
 import db.store as store
 from connectors.registry import ConnectorRegistry
+
+@pytest.fixture(autouse=True)
+def _set_secret(monkeypatch):
+    monkeypatch.setenv("KVFORGE_SECRET_KEY", "test-secret-32bytesXXXXXXXXXXXX")
 
 def _setup(tmp_path):
     store.DB_PATH = tmp_path / "test.db"
