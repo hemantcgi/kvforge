@@ -1,1603 +1,597 @@
-<!-- templates/studio/hub.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KVForge Studio</title>
 <style>
-/* === Reset + Base === */
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#020817;font-family:system-ui,-apple-system,sans-serif;color:#e2e8f0;font-size:13px;height:100vh;display:flex;overflow:hidden}
+:root {
+  --bg-page:#F7F8F9;--bg-surface:#FFFFFF;--bg-sunken:#F1F2F4;--bg-input:#FFFFFF;
+  --bg-sidebar:#FFFFFF;--bg-active:#E9F2FF;--bg-hover:#F7F8F9;--bg-topbar:#0052CC;
+  --bg-metric-b:#E9F2FF;--bg-metric-r:#FFEBE6;--bg-metric-g:#E3FCEF;--bg-metric-y:#FFF7D6;
+  --border:#DFE1E6;--border-focus:#4C9AFF;
+  --text-primary:#172B4D;--text-secondary:#626F86;--text-subtle:#8590A2;--text-disabled:#C7D1DB;
+  --accent:#0052CC;--accent-hover:#0065FF;
+  --success:#22A06B;--danger:#DE350B;--warning:#FF991F;--gold:#946300;
+  --track-bg:#DFE1E6;
+  --tag-bg:#EBECF0;--tag-clr:#626F86;
+  --shadow-sm:0 1px 3px rgba(9,30,66,0.12),0 0 1px rgba(9,30,66,0.08);
+  --shadow-md:0 3px 8px rgba(9,30,66,0.1),0 0 1px rgba(9,30,66,0.1);
+  --shadow-lg:0 8px 24px rgba(9,30,66,0.12),0 0 1px rgba(9,30,66,0.1);
+  --topbar-text:#FFFFFF;--topbar-muted:rgba(255,255,255,0.7);
+  --topbar-badge:rgba(255,255,255,0.15);--topbar-badge-border:rgba(255,255,255,0.3);
+}
+[data-theme="dark"] {
+  --bg-page:#1D2125;--bg-surface:#22272B;--bg-sunken:#161A1D;--bg-input:#22272B;
+  --bg-sidebar:#22272B;--bg-active:#1C3353;--bg-hover:#2C333A;--bg-topbar:#161A1D;
+  --bg-metric-b:#1C3353;--bg-metric-r:#42130E;--bg-metric-g:#164B35;--bg-metric-y:#2E2000;
+  --border:#3B4651;--border-focus:#579DFF;
+  --text-primary:#C7D1DB;--text-secondary:#8C9BAB;--text-subtle:#596773;--text-disabled:#3B4651;
+  --accent:#579DFF;--accent-hover:#85B8FF;
+  --success:#4BCE97;--danger:#F87462;--warning:#F5CD47;--gold:#E2B203;
+  --track-bg:#3B4651;
+  --tag-bg:#2C333A;--tag-clr:#8C9BAB;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.4);--shadow-md:0 3px 8px rgba(0,0,0,0.4);
+  --shadow-lg:0 8px 24px rgba(0,0,0,0.5);
+  --topbar-text:#C7D1DB;--topbar-muted:#596773;
+  --topbar-badge:rgba(255,255,255,0.06);--topbar-badge-border:#3B4651;
+}
 
-/* === Sidebar === */
-#sidebar{width:220px;background:#080712;border-right:1px solid #1e1b4b;display:flex;flex-direction:column;transition:width 0.22s ease;flex-shrink:0;overflow:hidden}
-#sidebar.collapsed{width:52px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;line-height:1.5;background:var(--bg-page);color:var(--text-primary);display:flex;flex-direction:column;transition:background .2s,color .2s;}
 
-.sb-header-exp{padding:13px 12px;display:flex;align-items:center;gap:9px;border-bottom:1px solid #1e1b4b;flex-shrink:0}
-#sidebar.collapsed .sb-header-exp{display:none}
-.sb-header-col{display:none;padding:12px 0;justify-content:center;align-items:center;flex-direction:column;gap:8px;border-bottom:1px solid #1e1b4b;flex-shrink:0;cursor:pointer}
-#sidebar.collapsed .sb-header-col{display:flex}
-.sb-header-col:hover .logo-mark{box-shadow:0 0 12px #8b5cf688}
+/* TOPBAR */
+.topbar{height:48px;flex-shrink:0;z-index:200;background:var(--bg-topbar);display:flex;align-items:center;padding:0 16px;gap:12px;border-bottom:1px solid rgba(0,0,0,0.15);}
+.topbar-brand{font-size:15px;font-weight:800;color:var(--topbar-text);letter-spacing:-.3px;display:flex;align-items:center;gap:7px;cursor:pointer;}
+.logo-sq{width:24px;height:24px;border-radius:5px;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;}
+.topbar-tag{font-size:10px;color:var(--topbar-muted);background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:3px;padding:1px 6px;font-weight:600;letter-spacing:.04em;}
+.topbar-sp{flex:1;}
+.topbar-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--topbar-text);font-weight:500;background:var(--topbar-badge);border:1px solid var(--topbar-badge-border);border-radius:4px;padding:3px 10px;}
+.topbar-badge .dot{width:6px;height:6px;border-radius:50%;}
+.topbar-btn{font-size:13px;color:var(--topbar-text);background:transparent;border:none;cursor:pointer;padding:5px 9px;border-radius:4px;transition:background .15s;}
+.topbar-btn:hover{background:rgba(255,255,255,0.12);}
+.profile-wrap{position:relative;}
+.profile-menu{position:absolute;top:calc(100% + 8px);right:0;background:#fff;border:1px solid #DFE1E6;border-radius:8px;box-shadow:0 8px 24px rgba(9,30,66,0.15),0 0 1px rgba(9,30,66,0.1);min-width:220px;z-index:1000;overflow:hidden;}
+.profile-menu-header{padding:12px 16px 10px;border-bottom:1px solid #DFE1E6;}
+.pm-name{font-size:13px;font-weight:700;color:#172B4D;}
+.pm-email{font-size:12px;color:#626F86;margin-top:1px;}
+.profile-menu-item{display:block;padding:9px 16px;font-size:13px;color:#172B4D;cursor:pointer;transition:background .1s;text-decoration:none;}
+.profile-menu-item:hover{background:#F7F8F9;}
+.pm-signout{color:#DE350B;}
+.pm-signout:hover{background:#FFEBE6 !important;}
+.profile-menu-sep{height:1px;background:#DFE1E6;margin:4px 0;}
 
-.logo-mark{width:28px;height:28px;background:linear-gradient(135deg,#8b5cf6,#06b6d4);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:10px;flex-shrink:0;transition:box-shadow 0.2s}
-.logo-text{background:linear-gradient(90deg,#a78bfa,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;font-size:14px;white-space:nowrap}
-.collapse-btn{margin-left:auto;color:#475569;cursor:pointer;display:flex;align-items:center;padding:4px;border-radius:5px;transition:color 0.15s,background 0.15s;flex-shrink:0}
-.collapse-btn:hover{color:#a78bfa;background:#1e1b4b}
-.expand-hint{color:#4c1d95;font-size:18px}
+/* SHELL */
+.shell{display:flex;flex:1;overflow:hidden;}
 
-.sb-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:10px 8px}
-#sidebar.collapsed .nav-label,#sidebar.collapsed .section-title,#sidebar.collapsed .uc-name,#sidebar.collapsed .new-uc-label{display:none}
-.section-title{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#334155;padding:0 6px;margin:4px 0 6px;white-space:nowrap}
-.nav-item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:7px;cursor:pointer;color:#64748b;transition:background .15s,color .15s;white-space:nowrap;margin-bottom:2px}
-#sidebar.collapsed .nav-item{justify-content:center;padding:8px 4px}
-.nav-item:hover{background:#1e1b4b;color:#c4b5fd}
-.nav-item.active{background:#1e1b4b;color:#a78bfa}
-.nav-icon{font-size:15px;flex-shrink:0}
-.nav-label{font-size:12px;font-weight:500}
-.divider{height:1px;background:#1e1b4b;margin:8px 4px}
-.uc-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;margin-bottom:1px;transition:background .15s}
-#sidebar.collapsed .uc-item{justify-content:center;padding:6px 4px}
-.uc-item:hover{background:#0f0f1a}
-.uc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.uc-name{font-size:11px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.uc-item.active .uc-name{color:#22d3ee}
-.new-uc-btn{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;border:1px dashed #4c1d95;color:#7c3aed;margin-top:6px;transition:background .15s;white-space:nowrap}
-#sidebar.collapsed .new-uc-btn{justify-content:center}
-.new-uc-btn:hover{background:#1a0a3a}
+/* SIDEBAR */
+.sidebar{width:220px;flex-shrink:0;background:var(--bg-sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .22s cubic-bezier(0.4,0,0.2,1);overflow:hidden;position:relative;z-index:100;}
+.sidebar.collapsed{width:48px;}
+.sidebar-toggle{position:absolute;right:-12px;top:20px;width:24px;height:24px;border-radius:50%;background:var(--bg-surface);border:1px solid var(--border);color:var(--text-secondary);cursor:pointer;z-index:101;display:flex;align-items:center;justify-content:center;font-size:10px;box-shadow:var(--shadow-sm);transition:all .15s;}
+.sidebar-toggle:hover{background:var(--bg-active);color:var(--accent);}
+.sidebar-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-subtle);padding:16px 14px 6px;white-space:nowrap;overflow:hidden;transition:opacity .15s;}
+.sidebar.collapsed .sidebar-section-title{opacity:0;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:7px 12px;cursor:pointer;border-radius:4px;margin:1px 6px;font-size:13px;color:var(--text-secondary);transition:background .12s,color .12s;white-space:nowrap;overflow:hidden;}
+.nav-item:hover{background:var(--bg-hover);color:var(--text-primary);}
+.nav-item.active{background:var(--bg-active);color:var(--accent);font-weight:600;border-left:2px solid var(--accent);margin-left:4px;padding-left:10px;}
+.nav-icon{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.nav-label{flex:1;overflow:hidden;text-overflow:ellipsis;transition:opacity .15s;}
+.sidebar.collapsed .nav-label{opacity:0;width:0;}
+.nav-count{font-size:10px;font-weight:700;background:var(--accent);color:#fff;border-radius:8px;padding:1px 6px;flex-shrink:0;transition:opacity .15s;}
+.sidebar.collapsed .nav-count{opacity:0;}
+.sidebar.collapsed .nav-item{justify-content:center;padding:7px 0;margin:1px 4px;}
+.sidebar.collapsed .nav-item.active{border-left:2px solid var(--accent);margin-left:4px;padding-left:0;}
+.sidebar-divider{height:1px;background:var(--border);margin:8px 0;}
+.sidebar-footer{margin-top:auto;padding:12px 10px;border-top:1px solid var(--border);}
+.sidebar-version{font-size:10px;color:var(--text-subtle);padding:4px 8px;white-space:nowrap;overflow:hidden;transition:opacity .15s;}
+.sidebar.collapsed .sidebar-version{opacity:0;}
 
-/* === Main === */
-#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+/* MAIN */
+.main{flex:1;overflow-y:auto;}
 
-/* === Topbar === */
-#topbar{background:#080712;border-bottom:1px solid #1e1b4b;padding:0 20px;height:48px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.breadcrumb{display:flex;align-items:center;gap:5px;font-size:12px}
-.bc-seg{color:#475569;cursor:pointer;transition:color .15s;display:flex;align-items:center}
-.bc-seg:hover{color:#a78bfa}
-.bc-seg.current{color:#22d3ee;font-weight:600;cursor:default}
-.bc-sep{color:#1e1b4b;font-size:16px;margin:0 2px}
-.topbar-right{display:flex;align-items:center;gap:8px}
-.gpu-pill{display:flex;align-items:center;gap:5px;background:#0f172a;border:1px solid #064e3b;border-radius:20px;padding:4px 10px;font-size:10px;color:#34d399;white-space:nowrap}
-.gpu-dot{width:6px;height:6px;background:#34d399;border-radius:50%;animation:pulse 2s infinite;flex-shrink:0}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.icon-btn{display:flex;align-items:center;gap:5px;background:#0f0f1a;border:1px solid #1e1b4b;border-radius:6px;padding:5px 10px;font-size:11px;color:#64748b;cursor:pointer;transition:border-color .15s,color .15s}
-.icon-btn:hover{border-color:#4c1d95;color:#a78bfa}
+/* PAGE HEADER */
+.page-header{padding:24px 32px 0;display:flex;align-items:flex-end;justify-content:space-between;}
+.page-title{font-size:20px;font-weight:700;color:var(--text-primary);}
+.page-sub{font-size:13px;color:var(--text-secondary);margin-top:2px;}
+.btn-primary{background:var(--accent);color:#fff;border:none;padding:9px 20px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary:hover{background:var(--accent-hover);}
 
-/* === Content === */
-#content{flex:1;overflow-y:auto;padding:20px}
-.page-title{color:#a78bfa;font-size:18px;font-weight:700;margin-bottom:4px}
-.page-sub{color:#475569;font-size:12px;margin-bottom:20px}
+/* SYSTEM STATUS BAR */
+.sys-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:20px 32px 0;}
+.sys-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:12px;}
+.sys-icon{font-size:20px;flex-shrink:0;}
+.sys-label{font-size:11px;color:var(--text-subtle);}
+.sys-val{font-size:16px;font-weight:700;color:var(--text-primary);}
+.sys-sub{font-size:10px;color:var(--text-subtle);margin-top:1px;}
+.status-dot-live{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 0 2px rgba(34,160,107,0.3);flex-shrink:0;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 2px rgba(34,160,107,0.3);}50%{box-shadow:0 0 0 5px rgba(34,160,107,0.1);}}
 
-/* === New UC inline form === */
-#new-uc-bar{display:none;background:#0c0a1e;border-bottom:1px solid #312e81;padding:8px 20px;align-items:center;gap:10px;flex-shrink:0}
-#new-uc-bar.visible{display:flex}
-#new-uc-bar input{background:#1e1b4b;border:1px solid #4338ca;border-radius:5px;padding:5px 10px;color:#e2e8f0;font-size:11px;outline:none}
-#new-uc-bar input:focus{border-color:#7c3aed}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s}
-.btn-primary{background:linear-gradient(135deg,#7c3aed,#0891b2);color:#fff}
-.btn-ghost{background:transparent;border:1px solid #312e81;color:#a78bfa}
-.btn-danger{background:transparent;border:1px solid #7f1d1d;color:#f87171}
-.btn:hover{opacity:.85}
+/* USE CASE GRID */
+.uc-section{padding:20px 32px 40px;}
+.uc-section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.uc-section-title{font-size:13px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.07em;}
+.uc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
 
-/* === UC Cards === */
-.uc-card{background:#0f0f1a;border:1px solid #1e1b4b;border-radius:10px;overflow:hidden;margin-bottom:10px}
-.uc-card-header{padding:11px 14px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
-.uc-card-header:hover{background:#0a0a1e}
-.uc-title{color:#a78bfa;font-weight:600;font-size:13px}
-.phase-badge{padding:2px 8px;border-radius:10px;font-size:9px;font-weight:600}
-.phase-1{background:#1e1b4b;color:#94a3b8}
-.phase-2{background:#1c1917;color:#f59e0b}
-.phase-3{background:#064e3b;color:#34d399}
-.prs-val{font-size:10px;margin-left:4px}
-.example-badge{background:#1e1b4b;color:#64748b;padding:2px 6px;border-radius:8px;font-size:9px}
-.journey{display:flex;align-items:center;gap:3px;margin-left:auto}
-.jd{width:8px;height:8px;border-radius:50%;background:#22d3ee}
-.ja{width:8px;height:8px;border-radius:50%;background:#f59e0b;box-shadow:0 0 5px #f59e0b88}
-.jl{width:8px;height:8px;border-radius:50%;border:1px solid #334155}
-.jline{width:16px;height:1px;background:#1e1b4b}
-.j-count{font-size:9px;margin-left:5px}
+/* UC CARD */
+.uc-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow-sm);transition:box-shadow .15s,transform .15s,border-color .15s;cursor:pointer;display:flex;flex-direction:column;}
+.uc-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);border-color:var(--border-focus);}
+.uc-card-accent{height:3px;background:var(--accent);}
+.uc-card-accent.green{background:var(--success);}
+.uc-card-accent.gold{background:#FF991F;}
+.uc-card-accent.gray{background:var(--text-subtle);}
+.uc-card-body{padding:16px 18px 0;}
+.uc-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;}
+.uc-name-row{display:flex;align-items:center;gap:8px;}
+.uc-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.uc-status-dot.running{background:var(--success);}
+.uc-status-dot.stopped{background:var(--text-disabled);}
+.uc-status-dot.indexing{background:var(--accent);animation:pulse-blue 1.5s infinite;}
+@keyframes pulse-blue{0%,100%{box-shadow:0 0 0 2px rgba(0,82,204,0.2);}50%{box-shadow:0 0 0 5px rgba(0,82,204,0.08);}}
+.uc-name{font-size:15px;font-weight:700;color:var(--text-primary);}
+.uc-more-btn{background:none;border:none;cursor:pointer;color:var(--text-subtle);font-size:16px;padding:2px 6px;border-radius:4px;line-height:1;transition:background .12s;}
+.uc-more-btn:hover{background:var(--bg-hover);color:var(--text-primary);}
+.uc-phase-row{display:flex;align-items:center;gap:6px;margin-bottom:14px;}
 
-/* === Module Chips === */
-.mod-strip{padding:6px 14px 8px;display:flex;gap:6px;border-top:1px solid #1e1b4b;background:#080a14;flex-wrap:wrap}
-.mod-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;border:1px solid;cursor:pointer;font-size:10px;font-weight:500;transition:all .15s;white-space:nowrap;user-select:none}
-.chip-arrow{font-size:9px;margin-left:2px;display:inline-block;transition:transform .2s}
-.mod-chip.open .chip-arrow{transform:rotate(180deg)}
-.chip-done{border-color:#064e3b;color:#34d399;background:#0a1a12}
-.chip-done:hover{border-color:#0d9488;background:#0d1f17}
-.chip-active{border-color:#7c3aed;color:#a78bfa;background:#12092a;box-shadow:0 0 8px #7c3aed44}
-.chip-active:hover{border-color:#9d4edd}
-.chip-locked{border-color:#1e293b;color:#334155;background:transparent;cursor:not-allowed}
+/* Phase badge */
+.phase-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:12px;letter-spacing:.03em;}
+.phase-1{background:var(--tag-bg);color:var(--tag-clr);}
+.phase-2{background:var(--bg-metric-b);color:var(--accent);}
+.phase-3{background:var(--bg-metric-g);color:#006644;}
+[data-theme="dark"] .phase-3{color:#4BCE97;}
 
-/* === Module Panels === */
-.mod-panel-wrap{max-height:0;overflow:hidden;transition:max-height .35s ease}
-.mod-panel-wrap.open{max-height:1200px}
-.mod-panel{border-top:1px solid #312e81;background:#0c0a1e;padding:14px}
-.panel-top{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #1e1b4b}
-.panel-title{color:#a78bfa;font-weight:600;font-size:12px;flex:1}
-.status-pill{padding:2px 8px;border-radius:8px;font-size:9px;font-weight:600}
-.pill-done{background:#064e3b;color:#34d399}
-.pill-running{background:#1c1917;color:#f59e0b}
-.pill-error{background:#450a0a;color:#f87171}
-.collapse-sm{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#475569;cursor:pointer;padding:3px 8px;border:1px solid #1e1b4b;border-radius:5px;transition:color .15s,border-color .15s}
-.collapse-sm:hover{color:#a78bfa;border-color:#4c1d95}
+.uc-status-tag{font-size:10px;color:var(--text-subtle);font-weight:500;}
+.uc-status-tag.running{color:var(--success);}
+.uc-status-tag.indexing{color:var(--accent);}
 
-/* === Forms === */
-.field{margin-bottom:11px}
-label{display:block;color:#64748b;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px}
-input[type=text],input[type=number],select,textarea{width:100%;background:#080712;border:1px solid #1e1b4b;border-radius:6px;padding:7px 10px;color:#e2e8f0;font-size:11px;outline:none;transition:border-color .15s;font-family:inherit}
-input:focus,select:focus,textarea:focus{border-color:#7c3aed}
-textarea{resize:vertical;min-height:52px}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-.toggle-group{display:flex;border:1px solid #1e1b4b;border-radius:6px;overflow:hidden}
-.topt{flex:1;padding:7px;text-align:center;color:#475569;cursor:pointer;font-size:10px;background:#080712;transition:all .15s}
-.topt:not(:last-child){border-right:1px solid #1e1b4b}
-.topt.sel{background:#1e1b4b;color:#a78bfa}
-.hint{color:#475569;font-size:10px;margin-top:4px}
-.btn-row{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid #1e1b4b}
-.section-lbl{color:#64748b;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
-.preview-card{background:#080712;border:1px solid #1e1b4b;border-radius:7px;padding:10px;margin-top:10px}
-.preview-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #0f172a}
-.preview-row:last-child{border-bottom:none}
-.pk{color:#475569;font-size:10px}
-.pv{color:#e2e8f0;font-size:10px;font-family:monospace}
-.vdb-readonly-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:4px}
-.vdb-ro-wide{grid-column:span 2}
-.vdb-ro-item{background:#080712;border:1px solid #1e1b4b;border-radius:6px;padding:8px 10px}
-.vdb-ro-label{color:#475569;font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
-.vdb-ro-value{color:#e2e8f0;font-size:12px}
-.vdb-badge{display:inline-block;background:#1e1b4b;color:#a78bfa;border-radius:4px;padding:1px 8px;font-size:11px;font-weight:600}
-.vdb-mono{font-family:monospace;font-size:11px;word-break:break-all}
+/* Metrics mini-grid */
+.uc-metrics{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:14px;}
+.uc-metric{background:var(--bg-surface);padding:10px 12px;}
+.um-label{font-size:10px;color:var(--text-subtle);margin-bottom:2px;}
+.um-val{font-size:17px;font-weight:700;color:var(--text-primary);}
+.um-sub{font-size:9px;color:var(--text-subtle);margin-top:1px;}
+.um-val.accent{color:var(--accent);}
+.um-val.green{color:var(--success);}
+.um-val.muted{color:var(--text-subtle);font-size:14px;}
 
-/* === GPU Grid === */
-.gpu-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
-.gpu-card{background:#080712;border:1px solid;border-radius:7px;padding:8px 10px}
-.gpu-free{border-color:#064e3b}
-.gpu-busy{border-color:#7f1d1d}
-.gpu-hd{display:flex;align-items:center;gap:5px;margin-bottom:5px;font-size:10px;font-weight:600}
-.gpu-free .gpu-hd{color:#34d399}
-.gpu-busy .gpu-hd{color:#f87171}
-.vbar{height:4px;background:#1e1b4b;border-radius:3px;overflow:hidden;margin-bottom:3px}
-.vfill{height:100%;border-radius:3px}
-.gpu-free .vfill{background:linear-gradient(90deg,#059669,#34d399)}
-.gpu-busy .vfill{background:linear-gradient(90deg,#dc2626,#f87171)}
-.gpu-meta{font-size:9px;color:#475569}
+/* Card footer */
+.uc-card-foot{padding:12px 18px 14px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--bg-sunken);margin-top:auto;}
+.uc-sync-time{font-size:11px;color:var(--text-subtle);}
+.btn-open-dash{background:var(--accent);color:#fff;border:none;padding:7px 16px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s;}
+.btn-open-dash:hover{background:var(--accent-hover);}
+.btn-open-dash.stopped{background:var(--bg-sunken);color:var(--text-secondary);border:1px solid var(--border);}
 
-/* === Pipeline Stepper === */
-.pipeline{display:flex;flex-direction:column}
-.pstep{display:flex;gap:10px;padding:7px 0;position:relative}
-.pstep:not(:last-child)::after{content:'';position:absolute;left:10px;top:26px;bottom:-2px;width:1px;background:#1e1b4b}
-.pico{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;margin-top:1px}
-.p-done{background:#064e3b;color:#34d399}
-.p-running{background:#312e81;color:#a78bfa;box-shadow:0 0 7px #7c3aed66}
-.p-pending{background:#0f172a;color:#334155;border:1px solid #1e293b}
-.ptitle{font-size:11px;font-weight:600;margin-bottom:2px}
-.pmeta{font-size:10px;color:#475569}
-.pbar{height:4px;background:#1e1b4b;border-radius:3px;overflow:hidden;margin-top:5px}
-.pfill{height:100%;background:linear-gradient(90deg,#7c3aed,#06b6d4);border-radius:3px;transition:width .5s}
-.plog{background:#020817;border:1px solid #1e1b4b;border-radius:5px;padding:6px 9px;font-size:9px;font-family:monospace;color:#64748b;margin-top:5px;max-height:80px;overflow-y:auto;line-height:1.7}
-.log-ok{color:#34d399}
-.log-info{color:#60a5fa}
-.log-warn{color:#f59e0b}
-.log-err{color:#f87171}
-.cur{display:inline-block;width:6px;height:10px;background:#a78bfa;animation:blink 1s infinite;vertical-align:middle}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+/* CREATE CARD */
+.uc-card-create{background:var(--bg-surface);border:2px dashed var(--border);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 20px;cursor:pointer;transition:all .15s;min-height:240px;text-align:center;}
+.uc-card-create:hover{border-color:var(--accent);background:var(--bg-active);}
+.create-icon{width:48px;height:48px;border-radius:12px;background:var(--bg-sunken);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:12px;transition:background .15s;}
+.uc-card-create:hover .create-icon{background:var(--bg-active);}
+.create-title{font-size:14px;font-weight:700;color:var(--text-secondary);margin-bottom:4px;}
+.uc-card-create:hover .create-title{color:var(--accent);}
+.create-sub{font-size:12px;color:var(--text-subtle);}
 
-/* === Eval Stats === */
-.eval-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
-.stat-card{background:#080712;border:1px solid #1e1b4b;border-radius:7px;padding:10px;text-align:center}
-.stat-val{font-size:22px;font-weight:700;margin-bottom:3px}
-.stat-label{font-size:9px;color:#475569;text-transform:uppercase;letter-spacing:.07em}
-.stat-sub{font-size:9px;color:#334155;margin-top:2px}
-.compare-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#080712;border:1px solid #1e1b4b;border-radius:6px;margin-bottom:5px}
-.cmp-label{font-size:10px;color:#64748b;width:110px;flex-shrink:0}
-.cmp-bars{flex:1;display:flex;flex-direction:column;gap:3px}
-.cmp-bar{display:flex;align-items:center;gap:6px}
-.bar-track{flex:1;height:6px;background:#1e1b4b;border-radius:3px;overflow:hidden}
-.bar-a{height:100%;border-radius:3px;background:linear-gradient(90deg,#7c3aed,#a78bfa)}
-.bar-b{height:100%;border-radius:3px;background:linear-gradient(90deg,#0891b2,#22d3ee)}
-.bar-val{font-size:9px;color:#94a3b8;width:40px;text-align:right;flex-shrink:0}
-.bar-name{font-size:9px;width:55px;flex-shrink:0}
-.bar-name-a{color:#a78bfa}
-.bar-name-b{color:#22d3ee}
+/* EMPTY STATE */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 32px 40px;text-align:center;}
+.empty-icon{font-size:52px;margin-bottom:18px;opacity:0.85;}
+.empty-title{font-size:22px;font-weight:700;color:var(--text-primary);margin-bottom:8px;}
+.empty-sub{font-size:14px;color:var(--text-secondary);max-width:440px;margin-bottom:28px;line-height:1.6;}
+.btn-cta-lg{background:var(--accent);color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer;transition:background .15s;box-shadow:0 2px 8px rgba(0,82,204,0.25);}
+.btn-cta-lg:hover{background:var(--accent-hover);box-shadow:0 4px 14px rgba(0,82,204,0.35);}
+.empty-hint{font-size:12px;color:var(--text-subtle);margin-top:14px;}
 
-/* === Wizard Modal === */
-.wizard-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:3000;align-items:center;justify-content:center}
-.wizard-overlay.open{display:flex}
-.wizard-box{background:#0c0a1e;border:1px solid #312e81;border-radius:12px;padding:28px;max-width:540px;width:92%;position:relative;color:#e2e8f0;max-height:90vh;overflow-y:auto}
-.wizard-box h2{color:#a78bfa;font-size:15px;font-weight:700;margin:0 0 6px}
-.wizard-steps{display:flex;gap:6px;margin-bottom:20px}
-.wz-step{flex:1;height:3px;background:#1e1b4b;border-radius:2px;transition:background 0.35s}
-.wz-step.done{background:#7c3aed}
-.wz-step.active{background:#22d3ee}
-.wz-section{display:none}.wz-section.visible{display:block}
-.wz-label{font-size:11px;color:#94a3b8;margin:10px 0 3px;display:block}
-.wz-input{background:#1e1b4b;border:1px solid #4338ca;border-radius:5px;padding:6px 10px;color:#e2e8f0;font-size:12px;width:100%;box-sizing:border-box;margin-bottom:4px}
-.wz-input:focus{border-color:#7c3aed;outline:none}
-.wz-radio-group{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
-.wz-radio{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #1e1b4b;border-radius:6px;cursor:pointer;transition:border-color 0.15s}
-.wz-radio:hover{border-color:#4338ca}
-.wz-radio.selected{border-color:#7c3aed;background:#1e1b4b}
-.wz-radio-title{font-size:12px;font-weight:600;color:#c4b5fd}
-.wz-radio-sub{font-size:10px;color:#64748b}
-.wz-nav{display:flex;justify-content:space-between;margin-top:18px;gap:10px}
-.wz-err{color:#f87171;font-size:11px;margin-top:6px;display:none}
-.wz-err.visible{display:block}
-.wz-review-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1e1b4b;font-size:12px}
-.wz-review-row:last-child{border-bottom:none}
-.wz-review-key{color:#94a3b8}
-.wz-review-val{color:#e2e8f0;font-weight:600}
-/* === Connectivity Pills === */
-.conn-pill{display:flex;align-items:center;gap:5px;background:#0f172a;border:1px solid #1e293b;border-radius:20px;padding:4px 10px;font-size:10px;color:#64748b;white-space:nowrap;cursor:default}
-.conn-dot{width:6px;height:6px;border-radius:50%;background:#475569;flex-shrink:0;transition:background 0.4s}
-.conn-dot.ok{background:#34d399}
-.conn-dot.fail{background:#f87171}
-/* === Error Assistant Toast === */
-.err-toast{display:none;position:fixed;bottom:20px;right:20px;max-width:380px;background:#1a0a0a;border:1px solid #7f1d1d;border-radius:10px;padding:14px 16px;z-index:5000;color:#fca5a5;font-size:12px;line-height:1.5;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
-.err-toast.visible{display:block}
-.err-toast-title{font-weight:700;margin-bottom:4px;color:#f87171}
-.err-toast-hint{margin-top:6px;color:#fbbf24;font-size:11px;display:none}
-.err-toast-hint.visible{display:block}
+/* FEATURE CARDS (empty state) */
+.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:800px;margin:40px auto 0;}
+.feature-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:left;box-shadow:var(--shadow-sm);}
+.fc-icon{font-size:26px;margin-bottom:10px;}
+.fc-title{font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:6px;}
+.fc-desc{font-size:12px;color:var(--text-secondary);line-height:1.6;}
+.fc-tag{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:3px;background:var(--bg-metric-b);color:var(--accent);margin-bottom:8px;}
+[data-theme="dark"] .fc-tag{background:var(--bg-metric-b);color:var(--accent);}
+
+/* VRAM MINI BAR */
+.vram-mini{height:4px;border-radius:2px;background:var(--bg-sunken);overflow:hidden;margin-top:4px;}
+.vram-mini-fill{height:100%;border-radius:2px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg-surface);border:1px solid var(--border);color:var(--text-primary);padding:10px 16px;border-radius:6px;font-size:13px;z-index:600;box-shadow:var(--shadow-md);transform:translateY(20px);opacity:0;transition:all .25s;pointer-events:none;max-width:340px;}
+.toast.show{transform:translateY(0);opacity:1;}
 </style>
 </head>
 <body>
 
-<!-- ── Sidebar ── -->
-<div id="sidebar">
-  <div class="sb-header-exp">
-    <div class="logo-mark">KV</div>
-    <span class="logo-text">KVForge</span>
-    <div class="collapse-btn" onclick="toggleSidebar()" title="Collapse">&#8249;</div>
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand" onclick="location.href='/'">
+    <div class="logo-sq">K</div>
+    KVForge
+    <span class="topbar-tag">STUDIO</span>
   </div>
-  <div class="sb-header-col" onclick="toggleSidebar()" title="Expand">
-    <div class="logo-mark">KV</div>
-    <div class="expand-hint">&#8250;</div>
+  <div class="topbar-sp"></div>
+  <div class="topbar-badge"><div class="dot" style="background:#4BCE97"></div>All systems operational</div>
+  <div class="topbar-badge"><div class="dot" style="background:#4BCE97"></div>Qdrant · localhost:6333</div>
+  <button class="topbar-btn" onclick="toggleTheme()"><span id="theme-icon">🌙</span></button>
+  <div class="profile-wrap">
+    <button class="topbar-btn" id="profile-btn" onclick="toggleProfile(event)">👤 user ▾</button>
+    <div class="profile-menu" id="profileMenu" style="display:none">
+      <div class="profile-menu-header">
+        <div class="pm-name" id="pm-name">User</div>
+        <div class="pm-email" id="pm-email"></div>
+      </div>
+      <a class="profile-menu-item" id="pm-settings-link" href="/studio/settings">⚙ Profile &amp; Settings</a>
+      <div class="profile-menu-sep"></div>
+      <a class="profile-menu-item pm-signout" href="/auth/logout">↩ Sign Out</a>
+    </div>
   </div>
-  <div class="sb-body">
-    <div class="section-title">Workspace</div>
-    <div class="nav-item active" onclick="navTo('hub')" title="Studio Hub">
-      <span class="nav-icon">&#9783;</span>
-      <span class="nav-label">Studio Hub</span>
+</div>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()">‹</button>
+
+    <div class="sidebar-section-title">Navigation</div>
+    <div class="nav-item" onclick="location.href='/'">
+      <div class="nav-icon">🏠</div>
+      <span class="nav-label">Overview</span>
     </div>
-    <div class="nav-item" onclick="window.open('/kvq','_blank')" title="KVQ Live Stats">
-      <span class="nav-icon">&#9096;</span>
-      <span class="nav-label">KVQ Live Stats</span>
+    <div class="nav-item active">
+      <div class="nav-icon">🗂</div>
+      <span class="nav-label">Use Cases</span>
+      <span class="nav-count" id="uc-count">0</span>
     </div>
-    <div class="nav-item" onclick="window.open('/ab-eval/uc1','_blank')" title="A/B Reports">
-      <span class="nav-icon">&#9638;</span>
-      <span class="nav-label">A/B Reports</span>
+    <div class="nav-item" onclick="showToast('Coming soon')">
+      <div class="nav-icon">📊</div>
+      <span class="nav-label">Monitoring</span>
     </div>
-    <div class="nav-item" onclick="showSettings()" title="Settings">
-      <span class="nav-icon">&#9881;</span>
+    <div class="nav-item" onclick="showToast('Coming soon')">
+      <div class="nav-icon">🖥</div>
+      <span class="nav-label">System</span>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-title">Config</div>
+    <div class="nav-item" onclick="location.href='/studio/connectors'">
+      <div class="nav-icon">🧩</div>
+      <span class="nav-label">Addons</span>
+      <span style="font-size:9px;font-weight:700;background:var(--success);color:#fff;border-radius:8px;padding:1px 6px;flex-shrink:0">NEW</span>
+    </div>
+    <div class="nav-item" onclick="showToast('Coming soon')">
+      <div class="nav-icon">⚙</div>
       <span class="nav-label">Settings</span>
     </div>
-    <div class="divider"></div>
-    <div class="section-title">Use Cases</div>
-    <div id="uc-list"></div>
-    <div class="new-uc-btn" onclick="showNewUcForm()" title="New Use Case">
-      <span style="font-size:14px">&#43;</span>
-      <span class="new-uc-label nav-label">New Use Case</span>
+    <div class="nav-item" onclick="showToast('Coming soon')">
+      <div class="nav-icon">📖</div>
+      <span class="nav-label">Documentation</span>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-version">KVForge v2.1.0 · EC2 g5.xlarge</div>
     </div>
   </div>
-</div>
 
-<!-- ── Main ── -->
-<div id="main">
-  <div id="topbar">
-    <div class="breadcrumb" id="breadcrumb">
-      <div class="bc-seg" onclick="navTo('hub')">&#8962;</div>
-      <span class="bc-sep">&#8250;</span>
-      <div class="bc-seg current" id="bc-current">Studio Hub</div>
-    </div>
-    <div class="topbar-right">
-      <div id="conn-pills" style="display:flex;gap:5px;align-items:center">
-        <div class="conn-pill" title="Qdrant vector store"><div class="conn-dot" id="cd-qdrant"></div><span>Qdrant</span></div>
-        <div class="conn-pill" title="GPU"><div class="conn-dot" id="cd-gpu"></div><span>GPU</span></div>
-        <div class="conn-pill" title="LLM"><div class="conn-dot" id="cd-llm"></div><span>LLM</span></div>
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">Use Cases</div>
+        <div class="page-sub" id="uc-subtitle">Loading…</div>
       </div>
-      <div class="gpu-pill" id="gpu-pill" onclick="refreshGpu()">
-        <div class="gpu-dot"></div>
-        <span id="gpu-text">Checking GPUs...</span>
+      <button class="btn-primary" onclick="location.href='/studio/wizard'">+ New Use Case</button>
+    </div>
+
+    <!-- SYSTEM STATUS BAR -->
+    <div class="sys-bar">
+      <div class="sys-card">
+        <div class="sys-icon">🗂</div>
+        <div>
+          <div class="sys-label">Active Use Cases</div>
+          <div class="sys-val" id="sys-active-ucs">— / —</div>
+          <div class="sys-sub" id="sys-active-sub">Loading…</div>
+        </div>
       </div>
-      <div class="icon-btn" onclick="showApiKeys()">&#128273; API Keys</div>
+      <div class="sys-card">
+        <div class="sys-icon">💬</div>
+        <div>
+          <div class="sys-label">Total Queries Today</div>
+          <div class="sys-val">—</div>
+          <div class="sys-sub">No data yet</div>
+        </div>
+      </div>
+      <div class="sys-card">
+        <div class="sys-icon">🖥</div>
+        <div style="flex:1">
+          <div class="sys-label">GPU Utilization</div>
+          <div class="sys-val" id="sys-gpu-val">—</div>
+          <div class="vram-mini" style="margin-top:5px">
+            <div class="vram-mini-fill" id="sys-gpu-bar" style="width:0%;background:var(--accent)"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sys-card">
+        <div class="status-dot-live"></div>
+        <div>
+          <div class="sys-label">System Health</div>
+          <div class="sys-val" style="color:var(--success)">All OK</div>
+          <div class="sys-sub">Qdrant · LLM · Sync</div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <!-- New UC form bar (hidden by default) -->
-  <div id="new-uc-bar">
-    <span style="color:#a78bfa;font-size:10px;font-weight:600">New use case:</span>
-    <input id="new-uc-id" placeholder="id (e.g. medqa-2024)" style="width:150px">
-    <input id="new-uc-name" placeholder="Display name" style="flex:1;max-width:240px">
-    <div class="btn btn-primary" onclick="createUc()">Create</div>
-    <div class="btn btn-ghost" onclick="hideNewUcForm()">Cancel</div>
-  </div>
+    <!-- UC GRID SECTION (shown when UCs > 0) -->
+    <div id="uc-section" class="uc-section" style="display:none">
+      <div class="uc-section-head">
+        <div class="uc-section-title">Use Cases</div>
+      </div>
+      <div class="uc-grid" id="uc-grid">
+        <!-- UC cards injected by JS -->
+      </div>
+    </div>
 
-  <div id="content">
-    <div class="page-title">Studio Hub</div>
-    <div class="page-sub">Configure and run the KVForge pipeline on any dataset.</div>
-    <div id="uc-cards"></div>
-  </div>
-</div>
+    <!-- EMPTY STATE (shown when no UCs) -->
+    <div id="uc-empty" class="empty-state" style="display:none">
+      <div class="empty-icon">🧠</div>
+      <div class="empty-title">Welcome to KVForge Studio</div>
+      <div class="empty-sub">No use cases configured yet. Create your first one to start building a progressive RAG pipeline that gets smarter over time.</div>
+      <button class="btn-cta-lg" onclick="location.href='/studio/wizard'">+ Create Your First Use Case</button>
+      <div class="empty-hint">Takes about 5 minutes to configure · ~10 minutes to index</div>
 
-<!-- ── API Keys Modal ── -->
-<div id="keys-modal" style="display:none;position:fixed;inset:0;background:#000a;z-index:100;align-items:center;justify-content:center">
-  <div style="background:#0f0f1a;border:1px solid #312e81;border-radius:12px;padding:24px;width:380px">
-    <div style="color:#a78bfa;font-size:14px;font-weight:700;margin-bottom:16px">API Keys</div>
-    <div class="field"><label>Gemini API Key</label>
-      <input type="text" id="key-gemini" placeholder="AIza...">
-      <div class="hint">Stored in browser only — never sent to server</div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="fc-tag">Phase 1 → 3</div>
+          <div class="fc-icon">🚀</div>
+          <div class="fc-title">Progressive RAG</div>
+          <div class="fc-desc">Starts with text-in-context RAG on day one. Automatically advances to KV cache injection and parametric answering as your corpus matures.</div>
+        </div>
+        <div class="feature-card">
+          <div class="fc-tag">4.4× compression</div>
+          <div class="fc-icon">⚡</div>
+          <div class="fc-title">TurboQuant KV Cache</div>
+          <div class="fc-desc">3-bit key / 4-bit value quantization stores pre-computed KV tensors at 4.4× compression with 0.91 recall — saving ~3.8 GB VRAM per 50k chunks.</div>
+        </div>
+        <div class="feature-card">
+          <div class="fc-tag">V2 Feature</div>
+          <div class="fc-icon">🧠</div>
+          <div class="fc-title">Corpus Intelligence</div>
+          <div class="fc-desc">CIS scoring automatically promotes hot chunks to enhanced storage, keeps active chunks in the vector store, and archives cold content — zero manual curation.</div>
+        </div>
+      </div>
     </div>
-    <div class="field"><label>OpenAI API Key</label>
-      <input type="text" id="key-openai" placeholder="sk-...">
-    </div>
-    <div class="btn-row">
-      <div class="btn btn-ghost" onclick="closeApiKeys()">Cancel</div>
-      <div class="btn btn-primary" onclick="saveApiKeys()">Save Keys</div>
-    </div>
-  </div>
-</div>
+
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<div class="toast" id="toast"></div>
 
 <script>
-// ── State ───────────────────────────────────────────────────────────────────
-const STATE = { ucs: [], openPanels: {}, activeStreams: {}, configs: {} };
+// State
+let ucData = [];
+let profileData = null;
 
-// ── Utilities ────────────────────────────────────────────────────────────────
-function showToast(msg, isError) {
-  const t = document.createElement('div');
-  t.textContent = msg;
-  t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:10px 18px;border-radius:6px;font-size:13px;color:#fff;background:${isError?'#dc2626':'#22c55e'};box-shadow:0 2px 8px rgba(0,0,0,.4);pointer-events:none;`;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2500);
-}
-
-// ── Init ────────────────────────────────────────────────────────────────────
+// On load
 document.addEventListener('DOMContentLoaded', () => {
-  loadApiKeysFromStorage();
+  loadProfile();
   loadRegistry();
-  refreshGpu();
+  loadGpuStatus();
+  setInterval(loadGpuStatus, 15000);
 });
 
-// ── Sidebar ─────────────────────────────────────────────────────────────────
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('collapsed');
-}
-
-// ── Registry / UC list ──────────────────────────────────────────────────────
-const _MODS = ['data', 'vdb', 'llm', 'sleep-faq', 'train', 'eval'];
-
-function _saveOpenPanels() {
-  const open = [];
-  document.querySelectorAll('.mod-panel-wrap.open').forEach(wrap => {
-    for (const mod of _MODS) {
-      if (wrap.id.endsWith('-' + mod)) {
-        const ucId = wrap.id.slice('panel-'.length, -(mod.length + 1));
-        open.push({ ucId, mod });
-        break;
+// Profile
+async function loadProfile() {
+  try {
+    const r = await fetch('/auth/me');
+    if (r.ok) {
+      profileData = await r.json();
+      const name = profileData.email.split('@')[0];
+      document.getElementById('profile-btn').textContent = '\u{1F464} ' + profileData.email + ' ▾';
+      document.getElementById('pm-name').textContent = name.charAt(0).toUpperCase() + name.slice(1);
+      document.getElementById('pm-email').textContent = profileData.email;
+      // Settings link: admin goes to admin/users, else settings
+      const settingsLink = document.getElementById('pm-settings-link');
+      if (profileData.role === 'admin') {
+        settingsLink.href = '/studio/admin/users';
+      } else {
+        settingsLink.href = '/studio/settings';
       }
     }
-  });
-  return open;
+  } catch(e) { /* no auth, show static */ }
 }
 
-async function _restoreOpenPanels(open) {
-  for (const { ucId, mod } of open) {
-    const wrap = document.getElementById(`panel-${ucId}-${mod}`);
-    if (!wrap) continue;
-    if (!STATE.configs[ucId]) {
-      try {
-        const r = await fetch(`/studio/api/uc/${ucId}/config`);
-        STATE.configs[ucId] = await r.json();
-      } catch(e) { STATE.configs[ucId] = {}; }
-    }
-    const body = document.getElementById(`panel-body-${ucId}-${mod}`);
-    if (body) body.innerHTML = renderPanelContent(ucId, mod, STATE.configs[ucId]);
-    wrap.classList.add('open');
-    const chip = document.getElementById(`chip-${ucId}-${mod}`);
-    if (chip) {
-      chip.classList.add('open');
-      const arrow = chip.querySelector('.chip-arrow');
-      if (arrow) arrow.style.transform = 'rotate(180deg)';
-    }
-    if (mod === 'train') {
-      const uc = STATE.ucs.find(u => u.id === ucId);
-      if (uc && uc.active_job && !STATE.activeStreams[ucId]) {
-        attachStream(ucId, uc.active_job.job_id);
-      }
-    }
-  }
-}
-
+// Registry
 async function loadRegistry() {
-  const openPanels = _saveOpenPanels();
-  const res = await fetch('/studio/api/registry');
-  const data = await res.json();
-  STATE.ucs = data.use_cases || [];
-  renderUcList();
-  renderUcCards();
-  await _restoreOpenPanels(openPanels);
-  // Wire connectivity polling to first UC that has a dashboard port
-  var firstWithPort = STATE.ucs.find(function(u) { return u.dashboard_port; });
-  if (firstWithPort && !_connPort) {
-    setConnPort(firstWithPort.dashboard_port);
-    pollConnectivity();
+  try {
+    const r = await fetch('/studio/api/registry');
+    const data = await r.json();
+    ucData = data.use_cases || [];
+  } catch(e) {
+    ucData = [];
+  }
+
+  // Update subtitle
+  const running = ucData.filter(function(u) {
+    return u.has_index && !(u.active_job && u.active_job.status !== 'done');
+  }).length;
+  const indexing = ucData.filter(function(u) {
+    return u.active_job && u.active_job.status !== 'done';
+  }).length;
+  const parts = [ucData.length + ' configured'];
+  if (running > 0) parts.push(running + ' running');
+  if (indexing > 0) parts.push(indexing + ' indexing');
+  document.getElementById('uc-subtitle').textContent = parts.join(' · ');
+
+  // UC count badge in sidebar
+  document.getElementById('uc-count').textContent = ucData.length;
+
+  // Update system status card: Active UCs
+  document.getElementById('sys-active-ucs').textContent = running + ' / ' + ucData.length;
+  document.getElementById('sys-active-sub').textContent = indexing > 0
+    ? indexing + ' indexing'
+    : (ucData.length - running) + ' stopped';
+
+  // Show/hide sections
+  if (ucData.length === 0) {
+    document.getElementById('uc-section').style.display = 'none';
+    document.getElementById('uc-empty').style.display = 'flex';
+  } else {
+    document.getElementById('uc-section').style.display = 'block';
+    document.getElementById('uc-empty').style.display = 'none';
+    renderUcGrid();
   }
 }
 
-function renderUcList() {
-  const el = document.getElementById('uc-list');
-  el.innerHTML = STATE.ucs.map(uc => {
-    const color = uc.phase === 3 ? '#22d3ee' : uc.phase === 2 ? '#f59e0b' : '#475569';
-    return `<div class="uc-item" onclick="scrollToUc('${uc.id}')" title="${uc.display_name}">
-      <div class="uc-dot" style="background:${color}"></div>
-      <span class="uc-name">${uc.display_name || uc.id}</span>
-    </div>`;
-  }).join('');
+// GPU status
+async function loadGpuStatus() {
+  try {
+    const r = await fetch('/studio/api/gpu/realtime');
+    const data = await r.json();
+    const gpus = data.gpus || [];
+    if (gpus.length > 0) {
+      const avg = Math.round(gpus.reduce(function(s, g) { return s + (g.util_pct || 0); }, 0) / gpus.length);
+      document.getElementById('sys-gpu-val').textContent = avg + '%';
+      document.getElementById('sys-gpu-bar').style.width = avg + '%';
+      document.getElementById('sys-gpu-bar').style.background = avg > 85
+        ? 'var(--danger)' : avg > 60 ? 'var(--warning)' : 'var(--accent)';
+    } else {
+      document.getElementById('sys-gpu-val').textContent = 'No GPU';
+    }
+  } catch(e) {
+    document.getElementById('sys-gpu-val').textContent = '—';
+  }
 }
 
-// ── UC Cards ─────────────────────────────────────────────────────────────────
-function renderUcCards() {
-  const el = document.getElementById('uc-cards');
-  el.innerHTML = STATE.ucs.map(uc => renderUcCard(uc)).join('');
+// Render UC grid
+function renderUcGrid() {
+  const grid = document.getElementById('uc-grid');
+  grid.innerHTML = ucData.map(function(uc) { return renderUcCard(uc); }).join('') + renderCreateCard();
 }
 
 function renderUcCard(uc) {
   const phase = uc.phase || 1;
-  const prs = uc.prs ? uc.prs.toFixed(3) : '—';
-  const prsColor = uc.prs >= 0.75 ? '#34d399' : uc.prs ? '#f59e0b' : '#475569';
-  const dots = renderJourneyDots(uc);
-  const typeTag = uc.type === 'example' ? '<span class="example-badge">Example</span>' : '';
-  const dashLink = uc.dashboard_port
-    ? `<a href="http://${location.hostname}:${uc.dashboard_port}/" target="_blank" onclick="event.stopPropagation()" style="margin-left:auto;padding:2px 10px;font-size:11px;background:#1e293b;border:1px solid #334155;border-radius:4px;color:#94a3b8;text-decoration:none;white-space:nowrap">Dashboard &#8599;</a>`
-    : '';
+  const isIndexing = uc.active_job && uc.active_job.status !== 'done';
+  const isRunning = uc.has_index && !isIndexing;
+  const statusClass = isIndexing ? 'indexing' : isRunning ? 'running' : 'stopped';
+  const statusText = isIndexing ? '↻ Indexing…' : isRunning ? '● Running' : '● Stopped';
 
-  return `<div class="uc-card" id="uc-${uc.id}">
-    <div class="uc-card-header" onclick="toggleUcCard('${uc.id}')">
-      <span style="font-size:15px;color:#a78bfa">&#9638;</span>
-      <span class="uc-title">${uc.display_name || uc.id}</span>
-      ${typeTag}
-      <span class="phase-badge phase-${phase}">Phase ${phase}</span>
-      <span class="prs-val" style="color:${prsColor}">PRS ${prs}</span>
-      ${dots}
-      ${dashLink}
-      <div class="btn btn-primary" style="margin-left:6px;font-size:10px;padding:4px 10px;white-space:nowrap" onclick="event.stopPropagation();openWizard('${uc.id}','${(uc.display_name||uc.id).replace(/'/g,"\\'")}')">&#128640; Launch</div>
-    </div>
-    <div class="mod-strip" id="chips-${uc.id}">
-      ${renderChips(uc)}
-    </div>
-    ${renderPanels(uc)}
-  </div>`;
+  const accentClass = phase === 3 ? 'green' : phase === 2 ? '' : 'gray';
+  const phaseIcons = {1: '📄', 2: '⚡', 3: '🏆'};
+  const phaseLabels = {1: 'Text RAG', 2: 'KV Injection', 3: 'Parametric'};
+
+  const prs = uc.prs ? uc.prs.toFixed(2) : '—';
+  const prsColorClass = uc.prs >= 0.75 ? 'green' : uc.prs ? 'accent' : 'muted';
+  const prsSub = uc.prs >= 0.75 ? 'Phase 3 threshold met' : uc.prs ? 'Phase 3 at 0.75' : 'Not yet evaluated';
+
+  const metricLabel = phase === 3 ? 'Parametric rate' : phase === 2 ? 'KV hit rate' : 'Training';
+  const metricVal = '—';
+
+  const statusLabel = isIndexing ? 'Indexing' : isRunning ? 'Ready' : 'Stopped';
+  const jobInfo = uc.active_job ? 'Step: ' + (uc.active_job.step || 'running') : 'No active job';
+
+  const syncText = uc.has_index ? '🔄 Indexed' : '📦 Not yet indexed';
+
+  const btnText = isIndexing ? 'View Progress'
+    : uc.dashboard_port ? 'Open Dashboard →'
+    : isRunning ? 'Open Studio →'
+    : 'Configure';
+  const btnClass = (!uc.has_index && !isIndexing) ? ' stopped' : '';
+
+  const ucIdSafe = escHtml(uc.id);
+  const portArg = uc.dashboard_port ? uc.dashboard_port : 'null';
+
+  return '<div class="uc-card" onclick="openUcDetail(\'' + ucIdSafe + '\',' + portArg + ')">'
+    + '<div class="uc-card-accent' + (accentClass ? ' ' + accentClass : '') + '"></div>'
+    + '<div class="uc-card-body">'
+    +   '<div class="uc-card-head">'
+    +     '<div class="uc-name-row">'
+    +       '<div class="uc-status-dot ' + statusClass + '"></div>'
+    +       '<div class="uc-name">' + escHtml(uc.display_name || uc.id) + '</div>'
+    +     '</div>'
+    +     '<button class="uc-more-btn" onclick="event.stopPropagation()">⋯</button>'
+    +   '</div>'
+    +   '<div class="uc-phase-row">'
+    +     '<span class="phase-badge phase-' + phase + '">' + (phaseIcons[phase] || '') + ' Phase ' + phase + ' — ' + phaseLabels[phase] + '</span>'
+    +     '<span class="uc-status-tag ' + statusClass + '">' + statusText + '</span>'
+    +   '</div>'
+    +   '<div class="uc-metrics">'
+    +     '<div class="uc-metric"><div class="um-label">PRS Score</div><div class="um-val ' + prsColorClass + '">' + prs + '</div><div class="um-sub">' + prsSub + '</div></div>'
+    +     '<div class="uc-metric"><div class="um-label">Chunks Indexed</div><div class="um-val' + (uc.has_index ? ' accent' : ' muted') + '">' + (uc.has_index ? '✓' : '—') + '</div><div class="um-sub">' + (uc.has_index ? 'Index ready' : 'Not indexed') + '</div></div>'
+    +     '<div class="uc-metric"><div class="um-label">' + metricLabel + '</div><div class="um-val muted">' + metricVal + '</div><div class="um-sub">No data yet</div></div>'
+    +     '<div class="uc-metric"><div class="um-label">Status</div><div class="um-val" style="font-size:13px">' + statusLabel + '</div><div class="um-sub">' + jobInfo + '</div></div>'
+    +   '</div>'
+    + '</div>'
+    + '<div class="uc-card-foot">'
+    +   '<span class="uc-sync-time">' + syncText + '</span>'
+    +   '<button class="btn-open-dash' + btnClass + '" onclick="event.stopPropagation();openDashboard(\'' + ucIdSafe + '\',' + portArg + ')">' + btnText + '</button>'
+    + '</div>'
+    + '</div>';
 }
 
-function renderJourneyDots(uc) {
-  // Determine completion of each module from uc_config + version
-  const steps = getStepStatuses(uc);
-  const dotHtml = steps.map((s, i) => {
-    const dot = s === 'done' ? '<div class="jd"></div>'
-               : s === 'active' ? '<div class="ja"></div>'
-               : '<div class="jl"></div>';
-    const line = i < steps.length - 1 ? '<div class="jline"></div>' : '';
-    return dot + line;
-  }).join('');
-  const done = steps.filter(s => s === 'done').length;
-  return `<div class="journey">${dotHtml}<span class="j-count" style="color:${done===6?'#34d399':'#64748b'}">${done}/6</span></div>`;
+function renderCreateCard() {
+  return '<div class="uc-card-create" onclick="location.href=\'/studio/wizard\'">'
+    + '<div class="create-icon">＋</div>'
+    + '<div class="create-title">New Use Case</div>'
+    + '<div class="create-sub">Configure a new RAG pipeline<br>with the setup wizard</div>'
+    + '</div>';
 }
 
-function getStepStatuses(uc) {
-  const cfg = STATE.configs && STATE.configs[uc.id];
-  const hasData   = cfg && cfg.data && cfg.data.dataset_id;
-  const hasVdb    = cfg && cfg.vectordb && cfg.vectordb.store;
-  const hasLlm    = cfg && cfg.llm && cfg.llm.local_model;
-  const hasFaqs   = !!uc.has_faqs;
-  const hasTrain  = uc.phase >= 2;
-  const hasEval   = uc.phase >= 2 && uc.prs;
-  return [
-    hasData  ? 'done' : 'active',
-    hasVdb   ? 'done' : hasData  ? 'active' : 'locked',
-    hasLlm   ? 'done' : 'active',
-    hasFaqs  ? 'done' : (hasVdb && hasLlm) ? 'active' : 'locked',
-    hasTrain ? 'done' : hasFaqs ? 'active' : 'locked',
-    hasEval  ? 'done' : hasTrain ? 'active' : 'locked',
-  ];
-}
-
-// ── Module Chips ─────────────────────────────────────────────────────────────
-function renderChips(uc) {
-  const steps = getStepStatuses(uc);
-  const labels = ['Data','VectorDB','LLM','Sleep-FAQ','Training','Evaluation'];
-  const mods   = ['data','vdb','llm','sleep-faq','train','eval'];
-  return mods.map((m, i) => {
-    const s = steps[i];
-    const cls = s === 'done' ? 'chip-done' : s === 'active' ? 'chip-active' : 'chip-locked';
-    const locked = s === 'locked';
-    const onclick = locked ? '' : `onclick="togglePanel('${uc.id}','${m}')"`;
-    const lockIcon = locked ? ' &#128274;' : '';
-    return `<div class="mod-chip ${cls}" id="chip-${uc.id}-${m}" ${onclick} title="${locked ? getLockedReason(m) : ''}">
-      ${labels[i]}${lockIcon}<span class="chip-arrow">&#9660;</span>
-    </div>`;
-  }).join('');
-}
-
-function getLockedReason(mod) {
-  if (mod === 'vdb')       return 'Requires Data configured first';
-  if (mod === 'sleep-faq') return 'Requires VectorDB indexed and LLM configured';
-  if (mod === 'train')     return 'Requires Sleep-FAQ generated first';
-  if (mod === 'eval')      return 'Requires at least one training round complete';
-  return '';
-}
-
-// ── Module Panels ─────────────────────────────────────────────────────────────
-function renderPanels(uc) {
-  return ['data','vdb','llm','sleep-faq','train','eval'].map(m =>
-    `<div class="mod-panel-wrap" id="panel-${uc.id}-${m}">
-       <div class="mod-panel" id="panel-body-${uc.id}-${m}">
-         <div style="color:#475569;font-size:11px">Loading...</div>
-       </div>
-     </div>`
-  ).join('');
-}
-
-// ── Panel Toggle ─────────────────────────────────────────────────────────────
-async function togglePanel(ucId, mod) {
-  const wrap  = document.getElementById(`panel-${ucId}-${mod}`);
-  const chip  = document.getElementById(`chip-${ucId}-${mod}`);
-  const isOpen = wrap.classList.contains('open');
-
-  if (!isOpen) {
-    // Load config if not cached
-    if (!STATE.configs[ucId]) {
-      try {
-        const r = await fetch(`/studio/api/uc/${ucId}/config`);
-        STATE.configs[ucId] = await r.json();
-      } catch(e) { STATE.configs[ucId] = {}; }
-    }
-    // Render panel content
-    const body = document.getElementById(`panel-body-${ucId}-${mod}`);
-    body.innerHTML = renderPanelContent(ucId, mod, STATE.configs[ucId]);
-
-    // Auto-attach log stream if a job is already running for this UC
-    if (mod === 'train') {
-      const uc = STATE.ucs.find(u => u.id === ucId);
-      if (uc && uc.active_job && !STATE.activeStreams[ucId]) {
-        attachStream(ucId, uc.active_job.job_id);
-      }
-    }
-    // Load eval stats when eval panel opens
-    if (mod === 'eval') {
-      loadEvalStats(ucId);
-    }
-  }
-
-  wrap.classList.toggle('open', !isOpen);
-  if (chip) {
-    chip.classList.toggle('open', !isOpen);
-    const arrow = chip.querySelector('.chip-arrow');
-    if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
-  }
-}
-
-function collapsePanel(ucId, mod) {
-  const wrap = document.getElementById(`panel-${ucId}-${mod}`);
-  if (wrap && wrap.classList.contains('open')) {
-    togglePanel(ucId, mod);
-  }
-}
-
-// ── Panel Content Renderers ───────────────────────────────────────────────────
-function renderPanelContent(ucId, mod, cfg) {
-  switch(mod) {
-    case 'data':  return renderDataPanel(ucId, cfg);
-    case 'vdb':   return renderVdbPanel(ucId, cfg);
-    case 'llm':       return renderLlmPanel(ucId, cfg);
-    case 'sleep-faq': return renderSleepFaqPanel(ucId, cfg);
-    case 'train':     return renderTrainPanel(ucId, cfg);
-    case 'eval':  return renderEvalPanel(ucId, cfg);
-    default: return '<div style="color:#475569">Unknown module</div>';
-  }
-}
-
-function renderDataPanel(ucId, cfg) {
-  const d = (cfg && cfg.data) || {};
-  const isHf = !d.source_type || d.source_type === 'huggingface';
-  return `<div class="panel-top">
-    <span>&#9650;</span>
-    <span class="panel-title">Data Source</span>
-    ${d.dataset_id || d.source_path ? '<span class="status-pill pill-done">&#10003; Configured</span>' : ''}
-    <div class="collapse-sm" onclick="togglePanel('${ucId}','data')">&#9650; Collapse</div>
-  </div>
-  <div class="field"><label>Source Type</label>
-    <div class="toggle-group">
-      <div class="topt ${isHf ? 'sel' : ''}" onclick="switchDataSource(this,'hf')">&#128194; HuggingFace</div>
-      <div class="topt ${!isHf ? 'sel' : ''}" onclick="switchDataSource(this,'pdf')">&#128196; PDF / Local</div>
-    </div>
-  </div>
-  <div id="data-hf-${ucId}" style="${isHf ? '' : 'display:none'}">
-    <div class="row2">
-      <div class="field"><label>Dataset ID</label><input type="text" id="d-dataset-${ucId}" value="${d.dataset_id || ''}"></div>
-      <div class="field"><label>Split</label><select id="d-split-${ucId}">
-        <option ${d.split==='train'?'selected':''}>train</option>
-        <option ${d.split==='validation'?'selected':''}>validation</option>
-        <option ${d.split==='test'?'selected':''}>test</option>
-      </select></div>
-    </div>
-    <div class="row2">
-      <div class="field"><label>Text Column</label><input type="text" id="d-col-${ucId}" value="${d.text_column || 'text'}"></div>
-      <div class="field"><label>Max Rows</label><input type="number" id="d-rows-${ucId}" value="${d.max_rows || 5000}"></div>
-    </div>
-  </div>
-  <div id="data-pdf-${ucId}" style="${!isHf ? '' : 'display:none'}">
-    <div class="field"><label>Local Path (on server)</label>
-      <input type="text" id="d-path-${ucId}" value="${d.source_path || ''}" placeholder="examples/myuc/data/">
-      <div class="hint">Path relative to project root on the EC2 server</div>
-    </div>
-  </div>
-  <div class="btn-row">
-    <div class="btn btn-ghost" onclick="togglePanel('${ucId}','data')">&#9650; Collapse</div>
-    <div class="btn btn-primary" onclick="saveDataConfig('${ucId}')">&#10003; Save</div>
-  </div>`;
-}
-
-function renderVdbPanel(ucId, cfg) {
-  // Prefer authoritative values from config.json (datasource_config);
-  // fall back to uc_config.json vectordb fields for new/custom UCs.
-  const ds = (cfg && cfg.datasource_config) || {};
-  const v  = (cfg && cfg.vectordb) || {};
-
-  const store      = ds.vector_store    || v.store            || '—';
-  const dims       = ds.vector_dim      || v.dimensions        || '—';
-  const chunkSize  = ds.chunk_size      || v.chunk_size        || '—';
-  const overlap    = ds.chunk_overlap   || v.chunk_overlap     || '—';
-  const embedModel = ds.embed_model     || v.embedding_model   || '—';
-  const backend    = ds.embedder_backend                       || '—';
-  const collection = ds.collection                             || '—';
-  const loader     = ds.loader                                 || '—';
-
-  const storeLabel = store.charAt(0).toUpperCase() + store.slice(1);
-
-  return `<div class="panel-top">
-    <span>&#9641;</span>
-    <span class="panel-title">VectorDB Configuration</span>
-    <div class="collapse-sm" onclick="togglePanel('${ucId}','vdb')">&#9650; Collapse</div>
-  </div>
-  <div class="vdb-readonly-grid">
-    <div class="vdb-ro-item">
-      <div class="vdb-ro-label">Vector Store</div>
-      <div class="vdb-ro-value vdb-badge">${storeLabel}</div>
-    </div>
-    <div class="vdb-ro-item">
-      <div class="vdb-ro-label">Collection</div>
-      <div class="vdb-ro-value">${collection}</div>
-    </div>
-    <div class="vdb-ro-item">
-      <div class="vdb-ro-label">Dimensions</div>
-      <div class="vdb-ro-value">${dims}</div>
-    </div>
-    <div class="vdb-ro-item">
-      <div class="vdb-ro-label">Chunk Size</div>
-      <div class="vdb-ro-value">${chunkSize}</div>
-    </div>
-    <div class="vdb-ro-item">
-      <div class="vdb-ro-label">Chunk Overlap</div>
-      <div class="vdb-ro-value">${overlap}</div>
-    </div>
-    <div class="vdb-ro-item">
-      <div class="vdb-ro-label">Loader</div>
-      <div class="vdb-ro-value">${loader}</div>
-    </div>
-    <div class="vdb-ro-item vdb-ro-wide">
-      <div class="vdb-ro-label">Embedding Model</div>
-      <div class="vdb-ro-value vdb-mono">${embedModel}</div>
-    </div>
-    <div class="vdb-ro-item">
-      <div class="vdb-ro-label">Embedder Backend</div>
-      <div class="vdb-ro-value">${backend}</div>
-    </div>
-  </div>
-  <div class="btn-row">
-    <div class="btn btn-ghost" onclick="togglePanel('${ucId}','vdb')">&#9650; Collapse</div>
-  </div>`;
-}
-
-function renderLlmPanel(ucId, cfg) {
-  const l = (cfg && cfg.llm) || {};
-  const geminiKey = localStorage.getItem('kvf_gemini_key');
-  return `<div class="panel-top">
-    <span>&#9711;</span>
-    <span class="panel-title">Model Selection</span>
-    <div class="collapse-sm" onclick="togglePanel('${ucId}','llm')">&#9650; Collapse</div>
-  </div>
-  <div class="row2">
-    <div>
-      <div class="section-lbl">&#9881; Local Model (fine-tuned)</div>
-      <div class="field"><label>Base Model</label>
-        <select id="llm-model-${ucId}">
-          <option ${(l.local_model||'').includes('Llama') ? 'selected':''}>${'meta-llama/Llama-3.2-3B-Instruct'}</option>
-          <option ${(l.local_model||'').includes('Qwen')  ? 'selected':''}>Qwen/Qwen2.5-3B-Instruct</option>
-        </select>
-      </div>
-      <div class="field"><label>Quantization</label>
-        <div class="toggle-group">
-          <div class="topt ${l.quantization==='fp16'?'sel':''}" onclick="selToggle(this)">fp16</div>
-          <div class="topt ${(l.quantization||'4bit')==='4bit'?'sel':''}" onclick="selToggle(this)">4-bit</div>
-          <div class="topt ${l.quantization==='8bit'?'sel':''}" onclick="selToggle(this)">8-bit</div>
-        </div>
-      </div>
-    </div>
-    <div>
-      <div class="section-lbl">&#9729; Comparison Model</div>
-      <div class="field"><label>Provider</label>
-        <div class="toggle-group">
-          <div class="topt ${(l.comparison_provider||'gemini')==='gemini'?'sel':''}" onclick="selToggle(this)">Gemini</div>
-          <div class="topt ${l.comparison_provider==='openai'?'sel':''}" onclick="selToggle(this)">OpenAI</div>
-        </div>
-      </div>
-      <div class="field"><label>Model</label>
-        <select id="llm-cmp-${ucId}">
-          <option>gemini-1.5-flash</option><option>gemini-1.5-pro</option>
-        </select>
-      </div>
-      ${geminiKey
-        ? '<div style="background:#0f172a;border:1px solid #312e81;border-radius:5px;padding:6px 10px;font-size:10px;color:#a78bfa;margin-top:4px">&#10003; Gemini key loaded</div>'
-        : '<div style="background:#1c0a0a;border:1px solid #7f1d1d;border-radius:5px;padding:6px 10px;font-size:10px;color:#f87171;margin-top:4px;cursor:pointer" onclick="showApiKeys()">&#128273; Add Gemini key</div>'}
-    </div>
-  </div>
-  <div class="btn-row">
-    <div class="btn btn-ghost" onclick="togglePanel('${ucId}','llm')">&#9650; Collapse</div>
-    <div class="btn btn-primary" onclick="saveLlmConfig('${ucId}')">&#10003; Save</div>
-  </div>`;
-}
-
-function renderTrainPanel(ucId, cfg) {
-  const uc = STATE.ucs.find(u => u.id === ucId) || {};
-  const isRunning = !!uc.active_job;
-  return `<div class="panel-top">
-    <span>&#8635;</span>
-    <span class="panel-title">Training Pipeline</span>
-    <span class="status-pill" id="train-status-${ucId}">${isRunning ? '&#9654; Running…' : ''}</span>
-    <div class="collapse-sm" onclick="togglePanel('${ucId}','train')">&#9650; Collapse</div>
-  </div>
-  <div class="section-lbl">GPU Status <span style="color:#475569;font-weight:400;cursor:pointer" onclick="refreshGpuPanel('${ucId}')">(refresh)</span></div>
-  <div class="gpu-grid" id="gpu-grid-${ucId}">
-    <div style="color:#475569;font-size:10px">Loading GPU info...</div>
-  </div>
-  <div class="section-lbl">Pipeline Steps</div>
-  <div class="pipeline" id="pipeline-${ucId}">
-    ${renderPipelineSteps(ucId, cfg)}
-  </div>
-  <div class="plog" id="log-${ucId}" style="display:none"></div>
-  <div class="btn-row">
-    <div class="btn btn-danger" id="stop-btn-${ucId}" style="${isRunning ? '' : 'display:none'}" onclick="stopJob('${ucId}')">&#9632; Stop</div>
-    <div class="btn btn-ghost" onclick="togglePanel('${ucId}','train')">&#9650; Collapse</div>
-    <div class="btn btn-ghost" id="logs-btn-${ucId}" onclick="toggleLogs('${ucId}')">&#128203; View Logs</div>
-    <div class="btn btn-primary" id="run-btn-${ucId}" style="${isRunning ? 'display:none' : ''}" onclick="runNextStep('${ucId}')">&#9654; ${_STEP_LABELS[_nextStepForUc(uc)] || 'Run Pipeline'}</div>
-  </div>`;
-}
-
-function renderPipelineSteps(ucId, cfg) {
-  const uc = STATE.ucs.find(u => u.id === ucId) || {};
-  const phase = uc.phase || 1;
-  const history = uc.prs_history || [];
-  const steps = [
-    {label: 'KV Indexing',             done: phase >= 1,      meta: ''},
-    {label: 'Sleep-time FAQ Gen',      done: !!uc.has_faqs,   meta: uc.has_faqs ? '&#10003; faqs.json' : ''},
-    {label: 'LoRA Training — Round 1', done: phase >= 2,      meta: history[0] ? `PRS ${history[0].prs.toFixed(3)}` : ''},
-    {label: 'KV Recompute',            done: phase >= 2,      meta: ''},
-    {label: 'PRS Evaluation',          done: phase >= 2,      meta: ''},
-    {label: 'LoRA Training — Round 2', done: phase >= 3,      meta: history[1] ? `PRS ${history[1].prs.toFixed(3)}` : ''},
-  ];
-  return steps.map(s => `
-    <div class="pstep">
-      <div class="pico ${s.done ? 'p-done' : 'p-pending'}">${s.done ? '&#10003;' : '&#9675;'}</div>
-      <div>
-        <div class="ptitle" style="color:${s.done ? '#34d399' : '#334155'}">${s.label}</div>
-        <div class="pmeta">${s.meta}</div>
-      </div>
-    </div>`).join('');
-}
-
-function renderEvalPanel(ucId, cfg) {
-  const uc = STATE.ucs.find(u => u.id === ucId) || {};
-  const isRunning = uc.active_job && uc.active_job.step === 'ab-eval';
-  return `<div class="panel-top">
-    <span>&#9638;</span>
-    <span class="panel-title">Evaluation Results</span>
-    <span class="status-pill" id="eval-status-${ucId}">${isRunning ? '&#9654; Running…' : ''}</span>
-    <div class="collapse-sm" onclick="togglePanel('${ucId}','eval')">&#9650; Collapse</div>
-  </div>
-  <div class="eval-stats">
-    <div class="stat-card"><div class="stat-val" style="color:#22d3ee" id="eval-win-${ucId}">—</div>
-      <div class="stat-label">Win Rate</div><div class="stat-sub">PRS &#8805; 0.75</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#a78bfa" id="eval-prs-${ucId}">${uc.prs ? uc.prs.toFixed(3) : '—'}</div>
-      <div class="stat-label">Avg PRS</div><div class="stat-sub">Phase ${uc.phase||1}</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#34d399" id="eval-lat-${ucId}">—</div>
-      <div class="stat-label">Speed Gain</div><div class="stat-sub">vs comparison model</div></div>
-  </div>
-  <div class="compare-row">
-    <span class="cmp-label">Semantic Accuracy</span>
-    <div class="cmp-bars">
-      <div class="cmp-bar"><span class="bar-name bar-name-a">KVForge</span><div class="bar-track"><div class="bar-a" id="cmp-acc-a-${ucId}" style="width:0%"></div></div><span class="bar-val" id="cmp-acc-av-${ucId}">—</span></div>
-      <div class="cmp-bar"><span class="bar-name bar-name-b">3rd Party</span><div class="bar-track"><div class="bar-b" id="cmp-acc-b-${ucId}" style="width:0%"></div></div><span class="bar-val" id="cmp-acc-bv-${ucId}">—</span></div>
-    </div>
-  </div>
-  <div class="compare-row" style="margin-top:5px">
-    <span class="cmp-label">Latency (p50 ms)</span>
-    <div class="cmp-bars">
-      <div class="cmp-bar"><span class="bar-name bar-name-a">KVForge</span><div class="bar-track"><div class="bar-a" id="cmp-lat-a-${ucId}" style="width:0%"></div></div><span class="bar-val" id="cmp-lat-av-${ucId}">—</span></div>
-      <div class="cmp-bar"><span class="bar-name bar-name-b">3rd Party</span><div class="bar-track"><div class="bar-b" id="cmp-lat-b-${ucId}" style="width:0%"></div></div><span class="bar-val" id="cmp-lat-bv-${ucId}">—</span></div>
-    </div>
-  </div>
-  <div class="plog" id="eval-log-${ucId}" style="display:none"></div>
-  <div class="btn-row">
-    <div class="btn btn-ghost" id="eval-logs-btn-${ucId}" onclick="toggleEvalLogs('${ucId}')">&#128203; View Logs</div>
-    <div class="btn btn-ghost" id="eval-run-btn-${ucId}" style="${isRunning ? 'display:none' : ''}" onclick="runAbEval('${ucId}')">&#8635; Re-run Eval</div>
-    <div class="btn btn-primary" onclick="window.open('/ab-eval/${ucId}','_blank')">&#10138; Full A/B Report</div>
-  </div>`;
-}
-
-const SLEEP_FAQ_MODELS = {
-  gemini: ['gemini-2.5-flash','gemini-2.5-pro','gemini-2.0-flash'],
-  claude: ['claude-sonnet-4-6','claude-opus-4-6','claude-haiku-4-5-20251001'],
-  openai: ['gpt-4.1','gpt-4.1-mini','gpt-4o'],
-};
-
-function updateSleepFaqModels(ucId) {
-  const provider = document.getElementById(`sfaq-provider-${ucId}`).value;
-  const sel = document.getElementById(`sfaq-model-${ucId}`);
-  const models = SLEEP_FAQ_MODELS[provider] || SLEEP_FAQ_MODELS.gemini;
-  sel.innerHTML = models.map(m => `<option value="${m}">${m}</option>`).join('');
-}
-
-async function saveSleepFaqConfig(ucId) {
-  const provider = document.getElementById(`sfaq-provider-${ucId}`).value;
-  const model    = document.getElementById(`sfaq-model-${ucId}`).value;
-  const count    = parseInt(document.getElementById(`sfaq-count-${ucId}`).value) || 50;
-  await fetch(`/studio/api/uc/${ucId}/config`, {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({llm: {sleep_faq_provider: provider, sleep_faq_model: model, sleep_faq_count: count}}),
-  });
-  showToast('Sleep-FAQ config saved');
-}
-
-async function runSleepFaq(ucId) {
-  await saveSleepFaqConfig(ucId);
-  const r = await fetch('/studio/api/run-step', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({uc_id: ucId, step: 'sleep-faq'}),
-  });
-  if (!r.ok) { const e = await r.json(); showToast('Error: ' + (e.detail || 'unknown'), true); return; }
-  const { job_id } = await r.json();
-  showToast('Sleep-time FAQ generation started');
-  startStreaming(ucId, job_id);
-}
-
-function renderSleepFaqPanel(ucId, cfg) {
-  const uc = STATE.ucs.find(u => u.id === ucId) || {};
-  const l = (cfg && cfg.llm) || {};
-  const savedProvider = l.sleep_faq_provider || 'gemini';
-  const savedModel    = l.sleep_faq_model    || 'gemini-2.5-flash';
-  const savedCount    = l.sleep_faq_count    || 50;
-  const providers = ['gemini','claude','openai'];
-  const providerOpts = providers.map(p =>
-    `<option value="${p}" ${p === savedProvider ? 'selected' : ''}>${p.charAt(0).toUpperCase()+p.slice(1)}</option>`
-  ).join('');
-  const modelOpts = (SLEEP_FAQ_MODELS[savedProvider] || SLEEP_FAQ_MODELS.gemini).map(m =>
-    `<option value="${m}" ${m === savedModel ? 'selected' : ''}>${m}</option>`
-  ).join('');
-  const faqStatus = uc.has_faqs
-    ? '<span class="status-pill pill-done">&#10003; faqs.json exists</span>'
-    : '<span class="status-pill" style="background:#1c0a0a;color:#f87171">&#9675; Not generated</span>';
-  return `<div class="panel-top">
-    <span>&#128214;</span>
-    <span class="panel-title">Sleep-time FAQ Generation</span>
-    ${faqStatus}
-    <div class="collapse-sm" onclick="togglePanel('${ucId}','sleep-faq')">&#9650; Collapse</div>
-  </div>
-  <div style="color:#64748b;font-size:11px;margin-bottom:10px">
-    Uses a cloud LLM to reason over indexed chunks offline and generate Q&amp;A pairs
-    for LoRA training. Also pre-seeds the Phase 3 parametric shortcut.
-  </div>
-  <div class="row2">
-    <div class="field"><label>Provider</label>
-      <select id="sfaq-provider-${ucId}" onchange="updateSleepFaqModels('${ucId}')"
-        style="background:#1a1a1a;color:#eee;border:1px solid #444;padding:4px 6px;font-family:monospace;font-size:0.9em;width:100%;box-sizing:border-box;">
-        ${providerOpts}
-      </select>
-    </div>
-    <div class="field"><label>Model</label>
-      <select id="sfaq-model-${ucId}"
-        style="background:#1a1a1a;color:#eee;border:1px solid #444;padding:4px 6px;font-family:monospace;font-size:0.9em;width:100%;box-sizing:border-box;">
-        ${modelOpts}
-      </select>
-    </div>
-  </div>
-  <div class="field"><label>FAQ Count <span style="color:#475569;font-weight:400">(target pairs)</span></label>
-    <input type="number" id="sfaq-count-${ucId}" value="${savedCount}" min="10" max="500"
-      style="width:100px">
-  </div>
-  <div class="btn-row">
-    <div class="btn btn-ghost" onclick="togglePanel('${ucId}','sleep-faq')">&#9650; Collapse</div>
-    <div class="btn btn-ghost" onclick="saveSleepFaqConfig('${ucId}')">&#10003; Save Config</div>
-    <div class="btn btn-primary" onclick="runSleepFaq('${ucId}')">&#9654; Generate FAQs</div>
-  </div>`;
-}
-
-// ── Toggle helpers ────────────────────────────────────────────────────────────
-function selToggle(el) {
-  const group = el.parentElement;
-  group.querySelectorAll('.topt').forEach(e => e.classList.remove('sel'));
-  el.classList.add('sel');
-}
-
-function switchDataSource(el, type) {
-  selToggle(el);
-  // Scope to the current panel only — find ucId from nearest mod-panel ancestor
-  const panel = el.closest('.mod-panel');
-  if (!panel) return;
-  const ucId = panel.id.replace('panel-body-', '').replace(/-data$/, '');
-  const hfEl  = document.getElementById(`data-hf-${ucId}`);
-  const pdfEl = document.getElementById(`data-pdf-${ucId}`);
-  if (hfEl)  hfEl.style.display  = type === 'hf'  ? '' : 'none';
-  if (pdfEl) pdfEl.style.display = type === 'pdf' ? '' : 'none';
-}
-
-// ── Config save helpers ───────────────────────────────────────────────────────
-async function saveDataConfig(ucId) {
-  const hfEl  = document.getElementById(`data-hf-${ucId}`);
-  const pdfEl = document.getElementById(`data-pdf-${ucId}`);
-  const isPdf = pdfEl && pdfEl.style.display !== 'none';
-  let payload;
-  if (isPdf) {
-    payload = { data: {
-      source_type: 'pdf',
-      source_path: document.getElementById(`d-path-${ucId}`)?.value || '',
-      dataset_id: '', split: 'train', text_column: 'text', max_rows: 0,
-    }};
+function openUcDetail(id, port) {
+  if (port) {
+    window.open('http://' + location.hostname + ':' + port + '/', '_blank');
   } else {
-    payload = { data: {
-      source_type:  'huggingface',
-      dataset_id:   document.getElementById(`d-dataset-${ucId}`)?.value || '',
-      split:        document.getElementById(`d-split-${ucId}`)?.value || 'train',
-      text_column:  document.getElementById(`d-col-${ucId}`)?.value || 'text',
-      max_rows:     parseInt(document.getElementById(`d-rows-${ucId}`)?.value || '5000'),
-    }};
-  }
-  await fetch(`/studio/api/uc/${ucId}/config`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-  if (STATE.configs) delete STATE.configs[ucId];
-  await loadRegistry();
-}
-
-
-async function saveLlmConfig(ucId) {
-  const payload = { llm: {
-    local_model: document.getElementById(`llm-model-${ucId}`)?.value || '',
-    vllm_url: '',
-    comparison_model: document.getElementById(`llm-cmp-${ucId}`)?.value || 'gemini-1.5-flash',
-  }};
-  await fetch(`/studio/api/uc/${ucId}/config`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-  if (STATE.configs) delete STATE.configs[ucId];
-}
-
-// ── GPU ───────────────────────────────────────────────────────────────────────
-async function refreshGpu() {
-  try {
-    const r = await fetch('/studio/api/gpu-check', {method:'POST'});
-    const data = await r.json();
-    const pill = document.getElementById('gpu-pill');
-    const txt  = document.getElementById('gpu-text');
-    if (data.error) {
-      pill.style.borderColor = '#7f1d1d'; txt.textContent = 'GPU unavailable';
-      return;
-    }
-    const free = data.gpus.filter(g => g.status === 'free').length;
-    pill.style.borderColor = free > 0 ? '#064e3b' : '#7f1d1d';
-    txt.textContent = `${free}/${data.gpus.length} GPUs free`;
-  } catch(e) { document.getElementById('gpu-text').textContent = 'GPU check failed'; }
-}
-
-async function refreshGpuPanel(ucId) {
-  const grid = document.getElementById(`gpu-grid-${ucId}`);
-  if (!grid) return;
-  try {
-    const r = await fetch('/studio/api/gpu-check', {method:'POST'});
-    const data = await r.json();
-    if (data.error) { grid.innerHTML = `<div style="color:#f87171;font-size:10px">${data.error}</div>`; return; }
-    grid.innerHTML = data.gpus.map(g => `
-      <div class="gpu-card ${g.status === 'free' ? 'gpu-free' : 'gpu-busy'}">
-        <div class="gpu-hd">&#9641; GPU ${g.id} — ${g.status === 'free' ? 'Free' : g.process || 'Busy'}</div>
-        <div class="vbar"><div class="vfill" style="width:${Math.round(g.used_gb/g.total_gb*100)}%"></div></div>
-        <div class="gpu-meta">${g.used_gb} / ${g.total_gb} GB used</div>
-      </div>`).join('');
-  } catch(e) { grid.innerHTML = '<div style="color:#f87171;font-size:10px">Failed to fetch GPU status</div>'; }
-}
-
-// ── Pipeline run ──────────────────────────────────────────────────────────────
-const _STEP_LABELS = {
-  'sleep-faq': 'Generate FAQs',
-  'train':     'Train LoRA',
-  'prs-eval':  'Evaluate PRS',
-  'recompute': 'Recompute KV',
-  'index':     'Index Documents',
-};
-
-function _nextStepForUc(uc) {
-  if (!uc || !uc.has_index)  return 'index';     // not yet indexed
-  if (!uc.has_faqs)          return 'sleep-faq';
-  const loraVer  = uc.lora_version || 0;
-  const prsRound = uc.prs_round    || 0;
-  if (loraVer === 0)         return 'train';      // never trained
-  if (loraVer > prsRound)    return 'prs-eval';   // trained since last eval
-  return 'train';                                  // PRS up-to-date → next round
-}
-
-async function runNextStep(ucId) {
-  const uc = STATE.ucs.find(u => u.id === ucId);
-  const step = _nextStepForUc(uc);
-
-  const runBtn = document.getElementById(`run-btn-${ucId}`);
-  if (runBtn) runBtn.disabled = true;
-
-  const r = await fetch('/studio/api/run-step', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({uc_id: ucId, step})
-  });
-  if (!r.ok) {
-    const err = await r.json();
-    alert(err.detail || 'Failed to start pipeline');
-    if (runBtn) runBtn.disabled = false;
-    return;
-  }
-  const {job_id} = await r.json();
-  startStreaming(ucId, job_id);
-}
-
-async function runAbEval(ucId) {
-  const runBtn = document.getElementById(`eval-run-btn-${ucId}`);
-  if (runBtn) { runBtn.style.display = 'none'; }
-  const pill = document.getElementById(`eval-status-${ucId}`);
-  if (pill) pill.innerHTML = '&#9654; Running…';
-
-  const r = await fetch('/studio/api/run-step', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({uc_id: ucId, step: 'ab-eval'})
-  });
-  if (!r.ok) {
-    if (runBtn) runBtn.style.display = '';
-    if (pill) pill.innerHTML = '';
-    const err = await r.json().catch(() => ({}));
-    const detail = err.detail || '';
-    if (detail.toLowerCase().includes('already has a running job')) {
-      alert('A/B eval is already running. Click "View Logs" to watch progress.');
-    } else {
-      alert('Failed to start A/B eval: ' + (detail || r.status));
-    }
-    return;
-  }
-  const {job_id} = await r.json();
-  _attachEvalStream(ucId, job_id);
-}
-
-function _attachEvalStream(ucId, jobId) {
-  const logDiv = document.getElementById(`eval-log-${ucId}`);
-  if (logDiv) { logDiv.innerHTML = ''; logDiv.style.display = ''; }
-  STATE.activeStreams[ucId] = jobId;
-
-  const es = new EventSource(`/studio/api/stream/${jobId}`);
-  es.onmessage = (e) => {
-    const msg = JSON.parse(e.data);
-    if (msg.type === 'log' && logDiv) {
-      logDiv.innerHTML += `<div>${escHtml(msg.line)}</div>`;
-      logDiv.scrollTop = logDiv.scrollHeight;
-    }
-    if (msg.type === 'done' || msg.type === 'error') {
-      es.close();
-      delete STATE.activeStreams[ucId];
-      const runBtn = document.getElementById(`eval-run-btn-${ucId}`);
-      if (runBtn) runBtn.style.display = '';
-      const pill = document.getElementById(`eval-status-${ucId}`);
-      if (pill) pill.innerHTML = '';
-      loadEvalStats(ucId);
-      loadRegistry();
-    }
-  };
-  es.onerror = () => {
-    es.close();
-    delete STATE.activeStreams[ucId];
-    const runBtn = document.getElementById(`eval-run-btn-${ucId}`);
-    if (runBtn) runBtn.style.display = '';
-    const pill = document.getElementById(`eval-status-${ucId}`);
-    if (pill) pill.innerHTML = '';
-  };
-}
-
-async function loadEvalStats(ucId) {
-  try {
-    const r = await fetch(`/studio/api/uc/${ucId}/eval-summary`);
-    const d = await r.json();
-    if (!d.has_results) return;
-
-    const winEl  = document.getElementById(`eval-win-${ucId}`);
-    const latEl  = document.getElementById(`eval-lat-${ucId}`);
-
-    if (winEl)  winEl.textContent  = `${d.win_rate}%`;
-
-    // Speed gain: show accuracy advantage instead when KVForge is slower
-    if (latEl) {
-      if (d.speed_gain_pct !== null && d.speed_gain_pct > 0) {
-        latEl.textContent = `+${d.speed_gain_pct}%`;
-      } else if (d.speed_gain_pct !== null) {
-        latEl.textContent  = `${d.avg_lat_a_ms}ms`;
-        latEl.style.color  = '#f87171';
-        const sub = latEl.closest('.stat-card')?.querySelector('.stat-sub');
-        if (sub) sub.textContent = `vs ${d.avg_lat_b_ms}ms baseline`;
-      }
-    }
-
-    // Accuracy bars
-    const maxSem = Math.max(d.avg_sem_a, d.avg_sem_b, 0.01);
-    const barAEl   = document.getElementById(`cmp-acc-a-${ucId}`);
-    const barBEl   = document.getElementById(`cmp-acc-b-${ucId}`);
-    const barAVEl  = document.getElementById(`cmp-acc-av-${ucId}`);
-    const barBVEl  = document.getElementById(`cmp-acc-bv-${ucId}`);
-    if (barAEl)  barAEl.style.width  = `${Math.round(d.avg_sem_a / maxSem * 100)}%`;
-    if (barBEl)  barBEl.style.width  = `${Math.round(d.avg_sem_b / maxSem * 100)}%`;
-    if (barAVEl) barAVEl.textContent = d.avg_sem_a.toFixed(3);
-    if (barBVEl) barBVEl.textContent = d.avg_sem_b.toFixed(3);
-
-    // Latency bars (lower = better, so invert)
-    const maxLat = Math.max(d.avg_lat_a_ms, d.avg_lat_b_ms, 1);
-    const latAEl  = document.getElementById(`cmp-lat-a-${ucId}`);
-    const latBEl  = document.getElementById(`cmp-lat-b-${ucId}`);
-    const latAVEl = document.getElementById(`cmp-lat-av-${ucId}`);
-    const latBVEl = document.getElementById(`cmp-lat-bv-${ucId}`);
-    if (latAEl)  latAEl.style.width  = `${Math.round(d.avg_lat_a_ms / maxLat * 100)}%`;
-    if (latBEl)  latBEl.style.width  = `${Math.round(d.avg_lat_b_ms / maxLat * 100)}%`;
-    if (latAVEl) latAVEl.textContent = `${d.avg_lat_a_ms}ms`;
-    if (latBVEl) latBVEl.textContent = `${d.avg_lat_b_ms}ms`;
-  } catch(e) { /* silently ignore */ }
-}
-
-async function toggleEvalLogs(ucId) {
-  const logDiv = document.getElementById(`eval-log-${ucId}`);
-  if (!logDiv) return;
-  if (logDiv.style.display !== 'none') { logDiv.style.display = 'none'; return; }
-  // Fetch logs from API
-  try {
-    const r = await fetch(`/studio/api/uc/${ucId}/logs`);
-    const d = await r.json();
-    logDiv.innerHTML = (d.lines || []).map(l => `<div>${escHtml(l)}</div>`).join('');
-    logDiv.style.display = '';
-    logDiv.scrollTop = logDiv.scrollHeight;
-    // If job is still running and we have a stream, attach it
-    if (d.status === 'running' && d.job_id && !STATE.activeStreams[ucId]) {
-      _attachEvalStream(ucId, d.job_id);
-    }
-  } catch(e) {
-    logDiv.innerHTML = '<div style="color:#94a3b8">Could not load logs.</div>';
-    logDiv.style.display = '';
+    location.href = '/studio/uc/' + id;
   }
 }
 
-function _setRunningUI(ucId, running) {
-  const stopBtn = document.getElementById(`stop-btn-${ucId}`);
-  const runBtn  = document.getElementById(`run-btn-${ucId}`);
-  const statusPill = document.getElementById(`train-status-${ucId}`);
-  if (stopBtn) stopBtn.style.display = running ? '' : 'none';
-  if (runBtn)  { runBtn.style.display = running ? 'none' : ''; runBtn.disabled = false; }
-  if (statusPill) statusPill.innerHTML = running ? '&#9654; Running…' : '';
+function openDashboard(id, port) {
+  openUcDetail(id, port);
 }
 
-async function toggleLogs(ucId) {
-  const logDiv = document.getElementById(`log-${ucId}`);
-  if (!logDiv) return;
-  const logsBtn = document.getElementById(`logs-btn-${ucId}`);
-  const isVisible = logDiv.style.display !== 'none';
-  if (isVisible) {
-    logDiv.style.display = 'none';
-    if (logsBtn) logsBtn.textContent = '📋 View Logs';
-    return;
-  }
-  // Expand: if no active stream, fetch last job logs from API
-  if (!STATE.activeStreams[ucId]) {
-    logDiv.style.display = '';
-    logDiv.innerHTML = '<div style="color:#475569;font-size:10px;padding:4px">Loading logs…</div>';
-    if (logsBtn) logsBtn.textContent = '📋 Hide Logs';
-    try {
-      const resp = await fetch(`/studio/api/uc/${ucId}/logs`);
-      const data = await resp.json();
-      if (!data.lines || data.lines.length === 0) {
-        logDiv.innerHTML = '<div style="color:#475569;font-size:10px;padding:4px">No recent logs for this use case.</div>';
-      } else {
-        const statusColor = data.status === 'done' ? '#34d399' : data.status === 'failed' ? '#f87171' : '#fcd34d';
-        logDiv.innerHTML = `<div style="color:${statusColor};font-size:9px;padding:2px 4px;margin-bottom:4px">` +
-          `Last run: ${data.step || '?'} · ${data.status || '?'}</div>` +
-          data.lines.map(l => `<div>${escHtml(l)}</div>`).join('');
-        logDiv.scrollTop = logDiv.scrollHeight;
-      }
-    } catch(e) {
-      logDiv.innerHTML = `<div style="color:#f87171;font-size:10px;padding:4px">Failed to load logs: ${escHtml(e.message)}</div>`;
-    }
-  } else {
-    // Active stream — show logDiv. If empty (panel opened mid-run), backfill buffered lines from API.
-    logDiv.style.display = '';
-    if (logsBtn) logsBtn.textContent = '📋 Hide Logs';
-    if (!logDiv.hasChildNodes()) {
-      try {
-        const resp = await fetch(`/studio/api/uc/${ucId}/logs`);
-        const data = await resp.json();
-        if (data.lines && data.lines.length > 0) {
-          logDiv.innerHTML = data.lines.map(l => `<div>${escHtml(l)}</div>`).join('');
-        }
-      } catch(e) { /* ignore — new lines from SSE will populate the div */ }
-    }
-    logDiv.scrollTop = logDiv.scrollHeight;
-  }
-}
-
-function startStreaming(ucId, jobId) {
-  _setRunningUI(ucId, true);
-  // Show log area if Training panel is open; logs will backfill via toggleLogs if panel opens later
-  const logDiv = document.getElementById(`log-${ucId}`);
-  if (logDiv) { logDiv.style.display = ''; logDiv.innerHTML = ''; }
-  const logsBtn = document.getElementById(`logs-btn-${ucId}`);
-  if (logsBtn) logsBtn.textContent = '📋 Hide Logs';
-  attachStream(ucId, jobId);
-}
-
-function attachStream(ucId, jobId) {
-  if (STATE.activeStreams[ucId]) return;  // already attached
-  STATE.activeStreams[ucId] = jobId;
-
-  const es = new EventSource(`/studio/api/stream/${jobId}`);
-
-  es.onmessage = (e) => {
-    const msg = JSON.parse(e.data);
-    const logDiv = document.getElementById(`log-${ucId}`);
-    if (msg.type === 'log' && logDiv) {
-      logDiv.innerHTML += `<div>${escHtml(msg.line)}</div>`;
-      logDiv.scrollTop = logDiv.scrollHeight;
-      if (_looksLikeError(msg.line || '')) showErrToast(msg.line);
-    }
-    if (msg.type === 'done' || msg.type === 'error') {
-      es.close();
-      delete STATE.activeStreams[ucId];
-      _setRunningUI(ucId, false);
-      loadRegistry();  // reload once on completion to update phase/PRS badges
-    }
-  };
-  es.onerror = () => {
-    es.close();
-    delete STATE.activeStreams[ucId];
-    // Check if job is still running server-side; reconnect if so
-    fetch(`/studio/api/uc/${ucId}/logs`)
-      .then(r => r.json())
-      .then(d => {
-        if (d.status === 'running') {
-          setTimeout(() => attachStream(ucId, jobId), 2000);
-        } else {
-          _setRunningUI(ucId, false);
-          loadRegistry();
-        }
-      })
-      .catch(() => { _setRunningUI(ucId, false); loadRegistry(); });
-  };
-}
-
-async function stopJob(ucId) {
-  const jobId = STATE.activeStreams[ucId];
-  if (!jobId) return;
-  await fetch(`/studio/api/job/${jobId}`, {method:'DELETE'});
-  delete STATE.activeStreams[ucId];
-  _setRunningUI(ucId, false);
-}
-
-// ── New UC ────────────────────────────────────────────────────────────────────
-function showNewUcForm() { document.getElementById('new-uc-bar').classList.add('visible'); }
-function hideNewUcForm() { document.getElementById('new-uc-bar').classList.remove('visible'); }
-
-async function createUc() {
-  const id   = document.getElementById('new-uc-id').value.trim();
-  const name = document.getElementById('new-uc-name').value.trim() || id;
-  if (!id) { alert('ID is required'); return; }
-  const r = await fetch('/studio/api/uc/new', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({id, display_name: name})
-  });
-  if (!r.ok) { alert('Failed to create use case'); return; }
-  hideNewUcForm();
-  document.getElementById('new-uc-id').value = '';
-  document.getElementById('new-uc-name').value = '';
-  await loadRegistry();
-}
-
-// ── API Keys ──────────────────────────────────────────────────────────────────
-function showApiKeys() {
-  document.getElementById('key-gemini').value = localStorage.getItem('kvf_gemini_key') || '';
-  document.getElementById('key-openai').value = localStorage.getItem('kvf_openai_key') || '';
-  document.getElementById('keys-modal').style.display = 'flex';
-}
-function closeApiKeys() { document.getElementById('keys-modal').style.display = 'none'; }
-function saveApiKeys() {
-  localStorage.setItem('kvf_gemini_key', document.getElementById('key-gemini').value);
-  localStorage.setItem('kvf_openai_key', document.getElementById('key-openai').value);
-  closeApiKeys();
-}
-function loadApiKeysFromStorage() {
-  // Keys are available via localStorage in JS; no server round-trip needed
-}
-
-// ── Nav helpers ───────────────────────────────────────────────────────────────
-function navTo(where) {
-  if (where === 'hub') {
-    document.getElementById('bc-current').textContent = 'Studio Hub';
-    loadRegistry();
-  }
-}
-function scrollToUc(ucId) {
-  const el = document.getElementById(`uc-${ucId}`);
-  if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
-}
-function toggleUcCard(ucId) {
-  const chips = document.getElementById(`chips-${ucId}`);
-  if (chips) chips.style.display = chips.style.display === 'none' ? '' : 'none';
-}
-function showSettings() { alert('Settings coming soon.'); }
 function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-// ── Wizard ────────────────────────────────────────────────────────────────────
-var _wzUcId = null, _wzStep = 1;
-
-function openWizard(ucId, ucName) {
-  _wzUcId = ucId; _wzStep = 1;
-  document.getElementById('wz-uc-name').textContent = 'Use Case: ' + ucName;
-  document.querySelectorAll('.wz-radio').forEach(function(r) { r.classList.remove('selected'); });
-  document.querySelectorAll('input[name="wz-step"]').forEach(function(r) { r.checked = false; });
-  document.getElementById('wz-epochs').value = '';
-  document.getElementById('wz-top-k').value = '';
-  document.getElementById('wz-faq-count').value = '';
-  document.querySelectorAll('.wz-err').forEach(function(e) { e.classList.remove('visible'); });
-  _wzShowStep(1);
-  document.getElementById('wizard-overlay').classList.add('open');
+// Sidebar toggle
+let sidebarCollapsed = false;
+function toggleSidebar() {
+  sidebarCollapsed = !sidebarCollapsed;
+  document.getElementById('sidebar').classList.toggle('collapsed', sidebarCollapsed);
+  document.getElementById('sidebar-toggle-btn').textContent = sidebarCollapsed ? '›' : '‹';
 }
 
-function closeWizard() {
-  document.getElementById('wizard-overlay').classList.remove('open');
+// Theme toggle
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.dataset.theme === 'dark';
+  html.dataset.theme = isDark ? 'light' : 'dark';
+  document.getElementById('theme-icon').textContent = isDark ? '🌙' : '☀️';
 }
 
-function _wzShowStep(n) {
-  _wzStep = n;
-  document.querySelectorAll('.wz-section').forEach(function(s) { s.classList.remove('visible'); });
-  document.getElementById('wz-step'+n).classList.add('visible');
-  [1,2,3].forEach(function(i) {
-    var el = document.getElementById('wz-s'+i);
-    if (!el) return;
-    el.className = 'wz-step' + (i < n ? ' done' : i === n ? ' active' : '');
-  });
-  document.getElementById('wz-back').style.display = n > 1 ? '' : 'none';
-  document.getElementById('wz-next').textContent = n < 3 ? 'Next →' : '🚀 Launch';
+// Profile dropdown
+function toggleProfile(e) {
+  e.stopPropagation();
+  const m = document.getElementById('profileMenu');
+  m.style.display = m.style.display === 'none' ? '' : 'none';
 }
-
-function wzBack() { if (_wzStep > 1) _wzShowStep(_wzStep - 1); }
-
-function _wzSelectedStep() {
-  var r = document.querySelector('input[name="wz-step"]:checked');
-  return r ? r.value : null;
-}
-
-function _wzShowParams(step) {
-  document.getElementById('wz-params-train').style.display = (step === 'train' || step === 'prs-eval') ? '' : 'none';
-  document.getElementById('wz-params-sleep-faq').style.display = step === 'sleep-faq' ? '' : 'none';
-  document.getElementById('wz-params-default').style.display = (!step || step === 'index' || step === 'recompute') ? '' : 'none';
-}
-
-function _wzBuildReview(step) {
-  var rows = [['Step', step], ['Use Case', _wzUcId]];
-  var epochs = document.getElementById('wz-epochs').value;
-  var topK = document.getElementById('wz-top-k').value;
-  var faqCount = document.getElementById('wz-faq-count').value;
-  if (epochs) rows.push(['Epochs', epochs]);
-  if (topK) rows.push(['Top-K', topK]);
-  if (faqCount) rows.push(['FAQ count', faqCount]);
-  document.getElementById('wz-review').innerHTML = rows.map(function(kv) {
-    return '<div class="wz-review-row"><span class="wz-review-key">'+kv[0]+'</span><span class="wz-review-val">'+kv[1]+'</span></div>';
-  }).join('');
-}
-
-async function wzNext() {
-  if (_wzStep === 1) {
-    var step = _wzSelectedStep();
-    var err = document.getElementById('wz-err1');
-    if (!step) { err.textContent = 'Please select a step.'; err.classList.add('visible'); return; }
-    err.classList.remove('visible');
-    _wzShowParams(step);
-    _wzShowStep(2);
-  } else if (_wzStep === 2) {
-    var step = _wzSelectedStep();
-    var body = { step: step };
-    var epochsVal = parseInt(document.getElementById('wz-epochs').value);
-    var topKVal = parseInt(document.getElementById('wz-top-k').value);
-    var faqCountVal = parseInt(document.getElementById('wz-faq-count').value);
-    if (!isNaN(epochsVal)) body.epochs = epochsVal;
-    if (!isNaN(topKVal)) body.top_k = topKVal;
-    if (!isNaN(faqCountVal)) body.faq_count = faqCountVal;
-    var err = document.getElementById('wz-err2');
-    try {
-      var resp = await fetch('/studio/api/wizard-validate', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
-      var data = await resp.json();
-      if (!data.ok) { err.textContent = data.errors.join(' · '); err.classList.add('visible'); return; }
-    } catch(e) { /* offline — skip validation */ }
-    err.classList.remove('visible');
-    _wzBuildReview(step);
-    _wzShowStep(3);
-  } else if (_wzStep === 3) {
-    var step = _wzSelectedStep();
-    var err = document.getElementById('wz-err3');
-    try {
-      var resp = await fetch('/studio/api/run-step', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({uc_id: _wzUcId, step: step})});
-      var data = await resp.json();
-      if (resp.ok) {
-        closeWizard();
-        await loadRegistry();
-        startStreaming(_wzUcId, data.job_id);
-      } else {
-        err.textContent = data.detail || 'Launch failed'; err.classList.add('visible');
-      }
-    } catch(e) {
-      err.textContent = 'Network error: ' + e.message; err.classList.add('visible');
-    }
-  }
-}
-
-document.querySelectorAll('.wz-radio').forEach(function(label) {
-  label.addEventListener('click', function() {
-    document.querySelectorAll('.wz-radio').forEach(function(r) { r.classList.remove('selected'); });
-    label.classList.add('selected');
-  });
+document.addEventListener('click', function() {
+  const m = document.getElementById('profileMenu');
+  if (m) m.style.display = 'none';
 });
 
-// ── Connectivity Status ───────────────────────────────────────────────────────
-var _connPort = null;
-
-function setConnPort(port) {
-  _connPort = port;
-}
-
-function _setConnDot(id, status) {
-  var el = document.getElementById('cd-' + id);
-  if (!el) return;
-  el.className = 'conn-dot' + (status === 'ok' ? ' ok' : status === 'fail' ? ' fail' : '');
-}
-
-async function pollConnectivity() {
-  if (!_connPort) return;
-  try {
-    var resp = await fetch('http://' + location.hostname + ':' + _connPort + '/api/connectivity', {signal: AbortSignal.timeout(3000)});
-    if (!resp.ok) throw new Error('non-200');
-    var data = await resp.json();
-    _setConnDot('qdrant', data.qdrant && data.qdrant.ok ? 'ok' : 'fail');
-    _setConnDot('gpu',    data.gpu    && data.gpu.ok    ? 'ok' : 'fail');
-    _setConnDot('llm',   data.llm    && data.llm.ok    ? 'ok' : 'fail');
-  } catch(e) {
-    ['qdrant','gpu','llm'].forEach(function(k) { _setConnDot(k, 'fail'); });
-  }
-}
-
-setInterval(pollConnectivity, 30000);
-
-// ── Error Assistant ───────────────────────────────────────────────────────────
-var _ERR_PATTERNS = ['traceback','error:','exception:','errno','attributeerror','importerror','modulenotfounderror','valueerror','runtimeerror','[studio] failed'];
-// Lines that look like errors but are harmless warnings from libraries
-var _BENIGN_PATTERNS = ['[w:onnxruntime','discoverdevices','readfilecontents failed','[transformers]','deprecat'];
-var _errToastTimer = null;
-
-function _looksLikeError(line) {
-  var l = line.toLowerCase();
-  if (_BENIGN_PATTERNS.some(function(p) { return l.includes(p); })) return false;
-  return _ERR_PATTERNS.some(function(p) { return l.includes(p); });
-}
-
-async function showErrToast(errLine) {
-  var toast = document.getElementById('err-toast');
-  var msgEl = document.getElementById('err-toast-msg');
-  var hintEl = document.getElementById('err-toast-hint');
-  msgEl.textContent = errLine.substring(0, 200);
-  hintEl.className = 'err-toast-hint';
-  hintEl.textContent = '';
-  toast.className = 'err-toast visible';
-  if (_errToastTimer) clearTimeout(_errToastTimer);
-  _errToastTimer = setTimeout(dismissErrToast, 15000);
-
-  if (!_connPort) return;
-  try {
-    var url = 'http://' + location.hostname + ':' + _connPort + '/api/error-hint?msg=' + encodeURIComponent(errLine);
-    var resp = await fetch(url, {signal: AbortSignal.timeout(3000)});
-    if (resp.ok) {
-      var data = await resp.json();
-      if (data.hint) {
-        hintEl.textContent = '&#128161; ' + data.hint;
-        hintEl.className = 'err-toast-hint visible';
-      }
-    }
-  } catch(e) {}
-}
-
-function dismissErrToast() {
-  document.getElementById('err-toast').className = 'err-toast';
-  if (_errToastTimer) { clearTimeout(_errToastTimer); _errToastTimer = null; }
+// Toast
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.classList.remove('show'); }, 3000);
 }
 </script>
-
-<!-- Pipeline Wizard Modal -->
-<div class="wizard-overlay" id="wizard-overlay" onclick="if(event.target===this)closeWizard()">
-  <div class="wizard-box">
-    <span style="position:absolute;top:12px;right:16px;cursor:pointer;color:#64748b;font-size:1.1em" onclick="closeWizard()">&#x2715;</span>
-    <h2>Launch Pipeline Step</h2>
-    <div style="font-size:11px;color:#64748b;margin-bottom:12px" id="wz-uc-name">Use Case: —</div>
-    <div class="wizard-steps">
-      <div class="wz-step active" id="wz-s1"></div>
-      <div class="wz-step" id="wz-s2"></div>
-      <div class="wz-step" id="wz-s3"></div>
-    </div>
-
-    <!-- Step 1: Select step -->
-    <div class="wz-section visible" id="wz-step1">
-      <div style="font-size:13px;font-weight:600;color:#a78bfa;margin-bottom:10px">1 · Select pipeline step</div>
-      <div class="wz-radio-group" id="wz-step-radios">
-        <label class="wz-radio"><input type="radio" name="wz-step" value="index" style="accent-color:#7c3aed"><div><div class="wz-radio-title">Index Documents</div><div class="wz-radio-sub">Chunk → embed → store KV tensors in vector store</div></div></label>
-        <label class="wz-radio"><input type="radio" name="wz-step" value="train" style="accent-color:#7c3aed"><div><div class="wz-radio-title">Train LoRA</div><div class="wz-radio-sub">Fine-tune with tier-weighted FAQ replay buffer</div></div></label>
-        <label class="wz-radio"><input type="radio" name="wz-step" value="prs-eval" style="accent-color:#7c3aed"><div><div class="wz-radio-title">Evaluate PRS</div><div class="wz-radio-sub">Score parametric readiness; may trigger phase advance</div></div></label>
-        <label class="wz-radio"><input type="radio" name="wz-step" value="sleep-faq" style="accent-color:#7c3aed"><div><div class="wz-radio-title">Generate FAQs</div><div class="wz-radio-sub">Offline FAQ generation via cloud LLM (sleep-time)</div></div></label>
-        <label class="wz-radio"><input type="radio" name="wz-step" value="recompute" style="accent-color:#7c3aed"><div><div class="wz-radio-title">Recompute KV Tensors</div><div class="wz-radio-sub">Refresh stale KV caches after LoRA version bump</div></div></label>
-      </div>
-      <div class="wz-err" id="wz-err1">Please select a step.</div>
-    </div>
-
-    <!-- Step 2: Parameters -->
-    <div class="wz-section" id="wz-step2">
-      <div style="font-size:13px;font-weight:600;color:#a78bfa;margin-bottom:10px">2 · Configure parameters</div>
-      <div id="wz-params-train">
-        <label class="wz-label">Epochs (leave blank to use config default)</label>
-        <input class="wz-input" type="number" id="wz-epochs" min="1" max="20" placeholder="e.g. 3">
-        <label class="wz-label">Top-K chunks for context</label>
-        <input class="wz-input" type="number" id="wz-top-k" min="1" max="50" placeholder="e.g. 5">
-      </div>
-      <div id="wz-params-sleep-faq" style="display:none">
-        <label class="wz-label">FAQ count to generate</label>
-        <input class="wz-input" type="number" id="wz-faq-count" min="5" max="500" placeholder="e.g. 50">
-      </div>
-      <div id="wz-params-default" style="display:none">
-        <p style="color:#64748b;font-size:12px">No extra parameters needed — uses values from config.json.</p>
-      </div>
-      <div class="wz-err" id="wz-err2"></div>
-    </div>
-
-    <!-- Step 3: Review & Launch -->
-    <div class="wz-section" id="wz-step3">
-      <div style="font-size:13px;font-weight:600;color:#a78bfa;margin-bottom:10px">3 · Review &amp; Launch</div>
-      <div id="wz-review"></div>
-      <div class="wz-err" id="wz-err3"></div>
-    </div>
-
-    <div class="wz-nav">
-      <button class="btn btn-ghost" id="wz-back" onclick="wzBack()" style="display:none">&#8592; Back</button>
-      <button class="btn btn-primary" id="wz-next" onclick="wzNext()">Next &#8594;</button>
-    </div>
-  </div>
-</div>
-
-<!-- Error Assistant Toast -->
-<div class="err-toast" id="err-toast">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-    <div style="flex:1">
-      <div class="err-toast-title">&#9888; Error Detected</div>
-      <div id="err-toast-msg"></div>
-      <div class="err-toast-hint" id="err-toast-hint"></div>
-    </div>
-    <span style="cursor:pointer;color:#64748b;flex-shrink:0;padding:2px" onclick="dismissErrToast()">&#x2715;</span>
-  </div>
-</div>
 </body>
 </html>
