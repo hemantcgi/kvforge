@@ -74,16 +74,25 @@ def app_server(db_path):
 # ── JWT cookie helpers ────────────────────────────────────────────────────────
 
 def _seed_user(db_path: Path, email: str, role: str, secret: str) -> str:
-    """Insert a user directly into the test DB; return a signed JWT."""
+    """Insert a user directly into the test DB; return a signed JWT.
+
+    If a user with this email already exists, reuse their id so that the JWT
+    sub claim always matches the users table (avoids 401 on repeated calls
+    with the same email across function-scoped fixtures).
+    """
     import sqlite3, bcrypt
     con = sqlite3.connect(str(db_path))
     con.row_factory = sqlite3.Row
-    uid = str(uuid.uuid4())
-    hashed = bcrypt.hashpw(b"testpass123", bcrypt.gensalt(rounds=4)).decode()
-    con.execute(
-        "INSERT OR IGNORE INTO users(id,email,hashed_pw,role,provider) VALUES(?,?,?,?,?)",
-        (uid, email, hashed, role, "local")
-    )
+    existing = con.execute("SELECT id FROM users WHERE email=?", (email,)).fetchone()
+    if existing:
+        uid = existing["id"]
+    else:
+        uid = str(uuid.uuid4())
+        hashed = bcrypt.hashpw(b"testpass123", bcrypt.gensalt(rounds=4)).decode()
+        con.execute(
+            "INSERT INTO users(id,email,hashed_pw,role,provider) VALUES(?,?,?,?,?)",
+            (uid, email, hashed, role, "local")
+        )
     exp = datetime.now(timezone.utc) + timedelta(hours=2)
     tok = pyjwt.encode({"sub": uid, "role": role, "exp": exp}, secret, algorithm="HS256")
     sid = str(uuid.uuid4())
