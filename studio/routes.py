@@ -64,6 +64,16 @@ def connectors_page(request: Request):
     return (TEMPLATES / "connectors.html").read_text()
 
 
+@router.get("/admin/users", response_class=HTMLResponse)
+def admin_users_page(request: Request):
+    u = getattr(request.state, "user", None)
+    if not u or u.role != "admin":
+        return HTMLResponse(
+            "<h1 style='color:#ce9178;font-family:sans-serif;padding:40px'>403 Forbidden</h1>",
+            status_code=403)
+    return (TEMPLATES / "auth" / "admin_users.html").read_text()
+
+
 # ── SSE stream ────────────────────────────────────────────────────────────────
 
 @router.get("/api/stream/{job_id}")
