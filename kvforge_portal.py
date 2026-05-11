@@ -27,6 +27,8 @@ from auth.middleware import AuthMiddleware
 from auth.routes import router as _auth_router
 from auth.oauth import router as _oauth_router
 from connectors.routes import connector_router, _sync_runs_router
+from sync.scheduler import SyncScheduler
+from connectors.sync_engine import make_default_engine
 
 try:
     import anthropic as _anthropic_mod
@@ -90,11 +92,20 @@ USE_CASES = [
 ]
 
 
+_scheduler: SyncScheduler | None = None
+
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
+    global _scheduler
     import db.store as store
     store.migrate()
+    engine = make_default_engine()
+    _scheduler = SyncScheduler(run_fn=engine.run)
+    _scheduler.load_from_db()
+    _scheduler.start()
     yield
+    if _scheduler:
+        _scheduler.shutdown()
 
 
 app = FastAPI(title="KVForge Portal", lifespan=_lifespan)

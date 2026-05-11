@@ -1,43 +1,58 @@
-import sys, time
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# tests/test_sync_scheduler.py
+import os, uuid, pytest
+os.environ.setdefault("KVFORGE_SECRET_KEY", "test-secret-32bytesXXXXXXXXXXXX")
 
+import db.store as store
+from sync.scheduler import SyncScheduler
 
-def test_scheduler_runs_job():
-    from core.sync_scheduler import APSchedulerBackend
-    results = []
-    sched = APSchedulerBackend()
-    sched.start()
-    job_id = sched.schedule("uc1", interval_minutes=1, fn=lambda: results.append(1))
-    sched.trigger_now(job_id)
-    time.sleep(0.5)
-    sched.stop()
-    assert len(results) >= 1
+@pytest.fixture(autouse=True)
+def _set_secret(monkeypatch):
+    monkeypatch.setenv("KVFORGE_SECRET_KEY", "test-secret-32bytesXXXXXXXXXXXX")
 
+@pytest.fixture(autouse=True)
+def _reset_store():
+    yield
+    store.close()
 
-def test_scheduler_cancel_job():
-    from core.sync_scheduler import APSchedulerBackend
-    results = []
-    sched = APSchedulerBackend()
-    sched.start()
-    job_id = sched.schedule("uc1", interval_minutes=60, fn=lambda: results.append(1))
-    sched.cancel(job_id)
+def _setup(tmp_path, monkeypatch):
+    monkeypatch.setattr(store, "DB_PATH", tmp_path / "sched.db")
+    store._local.__dict__.clear()
+    store.migrate()
+    admin_id = str(uuid.uuid4())
+    store.execute("INSERT INTO users(id,email,role,provider) VALUES(?,?,?,?)",
+                  (admin_id, "a@b.com", "admin", "local"))
+    cid = str(uuid.uuid4())
+    store.execute(
+        "INSERT INTO connector_configs(id,type,name,credentials_json,schedule_cron,created_by) VALUES(?,?,?,?,?,?)",
+        (cid, "s3", "S3", '{"k":"v"}', "*/5 * * * *", admin_id)
+    )
+    store.execute("INSERT INTO connector_uc_scopes(connector_id,uc_id,scope_config_json) VALUES(?,?,?)",
+                  (cid, "uc1", '{"bucket":"b"}'))
+    store.commit()
+    return cid
+
+def test_scheduler_registers_jobs(tmp_path, monkeypatch):
+    cid = _setup(tmp_path, monkeypatch)
+    async def fake_run(connector_id, uc_id, trigger):
+        pass
+    sched = SyncScheduler(run_fn=fake_run)
+    sched.load_from_db()
     jobs = sched.list_jobs()
-    assert not any(j.job_id == job_id for j in jobs)
-    sched.stop()
+    assert len(jobs) >= 1
+    assert any(j["connector_id"] == cid for j in jobs)
 
-
-def test_scheduler_list_jobs():
-    from core.sync_scheduler import APSchedulerBackend
-    sched = APSchedulerBackend()
-    sched.start()
-    job_id = sched.schedule("uc2", interval_minutes=30, fn=lambda: None)
+def test_scheduler_reschedule(tmp_path, monkeypatch):
+    cid = _setup(tmp_path, monkeypatch)
+    sched = SyncScheduler(run_fn=lambda *a: None)
+    sched.load_from_db()
+    sched.reschedule(cid, "0 * * * *")
     jobs = sched.list_jobs()
-    assert any(j.uc_name == "uc2" and j.interval_minutes == 30 for j in jobs)
-    sched.stop()
+    assert any(j["connector_id"] == cid for j in jobs)
 
-
-def test_sync_scheduler_protocol_satisfied():
-    from core.sync_scheduler import APSchedulerBackend, SyncScheduler
-    sched = APSchedulerBackend()
-    assert isinstance(sched, SyncScheduler)
+def test_scheduler_remove(tmp_path, monkeypatch):
+    cid = _setup(tmp_path, monkeypatch)
+    sched = SyncScheduler(run_fn=lambda *a: None)
+    sched.load_from_db()
+    sched.remove(cid)
+    jobs = sched.list_jobs()
+    assert not any(j["connector_id"] == cid for j in jobs)
