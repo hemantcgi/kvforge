@@ -11,8 +11,8 @@ from auth.models import User
 
 SECRET = os.environ.get("KVFORGE_SECRET_KEY", "dev-secret-change-me")
 
-_PUBLIC_PREFIXES = ("/auth/", "/webhooks/", "/static/")
-_API_PREFIXES = ("/studio/api/", "/sync/", "/api/")
+_PUBLIC_PREFIXES = ("/auth/", "/webhooks/", "/static/", "/api/", "/kvq", "/ab-eval/")
+_API_PREFIXES = ("/studio/api/", "/sync/")
 
 
 class AuthMiddleware(BaseHTTPMiddleware):

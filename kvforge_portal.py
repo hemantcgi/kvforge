@@ -21,6 +21,11 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
+from starlette.middleware.sessions import SessionMiddleware
+
+from auth.middleware import AuthMiddleware
+from auth.routes import router as _auth_router
+from auth.oauth import router as _oauth_router
 
 try:
     import anthropic as _anthropic_mod
@@ -86,13 +91,22 @@ USE_CASES = [
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
+    import db.store as store
+    store.migrate()
     yield
 
 
 app = FastAPI(title="KVForge Portal", lifespan=_lifespan)
 
+# Middleware (added in reverse order — last added = outermost in Starlette)
+# SessionMiddleware must be outermost so request.session is available to AuthMiddleware
+app.add_middleware(AuthMiddleware)
+app.add_middleware(SessionMiddleware, secret_key=os.environ.get("KVFORGE_SECRET_KEY", "dev-secret"))
+
 from studio.routes import router as _studio_router
 app.include_router(_studio_router, prefix="/studio")
+app.include_router(_auth_router)
+app.include_router(_oauth_router)
 
 
 @app.get("/api/status")
