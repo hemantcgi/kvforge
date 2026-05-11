@@ -26,6 +26,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from auth.middleware import AuthMiddleware
 from auth.routes import router as _auth_router
 from auth.oauth import router as _oauth_router
+from connectors.routes import connector_router, _sync_runs_router
 
 try:
     import anthropic as _anthropic_mod
@@ -107,6 +108,8 @@ from studio.routes import router as _studio_router
 app.include_router(_studio_router, prefix="/studio")
 app.include_router(_auth_router)
 app.include_router(_oauth_router)
+app.include_router(connector_router)
+app.include_router(_sync_runs_router)
 
 
 @app.get("/api/status")
