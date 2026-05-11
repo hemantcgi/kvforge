@@ -98,6 +98,10 @@ _scheduler: SyncScheduler | None = None
 async def _lifespan(app: FastAPI):
     global _scheduler
     import db.store as store
+    import os as _os
+    _db_override = _os.environ.get("KVFORGE_DB_PATH")
+    if _db_override:
+        store.DB_PATH = Path(_db_override)
     store.migrate()
     engine = make_default_engine()
     _scheduler = SyncScheduler(run_fn=engine.run)
