@@ -177,6 +177,21 @@ async def delete_scope(cid: str, uc_id: str, request: Request):
     return {"ok": True}
 
 
+@connector_router.post("/{cid}/sync")
+async def trigger_sync(cid: str, request: Request):
+    if err := _require_role(request, _EDITOR_UP):
+        return err
+    scopes = _registry.list_scopes(cid)
+    if not scopes:
+        return JSONResponse({"detail": "no scopes configured for this connector"}, status_code=400)
+    from connectors.sync_engine import make_default_engine
+    import asyncio
+    engine = make_default_engine()
+    for scope in scopes:
+        asyncio.create_task(engine.run(cid, scope["uc_id"], "manual"))
+    return {"ok": True, "triggered_scopes": [s["uc_id"] for s in scopes]}
+
+
 # Sync-runs router — included separately in portal
 _sync_runs_router = APIRouter(prefix="/studio/api", tags=["sync-runs"])
 
