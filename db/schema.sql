@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
     provider TEXT NOT NULL DEFAULT 'local',
     provider_id TEXT,
     invited_by TEXT REFERENCES users(id),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(provider, provider_id)
 );
 CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY,

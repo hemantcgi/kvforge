@@ -38,3 +38,10 @@ def migrate() -> None:
     schema = (Path(__file__).parent / "schema.sql").read_text()
     _conn().executescript(schema)
     _conn().commit()
+
+
+def close() -> None:
+    conn = getattr(_local, "conn", None)
+    if conn:
+        conn.close()
+        _local.conn = None
