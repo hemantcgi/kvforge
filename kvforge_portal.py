@@ -124,6 +124,10 @@ app.include_router(connector_router)
 app.include_router(_sync_runs_router)
 app.include_router(progress_router)
 
+from sync.webhook import make_webhook_router as _make_wh
+_engine_for_wh = make_default_engine()
+app.include_router(_make_wh(run_fn=_engine_for_wh.run))
+
 
 @app.get("/api/status")
 async def get_status():
