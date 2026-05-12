@@ -70,14 +70,7 @@ def migrate_existing_use_cases(root: Path = ROOT):
         uc_config_path = config_path.parent / "uc_config.json"
         uc_config_path.write_text(json.dumps(uc_config, indent=2))
 
-        # Add to registry if not already present
-        if uc_id not in existing_ids:
-            registry["use_cases"].append({
-                "id":           uc_id,
-                "display_name": uc_config["display_name"],
-                "type":         "example",
-            })
-            existing_ids.add(uc_id)
+        # Do NOT auto-register example UCs — users add them via the wizard
 
     registry_path.write_text(json.dumps(registry, indent=2))
 

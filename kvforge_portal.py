@@ -420,255 +420,204 @@ PORTAL_HTML = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KVForge Dashboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KVForge — Progressive RAG Platform</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: monospace;
-    background: #0d1117;
-    color: #e6edf3;
-    min-height: 100vh;
-    padding: 32px 24px;
-  }
-  header {
-    text-align: center;
-    margin-bottom: 48px;
-  }
-  header h1 {
-    font-size: 2.4em;
-    color: #7af;
-    letter-spacing: 2px;
-  }
-  header p {
-    color: #8b949e;
-    margin-top: 8px;
-    font-size: 0.95em;
-  }
-  .badge {
-    display: inline-block;
-    background: #1f2937;
-    border: 1px solid #374151;
-    border-radius: 4px;
-    padding: 2px 8px;
-    font-size: 0.75em;
-    color: #9ca3af;
-    margin-top: 6px;
-  }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-  .card {
-    background: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 8px;
-    padding: 24px;
-    transition: border-color 0.2s, transform 0.15s;
-    cursor: pointer;
-    text-decoration: none;
-    color: inherit;
-    display: block;
-  }
-  .card:hover {
-    border-color: var(--accent);
-    transform: translateY(-2px);
-  }
-  .card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-  }
-  .card-title {
-    font-size: 0.8em;
-    color: #8b949e;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-  .card-subtitle {
-    font-size: 1.1em;
-    color: var(--accent);
-    font-weight: bold;
-    margin: 4px 0 10px;
-  }
-  .card-desc {
-    font-size: 0.82em;
-    color: #8b949e;
-    line-height: 1.5;
-  }
-  .status-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #374151;
-    flex-shrink: 0;
-    transition: background 0.3s;
-  }
-  .status-dot.online { background: #22c55e; box-shadow: 0 0 6px #22c55e88; }
-  .status-dot.offline { background: #ef4444; }
-  .status-dot.error  { background: #f59e0b; }
-  .phase-badge {
-    display: inline-block;
-    padding: 2px 7px;
-    border-radius: 3px;
-    font-size: 0.72em;
-    font-weight: bold;
-    letter-spacing: 0.5px;
-    margin-left: 6px;
-    vertical-align: middle;
-  }
-  .phase-badge.p1 { background: #1f3a5f; color: #7ab8ff; }
-  .phase-badge.p2 { background: #1f4a2f; color: #7aff9e; }
-  .phase-badge.p3 { background: #3a1f4a; color: #c97aff; }
-  .phase-badge.unknown { background: #2a2a2a; color: #666; }
-  .card-meta {
-    margin-top: 14px;
-    border-top: 1px solid #21262d;
-    padding-top: 10px;
-    display: grid;
-    grid-template-columns: 80px 1fr;
-    gap: 4px 8px;
-    font-size: 0.75em;
-  }
-  .meta-key { color: #6b7280; align-self: center; }
-  .meta-val { color: #8b949e; text-decoration: none; word-break: break-all; }
-  .meta-val:hover { color: #e6edf3; }
-  .meta-val a { color: inherit; text-decoration: none; }
-  .meta-val a:hover { color: #7ab8ff; }
-  .prs-good { color: #22c55e !important; }
-  .prs-amber { color: #f59e0b !important; }
-  .prs-none { color: #6b7280 !important; }
-  .footer {
-    text-align: center;
-    margin-top: 48px;
-    color: #484f58;
-    font-size: 0.8em;
-  }
-  .arch {
-    max-width: 700px;
-    margin: 0 auto 48px;
-    background: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 8px;
-    padding: 20px 24px;
-    font-size: 0.82em;
-    color: #8b949e;
-    line-height: 1.7;
-  }
-  .arch h2 { color: #7af; margin-bottom: 8px; font-size: 0.95em; letter-spacing: 1px; text-transform: uppercase; }
-  .phase { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.85em; margin-right: 4px; }
-  .p1 { background: #1f3a5f; color: #7ab8ff; }
-  .p2 { background: #1f4a2f; color: #7aff9e; }
-  .p3 { background: #3a1f4a; color: #c97aff; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0e14;color:#c9d1d9;min-height:100vh;}
+
+/* NAV */
+.nav{height:52px;display:flex;align-items:center;padding:0 40px;border-bottom:1px solid #1c2230;background:#0d1117;position:sticky;top:0;z-index:100;}
+.nav-brand{font-size:17px;font-weight:800;color:#58a6ff;letter-spacing:-.3px;display:flex;align-items:center;gap:8px;}
+.nav-logo{width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#0052CC,#00875A);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;}
+.nav-sp{flex:1;}
+.nav-link{font-size:13px;color:#8b949e;text-decoration:none;padding:6px 12px;border-radius:5px;transition:color .15s,background .15s;}
+.nav-link:hover{color:#e6edf3;background:#161b22;}
+.btn-signin{font-size:13px;font-weight:600;color:#c9d1d9;background:#21262d;border:1px solid #30363d;border-radius:6px;padding:6px 16px;text-decoration:none;transition:all .15s;}
+.btn-signin:hover{background:#30363d;border-color:#8b949e;}
+.btn-signup{font-size:13px;font-weight:700;color:#0d1117;background:#58a6ff;border:none;border-radius:6px;padding:6px 18px;text-decoration:none;margin-left:8px;transition:opacity .15s;}
+.btn-signup:hover{opacity:.88;}
+
+/* HERO */
+.hero{text-align:center;padding:96px 24px 80px;max-width:800px;margin:0 auto;}
+.hero-tag{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#58a6ff;background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.25);border-radius:20px;padding:4px 14px;margin-bottom:24px;}
+.hero h1{font-size:52px;font-weight:800;line-height:1.1;color:#e6edf3;margin-bottom:20px;letter-spacing:-.5px;}
+.hero h1 span{background:linear-gradient(90deg,#58a6ff,#3fb950);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero-sub{font-size:18px;color:#8b949e;line-height:1.6;max-width:600px;margin:0 auto 40px;}
+.hero-cta{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;}
+.cta-primary{display:inline-block;font-size:15px;font-weight:700;color:#0d1117;background:#58a6ff;border-radius:8px;padding:12px 32px;text-decoration:none;transition:opacity .15s;}
+.cta-primary:hover{opacity:.88;}
+.cta-secondary{display:inline-block;font-size:15px;font-weight:600;color:#c9d1d9;background:#21262d;border:1px solid #30363d;border-radius:8px;padding:12px 28px;text-decoration:none;transition:all .15s;}
+.cta-secondary:hover{background:#30363d;border-color:#8b949e;}
+
+/* PHASES */
+.phases{display:flex;align-items:center;justify-content:center;gap:0;max-width:760px;margin:0 auto 96px;padding:0 24px;flex-wrap:wrap;}
+.phase-step{background:#0d1117;border:1px solid #21262d;border-radius:10px;padding:20px 22px;flex:1;min-width:200px;text-align:center;}
+.phase-arrow{font-size:18px;color:#30363d;padding:0 8px;flex-shrink:0;}
+.phase-num{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;}
+.p1 .phase-num{color:#58a6ff;} .p2 .phase-num{color:#3fb950;} .p3 .phase-num{color:#bc8cff;}
+.phase-title{font-size:14px;font-weight:700;color:#e6edf3;margin-bottom:6px;}
+.phase-desc{font-size:12px;color:#8b949e;line-height:1.5;}
+
+/* FEATURES */
+.section{padding:0 24px 96px;max-width:1100px;margin:0 auto;}
+.section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#8b949e;text-align:center;margin-bottom:12px;}
+.section-title{font-size:30px;font-weight:800;color:#e6edf3;text-align:center;margin-bottom:48px;}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+@media(max-width:768px){.feat-grid{grid-template-columns:1fr;}}
+.feat-card{background:#0d1117;border:1px solid #21262d;border-radius:12px;padding:24px;transition:border-color .15s,transform .15s;}
+.feat-card:hover{border-color:#30363d;transform:translateY(-2px);}
+.feat-icon{font-size:26px;margin-bottom:14px;}
+.feat-title{font-size:15px;font-weight:700;color:#e6edf3;margin-bottom:8px;}
+.feat-desc{font-size:13px;color:#8b949e;line-height:1.6;}
+.feat-tag{display:inline-block;font-size:10px;font-weight:700;color:#3fb950;background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.2);border-radius:10px;padding:2px 8px;margin-bottom:10px;}
+
+/* GET STARTED */
+.gs-section{background:#0d1117;border-top:1px solid #21262d;border-bottom:1px solid #21262d;padding:80px 24px;margin-bottom:80px;}
+.gs-inner{max-width:840px;margin:0 auto;}
+.gs-title{font-size:26px;font-weight:800;color:#e6edf3;margin-bottom:32px;text-align:center;}
+.steps{display:flex;flex-direction:column;gap:16px;}
+.step{display:flex;gap:20px;align-items:flex-start;}
+.step-num{width:32px;height:32px;border-radius:50%;background:rgba(88,166,255,.15);border:1px solid rgba(88,166,255,.3);color:#58a6ff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.step-body{}
+.step-title{font-size:14px;font-weight:700;color:#e6edf3;margin-bottom:4px;}
+.step-desc{font-size:13px;color:#8b949e;line-height:1.5;}
+.step-code{font-family:monospace;font-size:12px;background:#161b22;border:1px solid #21262d;border-radius:5px;padding:6px 12px;color:#79c0ff;margin-top:6px;display:inline-block;}
+
+/* FOOTER */
+footer{text-align:center;padding:32px 24px;color:#484f58;font-size:12px;border-top:1px solid #161b22;}
 </style>
 </head>
 <body>
 
-<header>
-  <h1>⚡ KVForge Dashboard</h1>
-  <p>Progressive RAG · KV-Cache Injection · LoRA Fine-Tuning · Confidence-Gated Parametric Answering</p>
-  <span class="badge">4 use-case corpora · A10G GPU · Qdrant · ChromaDB · FAISS</span>
-</header>
+<nav class="nav">
+  <div class="nav-brand"><div class="nav-logo">KV</div> KVForge</div>
+  <div class="nav-sp"></div>
+  <a class="nav-link" href="/studio">Studio</a>
+  <a class="nav-link" href="/auth/signup">Docs</a>
+  <a class="btn-signin" href="/auth/login">Sign In</a>
+  <a class="btn-signup" href="/auth/signup">Get Started Free</a>
+</nav>
 
-<div class="arch">
-  <h2>How KVForge Works</h2>
-  <span class="phase p1">Phase 1</span> Standard RAG — retrieval + text-in-context &nbsp;→&nbsp;
-  <span class="phase p2">Phase 2</span> KV tensor injection (pre-computed, no re-encoding) &nbsp;→&nbsp;
-  <span class="phase p3">Phase 3</span> Confidence gate: answer from LoRA weights when PRS ≥ 0.75
+<section class="hero">
+  <div class="hero-tag">Progressive RAG · KV Cache Injection · LoRA Fine-Tuning</div>
+  <h1>RAG that gets<br><span>smarter over time</span></h1>
+  <p class="hero-sub">KVForge is an end-to-end RAG platform that starts on day one and automatically advances through three phases — from standard retrieval to full parametric answering — as your corpus matures.</p>
+  <div class="hero-cta">
+    <a class="cta-primary" href="/auth/signup">Create your workspace</a>
+    <a class="cta-secondary" href="/auth/login">Sign in</a>
+  </div>
+</section>
+
+<div class="phases">
+  <div class="phase-step p1">
+    <div class="phase-num">Phase 1</div>
+    <div class="phase-title">Text RAG</div>
+    <div class="phase-desc">Standard retrieval-augmented generation. Chunks retrieved and passed as context.</div>
+  </div>
+  <div class="phase-arrow">→</div>
+  <div class="phase-step p2">
+    <div class="phase-num">Phase 2</div>
+    <div class="phase-title">KV Injection</div>
+    <div class="phase-desc">Pre-computed KV tensors injected at query time — no re-encoding of matched chunks.</div>
+  </div>
+  <div class="phase-arrow">→</div>
+  <div class="phase-step p3">
+    <div class="phase-num">Phase 3</div>
+    <div class="phase-title">Parametric</div>
+    <div class="phase-desc">LoRA-fine-tuned model answers from weights when PRS confidence ≥ 0.75.</div>
+  </div>
 </div>
 
-<div class="grid" id="grid">
-""" + "".join(f"""
-  <a class="card" href="#" data-port="{uc['port']}"
-     id="{uc['id']}" style="--accent:{uc['color']}"
-     data-vectordb-url="{uc['vectordb_url']}"
-     data-uc-id="{uc['id']}">
-    <div class="card-header">
-      <span class="card-title">{uc['title']}</span>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <span class="phase-badge unknown" id="phase-{uc['id']}">…</span>
-        <span class="status-dot" id="dot-{uc['id']}"></span>
+<div class="section">
+  <div class="section-label">What's inside</div>
+  <div class="section-title">Everything you need in one Studio</div>
+  <div class="feat-grid">
+    <div class="feat-card">
+      <div class="feat-tag">Zero config</div>
+      <div class="feat-icon">🧙</div>
+      <div class="feat-title">Setup Wizard</div>
+      <div class="feat-desc">5-step wizard configures your data source, vector DB, embedding model, and LLM. Supports HuggingFace datasets, PDFs, live APIs (Wikipedia, FDA, EDGAR, ESPN), and S3.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-tag">4.4× compression</div>
+      <div class="feat-icon">⚡</div>
+      <div class="feat-title">TurboQuant KV Cache</div>
+      <div class="feat-desc">3-bit key / 4-bit value quantization stores pre-computed KV tensors at 4.4× compression with 0.91 recall — saving ~3.8 GB VRAM per 50k chunks.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-tag">Auto-advancing</div>
+      <div class="feat-icon">🧠</div>
+      <div class="feat-title">Corpus Intelligence</div>
+      <div class="feat-desc">CIS scoring promotes hot chunks to enhanced storage, keeps active chunks in the vector store, and archives cold content — zero manual curation.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-tag">Pluggable</div>
+      <div class="feat-icon">🧩</div>
+      <div class="feat-title">7 Connector Types</div>
+      <div class="feat-desc">Google Drive, Amazon S3, SharePoint, Wikipedia, openFDA, SEC EDGAR, and ESPN Sports — all configurable from the Studio Connectors panel.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-tag">Live sync</div>
+      <div class="feat-icon">🔄</div>
+      <div class="feat-title">Delta Sync Engine</div>
+      <div class="feat-desc">Scheduled connector sync with section-hash diffing. Only changed chunks are re-indexed and re-computed, keeping your corpus fresh without full re-runs.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-tag">Observability</div>
+      <div class="feat-icon">📊</div>
+      <div class="feat-title">Phase Monitoring</div>
+      <div class="feat-desc">Per-use-case dashboards show PRS history, tier distribution (hot/warm/cold/frozen), active jobs, and sync history — all in real time.</div>
+    </div>
+  </div>
+</div>
+
+<div class="gs-section">
+  <div class="gs-inner">
+    <div class="gs-title">Get started in minutes</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Create an account</div>
+          <div class="step-desc">Sign up at <a href="/auth/signup" style="color:#58a6ff">kvforge/signup</a>. No credit card required for local deployments.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Sign in and open Studio</div>
+          <div class="step-desc">After signing in you land on the Studio dashboard. Click <strong style="color:#e6edf3">+ New Use Case</strong> to launch the setup wizard.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Choose your data source</div>
+          <div class="step-desc">Pick a HuggingFace dataset, upload a PDF, connect a live API source, or point at an existing corpus. The wizard walks you through every setting.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Launch the pipeline</div>
+          <div class="step-desc">The wizard generates your configuration and starts the index pipeline. KVForge streams live progress in the Studio — no CLI needed.</div>
+          <div class="step-code">Setup · Index · Train · Evaluate — fully managed</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title">Watch it advance</div>
+          <div class="step-desc">KVForge automatically promotes your use case from Phase 1 → 2 → 3 as your corpus grows and PRS thresholds are met. Zero manual intervention.</div>
+        </div>
       </div>
     </div>
-    <div class="card-subtitle">{uc['subtitle']}</div>
-    <div class="card-desc">{uc['description']}</div>
-    <div class="card-meta">
-      <span class="meta-key">Vector DB</span>
-      <span class="meta-val"><a href="#" class="vectordb-link" target="_blank" rel="noopener">{uc['vectordb']} ↗</a></span>
-      <span class="meta-key">Embed</span>
-      <span class="meta-val"><a href="https://huggingface.co/{uc['embed_model']}" target="_blank" rel="noopener">{uc['embed_model'].split('/')[-1]} ↗</a></span>
-      <span class="meta-key">LLM</span>
-      <span class="meta-val"><a href="https://huggingface.co/{uc['llm_model']}" target="_blank" rel="noopener">{uc['llm_model'].split('/')[-1]} ↗</a></span>
-      <span class="meta-key">PRS</span>
-      <span class="meta-val prs-none" id="prs-{uc['id']}">—</span>
-      <span class="meta-key">KVQ</span>
-      <span class="meta-val"><a href="/kvq" target="_blank" rel="noopener">Live stats ↗</a></span>
-    </div>
-  </a>
-""" for uc in USE_CASES) + """
+  </div>
 </div>
 
-<div class="footer">
-  KVForge · hemantcgi/kvforge · status auto-refreshes every 10 s
-</div>
+<footer>KVForge Studio &middot; Progressive RAG Platform &middot; <a href="/auth/login" style="color:#58a6ff">Sign in</a> &middot; <a href="/auth/signup" style="color:#58a6ff">Get started</a></footer>
 
-<script>
-// Build dashboard and vectordb links using current hostname
-document.querySelectorAll('.card[data-port]').forEach(card => {
-  const port = card.dataset.port;
-  card.href = `http://${window.location.hostname}:${port}/`;
-  card.target = '_blank';
-
-  // Wire vectordb link
-  const vdbUrl = card.dataset.vectordbUrl;
-  const vdbLink = card.querySelector('.vectordb-link');
-  if (vdbLink) {
-    vdbLink.href = vdbUrl === 'qdrant'
-      ? `http://${window.location.hostname}:6333/dashboard`
-      : vdbUrl;
-  }
-});
-
-const PHASE_LABELS = {1: 'Phase 1', 2: 'Phase 2', 3: 'Phase 3'};
-const PHASE_CLASSES = {1: 'p1', 2: 'p2', 3: 'p3'};
-
-async function refreshStatus() {
-  try {
-    const r = await fetch('/api/status');
-    const data = await r.json();
-    for (const [id, info] of Object.entries(data)) {
-      const dot = document.getElementById('dot-' + id);
-      if (dot) { dot.className = 'status-dot ' + info.status; }
-
-      const badge = document.getElementById('phase-' + id);
-      if (badge) {
-        const p = info.phase;
-        badge.textContent = p ? PHASE_LABELS[p] || ('Phase ' + p) : (info.status === 'offline' ? 'offline' : '…');
-        badge.className = 'phase-badge ' + (p ? (PHASE_CLASSES[p] || 'unknown') : 'unknown');
-      }
-
-      const prsEl = document.getElementById('prs-' + id);
-      if (prsEl) {
-        const prs = info.prs;
-        if (prs == null) {
-          prsEl.textContent = '—';
-          prsEl.className = 'meta-val prs-none';
-        } else {
-          const color = prs >= 0.75 ? 'prs-good' : 'prs-amber';
-          prsEl.className = `meta-val ${color}`;
-          prsEl.innerHTML = `<a href="/ab-eval/${id}" target="_blank" rel="noopener">${prs.toFixed(4)} ↗</a>`;
-        }
-      }
-    }
-  } catch(e) {}
-}
-refreshStatus();
-setInterval(refreshStatus, 10000);
-</script>
 </body>
 </html>
 """
