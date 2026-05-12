@@ -112,14 +112,13 @@ def _get_pem(profile_id: str) -> str | None:
 # ── SSH helpers ───────────────────────────────────────────────────────────────
 
 def _load_pkey(pem_content: str):
-    """Try loading a PEM string as Ed25519, ECDSA, RSA, or DSS key."""
+    """Load a PEM private key; works with paramiko 3.x and 4.x."""
     import paramiko
-    for cls in (
-        paramiko.Ed25519Key,
-        paramiko.ECDSAKey,
-        paramiko.RSAKey,
-        paramiko.DSSKey,
-    ):
+    # paramiko 4.x: PKey.from_private_key() auto-detects key type
+    if hasattr(paramiko.PKey, 'from_private_key'):
+        return paramiko.PKey.from_private_key(StringIO(pem_content))
+    # paramiko 3.x fallback: try each key class in turn
+    for cls in (paramiko.Ed25519Key, paramiko.ECDSAKey, paramiko.RSAKey):
         try:
             return cls.from_private_key(StringIO(pem_content))
         except Exception:
