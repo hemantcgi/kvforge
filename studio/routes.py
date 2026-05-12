@@ -77,6 +77,16 @@ def connectors_page(request: Request):
     return (TEMPLATES / "connectors.html").read_text()
 
 
+@router.get("/gpu-connect", response_class=HTMLResponse)
+def gpu_connect_page(request: Request):
+    u = getattr(request.state, "user", None)
+    if not u or u.role not in ("admin", "editor"):
+        return Response(
+            "<h1 style='color:#ce9178;font-family:sans-serif;padding:40px'>403 Forbidden</h1>",
+            status_code=403, media_type="text/html")
+    return (TEMPLATES / "gpu_connect.html").read_text()
+
+
 @router.get("/admin/users", response_class=HTMLResponse)
 def admin_users_page(request: Request):
     u = getattr(request.state, "user", None)

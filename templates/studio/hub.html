@@ -339,7 +339,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
         <div class="gpu-alert-title" id="gpu-alert-title">No GPU Detected</div>
         <div class="gpu-alert-desc" id="gpu-alert-desc">KVForge requires an NVIDIA GPU to index documents and run LLM inference. Connect an EC2 g5.xlarge (A10G) or any CUDA-capable GPU to onboard use cases.</div>
         <div class="gpu-alert-actions">
-          <button class="gpu-alert-btn primary" onclick="openGpuModal()">Connect GPU →</button>
+          <button class="gpu-alert-btn primary" onclick="location.href='/studio/gpu-connect'">Connect GPU →</button>
           <button class="gpu-alert-btn ghost" onclick="document.getElementById('gpu-alert').classList.remove('show')">Dismiss</button>
         </div>
       </div>
@@ -850,7 +850,7 @@ document.addEventListener('click', function() {
 // GPU modal
 function handleNewUseCase() {
   if (gpuAvailable === false) {
-    openGpuModal();
+    location.href = '/studio/gpu-connect';
   } else {
     location.href = '/studio/wizard';
   }

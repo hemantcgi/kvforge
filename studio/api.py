@@ -408,6 +408,100 @@ def eval_summary(uc_id: str):
     })
 
 
+# ── Remote GPU ─────────────────────────────────────────────────────────────────
+
+@api_router.post("/remote-gpu/session")
+async def create_remote_gpu_session(request: Request):
+    """Accept connection params + PEM content; return session_id for streaming."""
+    from studio.remote_gpu import create_session
+    body = await request.json()
+    host = str(body.get("host", "")).strip()
+    user = str(body.get("user", "ec2-user")).strip()
+    port = int(body.get("port", 22))
+    pem_key = str(body.get("pem_key", "")).strip()
+    display_name = str(body.get("display_name", host)).strip()
+    if not host or not pem_key:
+        raise HTTPException(400, "host and pem_key are required")
+    try:
+        session_id = create_session(host, user, port, pem_key, display_name)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    return JSONResponse({"session_id": session_id})
+
+
+@api_router.get("/remote-gpu/session/{session_id}/test-stream")
+async def remote_gpu_test_stream(session_id: str):
+    """SSE: SSH connect + nvidia-smi verification."""
+    import asyncio
+    from fastapi.responses import StreamingResponse
+    from studio.remote_gpu import stream_test_connection
+
+    async def gen():
+        loop = asyncio.get_event_loop()
+        events = await loop.run_in_executor(
+            None, lambda: list(stream_test_connection(session_id))
+        )
+        for ev in events:
+            yield f"data: {json.dumps(ev)}\n\n"
+
+    return StreamingResponse(gen(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@api_router.get("/remote-gpu/session/{session_id}/setup-stream")
+async def remote_gpu_setup_stream(session_id: str):
+    """SSE: install KVForge dependencies on remote host."""
+    import asyncio
+    from fastapi.responses import StreamingResponse
+    from studio.remote_gpu import stream_setup_gpu
+
+    async def gen():
+        loop = asyncio.get_event_loop()
+        events = await loop.run_in_executor(
+            None, lambda: list(stream_setup_gpu(session_id))
+        )
+        for ev in events:
+            yield f"data: {json.dumps(ev)}\n\n"
+
+    return StreamingResponse(gen(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@api_router.post("/remote-gpu/session/{session_id}/save")
+async def remote_gpu_save_profile(session_id: str, request: Request):
+    """Persist the verified connection as an encrypted profile."""
+    from studio.remote_gpu import get_session, save_profile
+    sess = get_session(session_id)
+    if not sess:
+        raise HTTPException(404, "Session not found")
+    body = await request.json()
+    display_name = str(body.get("display_name", sess["display_name"])).strip() or sess["host"]
+    profile = save_profile(
+        profile_id=session_id,
+        host=sess["host"],
+        user=sess["user"],
+        port=sess["port"],
+        display_name=display_name,
+        pem_key=sess["pem_key"],
+        fingerprint=sess.get("fingerprint") or "",
+    )
+    return JSONResponse(profile)
+
+
+@api_router.get("/remote-gpu/profiles")
+def list_remote_gpu_profiles():
+    from studio.remote_gpu import list_profiles
+    return JSONResponse(list_profiles())
+
+
+@api_router.delete("/remote-gpu/profiles/{profile_id}")
+def delete_remote_gpu_profile(profile_id: str):
+    from studio.remote_gpu import delete_profile
+    if not delete_profile(profile_id):
+        raise HTTPException(404, "Profile not found")
+    return JSONResponse({"ok": True})
+
+
 # ── Auto-curation ──────────────────────────────────────────────────────────────
 
 @api_router.post("/uc/{uc_id}/ab-curate")
