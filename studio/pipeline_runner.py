@@ -19,6 +19,7 @@ STEP_MODULES = {
     "ab-eval":   "pipeline.ab_evaluator",
     "sleep-faq": "pipeline.sleep_faq_generator",
     "faq-gen-cloud": "pipeline.sleep_faq_generator",
+    "setup": "__setup__",  # handled specially in _build_cmd
 }
 
 # Steps that require a free GPU — sleep-faq calls a cloud REST API, no GPU needed
@@ -33,6 +34,9 @@ STEP_EXTRA_ARGS = {
 
 
 def _build_cmd(uc_id: str, step: str) -> list[str]:
+    if step == "setup":
+        setup_script = str(ROOT / "examples" / uc_id / "setup.py")
+        return [sys.executable, setup_script]
     module = STEP_MODULES[step]
     config = str(ROOT / "examples" / uc_id / "config.json")
     cmd = [sys.executable, "-m", module, "--config", config]

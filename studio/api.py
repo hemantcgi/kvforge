@@ -169,7 +169,7 @@ def stop_vllm(req: StopVllmRequest):
 
 # ── Wizard Validate ───────────────────────────────────────────────────────────
 
-VALID_STEPS = {"index", "train", "recompute", "prs-eval", "ab-eval", "sleep-faq"}
+VALID_STEPS = {"index", "train", "recompute", "prs-eval", "ab-eval", "sleep-faq", "setup"}
 
 @api_router.post("/wizard-validate")
 async def wizard_validate(request: Request):
@@ -194,7 +194,7 @@ async def wizard_validate(request: Request):
 
 class RunStepRequest(BaseModel):
     uc_id: str
-    step: str  # "index" | "train" | "recompute" | "prs-eval" | "ab-eval" | "sleep-faq"
+    step: str  # "setup" | "index" | "train" | "recompute" | "prs-eval" | "ab-eval" | "sleep-faq"
 
 
 @api_router.post("/run-step")
