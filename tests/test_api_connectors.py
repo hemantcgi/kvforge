@@ -93,3 +93,52 @@ def test_fda_download(mock_get):
     sf = conn.list_files()[0]
     content = conn.download(sf)
     assert b"TYLENOL" in content
+
+
+# ── EDGAR ─────────────────────────────────────────────────────────────────────
+
+def _edgar_response_payload():
+    return {
+        "hits": {
+            "hits": [
+                {
+                    "_id": "edgar/data/320193/000032019324000008/0000320193-24-000008-index.htm",
+                    "_source": {
+                        "file_date": "2024-02-02",
+                        "entity_name": "Apple Inc.",
+                        "form_type": "10-K",
+                        "file_num": "0001234",
+                    },
+                }
+            ]
+        }
+    }
+
+
+@patch("connectors.edgar_connector.httpx.get")
+def test_edgar_list_files(mock_get):
+    from connectors.edgar_connector import EDGARConnector
+    mock_get.return_value = MagicMock(status_code=200, json=lambda: _edgar_response_payload())
+    conn = EDGARConnector(ticker="AAPL", form_type="10-K")
+    files = conn.list_files()
+    assert len(files) == 1
+    assert "Apple" in files[0].name or "AAPL" in files[0].name or "10-K" in files[0].name
+
+
+@patch("connectors.edgar_connector.httpx.get")
+def test_edgar_download_returns_bytes(mock_get):
+    from connectors.edgar_connector import EDGARConnector
+    mock_resp = MagicMock(status_code=200, text="<html>10-K filing</html>")
+    mock_resp.content = b"<html>10-K filing</html>"
+    mock_get.return_value = mock_resp
+    conn = EDGARConnector(ticker="AAPL", form_type="10-K")
+    sf = SourceFile(
+        id="https://www.sec.gov/Archives/edgar/data/320193/000032019324000008/aapl-20231230.htm",
+        name="AAPL_10-K.html",
+        path="",
+        size=100,
+        modified_at=datetime.now(timezone.utc),
+    )
+    content = conn.download(sf)
+    assert isinstance(content, bytes)
+    assert len(content) > 0
