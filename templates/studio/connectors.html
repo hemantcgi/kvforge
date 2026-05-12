@@ -288,6 +288,9 @@ function selectType(pill) {
   document.querySelectorAll('.cred-section').forEach(s=>s.classList.remove('visible'));
   const sec = document.getElementById('creds-'+_selectedType);
   if (sec) sec.classList.add('visible');
+  const ts = document.getElementById('m-test-status');
+  ts.textContent = '';
+  ts.className = 'test-status';
 }
 
 function _buildCredentials() {
@@ -343,6 +346,9 @@ async function testConn() {
     const result = await tr.json();
     status.className = result.ok ? 'test-status test-ok' : 'test-status test-err';
     status.textContent = result.ok ? ('✓ ' + (result.detail||'Connected')) : ('✗ ' + (result.error||'Failed'));
+  } catch(e) {
+    status.className = 'test-status test-err';
+    status.textContent = '✗ ' + (e.message || 'Network error');
   } finally {
     if (tempId) {
       fetch(`/studio/api/connectors/${tempId}`, {method:'DELETE', credentials:'include'});
@@ -356,14 +362,22 @@ async function saveConn() {
   if (!name) { alert('Enter a connector name'); return; }
   const creds = _buildCredentials();
   if (!creds) return;
-  const r = await fetch('/studio/api/connectors', {
-    method:'POST', credentials:'include',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({type: _selectedType, name, credentials: creds}),
-  });
-  if (!r.ok) { alert('Failed to save connector: ' + r.status); return; }
-  closeModal();
-  load();
+  const saveBtn = document.querySelector('.btn-save');
+  saveBtn.disabled = true;
+  try {
+    const r = await fetch('/studio/api/connectors', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({type: _selectedType, name, credentials: creds}),
+    });
+    if (!r.ok) { alert('Failed to save connector: ' + r.status); return; }
+    closeModal();
+    load();
+  } catch(e) {
+    alert('Network error saving connector: ' + (e.message || e));
+  } finally {
+    saveBtn.disabled = false;
+  }
 }
 
 document.getElementById('add-connector-modal').addEventListener('click', function(e){
