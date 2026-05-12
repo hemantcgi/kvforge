@@ -8,7 +8,7 @@ def test_wizard_validate_accepts_valid():
     from studio.api import api_router
     from fastapi import FastAPI
     app = FastAPI()
-    app.include_router(api_router)
+    app.include_router(api_router, prefix="/api")
     client = TestClient(app)
     resp = client.post("/api/wizard-validate", json={"step": "train", "epochs": 3, "top_k": 5})
     assert resp.status_code == 200
@@ -20,7 +20,7 @@ def test_wizard_validate_rejects_bad_epochs():
     from studio.api import api_router
     from fastapi import FastAPI
     app = FastAPI()
-    app.include_router(api_router)
+    app.include_router(api_router, prefix="/api")
     client = TestClient(app)
     resp = client.post("/api/wizard-validate", json={"step": "train", "epochs": 0})
     assert resp.status_code == 200
@@ -34,7 +34,7 @@ def test_wizard_validate_rejects_unknown_step():
     from studio.api import api_router
     from fastapi import FastAPI
     app = FastAPI()
-    app.include_router(api_router)
+    app.include_router(api_router, prefix="/api")
     client = TestClient(app)
     resp = client.post("/api/wizard-validate", json={"step": "invalid_step"})
     assert resp.status_code == 200

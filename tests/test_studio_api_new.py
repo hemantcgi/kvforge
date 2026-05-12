@@ -92,7 +92,7 @@ def test_prs_history_returns_list(tmp_path):
     (uc_dir / "version.json").write_text(json.dumps(version_data))
     with patch("studio.api.ROOT", tmp_path):
         app = FastAPI()
-        app.include_router(api_router)
+        app.include_router(api_router, prefix="/api")
         client = TestClient(app)
         resp = client.get("/api/uc/uc-test/prs-history")
     assert resp.status_code == 200
@@ -109,7 +109,7 @@ def test_prs_history_missing_version_json(tmp_path):
     (tmp_path / "examples" / "uc-empty").mkdir(parents=True)
     with patch("studio.api.ROOT", tmp_path):
         app = FastAPI()
-        app.include_router(api_router)
+        app.include_router(api_router, prefix="/api")
         client = TestClient(app)
         resp = client.get("/api/uc/uc-empty/prs-history")
     assert resp.status_code == 200
@@ -128,7 +128,7 @@ def test_ab_curate_appends_record(tmp_path):
          patch.object(cur, "ROOT", tmp_path), \
          patch("studio.api.curation_manager.ROOT", tmp_path):
         app = FastAPI()
-        app.include_router(api_router)
+        app.include_router(api_router, prefix="/api")
         client = TestClient(app)
         resp = client.post("/api/uc/uc-test/ab-curate",
                            json={"question": "Q?", "answer": "A.", "source_model": "model_b"})
@@ -144,7 +144,7 @@ def test_curation_status_empty(tmp_path):
     import studio.curation_manager as cur
     with patch.object(cur, "ROOT", tmp_path):
         app = FastAPI()
-        app.include_router(api_router)
+        app.include_router(api_router, prefix="/api")
         client = TestClient(app)
         resp = client.get("/api/uc/uc-empty2/curation-status")
     assert resp.status_code == 200
@@ -178,7 +178,7 @@ def test_ab_query_returns_both_responses():
     with patch("studio.api.ab_runner.run_ab_query", new_callable=AsyncMock) as mock_ab:
         mock_ab.return_value = mock_result
         app = FastAPI()
-        app.include_router(api_router)
+        app.include_router(api_router, prefix="/api")
         client = TestClient(app)
         resp = client.post("/api/uc/uc-test/ab-query", json={
             "query": "What is RAG?",
@@ -202,7 +202,7 @@ def test_ab_query_missing_query_returns_400():
     from studio.api import api_router
     from fastapi import FastAPI
     app = FastAPI()
-    app.include_router(api_router)
+    app.include_router(api_router, prefix="/api")
     client = TestClient(app)
     resp = client.post("/api/uc/uc-test/ab-query", json={})
     assert resp.status_code == 400
@@ -216,7 +216,7 @@ def test_wizard_validate_vdb_ok():
     from fastapi import FastAPI
     with patch("studio.api.vdb_validator.validate", return_value={"ok": True, "error": None, "collection_count": 3}):
         app = FastAPI()
-        app.include_router(api_router)
+        app.include_router(api_router, prefix="/api")
         client = TestClient(app)
         resp = client.post("/api/wizard/validate-vdb", json={"type": "qdrant", "host": "localhost", "port": 6333})
     assert resp.status_code == 200
@@ -230,7 +230,7 @@ def test_wizard_validate_vdb_failure():
     from fastapi import FastAPI
     with patch("studio.api.vdb_validator.validate", return_value={"ok": False, "error": "refused", "collection_count": None}):
         app = FastAPI()
-        app.include_router(api_router)
+        app.include_router(api_router, prefix="/api")
         client = TestClient(app)
         resp = client.post("/api/wizard/validate-vdb", json={"type": "qdrant"})
     assert resp.status_code == 200
@@ -245,7 +245,7 @@ def test_wizard_upload_pdf_returns_estimate(tmp_path):
     from fastapi import FastAPI
     with patch("studio.api.ROOT", tmp_path):
         app = FastAPI()
-        app.include_router(api_router)
+        app.include_router(api_router, prefix="/api")
         client = TestClient(app)
         resp = client.post(
             "/api/wizard/upload-pdf",
@@ -266,7 +266,7 @@ def test_wizard_estimate_vram_known_model():
     from studio.api import api_router
     from fastapi import FastAPI
     app = FastAPI()
-    app.include_router(api_router)
+    app.include_router(api_router, prefix="/api")
     client = TestClient(app)
     resp = client.post("/api/wizard/estimate-vram",
                        json={"model_id": "meta-llama/Llama-3.2-3B-Instruct", "lora_rank": 16})
@@ -281,7 +281,7 @@ def test_wizard_estimate_vram_unknown_model():
     from studio.api import api_router
     from fastapi import FastAPI
     app = FastAPI()
-    app.include_router(api_router)
+    app.include_router(api_router, prefix="/api")
     client = TestClient(app)
     resp = client.post("/api/wizard/estimate-vram",
                        json={"model_id": "unknown/UnknownModel-999B", "lora_rank": 16})
@@ -297,7 +297,7 @@ def _eval_client(tmp_path):
     from fastapi import FastAPI
     (tmp_path / "examples" / "uc-eval").mkdir(parents=True)
     app = FastAPI()
-    app.include_router(api_router)
+    app.include_router(api_router, prefix="/api")
     return TestClient(app), tmp_path
 
 
@@ -364,7 +364,7 @@ def test_uc_logs_from_job_manager(tmp_path):
     mock_jm.last_for_uc.return_value = fake_job
     with patch("studio.api.ROOT", tmp_path), patch("studio.api.get_manager", return_value=mock_jm):
         app = FastAPI()
-        app.include_router(api_router)
+        app.include_router(api_router, prefix="/api")
         client = TestClient(app)
         resp = client.get("/api/uc/uc-logs/logs")
     assert resp.status_code == 200
@@ -389,7 +389,7 @@ def test_uc_logs_disk_fallback_done(tmp_path):
     with patch("studio.api.ROOT", tmp_path), patch("studio.api.get_manager", return_value=mock_jm), \
          patch("studio.pipeline_runner.ROOT", tmp_path):
         app = FastAPI()
-        app.include_router(api_router)
+        app.include_router(api_router, prefix="/api")
         client = TestClient(app)
         resp = client.get("/api/uc/uc-logs2/logs")
     assert resp.status_code == 200
@@ -414,7 +414,7 @@ def test_uc_logs_disk_fallback_failed(tmp_path):
     with patch("studio.api.ROOT", tmp_path), patch("studio.api.get_manager", return_value=mock_jm), \
          patch("studio.pipeline_runner.ROOT", tmp_path):
         app = FastAPI()
-        app.include_router(api_router)
+        app.include_router(api_router, prefix="/api")
         client = TestClient(app)
         resp = client.get("/api/uc/uc-fail/logs")
     assert resp.status_code == 200
@@ -434,7 +434,7 @@ def test_uc_logs_empty_when_no_job_and_no_disk(tmp_path):
     with patch("studio.api.ROOT", tmp_path), patch("studio.api.get_manager", return_value=mock_jm), \
          patch("studio.pipeline_runner.ROOT", tmp_path):
         app = FastAPI()
-        app.include_router(api_router)
+        app.include_router(api_router, prefix="/api")
         client = TestClient(app)
         resp = client.get("/api/uc/uc-none/logs")
     assert resp.status_code == 200
@@ -460,7 +460,7 @@ def test_registry_has_index_true_when_version_json_exists(tmp_path):
          patch("studio.api.get_manager") as mock_jm:
         mock_jm.return_value.list_active.return_value = []
         app = FastAPI()
-        app.include_router(api_router)
+        app.include_router(api_router, prefix="/api")
         client = TestClient(app)
         resp = client.get("/api/registry")
     assert resp.status_code == 200
@@ -480,7 +480,7 @@ def test_registry_has_index_false_when_no_version_json(tmp_path):
          patch("studio.api.get_manager") as mock_jm:
         mock_jm.return_value.list_active.return_value = []
         app = FastAPI()
-        app.include_router(api_router)
+        app.include_router(api_router, prefix="/api")
         client = TestClient(app)
         resp = client.get("/api/registry")
     assert resp.status_code == 200
@@ -496,7 +496,7 @@ def test_sync_history_endpoint_no_db(tmp_path):
     (tmp_path / "examples" / "uc-sync").mkdir(parents=True)
     with patch("studio.api.ROOT", tmp_path):
         app = FastAPI()
-        app.include_router(api_router)
+        app.include_router(api_router, prefix="/api")
         client = TestClient(app)
         resp = client.get("/api/uc/uc-sync/sync-history")
     assert resp.status_code == 200
@@ -526,7 +526,7 @@ def test_sync_history_endpoint_with_runs(tmp_path):
     conn.close()
     with patch("studio.api.ROOT", tmp_path):
         app = FastAPI()
-        app.include_router(api_router)
+        app.include_router(api_router, prefix="/api")
         client = TestClient(app)
         resp = client.get("/api/uc/uc-hist/sync-history")
     assert resp.status_code == 200

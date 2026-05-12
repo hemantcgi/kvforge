@@ -212,6 +212,9 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
 .pipeline-dot-running { background:#1a2a3a; color:#9cdcfe; box-shadow:0 0 6px #264f7855; }
 .pipeline-dot-done { background:#1a3a2a; color:#4ec9b0; }
 .pipeline-dot-failed { background:#3a1a1a; color:#f87171; }
+.wz-preflight{background:#1a1a1a;border:1px solid #333;border-radius:6px;
+  padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;font-size:13px}
+.wz-preflight.ok{border-color:#4ec9b0}.wz-preflight.warn{border-color:#e5a231}
 </style>
 </head>
 <body>
@@ -697,6 +700,14 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
             <span class="review-label">Use Case Name</span>
             <input type="text" id="uc-name" class="finput" placeholder="my-corpus" value="my-corpus" style="width:200px">
           </div>
+        </div>
+
+        <!-- data pre-flight check — injected by JS on step 6 entry -->
+        <div id="wz-data-check" class="wz-preflight" style="display:none">
+          <span id="wz-data-check-icon"></span>
+          <span id="wz-data-check-msg"></span>
+          <button id="wz-run-setup-btn" class="btn-secondary" style="display:none"
+                  onclick="runSetupStep()">Download Dataset</button>
         </div>
 
         <div style="font-size:9px;color:#6b7280;margin-bottom:8px">
@@ -1249,6 +1260,46 @@ function buildReview() {
     document.getElementById('review-lora').textContent =
       `rank=${d.lora.rank} alpha=${d.lora.alpha} lr=${d.lora.lr} epochs=${d.lora.epochs} passes=${d.lora.passes}`;
   }
+  // Run pre-flight data check when entering the review step
+  if (d.uc_id) checkDataPreflight(d.uc_id);
+}
+
+async function checkDataPreflight(ucId) {
+  const el = document.getElementById('wz-data-check');
+  const icon = document.getElementById('wz-data-check-icon');
+  const msg = document.getElementById('wz-data-check-msg');
+  const setupBtn = document.getElementById('wz-run-setup-btn');
+  el.style.display = 'flex';
+  try {
+    const r = await fetch(`/api/check-data/${ucId}`);
+    const d = await r.json();
+    if (d.corpus_exists) {
+      el.className = 'wz-preflight ok';
+      icon.textContent = '✓';
+      msg.textContent = 'Data ready — ' + (d.corpus_path ? d.corpus_path.split('/').pop() : 'corpus found');
+      setupBtn.style.display = 'none';
+    } else {
+      el.className = 'wz-preflight warn';
+      icon.textContent = '⚠';
+      msg.textContent = d.loader === 'pdf'
+        ? 'No PDF found in data/ — upload your PDF before launching.'
+        : 'Dataset not downloaded. Run setup to fetch from HuggingFace.';
+      setupBtn.style.display = d.loader !== 'pdf' ? 'inline-block' : 'none';
+    }
+  } catch (e) {
+    el.style.display = 'none';
+  }
+}
+
+function runSetupStep() {
+  const ucId = WIZARD.data.uc_id || document.getElementById('wz-uc-id-input')?.value;
+  fetch('/api/run-step', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({uc_id: ucId, step: 'setup'})
+  }).then(r => r.json()).then(d => {
+    if (d.job_id) location.href = `/studio/uc/${ucId}`;
+  });
 }
 
 // ═══════════════════════════════════════════════════════════

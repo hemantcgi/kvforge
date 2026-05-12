@@ -20,7 +20,7 @@ from studio import vdb_validator
 
 ROOT = Path(__file__).resolve().parent.parent
 
-api_router = APIRouter(prefix="/api")
+api_router = APIRouter()
 
 
 def _uc_path(uc_id: str) -> Path:
@@ -170,6 +170,44 @@ def stop_vllm(req: StopVllmRequest):
 # ── Wizard Validate ───────────────────────────────────────────────────────────
 
 VALID_STEPS = {"index", "train", "recompute", "prs-eval", "ab-eval", "sleep-faq", "setup"}
+
+@api_router.get("/check-data/{uc_id}")
+def check_data(uc_id: str):
+    """Return whether the indexed data source exists for a use case."""
+    import json as _json
+
+    cfg_path = ROOT / "examples" / uc_id / "config.json"
+    loader = "pdf"
+    if cfg_path.exists():
+        try:
+            raw = _json.loads(cfg_path.read_text())
+            loader = (
+                raw.get("addon_config", {}).get("indexing", {}).get("loader", "pdf")
+                or raw.get("loader", "pdf")
+            )
+        except Exception:
+            pass
+
+    uc_dir = ROOT / "examples" / uc_id
+    corpus_path = uc_dir / "data" / "corpus.jsonl"
+    faq_path = uc_dir / "faqs.json"
+
+    if loader == "pdf":
+        data_dir = uc_dir / "data"
+        pdf_files = list(data_dir.glob("*.pdf")) if data_dir.exists() else []
+        return {
+            "loader": loader,
+            "corpus_exists": bool(pdf_files),
+            "corpus_path": str(pdf_files[0]) if pdf_files else None,
+            "faq_exists": faq_path.exists(),
+        }
+    return {
+        "loader": loader,
+        "corpus_exists": corpus_path.exists(),
+        "corpus_path": str(corpus_path) if corpus_path.exists() else None,
+        "faq_exists": faq_path.exists(),
+    }
+
 
 @api_router.post("/wizard-validate")
 async def wizard_validate(request: Request):
