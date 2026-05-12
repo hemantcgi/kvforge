@@ -283,6 +283,61 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
               <div class="src-sub">Skip indexing — generate FAQs &amp; fine-tune an existing collection</div>
             </div>
           </div>
+          <div class="src-card unsel" data-src="api" onclick="selectSource('api')">
+            <span class="src-icon">🌐</span>
+            <div>
+              <div class="src-title">Live API Source</div>
+              <div class="src-sub">Wikipedia · openFDA · SEC EDGAR · ESPN</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- API Source sub-panel (shown when src=api is selected) -->
+        <div id="api-src-panel" style="display:none;margin-top:8px;">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#4ec9b0;margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid #2d2d2d;">API Source Config</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;" id="api-type-pills">
+            <div class="src-card unsel" style="padding:4px 9px;flex-direction:row;gap:6px;" data-api="wikipedia" onclick="selApiType(this)">
+              <span style="font-size:12px;">📖</span>
+              <div><div class="src-title">Wikipedia</div></div>
+            </div>
+            <div class="src-card unsel" style="padding:4px 9px;flex-direction:row;gap:6px;" data-api="fda" onclick="selApiType(this)">
+              <span style="font-size:12px;">💊</span>
+              <div><div class="src-title">openFDA</div></div>
+            </div>
+            <div class="src-card unsel" style="padding:4px 9px;flex-direction:row;gap:6px;" data-api="edgar" onclick="selApiType(this)">
+              <span style="font-size:12px;">📋</span>
+              <div><div class="src-title">SEC EDGAR</div></div>
+            </div>
+            <div class="src-card unsel" style="padding:4px 9px;flex-direction:row;gap:6px;" data-api="espn" onclick="selApiType(this)">
+              <span style="font-size:12px;">🏈</span>
+              <div><div class="src-title">ESPN Sports</div></div>
+            </div>
+          </div>
+          <!-- Per-type config fields -->
+          <div id="api-cfg-wikipedia" class="api-cfg-panel" style="display:none;">
+            <div class="field"><div class="flabel">Topics (comma-sep article titles)</div>
+              <input class="finput" id="api-wiki-topics" type="text" placeholder="Python_(programming_language),NumPy"/></div>
+          </div>
+          <div id="api-cfg-fda" class="api-cfg-panel" style="display:none;">
+            <div class="field"><div class="flabel">Drug Name (brand or generic)</div>
+              <input class="finput" id="api-fda-drug" type="text" placeholder="aspirin"/></div>
+          </div>
+          <div id="api-cfg-edgar" class="api-cfg-panel" style="display:none;">
+            <div class="row2">
+              <div class="field"><div class="flabel">Ticker</div>
+                <input class="finput" id="api-edgar-ticker" type="text" placeholder="AAPL"/></div>
+              <div class="field"><div class="flabel">Form Type</div>
+                <input class="finput" id="api-edgar-form" type="text" placeholder="10-K" value="10-K"/></div>
+            </div>
+          </div>
+          <div id="api-cfg-espn" class="api-cfg-panel" style="display:none;">
+            <div class="row2">
+              <div class="field"><div class="flabel">Sport</div>
+                <input class="finput" id="api-espn-sport" type="text" placeholder="football"/></div>
+              <div class="field"><div class="flabel">League</div>
+                <input class="finput" id="api-espn-league" type="text" placeholder="nfl"/></div>
+            </div>
+          </div>
         </div>
 
         <!-- PDF Upload sub-panel -->
@@ -687,6 +742,7 @@ function selectSource(src) {
   document.getElementById('src-vdb-panel').style.display = (src === 'vdb') ? '' : 'none';
   document.getElementById('src-hf-panel').style.display = (src === 'hf') ? '' : 'none';
   document.getElementById('src-existing-panel').style.display = (src === 'existing') ? '' : 'none';
+  document.getElementById('api-src-panel').style.display = (src === 'api') ? 'block' : 'none';
 
   // Reset next button when source type changes
   const btn = document.getElementById('step1-next');
@@ -695,6 +751,8 @@ function selectSource(src) {
   } else if (src === 'existing') {
     btn.disabled = true; // enabled after UC is selected
     loadExistingUCs();
+  } else if (src === 'api') {
+    btn.disabled = false; // API type selected by user; allow proceeding
   } else {
     btn.disabled = true;
   }
@@ -734,6 +792,17 @@ function selectExistingUC(ucId) {
     status.textContent = `✓ "${ucId}" selected — indexing will be skipped`;
     status.className = 'status-line status-ok';
   }
+}
+
+// ── API Source Type Selection ──
+function selApiType(pill) {
+  document.querySelectorAll('#api-type-pills [data-api]').forEach(p => {
+    p.classList.remove('sel'); p.classList.add('unsel');
+  });
+  pill.classList.add('sel'); pill.classList.remove('unsel');
+  document.querySelectorAll('.api-cfg-panel').forEach(p => p.style.display='none');
+  const panel = document.getElementById('api-cfg-'+pill.dataset.api);
+  if (panel) panel.style.display = 'block';
 }
 
 // ── PDF Upload ──
@@ -1104,10 +1173,11 @@ function collectLoraParams() {
 function buildReview() {
   const d = WIZARD.data;
   document.getElementById('review-source').textContent =
-    d.existing_uc ? `Existing VDB · ${d.uc_id} (skip indexing)`
-    : d.pdf        ? `PDF · ${d.pdf.filename} · ~${d.pdf.estimated_chunks} chunks`
-    : d.vdb        ? `VDB · ${d.vdb.type} · ${d.vdb.host || d.vdb.base_url || ''}`
-                   : `HuggingFace · ${d.hf_repo || 'not configured'}`;
+    d.existing_uc          ? `Existing VDB · ${d.uc_id} (skip indexing)`
+    : d.pdf                ? `PDF · ${d.pdf.filename} · ~${d.pdf.estimated_chunks} chunks`
+    : d.vdb                ? `VDB · ${d.vdb.type} · ${d.vdb.host || d.vdb.base_url || ''}`
+    : d.source_type==='api' ? `Live API · ${d.api_type || 'not selected'}`
+                             : `HuggingFace · ${d.hf_repo || 'not configured'}`;
   document.getElementById('review-model').textContent = d.model_id || '—';
   document.getElementById('review-gpu').textContent = d.gpu_id != null ? `GPU ${d.gpu_id}` : '—';
   document.getElementById('review-faq').textContent = d.faq_mode || d.gen_mode || 'not configured';
@@ -1123,6 +1193,22 @@ function buildReview() {
 async function launchPipeline() {
   const btn = document.getElementById('launch-btn');
   btn.disabled = true;
+
+  // Collect API source config if applicable
+  if (WIZARD.data.source_type === 'api') {
+    const apiType = document.querySelector('#api-type-pills .sel')?.dataset.api;
+    WIZARD.data.api_type = apiType;
+    if (apiType === 'wikipedia') WIZARD.data.api_topics = document.getElementById('api-wiki-topics').value;
+    if (apiType === 'fda') WIZARD.data.api_drug = document.getElementById('api-fda-drug').value;
+    if (apiType === 'edgar') {
+      WIZARD.data.api_ticker = document.getElementById('api-edgar-ticker').value;
+      WIZARD.data.api_form = document.getElementById('api-edgar-form').value;
+    }
+    if (apiType === 'espn') {
+      WIZARD.data.api_sport = document.getElementById('api-espn-sport').value;
+      WIZARD.data.api_league = document.getElementById('api-espn-league').value;
+    }
+  }
 
   if (WIZARD.data.existing_uc) {
     // ── Existing UC: skip creation + indexing, go straight to FAQ generation ──
