@@ -530,6 +530,43 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
           </div>
         </div>
 
+        <!-- Domain Presets -->
+        <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;margin:10px 0 6px;padding-bottom:3px;border-bottom:1px solid #2d2d2d;">Domain Presets</div>
+        <div class="model-list">
+          <div class="model-card unsel" data-model="BioMistral/BioMistral-7B-DARE" onclick="selectModel(this)">
+            <span class="mc-icon">💊</span>
+            <div>
+              <div class="mc-name">BioMistral-7B</div>
+              <div class="mc-meta">Medical / Pharma RAG · Recommended for FDA</div>
+            </div>
+            <div class="mc-vram"><span class="vram-pill vram-warn">~14 GB</span></div>
+          </div>
+          <div class="model-card unsel" data-model="mistralai/Mistral-7B-Instruct-v0.3" onclick="selectModel(this)">
+            <span class="mc-icon">📋</span>
+            <div>
+              <div class="mc-name">Mistral-7B-Instruct v0.3</div>
+              <div class="mc-meta">Finance / Legal RAG · Recommended for EDGAR</div>
+            </div>
+            <div class="mc-vram"><span class="vram-pill vram-warn">~14 GB</span></div>
+          </div>
+          <div class="model-card unsel" data-model="microsoft/Phi-3-mini-4k-instruct" onclick="selectModel(this)">
+            <span class="mc-icon">🏈</span>
+            <div>
+              <div class="mc-name">Phi-3-mini-4k-instruct</div>
+              <div class="mc-meta">Sports / News · Fast inference</div>
+            </div>
+            <div class="mc-vram"><span class="vram-pill vram-ok">~8 GB</span></div>
+          </div>
+          <div class="model-card unsel" data-model="meta-llama/Llama-3.1-8B-Instruct" onclick="selectModel(this)">
+            <span class="mc-icon">📖</span>
+            <div>
+              <div class="mc-name">Llama-3.1-8B-Instruct</div>
+              <div class="mc-meta">General purpose · Best for Wikipedia</div>
+            </div>
+            <div class="mc-vram"><span class="vram-pill vram-warn">~16 GB</span></div>
+          </div>
+        </div>
+
         <!-- Custom model input — shown only when "custom" card is selected -->
         <div id="custom-model-row" style="display:none; margin-bottom:8px;">
           <div class="field"><div class="flabel">HuggingFace model ID</div>
