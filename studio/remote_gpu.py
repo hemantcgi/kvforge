@@ -17,15 +17,28 @@ from cryptography.fernet import Fernet
 _SALT = b"kvforge-remote-gpu-v1"
 _PROFILES_PATH = Path.home() / ".kvforge" / "gpu_profiles.json"
 
+_VENV = "~/kvforge-env"
+_PIP = f"{_VENV}/bin/pip"
+
 _SETUP_COMMANDS = [
-    ("Updating package lists", "sudo apt-get update -q"),
-    ("Installing Python build deps", "sudo apt-get install -y python3-pip python3-venv build-essential -q"),
-    ("Installing PyTorch (CUDA 12.1)", "pip3 install torch --index-url https://download.pytorch.org/whl/cu121 -q"),
-    ("Installing transformers + peft", "pip3 install transformers peft bitsandbytes accelerate datasets -q"),
-    ("Installing FastAPI + uvicorn", "pip3 install fastapi uvicorn httpx -q"),
-    ("Installing vector store clients", "pip3 install qdrant-client chromadb faiss-cpu fastembed -q"),
-    ("Installing KVForge extras", "pip3 install anthropic apscheduler msal requests paramiko cryptography -q"),
-    ("Verifying CUDA drivers", "nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader"),
+    ("Updating package lists",
+     "sudo apt-get update -q"),
+    ("Installing Python build deps",
+     "sudo apt-get install -y python3-pip python3-venv build-essential -q"),
+    ("Creating KVForge virtualenv",
+     f"python3 -m venv {_VENV}"),
+    ("Installing PyTorch (CUDA 12.1)",
+     f"{_PIP} install torch --index-url https://download.pytorch.org/whl/cu121 -q"),
+    ("Installing transformers + peft",
+     f"{_PIP} install transformers peft bitsandbytes accelerate datasets -q"),
+    ("Installing FastAPI + uvicorn",
+     f"{_PIP} install fastapi uvicorn httpx -q"),
+    ("Installing vector store clients",
+     f"{_PIP} install qdrant-client chromadb faiss-cpu fastembed -q"),
+    ("Installing KVForge extras",
+     f"{_PIP} install anthropic apscheduler msal requests paramiko cryptography -q"),
+    ("Verifying CUDA drivers",
+     "nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader"),
 ]
 
 _HOST_RE = re.compile(r'^[a-zA-Z0-9._\-]{1,253}$')
