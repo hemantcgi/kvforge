@@ -37,7 +37,7 @@ async def create_connector(request: Request):
     missing = [f for f in ("type", "name") if f not in body]
     if missing:
         return JSONResponse({"detail": f"missing required fields: {missing}"}, status_code=400)
-    valid_types = ("gdrive", "s3", "sharepoint")
+    valid_types = ("gdrive", "s3", "sharepoint", "wikipedia", "fda", "edgar", "espn")
     if body["type"] not in valid_types:
         return JSONResponse({"detail": f"type must be one of {valid_types}"}, status_code=400)
     cfg = _registry.create(
@@ -112,6 +112,7 @@ async def _run_test(connector_type: str, creds: dict) -> dict:
         svc = build("drive", "v3", credentials=sa_creds, cache_discovery=False)
         files = svc.files().list(pageSize=1).execute()
         return {"ok": True, "detail": f"Connected — {len(files.get('files', []))} files visible"}
+
     elif connector_type == "s3":
         try:
             import boto3
@@ -125,6 +126,7 @@ async def _run_test(connector_type: str, creds: dict) -> dict:
         )
         s3.head_bucket(Bucket=creds.get("bucket", ""))
         return {"ok": True, "detail": "S3 bucket reachable"}
+
     elif connector_type == "sharepoint":
         try:
             import msal
@@ -146,6 +148,60 @@ async def _run_test(connector_type: str, creds: dict) -> dict:
                 headers={"Authorization": f"Bearer {result['access_token']}"},
             )
         return {"ok": r.status_code == 200, "detail": f"HTTP {r.status_code}"}
+
+    elif connector_type == "wikipedia":
+        import httpx
+        topic = creds.get("topics", "Python_(programming_language)").split(",")[0].strip()
+        r = httpx.get(
+            f"https://en.wikipedia.org/api/rest_v1/page/summary/{topic}",
+            timeout=8,
+        )
+        if r.status_code == 200:
+            return {"ok": True, "detail": f"Wikipedia reachable — '{topic}' found"}
+        return {"ok": False, "error": f"Wikipedia returned HTTP {r.status_code}"}
+
+    elif connector_type == "fda":
+        import httpx
+        drug = creds.get("drug_name", "aspirin")
+        r = httpx.get(
+            "https://api.fda.gov/drug/label.json",
+            params={"search": f'openfda.brand_name:"{drug}"', "limit": 1},
+            timeout=10,
+        )
+        if r.status_code in (200, 404):
+            count = len(r.json().get("results", [])) if r.status_code == 200 else 0
+            return {"ok": True, "detail": f"openFDA reachable — {count} labels for '{drug}'"}
+        return {"ok": False, "error": f"openFDA returned HTTP {r.status_code}"}
+
+    elif connector_type == "edgar":
+        import httpx
+        ticker = creds.get("ticker", "AAPL")
+        r = httpx.get(
+            "https://efts.sec.gov/LATEST/search-index",
+            params={"q": f'"{ticker}"', "forms": "10-K", "dateRange": "custom",
+                    "startdt": "2020-01-01"},
+            headers={"User-Agent": "KVForge research@kvforge.ai"},
+            timeout=10,
+        )
+        if r.status_code == 200:
+            count = len(r.json().get("hits", {}).get("hits", []))
+            return {"ok": True, "detail": f"EDGAR reachable — {count} filings for '{ticker}'"}
+        return {"ok": False, "error": f"EDGAR returned HTTP {r.status_code}"}
+
+    elif connector_type == "espn":
+        import httpx
+        sport = creds.get("sport", "football")
+        league = creds.get("league", "nfl")
+        r = httpx.get(
+            f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/news",
+            params={"limit": 1},
+            timeout=8,
+        )
+        if r.status_code == 200:
+            count = len(r.json().get("articles", []))
+            return {"ok": True, "detail": f"ESPN reachable — {count} articles for {sport}/{league}"}
+        return {"ok": False, "error": f"ESPN returned HTTP {r.status_code}"}
+
     return {"ok": False, "error": f"unknown connector type: {connector_type}"}
 
 

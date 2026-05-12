@@ -82,3 +82,38 @@ def test_delete_connector(tmp_path):
     r2 = client.delete(f"/studio/api/connectors/{cid}", cookies={"kvforge_session": tok})
     assert r2.status_code == 200
     assert client.get("/studio/api/connectors", cookies={"kvforge_session": tok}).json() == []
+
+
+@pytest.mark.parametrize("conn_type", ["wikipedia", "fda", "edgar", "espn"])
+def test_valid_types_includes_new_connectors(conn_type):
+    """valid_types in routes.py must include all new API connector types."""
+    import importlib, inspect
+    mod = importlib.import_module("connectors.routes")
+    src = inspect.getsource(mod.create_connector)
+    # valid_types tuple must contain the new type
+    assert conn_type in src, f"'{conn_type}' not found in create_connector source"
+
+
+@pytest.mark.parametrize("conn_type", ["wikipedia", "fda", "edgar", "espn"])
+async def test_run_test_returns_ok_for_new_types(conn_type, monkeypatch):
+    """_run_test must return {ok: True} for the new connector types using mocked httpx."""
+    from unittest.mock import patch, MagicMock
+    from connectors.routes import _run_test
+
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {"extract": "test"} if conn_type == "wikipedia" else \
+                                   {"results": [{"id": "x"}]} if conn_type == "fda" else \
+                                   {"hits": {"hits": []}} if conn_type == "edgar" else \
+                                   {"articles": []}
+
+    with patch("httpx.get", return_value=mock_resp):
+        result = await _run_test(conn_type, {
+            "topics": "Python_(programming_language)",
+            "drug_name": "TYLENOL",
+            "ticker": "AAPL",
+            "form_type": "10-K",
+            "sport": "football",
+            "league": "nfl",
+        })
+    assert result.get("ok") is True, f"Expected ok=True for {conn_type}, got {result}"
