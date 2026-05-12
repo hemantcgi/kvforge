@@ -57,3 +57,39 @@ def test_wikipedia_supports_delta(mock_get):
     from connectors.wikipedia_connector import WikipediaConnector
     conn = WikipediaConnector(topics="Python_(programming_language)")
     assert conn.supports_delta() is False
+
+
+# ── FDA ───────────────────────────────────────────────────────────────────────
+
+def _fda_response_payload():
+    return {
+        "results": [
+            {
+                "id": "abc123",
+                "openfda": {"brand_name": ["TYLENOL"]},
+                "effective_time": "20240101",
+                "description": ["Extra Strength Tylenol is an analgesic."],
+            }
+        ]
+    }
+
+
+@patch("connectors.fda_connector.httpx.get")
+def test_fda_list_files(mock_get):
+    from connectors.fda_connector import FDAConnector
+    mock_get.return_value = MagicMock(status_code=200, json=lambda: _fda_response_payload())
+    conn = FDAConnector(drug_name="TYLENOL")
+    files = conn.list_files()
+    assert len(files) == 1
+    assert files[0].id == "abc123"
+    assert "TYLENOL" in files[0].name
+
+
+@patch("connectors.fda_connector.httpx.get")
+def test_fda_download(mock_get):
+    from connectors.fda_connector import FDAConnector
+    mock_get.return_value = MagicMock(status_code=200, json=lambda: _fda_response_payload())
+    conn = FDAConnector(drug_name="TYLENOL")
+    sf = conn.list_files()[0]
+    content = conn.download(sf)
+    assert b"TYLENOL" in content
