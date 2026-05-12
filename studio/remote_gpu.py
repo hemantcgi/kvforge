@@ -112,18 +112,16 @@ def _get_pem(profile_id: str) -> str | None:
 # ── SSH helpers ───────────────────────────────────────────────────────────────
 
 def _load_pkey(pem_content: str):
-    """Load a PEM private key; works with paramiko 3.x and 4.x."""
+    """Load a PEM private key, trying each concrete key type in turn."""
     import paramiko
-    # paramiko 4.x: PKey.from_private_key() auto-detects key type
-    if hasattr(paramiko.PKey, 'from_private_key'):
-        return paramiko.PKey.from_private_key(StringIO(pem_content))
-    # paramiko 3.x fallback: try each key class in turn
-    for cls in (paramiko.Ed25519Key, paramiko.ECDSAKey, paramiko.RSAKey):
+    key_classes = [paramiko.Ed25519Key, paramiko.ECDSAKey, paramiko.RSAKey]
+    last_exc = None
+    for cls in key_classes:
         try:
             return cls.from_private_key(StringIO(pem_content))
-        except Exception:
-            continue
-    raise ValueError("Could not parse PEM key — unsupported key type")
+        except Exception as e:
+            last_exc = e
+    raise ValueError(f"Could not parse PEM key — tried Ed25519, ECDSA, RSA. Last error: {last_exc}")
 
 
 def _make_client(host: str, user: str, port: int, pem_content: str):
