@@ -61,8 +61,8 @@ footer{margin:60px 40px 0;color:#333;font-size:12px;text-align:center}
   <div class="tech-row">
     <div class="tech-pill">VectorDB: <span>Qdrant</span></div>
     <div class="tech-pill">LLM: <span>Llama-3.2-3B-Instruct</span></div>
-    <div class="tech-pill">Data: <span>HuggingFace — AWS Bedrock docs</span></div>
-    <div class="tech-pill">Embedding: <span>BAAI/bge-small-en-v1.5</span></div>
+    <div class="tech-pill">Data: <span>PDF — AWS Bedrock User Guide (~500 pages)</span></div>
+    <div class="tech-pill">Embedding: <span>mixedbread-ai/mxbai-embed-large-v1 (1024-dim)</span></div>
     <div class="tech-pill">Domain: <span>Technical Documentation QA</span></div>
   </div>
 </header>
@@ -80,7 +80,7 @@ footer{margin:60px 40px 0;color:#333;font-size:12px;text-align:center}
     <div class="instructions">
       <div class="instr-row">
         <span class="instr-icon">📦</span>
-        <div class="instr-text"><strong>Dataset:</strong> The AWS Bedrock documentation can be indexed either from a HuggingFace dataset or directly from PDF/HTML source files. The recommended source is <code>psyche/bedrock-user-guide</code> on HuggingFace (a pre-processed text dataset of the Bedrock docs), or the raw PDFs from the AWS documentation site.</div>
+        <div class="instr-text"><strong>Dataset:</strong> The <strong>Amazon Bedrock User Guide PDF</strong> (~500 pages). Download it from the AWS documentation site: <a href="https://docs.aws.amazon.com/bedrock/latest/userguide/" style="color:#4ec9b0">docs.aws.amazon.com/bedrock/latest/userguide/</a> → "Download PDF". Place it at <code>examples/usecase4_bedrock_userguide/data/amazon-bedrock-user-guide.pdf</code>. This is a PDF-only use case — there is no HuggingFace dataset for it.</div>
       </div>
       <div class="instr-row">
         <span class="instr-icon">🎯</span>
@@ -116,30 +116,38 @@ footer{margin:60px 40px 0;color:#333;font-size:12px;text-align:center}
     <div class="step-header">
       <div class="step-num">2</div>
       <div>
-        <div class="step-title">Step 1 — Choose Data Source: HuggingFace or PDF Upload</div>
-        <div class="step-desc">You have two options for sourcing the Bedrock documentation. Choose the approach that fits your setup.</div>
+        <div class="step-title">Step 0 — Download the Bedrock User Guide PDF</div>
+        <div class="step-desc">This use case is PDF-only. The PDF must be placed in the data directory before indexing. There is no HuggingFace dataset for it.</div>
       </div>
     </div>
     <div class="instructions">
       <div class="instr-row">
-        <span class="instr-icon">📋</span>
-        <div class="instr-text"><strong>Option A — HuggingFace:</strong> Click the <strong>HuggingFace</strong> source card. Set Dataset ID to <code>psyche/bedrock-user-guide</code>, Split: <code>train</code>, Text Column: <code>text</code>, Max Rows: <code>5000</code>.</div>
+        <span class="instr-icon">🌐</span>
+        <div class="instr-text">Go to <code>https://docs.aws.amazon.com/bedrock/latest/userguide/</code> → click the PDF download link in the top-right of the page.</div>
       </div>
       <div class="instr-row">
-        <span class="instr-icon">📄</span>
-        <div class="instr-text"><strong>Option B — PDF Upload:</strong> Download the Bedrock User Guide PDF from the AWS docs site. Click the <strong>Upload Files</strong> source card and drag-drop the PDF into the upload zone.</div>
+        <span class="instr-icon">📁</span>
+        <div class="instr-text">Place the downloaded file at: <code>examples/usecase4_bedrock_userguide/data/amazon-bedrock-user-guide.pdf</code> (create the <code>data/</code> directory if it doesn't exist).</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">ℹ</span>
+        <div class="instr-text">The existing <code>config.json</code> for this use case sets <code>"loader": "pdf"</code> and <code>"embed_model": "mixedbread-ai/mxbai-embed-large-v1"</code> (1024-dim) — higher accuracy than the 384-dim default for dense technical text.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">🔑</span>
+        <div class="instr-text">This use case uses <strong>Llama-3.2-3B-Instruct</strong>, which is a gated model. Set your HuggingFace token: <code>export HF_TOKEN=hf_your_token_here</code> before running.</div>
       </div>
     </div>
-    <div class="screenshot-missing">📸 Screenshot: Wizard Step 1 showing either the HuggingFace card selected (with bedrock dataset ID) or the Upload Files zone with a PDF loaded.</div>
+    <div class="screenshot-missing">📸 Screenshot: File browser showing the PDF placed in examples/usecase4_bedrock_userguide/data/.</div>
     <div class="todo-box">
-      <div class="todo-title">TODO: Studio UI — PDF Upload Source Card</div>
-      <div class="todo-item"><span class="todo-bullet">▶</span>The wizard's <strong>Upload Files</strong> card shows a drag-drop zone, but uploading large PDF files (the Bedrock User Guide PDF is ~15 MB) times out with the current multipart form handler. The upload endpoint needs chunked upload support or a file-size progress indicator.</div>
-      <div class="todo-item"><span class="todo-bullet">▶</span>The wizard does not surface any feedback when a PDF is being parsed (text extraction can take 10-30 seconds for a large technical document). Add a parsing progress indicator.</div>
+      <div class="todo-title">TODO: Studio UI — PDF Source + HF Token</div>
+      <div class="todo-item"><span class="todo-bullet">▶</span>The wizard's <strong>Upload Files</strong> card should support PDF upload directly to the UC's <code>data/</code> directory, so users don't need to copy files manually. Large PDFs (~15 MB) need chunked upload with a progress indicator.</div>
+      <div class="todo-item"><span class="todo-bullet">▶</span>The Studio <strong>Settings</strong> page has no field for a HuggingFace token (<code>HF_TOKEN</code>). This is required for any gated model (Llama, Mistral). Add a HF Token field to Studio Settings that gets injected into subprocess environments before running index/train steps.</div>
     </div>
     <div class="alt-source-box">
       <div class="alt-source-title">Alternative sources for AWS documentation</div>
-      <div class="alt-source-item">• <strong>S3 connector:</strong> If your team stores documentation PDFs in S3, use the S3 connector (connectors page) and configure a scheduled sync to keep the corpus up to date as docs are updated.</div>
-      <div class="alt-source-item">• <strong>Direct HTML scrape:</strong> The AWS docs HTML can be scraped and loaded via the directory loader CLI: <code>python -m pipeline.kv_indexer index ./aws-docs-html/</code></div>
+      <div class="alt-source-item">• <strong>S3 connector:</strong> Store documentation PDFs in S3 and use the S3 connector with a scheduled sync to auto-update the corpus when docs are revised.</div>
+      <div class="alt-source-item">• <strong>HTML directory:</strong> Download the docs as HTML, then run <code>python -m pipeline.kv_indexer --config config.json index ./bedrock-docs-html/</code> using the directory loader.</div>
     </div>
   </div>
 
@@ -149,7 +157,7 @@ footer{margin:60px 40px 0;color:#333;font-size:12px;text-align:center}
       <div class="step-num">3</div>
       <div>
         <div class="step-title">Step 2 — Vector Database: Qdrant</div>
-        <div class="step-desc">Configure Qdrant with a smaller chunk size for technical documentation.</div>
+        <div class="step-desc">This use case uses the existing <code>config.json</code> which is already configured with Qdrant. Start Qdrant locally and verify the connection.</div>
       </div>
     </div>
     <div class="instructions">
@@ -158,16 +166,12 @@ footer{margin:60px 40px 0;color:#333;font-size:12px;text-align:center}
         <div class="instr-text">Start Qdrant: <code>docker run -d --name qdrant -p 6333:6333 qdrant/qdrant</code></div>
       </div>
       <div class="instr-row">
-        <span class="instr-icon">👆</span>
-        <div class="instr-text">Select <strong>Qdrant</strong>. URL: <code>http://localhost:6333</code>, Collection: <code>bedrock_userguide</code></div>
+        <span class="instr-icon">ℹ</span>
+        <div class="instr-text">The existing <code>config.json</code> sets Collection: <code>bedrock-user-guide</code>, Dimensions: <code>1024</code> (matching <code>mxbai-embed-large-v1</code>), Chunk Size: <code>600</code>. These values are already correct — do not change them in the wizard or Qdrant will reject vectors with mismatched dimensions.</div>
       </div>
       <div class="instr-row">
-        <span class="instr-icon">✏</span>
-        <div class="instr-text">Set <strong>Chunk Size</strong> to <code>256</code> (smaller than the default 512). Technical documentation benefits from smaller chunks for more precise retrieval of specific API parameters and configuration options.</div>
-      </div>
-      <div class="instr-row">
-        <span class="instr-icon">✏</span>
-        <div class="instr-text">Set <strong>Chunk Overlap</strong> to <code>32</code> to preserve context around API examples that may span chunk boundaries.</div>
+        <span class="instr-icon">🔵</span>
+        <div class="instr-text">On the UC detail page, click <strong>Test VDB Connection</strong> to confirm Qdrant is reachable at <code>http://localhost:6333</code> before running index.</div>
       </div>
     </div>
     <div class="screenshot-missing">📸 Screenshot: Wizard VDB step with Qdrant selected, collection "bedrock_userguide", chunk size 256.</div>
@@ -265,36 +269,35 @@ footer{margin:60px 40px 0;color:#333;font-size:12px;text-align:center}
       </div>
     </div>
     <div class="cli-box">
-      <div class="cli-label">Option A — HuggingFace dataset</div>
-      <pre># 1. Initialize
-python kvforge.py init --name bedrock_userguide
+      <div class="cli-label">Full CLI walkthrough (PDF source)</div>
+      <pre>export HF_TOKEN=hf_your_token_here   # required for Llama (gated model)
+CONFIG=examples/usecase4_bedrock_userguide/config.json
+FAQS=examples/usecase4_bedrock_userguide/faqs.json
+PDF=examples/usecase4_bedrock_userguide/data/amazon-bedrock-user-guide.pdf
 
-# 2. Index via HuggingFace
-python -m pipeline.kv_indexer \
-  --config datasource_bedrock_userguide.json \
-  index hf://psyche/bedrock-user-guide
+# 1. Place the PDF (download from AWS docs site first)
+mkdir -p examples/usecase4_bedrock_userguide/data
+# cp ~/Downloads/amazon-bedrock-user-guide.pdf $PDF
 
-# 3. Generate FAQs
-python -m pipeline.sleep_faq_generator \
-  --config datasource_bedrock_userguide.json \
-  --output bedrock_faqs.json --count 50
+# 2. Index the PDF (uses mxbai-embed-large-v1 @ 1024-dim per config.json)
+python -m pipeline.kv_indexer --config "$CONFIG" index "$PDF"
 
-# 4. Train + evaluate
-python -m pipeline.lora_trainer \
-  --config datasource_bedrock_userguide.json \
-  --faqs bedrock_faqs.json
+# 3. Compute KV tensors
+python -m pipeline.kv_indexer --config "$CONFIG" compute-kv
 
-# 5. Query
-python -m pipeline.kv_inference \
-  --config datasource_bedrock_userguide.json \
-  "How do I enable Claude 3 Sonnet in AWS Bedrock?"</pre>
-    </div>
-    <div class="cli-box">
-      <div class="cli-label">Option B — local PDF files</div>
-      <pre># After downloading bedrock-user-guide.pdf
-python -m pipeline.kv_indexer \
-  --config datasource_bedrock_userguide.json \
-  index ./bedrock-user-guide.pdf</pre>
+# 4. Train (faqs.json is pre-generated and included in the repo)
+python -m pipeline.lora_trainer --config "$CONFIG" --faqs "$FAQS"
+
+# 5. Recompute KV with updated LoRA weights
+python -m pipeline.kv_indexer --config "$CONFIG" compute-kv
+
+# 6. Evaluate PRS
+python -m pipeline.prs_evaluator --config "$CONFIG" --faqs "$FAQS" --sample 30
+
+# 7. Query
+python ask.py --config "$CONFIG" "What is Amazon Bedrock?"
+python ask.py --config "$CONFIG" "Which foundation models are available in Bedrock?"
+python ask.py --config "$CONFIG" "How do I enable model access in Bedrock?"</pre>
     </div>
   </div>
 

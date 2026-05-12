@@ -1575,6 +1575,1003 @@ git commit -m "chore: final integration pass — all demo connector UI items com
 
 ---
 
+## Task 11: HuggingFace ingestion loader
+
+**Files:**
+- Create: `ingestion/huggingface_loader.py`
+- Modify: `ingestion/registry.py`
+- Create: `tests/test_hf_ingestion.py`
+
+The `HuggingFaceLoader` streams a HuggingFace dataset into the same `{"text": str, "metadata": dict}` document format as all other loaders. The `load(source)` argument is ignored (dataset is configured in the constructor); this matches how the registry calls loaders. Register as the `"huggingface"` case in `registry.py`. The `datasets` package may not be installed in all environments so the import lives inside `load()`.
+
+- [ ] **Step 1: Write the failing tests**
+
+Create `tests/test_hf_ingestion.py`:
+
+```python
+# tests/test_hf_ingestion.py
+import pytest
+from unittest.mock import patch
+
+
+def test_get_loader_returns_huggingface_loader():
+    from ingestion.registry import get_loader
+    from ingestion.huggingface_loader import HuggingFaceLoader
+    loader = get_loader({"loader": "huggingface", "dataset_id": "qiaojin/PubMedQA"})
+    assert isinstance(loader, HuggingFaceLoader)
+
+
+def test_huggingface_loader_load_filters_short():
+    from ingestion.huggingface_loader import HuggingFaceLoader
+    fake_rows = [
+        {"text": "Short.", "extra": "a"},
+        {"text": "This is a long enough medical abstract about clinical outcomes in patients.", "extra": "b"},
+    ]
+    with patch("ingestion.huggingface_loader.load_dataset") as mock_ld:
+        mock_ld.return_value = fake_rows
+        loader = HuggingFaceLoader(dataset_id="qiaojin/PubMedQA", config_name="pqa_labeled")
+        docs = loader.load()
+    assert len(docs) == 1
+    assert "This is a long enough" in docs[0]["text"]
+    assert docs[0]["metadata"]["extra"] == "b"
+
+
+def test_huggingface_loader_load_respects_max_rows():
+    from ingestion.huggingface_loader import HuggingFaceLoader
+
+    class _FakeDS(list):
+        def select(self, indices):
+            return [self[i] for i in indices]
+
+    fake_ds = _FakeDS([
+        {"text": f"Long enough text for row number {i} with sufficient word count.", "idx": i}
+        for i in range(10)
+    ])
+    with patch("ingestion.huggingface_loader.load_dataset") as mock_ld:
+        mock_ld.return_value = fake_ds
+        loader = HuggingFaceLoader(dataset_id="test/ds", max_rows=3)
+        docs = loader.load()
+    assert len(docs) == 3
+
+
+def test_get_loader_unknown_raises():
+    from ingestion.registry import get_loader
+    with pytest.raises(ValueError, match="Unknown loader"):
+        get_loader({"loader": "unknown_xyz_loader"})
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+```
+python -m pytest tests/test_hf_ingestion.py -v --override-ini="addopts="
+```
+
+Expected: `ModuleNotFoundError: No module named 'ingestion.huggingface_loader'`
+
+- [ ] **Step 3: Implement the loader**
+
+Create `ingestion/huggingface_loader.py`:
+
+```python
+"""HuggingFace datasets ingestion loader."""
+from __future__ import annotations
+import os
+
+
+class HuggingFaceLoader:
+    """Load a HuggingFace dataset and return chunks in the standard document format.
+
+    Args:
+        dataset_id: HuggingFace dataset identifier (e.g. ``"qiaojin/PubMedQA"``).
+        config_name: Dataset config/subset name (e.g. ``"pqa_labeled"``).
+        split: Dataset split to load (default ``"train"``).
+        text_column: Column name to use as the document text (default ``"text"``).
+        max_rows: If > 0, limit to this many rows (default 0 = all rows).
+        hf_token: HuggingFace token for gated models. Falls back to the
+            ``HF_TOKEN`` / ``HUGGING_FACE_HUB_TOKEN`` environment variables.
+        trust_remote_code: Passed to ``load_dataset`` for datasets that require it.
+        min_chunk_words: Rows whose text has fewer words than this are dropped.
+    """
+
+    def __init__(
+        self,
+        dataset_id: str,
+        config_name: str | None = None,
+        split: str = "train",
+        text_column: str = "text",
+        max_rows: int = 0,
+        hf_token: str | None = None,
+        trust_remote_code: bool = False,
+        min_chunk_words: int = 5,
+    ):
+        self._dataset_id = dataset_id
+        self._config_name = config_name
+        self._split = split
+        self._text_column = text_column
+        self._max_rows = max_rows
+        self._hf_token = (
+            hf_token
+            or os.environ.get("HF_TOKEN")
+            or os.environ.get("HUGGING_FACE_HUB_TOKEN")
+        )
+        self._trust_remote_code = trust_remote_code
+        self._min_chunk_words = min_chunk_words
+
+    def load(self, source: str = "") -> list[dict]:
+        """Download and iterate the dataset; return document dicts.
+
+        ``source`` is ignored — the dataset is configured in the constructor.
+        """
+        from datasets import load_dataset
+
+        kwargs: dict = {
+            "split": self._split,
+            "trust_remote_code": self._trust_remote_code,
+        }
+        if self._config_name:
+            kwargs["name"] = self._config_name
+        if self._hf_token:
+            kwargs["token"] = self._hf_token
+
+        ds = load_dataset(self._dataset_id, **kwargs)
+
+        if self._max_rows and self._max_rows > 0:
+            ds = ds.select(range(min(self._max_rows, len(ds))))
+
+        docs = []
+        for i, row in enumerate(ds):
+            text = row.get(self._text_column, "")
+            if not isinstance(text, str):
+                text = str(text)
+            if len(text.split()) < self._min_chunk_words:
+                continue
+            metadata = {k: v for k, v in row.items() if k != self._text_column}
+            metadata.update({"source": self._dataset_id, "chunk_id": i})
+            docs.append({"text": text, "metadata": metadata})
+        return docs
+```
+
+Add the `"huggingface"` case and update the error message in `ingestion/registry.py`:
+
+```python
+    if name == "huggingface":
+        from ingestion.huggingface_loader import HuggingFaceLoader
+        return HuggingFaceLoader(
+            dataset_id=cfg.get("dataset_id", ""),
+            config_name=cfg.get("hf_config_name"),
+            split=cfg.get("hf_split", "train"),
+            text_column=cfg.get("hf_text_column", "text"),
+            max_rows=int(cfg.get("hf_max_rows", 0)),
+            hf_token=cfg.get("hf_token"),
+            trust_remote_code=bool(cfg.get("hf_trust_remote_code", False)),
+        )
+    raise ValueError(
+        f"Unknown loader '{name}'. Choose: pdf, markdown, jsonl, html, "
+        "directory, docx, pptx, xlsx, zip, huggingface"
+    )
+```
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+```
+python -m pytest tests/test_hf_ingestion.py -v --override-ini="addopts="
+```
+
+Expected: 4 PASSED
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add ingestion/huggingface_loader.py ingestion/registry.py tests/test_hf_ingestion.py
+git commit -m "feat: add HuggingFace datasets ingestion loader"
+```
+
+---
+
+## Task 12: Fix kv_indexer.py — support nested config and loader-agnostic source
+
+**Files:**
+- Modify: `pipeline/kv_indexer.py` (lines 129-179, 279-306)
+- Modify: `studio/pipeline_runner.py` (lines 28-32)
+- Create: `tests/test_kv_indexer_cli.py`
+
+Two bugs are fixed together:
+
+1. `kv_indexer.py:main()` calls `cfg["chunk_size"]` etc. on the raw JSON, but Studio passes the nested `addon_config` format. Add a flattening step using `DatasourceConfig.get_merged_config()`.
+
+2. `cmd_index` requires a positional `pdf_file` arg and hardcodes `read_pdf()`/`chunk_pages()`. Make the source optional and dispatch through the ingestion registry instead.
+
+`pipeline_runner.py` currently passes only `["index"]` (no source file) and will keep doing so — the indexer now auto-detects the source from the config.
+
+- [ ] **Step 1: Write the failing tests**
+
+Create `tests/test_kv_indexer_cli.py`:
+
+```python
+# tests/test_kv_indexer_cli.py
+"""Test CLI arg parsing and config-flattening in kv_indexer.main()."""
+import json
+import sys
+from pathlib import Path
+from unittest.mock import patch, MagicMock, mock_open
+
+import pytest
+
+
+_NESTED_CFG = {
+    "use_case_name": "test",
+    "collection": "col",
+    "version_file": "/tmp/ver.json",
+    "addons": ["indexing", "inference"],
+    "addon_config": {
+        "indexing": {
+            "loader": "jsonl",
+            "jsonl_text_key": "text",
+            "chunk_size": 300,
+            "chunk_overlap": 30,
+            "embed_batch": 8,
+            "upsert_batch": 16,
+            "embed_model": "BAAI/bge-small-en-v1.5",
+            "embedder_backend": "fastembed",
+            "vector_dim": 384,
+            "vector_store": "qdrant",
+            "qdrant_host": "localhost",
+            "qdrant_port": 6333,
+            "model_library": {
+                "meta-llama/Llama-3.2-3B-Instruct": {
+                    "kv_num_layers": 2, "kv_num_heads": 4, "kv_head_dim": 64
+                }
+            },
+        },
+        "inference": {
+            "llm_model": "meta-llama/Llama-3.2-3B-Instruct",
+            "quantization": "4bit",
+        },
+    },
+}
+
+
+def test_nested_config_is_flattened(tmp_path, monkeypatch):
+    """main() must flatten addon_config before calling cmd_index."""
+    cfg_file = tmp_path / "config.json"
+    cfg_file.write_text(json.dumps(_NESTED_CFG))
+    corpus = tmp_path / "data" / "corpus.jsonl"
+    corpus.parent.mkdir()
+    corpus.write_text('{"text": "enough words here to pass the threshold filter"}\n')
+
+    captured = {}
+
+    def fake_cmd_index(cfg):
+        captured["cfg"] = cfg
+
+    monkeypatch.setattr("pipeline.kv_indexer.cmd_index", fake_cmd_index)
+    monkeypatch.setattr("pipeline.kv_indexer.ver.init", lambda cfg: None)
+    monkeypatch.setattr("pipeline.kv_indexer.model_loader.init", lambda cfg: None)
+
+    sys.argv = ["kv_indexer", "--config", str(cfg_file), "index"]
+    # kv_indexer resolves corpus.jsonl relative to the config file's directory
+    from pipeline import kv_indexer
+    kv_indexer.main()
+
+    assert "chunk_size" in captured["cfg"], "flat key chunk_size must be present after merge"
+    assert captured["cfg"]["loader"] == "jsonl"
+
+
+def test_pdf_file_arg_optional_no_error(tmp_path, monkeypatch):
+    """Passing 'index' with no positional arg must not raise argparse error."""
+    cfg_file = tmp_path / "config.json"
+    cfg_file.write_text(json.dumps(_NESTED_CFG))
+
+    monkeypatch.setattr("pipeline.kv_indexer.cmd_index", lambda cfg: None)
+    monkeypatch.setattr("pipeline.kv_indexer.ver.init", lambda cfg: None)
+    monkeypatch.setattr("pipeline.kv_indexer.model_loader.init", lambda cfg: None)
+
+    sys.argv = ["kv_indexer", "--config", str(cfg_file), "index"]
+    from pipeline import kv_indexer
+    kv_indexer.main()  # must not raise SystemExit
+
+
+def test_pipeline_runner_index_cmd_no_pdf_arg():
+    """pipeline_runner._build_cmd for 'index' must not include a bare pdf_file positional."""
+    from studio.pipeline_runner import _build_cmd
+    cmd = _build_cmd("usecase1_customer_support", "index")
+    # Last arg should NOT be a bare file path that doesn't start with '--'
+    positional_extra = [a for a in cmd[5:] if not a.startswith("-") and a != "index"]
+    assert positional_extra == [], f"Unexpected positional args after 'index': {positional_extra}"
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+```
+python -m pytest tests/test_kv_indexer_cli.py -v --override-ini="addopts="
+```
+
+Expected: 2-3 failures — `test_nested_config_is_flattened` fails because flat keys are missing, `test_pdf_file_arg_optional_no_error` raises `SystemExit` because `pdf_file` is still required.
+
+- [ ] **Step 3: Implement the fix**
+
+In `pipeline/kv_indexer.py`:
+
+**3a. Change `cmd_index` signature and body** (replaces lines 129-179):
+
+```python
+def cmd_index(cfg: dict) -> None:
+    """Run the full index pipeline using the loader configured in *cfg*.
+
+    Dispatches to the ingestion registry based on ``cfg['loader']``.  The
+    source path is resolved as follows:
+
+    * PDF loader — ``cfg['_source_path']`` (set by ``main()`` from the CLI arg
+      or the ``data/`` directory auto-scan).
+    * All other loaders — ``cfg['_source_path']`` when provided; falls back to
+      ``<version_file_dir>/data/corpus.jsonl``.
+    """
+    import uuid
+    from ingestion.registry import get_loader
+
+    store = get_store(cfg)
+    num_layers, num_kv_heads, head_dim = model_loader.get_kv_shape(cfg)
+
+    loader = get_loader(cfg)
+    source_path = cfg.get("_source_path", "")
+    if not source_path and cfg.get("loader", "pdf") != "pdf":
+        # Auto-detect: corpus.jsonl sits next to version.json
+        ver_dir = Path(cfg.get("version_file", "version.json")).parent
+        candidate = ver_dir / "data" / "corpus.jsonl"
+        source_path = str(candidate) if candidate.exists() else ""
+
+    chunks = loader.load(source_path)
+    source_label = Path(source_path).name if source_path else cfg.get("dataset_id", "unknown")
+    print(f"  {len(chunks)} chunks from {source_label}")
+
+    embedder = TextEmbedding(model_name=cfg["embed_model"],
+                              show_download_progress=False)
+    texts = [c["text"] for c in chunks]
+    vectors = list(embedder.embed(texts, batch_size=cfg["embed_batch"]))
+
+    lora_ckpt = ver.load().get("checkpoint_path")
+    model, tokenizer = model_loader.load(lora_ckpt)
+
+    print(f"Computing KV tensors for {len(chunks)} chunks ...")
+    points = []
+    for i, (chunk, vec) in enumerate(zip(chunks, vectors)):
+        kv_arr = compute_kv_for_chunk(
+            chunk["text"], model, tokenizer, num_layers, num_kv_heads, head_dim
+        )
+        meta = chunk.get("metadata", {})
+        payload = build_payload(
+            text=chunk["text"],
+            page=meta.get("page", 0),
+            source_file=source_label,
+            kv_array=kv_arr,
+            source_version=meta.get("modified", ""),
+        )
+        points.append(Point(id=str(uuid.uuid4()), vector=vec.tolist(), payload=payload))
+        if (i + 1) % 50 == 0:
+            print(f"  {i + 1}/{len(chunks)} KV tensors computed")
+
+    for start in range(0, len(points), cfg["upsert_batch"]):
+        store.upsert(cfg["collection"], points[start:start + cfg["upsert_batch"]])
+    print(f"Indexed {len(points)} chunks into '{cfg['collection']}'")
+```
+
+**3b. Update `main()` to flatten the nested config and make `pdf_file` optional** (replaces lines 279-310):
+
+```python
+def main() -> None:
+    p = argparse.ArgumentParser()
+    p.add_argument("--config", default="my_config.json")
+    sub = p.add_subparsers(dest="cmd", required=True)
+
+    idx = sub.add_parser("index")
+    idx.add_argument("pdf_file", nargs="?", default=None,
+                     help="Path to PDF (pdf loader only). Omit for jsonl/hf loaders.")
+
+    kv = sub.add_parser("compute-kv")
+    kv.add_argument("--filter", choices=["kv_version=null"], default=None)
+    kv.add_argument("--stale-version", type=int, default=None)
+    kv.add_argument("--source-file", default=None)
+
+    args = p.parse_args()
+    with open(args.config) as f:
+        raw = json.load(f)
+
+    # Flatten nested addon_config format used by Studio (DatasourceConfig)
+    if "addon_config" in raw:
+        from core.config import DatasourceConfig
+        dc = DatasourceConfig(**raw)
+        cfg = dc.get_merged_config("indexing", "inference", "training")
+        cfg.setdefault("version_file", raw.get("version_file", "version.json"))
+        cfg.setdefault("collection", raw.get("collection", ""))
+    else:
+        cfg = raw
+
+    ver.init(cfg)
+    model_loader.init(cfg)
+
+    if args.cmd == "index":
+        if args.pdf_file:
+            cfg["_source_path"] = args.pdf_file
+        cmd_index(cfg)
+    elif args.cmd == "compute-kv":
+        if args.stale_version is not None:
+            cmd_compute_kv(cfg, "stale", args.stale_version)
+        elif args.source_file:
+            cmd_compute_kv(cfg, "source", args.source_file)
+        else:
+            cmd_compute_kv(cfg, "null", None)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+In `studio/pipeline_runner.py`, remove `"index"` from `STEP_EXTRA_ARGS` (the indexer now auto-detects its source) and keep only `"recompute"`:
+
+```python
+STEP_EXTRA_ARGS = {
+    # recompute uses compute-kv; --stale-version is added dynamically in _build_cmd
+    "recompute": ["compute-kv"],
+}
+```
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+```
+python -m pytest tests/test_kv_indexer_cli.py -v --override-ini="addopts="
+```
+
+Expected: 3 PASSED
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add pipeline/kv_indexer.py studio/pipeline_runner.py tests/test_kv_indexer_cli.py
+git commit -m "fix: flatten nested config in kv_indexer; make pdf_file optional; auto-detect corpus.jsonl"
+```
+
+---
+
+## Task 13: Add "setup" step to Studio pipeline runner
+
+**Files:**
+- Modify: `studio/pipeline_runner.py`
+- Modify: `studio/api.py`
+- Create: `tests/test_setup_step.py`
+
+The HuggingFace demo use cases (UC1-3) require running `examples/{uc_id}/setup.py` before indexing to download the dataset into `data/corpus.jsonl`. Studio has no way to trigger this. Add a `"setup"` step that runs the UC's `setup.py` script directly (it is not a Python module). The setup step requires no GPU.
+
+- [ ] **Step 1: Write the failing tests**
+
+Create `tests/test_setup_step.py`:
+
+```python
+# tests/test_setup_step.py
+import pytest
+
+
+def test_setup_in_valid_steps():
+    from studio.api import VALID_STEPS
+    assert "setup" in VALID_STEPS
+
+
+def test_setup_cmd_points_to_setup_py(tmp_path):
+    """_build_cmd for 'setup' must invoke examples/{uc_id}/setup.py directly."""
+    import sys
+    from studio.pipeline_runner import _build_cmd
+    cmd = _build_cmd("usecase1_customer_support", "setup")
+    assert cmd[0] == sys.executable
+    assert cmd[1].endswith("setup.py")
+    assert "usecase1_customer_support" in cmd[1]
+
+
+def test_setup_not_in_gpu_required_steps():
+    from studio.pipeline_runner import GPU_REQUIRED_STEPS
+    assert "setup" not in GPU_REQUIRED_STEPS
+
+
+def test_run_step_rejects_unknown_step():
+    """Existing guard still rejects unknown steps."""
+    from studio.pipeline_runner import STEP_MODULES
+    assert "bogus_step_xyz" not in STEP_MODULES
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+```
+python -m pytest tests/test_setup_step.py -v --override-ini="addopts="
+```
+
+Expected: `test_setup_in_valid_steps` and `test_setup_cmd_points_to_setup_py` fail.
+
+- [ ] **Step 3: Implement the fix**
+
+In `studio/pipeline_runner.py`, add a sentinel in `STEP_MODULES` and special-case `_build_cmd`:
+
+```python
+STEP_MODULES = {
+    "setup":     "__setup__",           # handled specially in _build_cmd
+    "index":     "pipeline.kv_indexer",
+    "train":     "pipeline.lora_trainer",
+    "recompute": "pipeline.kv_indexer",
+    "prs-eval":  "pipeline.prs_evaluator",
+    "ab-eval":   "pipeline.ab_evaluator",
+    "sleep-faq": "pipeline.sleep_faq_generator",
+    "faq-gen-cloud": "pipeline.sleep_faq_generator",
+}
+```
+
+In `_build_cmd`, add a branch at the top before `module = STEP_MODULES[step]`:
+
+```python
+def _build_cmd(uc_id: str, step: str) -> list[str]:
+    if step == "setup":
+        setup_script = str(ROOT / "examples" / uc_id / "setup.py")
+        return [sys.executable, setup_script]
+
+    module = STEP_MODULES[step]
+    ...  # rest of existing function unchanged
+```
+
+In `studio/api.py`, add `"setup"` to `VALID_STEPS` and the docstring on `RunStepRequest`:
+
+```python
+VALID_STEPS = {"index", "train", "recompute", "prs-eval", "ab-eval", "sleep-faq", "setup"}
+```
+
+```python
+class RunStepRequest(BaseModel):
+    uc_id: str
+    step: str  # "setup" | "index" | "train" | "recompute" | "prs-eval" | "ab-eval" | "sleep-faq"
+```
+
+In `run_step`, the existing guard already dispatches through `STEP_MODULES`, which now includes `"setup"`, so no further change needed there.
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+```
+python -m pytest tests/test_setup_step.py -v --override-ini="addopts="
+```
+
+Expected: 4 PASSED
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add studio/pipeline_runner.py studio/api.py tests/test_setup_step.py
+git commit -m "feat: add 'setup' step to Studio pipeline runner for HuggingFace dataset download"
+```
+
+---
+
+## Task 14: Wizard pre-flight: data-exists check before Launch
+
+**Files:**
+- Modify: `studio/api.py`
+- Modify: `templates/studio/wizard.html` (Step 6 section)
+- Create: `tests/test_data_check_api.py`
+
+Before the user clicks "Launch Pipeline" in wizard Step 6, the UI should verify whether the data is ready. For JSONL loader use cases (HF datasets), `data/corpus.jsonl` must exist. For PDF loader use cases, the PDF file must exist. If data is missing, show a "Run Setup" button (for HF) or a file-missing warning (for PDF). This prevents confusing pipeline failures that happen silently.
+
+- [ ] **Step 1: Write the failing tests**
+
+Create `tests/test_data_check_api.py`:
+
+```python
+# tests/test_data_check_api.py
+import json
+import pytest
+from pathlib import Path
+from fastapi.testclient import TestClient
+
+
+def _make_app():
+    from fastapi import FastAPI
+    from studio.api import api_router
+    app = FastAPI()
+    app.include_router(api_router, prefix="/api")
+    return app
+
+
+def test_data_check_corpus_exists(tmp_path, monkeypatch):
+    uc_id = "usecase1_customer_support"
+    corpus = tmp_path / "examples" / uc_id / "data" / "corpus.jsonl"
+    corpus.parent.mkdir(parents=True)
+    corpus.write_text('{"text":"hello"}\n')
+    cfg_file = tmp_path / "examples" / uc_id / "config.json"
+    cfg_file.parent.mkdir(parents=True, exist_ok=True)
+    cfg_file.write_text(json.dumps({"addon_config": {"indexing": {"loader": "jsonl"}}}))
+
+    import studio.pipeline_runner as pr
+    monkeypatch.setattr(pr, "ROOT", tmp_path)
+    import studio.api as api_mod
+    monkeypatch.setattr(api_mod, "ROOT", tmp_path, raising=False)
+
+    client = TestClient(_make_app())
+    resp = client.get(f"/api/check-data/{uc_id}")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["corpus_exists"] is True
+
+
+def test_data_check_corpus_missing(tmp_path, monkeypatch):
+    uc_id = "usecase1_customer_support"
+    cfg_file = tmp_path / "examples" / uc_id / "config.json"
+    cfg_file.parent.mkdir(parents=True)
+    cfg_file.write_text(json.dumps({"addon_config": {"indexing": {"loader": "jsonl"}}}))
+
+    import studio.api as api_mod
+    monkeypatch.setattr(api_mod, "ROOT", tmp_path, raising=False)
+
+    client = TestClient(_make_app())
+    resp = client.get(f"/api/check-data/{uc_id}")
+    assert resp.status_code == 200
+    assert resp.json()["corpus_exists"] is False
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+```
+python -m pytest tests/test_data_check_api.py -v --override-ini="addopts="
+```
+
+Expected: `404 Not Found` — endpoint does not exist yet.
+
+- [ ] **Step 3: Implement the API endpoint**
+
+In `studio/api.py`, add a `ROOT` import and the new endpoint. Add near the top, after the existing imports:
+
+```python
+from pathlib import Path as _Path
+ROOT = _Path(__file__).resolve().parent.parent
+```
+
+Add the endpoint after the `VALID_STEPS` block:
+
+```python
+@api_router.get("/check-data/{uc_id}")
+def check_data(uc_id: str):
+    """Return whether the indexed data source exists for a use case."""
+    import json as _json
+
+    cfg_path = ROOT / "examples" / uc_id / "config.json"
+    loader = "pdf"
+    if cfg_path.exists():
+        try:
+            raw = _json.loads(cfg_path.read_text())
+            loader = (
+                raw.get("addon_config", {}).get("indexing", {}).get("loader", "pdf")
+                or raw.get("loader", "pdf")
+            )
+        except Exception:
+            pass
+
+    uc_dir = ROOT / "examples" / uc_id
+    corpus_path = uc_dir / "data" / "corpus.jsonl"
+    faq_path = uc_dir / "faqs.json"
+
+    if loader == "pdf":
+        data_dir = uc_dir / "data"
+        pdf_files = list(data_dir.glob("*.pdf")) if data_dir.exists() else []
+        return {
+            "loader": loader,
+            "corpus_exists": bool(pdf_files),
+            "corpus_path": str(pdf_files[0]) if pdf_files else None,
+            "faq_exists": faq_path.exists(),
+        }
+    return {
+        "loader": loader,
+        "corpus_exists": corpus_path.exists(),
+        "corpus_path": str(corpus_path) if corpus_path.exists() else None,
+        "faq_exists": faq_path.exists(),
+    }
+```
+
+**Step 3b: Add wizard pre-flight UI** — in `templates/studio/wizard.html`, in the Step 6 section, add a data-check banner that appears before "Launch Pipeline". Find the Step 6 `<div>` and prepend:
+
+```html
+<!-- data pre-flight check — injected by JS on step 6 entry -->
+<div id="wz-data-check" class="wz-preflight" style="display:none">
+  <span id="wz-data-check-icon"></span>
+  <span id="wz-data-check-msg"></span>
+  <button id="wz-run-setup-btn" class="btn-secondary" style="display:none"
+          onclick="runSetupStep()">Download Dataset</button>
+</div>
+```
+
+Add the preflight CSS in the existing `<style>` block:
+
+```css
+.wz-preflight{background:#1a1a1a;border:1px solid #333;border-radius:6px;
+  padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;font-size:13px}
+.wz-preflight.ok{border-color:#4ec9b0}.wz-preflight.warn{border-color:#e5a231}
+```
+
+Add the pre-flight JS function (in the existing `<script>` block, called when wizard reaches step 6):
+
+```javascript
+async function checkDataPreflight(ucId) {
+  const el = document.getElementById('wz-data-check');
+  const icon = document.getElementById('wz-data-check-icon');
+  const msg = document.getElementById('wz-data-check-msg');
+  const setupBtn = document.getElementById('wz-run-setup-btn');
+  el.style.display = 'flex';
+  try {
+    const r = await fetch(`/api/check-data/${ucId}`);
+    const d = await r.json();
+    if (d.corpus_exists) {
+      el.className = 'wz-preflight ok';
+      icon.textContent = '✓';
+      msg.textContent = 'Data ready — ' + (d.corpus_path ? d.corpus_path.split('/').pop() : 'corpus found');
+      setupBtn.style.display = 'none';
+    } else {
+      el.className = 'wz-preflight warn';
+      icon.textContent = '⚠';
+      msg.textContent = d.loader === 'pdf'
+        ? 'No PDF found in data/ — upload your PDF before launching.'
+        : 'Dataset not downloaded. Run setup to fetch from HuggingFace.';
+      setupBtn.style.display = d.loader !== 'pdf' ? 'inline-block' : 'none';
+    }
+  } catch (e) {
+    el.style.display = 'none';
+  }
+}
+
+function runSetupStep() {
+  const ucId = document.getElementById('wz-uc-id-input').value;
+  fetch('/api/run-step', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({uc_id: ucId, step: 'setup'})
+  }).then(r => r.json()).then(d => {
+    if (d.job_id) location.href = `/studio/uc/${ucId}`;
+  });
+}
+```
+
+Call `checkDataPreflight(ucId)` from the existing step-navigation function when transitioning to step 6.
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+```
+python -m pytest tests/test_data_check_api.py -v --override-ini="addopts="
+```
+
+Expected: 2 PASSED
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add studio/api.py templates/studio/wizard.html tests/test_data_check_api.py
+git commit -m "feat: add /api/check-data endpoint and wizard pre-flight data check"
+```
+
+---
+
+## Task 15: Studio Settings page — HF_TOKEN field and env injection
+
+**Files:**
+- Modify: `studio/routes.py`
+- Create: `templates/studio/settings.html`
+- Modify: `studio/pipeline_runner.py` (`_build_env`)
+- Create: `tests/test_hf_token_injection.py`
+
+`settings_manager.py` already stores `huggingface_token` as a secret key. Two things are missing:
+
+1. The `/studio/settings` route doesn't exist — `hub.html` links to it but gets a 404.
+2. `_build_env()` in `pipeline_runner.py` only injects cloud provider API keys; it does not inject `HF_TOKEN` for `index` and `train` steps that call `model_loader.load()` (which may need HF access for gated Llama models).
+
+- [ ] **Step 1: Write the failing tests**
+
+Create `tests/test_hf_token_injection.py`:
+
+```python
+# tests/test_hf_token_injection.py
+import pytest
+from unittest.mock import patch
+
+
+def test_hf_token_injected_for_index_step(monkeypatch):
+    """_build_env must set HF_TOKEN when huggingface_token is configured."""
+    from studio import settings_manager
+    monkeypatch.setattr(settings_manager, "get_setting",
+                        lambda key: "hf_test_tok_abcd1234" if key == "huggingface_token" else "")
+
+    from studio.pipeline_runner import _build_env
+    env = _build_env("usecase1_customer_support", "index")
+    assert env.get("HF_TOKEN") == "hf_test_tok_abcd1234"
+
+
+def test_hf_token_injected_for_train_step(monkeypatch):
+    from studio import settings_manager
+    monkeypatch.setattr(settings_manager, "get_setting",
+                        lambda key: "hf_tok_xyz" if key == "huggingface_token" else "")
+
+    from studio.pipeline_runner import _build_env
+    env = _build_env("usecase1_customer_support", "train")
+    assert env.get("HF_TOKEN") == "hf_tok_xyz"
+
+
+def test_hf_token_not_injected_when_empty(monkeypatch):
+    from studio import settings_manager
+    monkeypatch.setattr(settings_manager, "get_setting", lambda key: "")
+
+    from studio.pipeline_runner import _build_env
+    env = _build_env("usecase1_customer_support", "index")
+    assert "HF_TOKEN" not in env or not env["HF_TOKEN"]
+
+
+def test_settings_route_exists():
+    """GET /studio/settings must return 200 (not 404)."""
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from studio.routes import router
+    app = FastAPI()
+    app.include_router(router, prefix="/studio")
+    client = TestClient(app)
+    resp = client.get("/studio/settings")
+    assert resp.status_code == 200
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+```
+python -m pytest tests/test_hf_token_injection.py -v --override-ini="addopts="
+```
+
+Expected: `test_hf_token_injected_for_index_step` and `test_settings_route_exists` fail.
+
+- [ ] **Step 3: Inject HF_TOKEN in _build_env**
+
+In `studio/pipeline_runner.py`, in the `_build_env` function, add HF_TOKEN injection for `index` and `train` steps (append after the `faq-gen-cloud` block):
+
+```python
+    if step in {"index", "train", "recompute"}:
+        from studio.settings_manager import get_setting
+        hf_token = get_setting("huggingface_token") or ""
+        if hf_token:
+            env["HF_TOKEN"] = hf_token
+    return env
+```
+
+- [ ] **Step 4: Create the settings route and template**
+
+In `studio/routes.py`, add the settings page route (after the `admin_users_page` route):
+
+```python
+@router.get("/settings", response_class=HTMLResponse)
+def settings_page(request: Request):
+    from studio import settings_manager
+    masked = settings_manager.get_masked()
+    from fastapi.responses import HTMLResponse as _HR
+    tmpl = (Path(__file__).parent.parent / "templates" / "studio" / "settings.html").read_text()
+    # Inject masked values as a JSON blob for the page's JS
+    import json as _json
+    tmpl = tmpl.replace("__SETTINGS_JSON__", _json.dumps(masked))
+    return HTMLResponse(tmpl)
+```
+
+Create `templates/studio/settings.html`:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KVForge Studio — Settings</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d0d;color:#d4d4d4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px;gap:24px}
+h1{color:#4ec9b0;font-size:20px;font-weight:700}
+.card{background:#111;border:1px solid #1e1e1e;border-radius:10px;padding:24px;width:100%;max-width:600px}
+.card h2{font-size:13px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;color:#888;margin-bottom:6px}
+.field input{width:100%;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;
+  padding:8px 12px;color:#d4d4d4;font-size:13px;font-family:monospace;outline:none}
+.field input:focus{border-color:#4ec9b0}
+.field .hint{font-size:11px;color:#555;margin-top:4px}
+.btn{background:#4ec9b0;color:#000;border:none;border-radius:6px;padding:8px 20px;
+  font-size:13px;font-weight:700;cursor:pointer}
+.btn:hover{background:#3ab89f}
+.msg{font-size:12px;margin-top:12px;height:16px}
+.msg.ok{color:#4ec9b0}.msg.err{color:#f87171}
+a.back{font-size:12px;color:#555;text-decoration:none}
+a.back:hover{color:#4ec9b0}
+</style>
+</head>
+<body>
+<a class="back" href="/studio">← Back to Studio</a>
+<h1>Settings</h1>
+
+<div class="card">
+  <h2>API Keys</h2>
+  <div class="field">
+    <label>HuggingFace Token (HF_TOKEN)</label>
+    <input type="password" id="hf-token" placeholder="hf_..." autocomplete="off">
+    <div class="hint">Required for gated models (Llama). Injected as HF_TOKEN during index &amp; train steps.</div>
+  </div>
+  <div class="field">
+    <label>Anthropic API Key</label>
+    <input type="password" id="anthropic-key" placeholder="sk-ant-..." autocomplete="off">
+    <div class="hint">Used for FAQ generation via Claude.</div>
+  </div>
+  <div class="field">
+    <label>OpenAI API Key</label>
+    <input type="password" id="openai-key" placeholder="sk-..." autocomplete="off">
+  </div>
+  <div class="field">
+    <label>Gemini API Key</label>
+    <input type="password" id="gemini-key" placeholder="AIza..." autocomplete="off">
+  </div>
+  <button class="btn" onclick="saveSettings()">Save Settings</button>
+  <div class="msg" id="save-msg"></div>
+</div>
+
+<script>
+const _s = __SETTINGS_JSON__;
+// Pre-fill masked values as placeholder hints (not actual values)
+document.getElementById('hf-token').placeholder = _s.huggingface_token || 'hf_...';
+document.getElementById('anthropic-key').placeholder = _s.anthropic_api_key || 'sk-ant-...';
+document.getElementById('openai-key').placeholder = _s.openai_api_key || 'sk-...';
+document.getElementById('gemini-key').placeholder = _s.gemini_api_key || 'AIza...';
+
+async function saveSettings() {
+  const body = {};
+  const hf = document.getElementById('hf-token').value.trim();
+  const ant = document.getElementById('anthropic-key').value.trim();
+  const oai = document.getElementById('openai-key').value.trim();
+  const gem = document.getElementById('gemini-key').value.trim();
+  if (hf)  body.huggingface_token  = hf;
+  if (ant) body.anthropic_api_key  = ant;
+  if (oai) body.openai_api_key     = oai;
+  if (gem) body.gemini_api_key     = gem;
+  if (!Object.keys(body).length) return;
+  const msg = document.getElementById('save-msg');
+  try {
+    const r = await fetch('/api/settings', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    if (r.ok) {
+      msg.className = 'msg ok'; msg.textContent = 'Saved.';
+      document.getElementById('hf-token').value = '';
+      document.getElementById('anthropic-key').value = '';
+      document.getElementById('openai-key').value = '';
+      document.getElementById('gemini-key').value = '';
+    } else {
+      const d = await r.json();
+      msg.className = 'msg err'; msg.textContent = d.detail || 'Save failed.';
+    }
+  } catch(e) {
+    msg.className = 'msg err'; msg.textContent = 'Network error.';
+  }
+}
+</script>
+</body>
+</html>
+```
+
+- [ ] **Step 5: Run tests to verify they pass**
+
+```
+python -m pytest tests/test_hf_token_injection.py -v --override-ini="addopts="
+```
+
+Expected: 4 PASSED
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add studio/pipeline_runner.py studio/routes.py templates/studio/settings.html tests/test_hf_token_injection.py
+git commit -m "feat: inject HF_TOKEN for index/train steps; add Studio Settings page"
+```
+
+---
+
 ## Self-Review
 
 **Spec coverage check:**
@@ -1586,7 +2583,12 @@ git commit -m "chore: final integration pass — all demo connector UI items com
 | Domain model presets missing | Task 8 | ✅ 4 preset cards |
 | Milvus/Weaviate Docker setup guidance | Task 9 | ✅ callout + copy button |
 | Connector modal (quality improvement) | Task 6 | ✅ proper modal UX |
+| No HuggingFace ingestion loader | Task 11 | ✅ HuggingFaceLoader + registry |
+| kv_indexer broken for Studio (missing pdf_file, flat cfg) | Task 12 | ✅ optional arg + config flatten |
+| No "setup" step for HF dataset download | Task 13 | ✅ setup step added |
+| No wizard pre-flight data check | Task 14 | ✅ /api/check-data + wizard banner |
+| No HF_TOKEN in Studio Settings UI or env injection | Task 15 | ✅ settings page + env injection |
 
 **Placeholder scan:** No TBDs. All code blocks are complete. Route handler code shows full implementations.
 
-**Type consistency:** `SourceFile`, `SourceConnector` — same types used throughout all 4 connectors (Tasks 1-4) matching the Protocol defined in `connectors/base.py`. `creds` dict structure matches between `_buildCredentials()` JS (Task 6) and `_run_test()` branches (Task 5).
+**Type consistency:** `SourceFile`, `SourceConnector` — same types used throughout all 4 connectors (Tasks 1-4) matching the Protocol defined in `connectors/base.py`. `creds` dict structure matches between `_buildCredentials()` JS (Task 6) and `_run_test()` branches (Task 5). Tasks 11-15 use `HuggingFaceLoader.load() -> list[dict]` matching the same contract as `JSONLLoader` and `PDFLoader`.

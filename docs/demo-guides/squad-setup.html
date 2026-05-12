@@ -77,15 +77,15 @@ footer{margin:60px 40px 0;color:#333;font-size:12px;text-align:center}
     <div class="instructions">
       <div class="instr-row">
         <span class="instr-icon">📦</span>
-        <div class="instr-text"><strong>Dataset:</strong> <code>rajpurkar/squad</code> on HuggingFace. 87,599 training examples from Wikipedia passages. Each example has a context paragraph, a question, and an answer span within the context.</div>
+        <div class="instr-text"><strong>Dataset:</strong> <code>rajpurkar/squad_v2</code> on HuggingFace. 130,319 training examples from Wikipedia passages — includes both answerable questions and unanswerable ones (added in v2). The setup script skips unanswerable questions for the FAQ training set.</div>
       </div>
       <div class="instr-row">
         <span class="instr-icon">🎯</span>
-        <div class="instr-text"><strong>Goal:</strong> After setup, the system answers factoid questions from Wikipedia passages. This is a great benchmark use case because SQuAD has official evaluation metrics (EM, F1) you can run against the standard dev set.</div>
+        <div class="instr-text"><strong>Goal:</strong> After setup, the system answers factoid questions from Wikipedia passages. This is a great benchmark use case because SQuAD v2 has official evaluation metrics (EM, F1) you can run against the standard dev set.</div>
       </div>
       <div class="instr-row">
         <span class="instr-icon">💡</span>
-        <div class="instr-text"><strong>Why SQuAD?</strong> SQuAD is the canonical reading comprehension benchmark. Using it here lets you compare KVForge Phase 1, 2, and 3 performance against published BERT/GPT baselines.</div>
+        <div class="instr-text"><strong>Why SQuAD v2?</strong> SQuAD v2 is the canonical reading comprehension benchmark. Using it here lets you compare KVForge Phase 1, 2, and 3 performance against published BERT/GPT baselines. The setup script de-duplicates passages so each Wikipedia context is indexed only once.</div>
       </div>
     </div>
   </div>
@@ -124,15 +124,15 @@ footer{margin:60px 40px 0;color:#333;font-size:12px;text-align:center}
       </div>
       <div class="instr-row">
         <span class="instr-icon">✏</span>
-        <div class="instr-text"><strong>Dataset ID:</strong> <code>rajpurkar/squad</code></div>
+        <div class="instr-text"><strong>Dataset ID:</strong> <code>rajpurkar/squad_v2</code></div>
       </div>
       <div class="instr-row">
         <span class="instr-icon">✏</span>
-        <div class="instr-text"><strong>Split:</strong> <code>train</code> &nbsp;|&nbsp; <strong>Text Column:</strong> <code>context</code> (the Wikipedia passage text) &nbsp;|&nbsp; <strong>Max Rows:</strong> <code>5000</code></div>
+        <div class="instr-text"><strong>Split:</strong> <code>train</code> &nbsp;|&nbsp; <strong>Text Column:</strong> <code>context</code> (Wikipedia passage) &nbsp;|&nbsp; <strong>Max Rows:</strong> <code>5000</code></div>
       </div>
       <div class="instr-row">
         <span class="instr-icon">ℹ</span>
-        <div class="instr-text">SQuAD has duplicate contexts (multiple questions per passage). Setting <code>Max Rows</code> to 5,000 gives ~2,000 unique paragraphs — sufficient for a demo. For the full benchmark, use all 87,599 rows.</div>
+        <div class="instr-text">SQuAD v2 has duplicate contexts (many questions per passage). The setup script de-duplicates, giving ~2,000 unique paragraphs from 5,000 rows — sufficient for a demo. For the full benchmark, use all 130,319 rows.</div>
       </div>
     </div>
     <div class="screenshot-missing">📸 Screenshot: Wizard Step 1 with HuggingFace selected and SQuAD dataset ID entered.</div>
@@ -221,7 +221,7 @@ footer{margin:60px 40px 0;color:#333;font-size:12px;text-align:center}
     <div class="screenshot-missing">📸 Screenshot: Wizard Step 7 pipeline monitor with all stages complete.</div>
     <div class="todo-box">
       <div class="todo-title">TODO: Studio UI — FAQ Auto-generation from Dataset Questions</div>
-      <div class="todo-item"><span class="todo-bullet">▶</span>SQuAD already contains 87K question-answer pairs. The wizard should detect when the source dataset contains Q&amp;A columns (<code>question</code> + <code>answers</code>) and offer to use those directly as the FAQ training set — skipping the cloud LLM FAQ generation step entirely. This would save API cost and produce higher-quality training signal.</div>
+      <div class="todo-item"><span class="todo-bullet">▶</span>SQuAD v2 already contains 130K question-answer pairs. The wizard should detect when the source dataset contains Q&amp;A columns (<code>question</code> + <code>answers</code>) and offer to use those directly as the FAQ training set — skipping the cloud LLM FAQ generation step entirely. This would save API cost and produce higher-quality training signal. The setup.py already does this extraction; the wizard needs to expose it.</div>
     </div>
   </div>
 
@@ -235,27 +235,26 @@ footer{margin:60px 40px 0;color:#333;font-size:12px;text-align:center}
       </div>
     </div>
     <div class="cli-box">
-      <div class="cli-label">Terminal commands</div>
-      <pre># 1. Initialize
-python kvforge.py init --name squad
+      <div class="cli-label">Terminal commands (current working path — before Studio HF integration)</div>
+      <pre># 1. Download the dataset and write data/corpus.jsonl + faqs.json
+python examples/usecase3_squad/setup.py
+# Downloads rajpurkar/squad_v2, de-duplicates contexts, writes:
+#   examples/usecase3_squad/data/corpus.jsonl  (2 000 unique passages)
+#   examples/usecase3_squad/faqs.json          (50 answerable Q&A pairs)
 
-# 2. Index SQuAD passages
+# 2. Index the local corpus via Studio or CLI:
 python -m pipeline.kv_indexer \
-  --config datasource_squad.json \
-  index hf://rajpurkar/squad
+  --config examples/usecase3_squad/config.json \
+  index examples/usecase3_squad/data/corpus.jsonl
 
-# 3. Generate FAQs (or reuse SQuAD questions directly)
-python -m pipeline.sleep_faq_generator \
-  --config datasource_squad.json \
-  --output squad_faqs.json --count 50
-
-# 4. Train + evaluate
+# 3. Train (faqs.json already written by setup.py)
 python -m pipeline.lora_trainer \
-  --config datasource_squad.json --faqs squad_faqs.json
+  --config examples/usecase3_squad/config.json \
+  --faqs examples/usecase3_squad/faqs.json
 
-# 5. Query
-python -m pipeline.kv_inference \
-  --config datasource_squad.json \
+# 4. Query
+python ask.py \
+  --config examples/usecase3_squad/config.json \
   "What river does the Colorado River empty into?"</pre>
     </div>
   </div>

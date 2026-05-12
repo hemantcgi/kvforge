@@ -77,7 +77,7 @@ footer{margin:60px 40px 0;color:#333;font-size:12px;text-align:center}
     <div class="instructions">
       <div class="instr-row">
         <span class="instr-icon">📦</span>
-        <div class="instr-text"><strong>Dataset:</strong> <code>pubmed_qa</code> on HuggingFace (config: <code>pqa_labeled</code>, split: <code>train</code>). Contains 1,000 expert-labeled biomedical Q&amp;A pairs. Access at <code>bigbio/pubmed_qa</code>.</div>
+        <div class="instr-text"><strong>Dataset:</strong> <code>qiaojin/PubMedQA</code> on HuggingFace (config: <code>pqa_labeled</code>, split: <code>train</code>). Contains 1,000 expert-labeled biomedical Q&amp;A pairs with long-form answers derived from PubMed abstracts.</div>
       </div>
       <div class="instr-row">
         <span class="instr-icon">🎯</span>
@@ -124,15 +124,15 @@ footer{margin:60px 40px 0;color:#333;font-size:12px;text-align:center}
       </div>
       <div class="instr-row">
         <span class="instr-icon">✏</span>
-        <div class="instr-text"><strong>Dataset ID:</strong> <code>bigbio/pubmed_qa</code></div>
+        <div class="instr-text"><strong>Dataset ID:</strong> <code>qiaojin/PubMedQA</code></div>
       </div>
       <div class="instr-row">
         <span class="instr-icon">✏</span>
-        <div class="instr-text"><strong>Config name:</strong> <code>pubmed_qa_labeled_fold0_bigbio_qa</code> &nbsp;|&nbsp; <strong>Split:</strong> <code>train</code></div>
+        <div class="instr-text"><strong>Config name:</strong> <code>pqa_labeled</code> &nbsp;|&nbsp; <strong>Split:</strong> <code>train</code></div>
       </div>
       <div class="instr-row">
         <span class="instr-icon">✏</span>
-        <div class="instr-text"><strong>Text Column:</strong> <code>context</code> (the PubMed abstract text) &nbsp;|&nbsp; <strong>Max Rows:</strong> <code>1000</code></div>
+        <div class="instr-text"><strong>Text Column:</strong> <code>context</code> (nested dict — the setup script flattens <code>context.contexts[]</code> paragraphs) &nbsp;|&nbsp; <strong>Max Rows:</strong> <code>1000</code></div>
       </div>
     </div>
     <div class="screenshot-missing">📸 Screenshot: Wizard Step 1 with HuggingFace card selected and pubmed_qa dataset ID entered.</div>
@@ -236,28 +236,31 @@ footer{margin:60px 40px 0;color:#333;font-size:12px;text-align:center}
       </div>
     </div>
     <div class="cli-box">
-      <div class="cli-label">Terminal commands</div>
-      <pre># 1. Initialize
-python kvforge.py init --name pubmedqa
+      <div class="cli-label">Terminal commands (current working path — before Studio HF integration)</div>
+      <pre># 1. Download the dataset and write data/corpus.jsonl + faqs.json
+python examples/usecase2_pubmedqa/setup.py
+# Downloads qiaojin/PubMedQA (config: pqa_labeled), writes:
+#   examples/usecase2_pubmedqa/data/corpus.jsonl  (1 000 records)
+#   examples/usecase2_pubmedqa/faqs.json          (50 Q&A pairs)
 
-# 2. Index the PubMedQA dataset
+# 2. Index the local corpus via Studio or CLI:
+#    In Studio: UC detail page → "Run Index" button
+#    Or CLI:
 python -m pipeline.kv_indexer \
-  --config datasource_pubmedqa.json \
-  index hf://bigbio/pubmed_qa:pubmed_qa_labeled_fold0_bigbio_qa
+  --config examples/usecase2_pubmedqa/config.json \
+  index examples/usecase2_pubmedqa/data/corpus.jsonl
 
-# 3. Generate FAQs
-python -m pipeline.sleep_faq_generator \
-  --config datasource_pubmedqa.json \
-  --output pubmedqa_faqs.json --count 50
+# 3. Generate FAQs (already written by setup.py — skip if present)
+# python -m pipeline.sleep_faq_generator ...
 
-# 4. Train + evaluate
+# 4. Train + evaluate via Studio or CLI
 python -m pipeline.lora_trainer \
-  --config datasource_pubmedqa.json \
-  --faqs pubmedqa_faqs.json
+  --config examples/usecase2_pubmedqa/config.json \
+  --faqs examples/usecase2_pubmedqa/faqs.json
 
 # 5. Query
-python -m pipeline.kv_inference \
-  --config datasource_pubmedqa.json \
+python ask.py \
+  --config examples/usecase2_pubmedqa/config.json \
   "Does metformin reduce cardiovascular mortality in type 2 diabetes patients?"</pre>
     </div>
   </div>
