@@ -1,5 +1,6 @@
 """Wikipedia REST API connector — fetches article text by topic list."""
 from __future__ import annotations
+import urllib.parse
 from datetime import datetime, timezone
 
 import httpx
@@ -19,7 +20,8 @@ class WikipediaConnector:
 
     def _fetch_summary(self, title: str) -> dict:
         if title not in self._cache:
-            r = httpx.get(f"{_BASE}/{title}", timeout=10)
+            encoded = urllib.parse.quote(title, safe="")
+            r = httpx.get(f"{_BASE}/{encoded}", timeout=10)
             r.raise_for_status()
             self._cache[title] = r.json()
         return self._cache[title]
@@ -43,7 +45,9 @@ class WikipediaConnector:
                     modified_at=modified_at,
                     mime_type="text/plain",
                 ))
-            except Exception:
+            except Exception as e:
+                import sys
+                print(f"[wikipedia] skipping '{title}': {e}", file=sys.stderr)
                 continue
         return files
 
