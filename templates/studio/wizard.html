@@ -392,10 +392,10 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
                 <span style="font-size:10px;font-weight:700;color:#9cdcfe;">Docker Setup Required</span>
               </div>
               <div style="background:#0a0e14;border:1px solid #1e2a3a;border-radius:4px;padding:7px 10px;font-family:monospace;font-size:9px;color:#4ec9b0;margin-bottom:6px;white-space:pre-wrap;">docker run -d --name weaviate \
-  -p 8080:8080 -p 50051:50051 \
+  -p 8180:8080 -p 50051:50051 \
   -e AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true \
   cr.weaviate.io/semitechnologies/weaviate:1.24.1</div>
-              <button onclick="copyCmd(this,'docker run -d --name weaviate -p 8080:8080 -p 50051:50051 -e AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true cr.weaviate.io/semitechnologies/weaviate:1.24.1')"
+              <button onclick="copyCmd(this,'docker run -d --name weaviate -p 8180:8080 -p 50051:50051 -e AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true cr.weaviate.io/semitechnologies/weaviate:1.24.1')"
                 style="background:#264f7822;border:1px solid #264f78;color:#9cdcfe;padding:3px 9px;border-radius:3px;font-size:9px;cursor:pointer;">📋 Copy Command</button>
             </div>
             <div class="field"><div class="flabel">URL</div><input id="vdb-host-wv" class="finput" placeholder="https://...weaviate.network"></div>
@@ -418,10 +418,9 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
                 <span style="font-size:14px;">🐳</span>
                 <span style="font-size:10px;font-weight:700;color:#9cdcfe;">Docker Setup Required</span>
               </div>
-              <div style="background:#0a0e14;border:1px solid #1e2a3a;border-radius:4px;padding:7px 10px;font-family:monospace;font-size:9px;color:#4ec9b0;margin-bottom:6px;white-space:pre-wrap;">docker run -d --name milvus-standalone \
-  -p 19530:19530 -p 9091:9091 \
-  milvusdb/milvus:v2.4.0 standalone</div>
-              <button onclick="copyCmd(this,'docker run -d --name milvus-standalone -p 19530:19530 -p 9091:9091 milvusdb/milvus:v2.4.0 standalone')"
+              <div style="background:#0a0e14;border:1px solid #1e2a3a;border-radius:4px;padding:7px 10px;font-family:monospace;font-size:9px;color:#4ec9b0;margin-bottom:6px;white-space:pre-wrap;">docker run -d --name milvus -p 19530:19530 \
+  milvusdb/milvus-lite:latest</div>
+              <button onclick="copyCmd(this,'docker run -d --name milvus -p 19530:19530 milvusdb/milvus-lite:latest')"
                 style="background:#264f7822;border:1px solid #264f78;color:#9cdcfe;padding:3px 9px;border-radius:3px;font-size:9px;cursor:pointer;">📋 Copy Command</button>
             </div>
             <div class="field"><div class="flabel">Host</div><input id="vdb-host-mv" class="finput" placeholder="localhost"></div>
@@ -576,7 +575,7 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
             <span class="mc-icon">🏈</span>
             <div>
               <div class="mc-name">Phi-3-mini-4k-instruct</div>
-              <div class="mc-meta">Sports / News · Fast inference</div>
+              <div class="mc-meta">General purpose · Lightweight / Fast inference</div>
             </div>
             <div class="mc-vram"><span class="vram-pill vram-ok">~8 GB</span></div>
           </div>
@@ -1425,9 +1424,12 @@ function updateStepDots() {
 // DOCKER CALLOUT — copy command helper
 // ═══════════════════════════════════════════════════════════
 function copyCmd(btn, cmd) {
+  const orig = btn.textContent;
   navigator.clipboard.writeText(cmd).then(() => {
-    const orig = btn.textContent;
     btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = orig, 1500);
+  }).catch(() => {
+    btn.textContent = '✗ Copy failed';
     setTimeout(() => btn.textContent = orig, 1500);
   });
 }
