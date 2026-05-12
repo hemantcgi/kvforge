@@ -56,6 +56,19 @@ def uc_detail(uc_id: str):
     return (TEMPLATES / "uc_detail.html").read_text()
 
 
+@router.get("/settings", response_class=HTMLResponse)
+def settings_page():
+    from studio import settings_manager
+    import json as _json
+    try:
+        masked = settings_manager.get_masked()
+    except AttributeError:
+        masked = {}
+    tmpl = (TEMPLATES / "settings.html").read_text()
+    tmpl = tmpl.replace("__SETTINGS_JSON__", _json.dumps(masked))
+    return HTMLResponse(tmpl)
+
+
 @router.get("/connectors", response_class=HTMLResponse)
 def connectors_page(request: Request):
     u = getattr(request.state, "user", None)

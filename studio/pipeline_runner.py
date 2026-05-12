@@ -272,6 +272,11 @@ def _build_env(uc_id: str, step: str) -> dict:
             except Exception:
                 pass
         env["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
+    if step in {"index", "train", "recompute"}:
+        from studio.settings_manager import get_setting
+        hf_token = get_setting("huggingface_token") or ""
+        if hf_token:
+            env["HF_TOKEN"] = hf_token
     if step == "faq-gen-cloud":
         from studio.settings_manager import get_setting
         import json as _json
