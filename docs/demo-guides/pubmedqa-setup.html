@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PubMedQA RAG Demo &mdash; KVForge Setup Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d0d;color:#d4d4d4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:0 0 80px}
+header{background:#111;border-bottom:1px solid #1e1e1e;padding:24px 40px;position:sticky;top:0;z-index:10}
+.header-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{width:28px;height:28px;border-radius:7px;background:#0052CC;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;flex-shrink:0}
+h1{color:#e0e0e0;font-size:18px;font-weight:700}
+.demo-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:3px;text-transform:uppercase;letter-spacing:.05em}
+.header-sub{color:#555;font-size:12px;margin-top:6px}
+.tech-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.tech-pill{font-size:10px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:4px;padding:3px 9px;color:#888}
+.tech-pill span{color:#4ec9b0;font-weight:700}
+.guide{max-width:1000px;margin:0 auto;padding:0 40px}
+.step{margin-top:40px;border:1px solid #1e1e1e;border-radius:12px;overflow:hidden}
+.step-header{padding:16px 20px;background:#111;border-bottom:1px solid #1e1e1e;display:flex;align-items:flex-start;gap:14px}
+.step-num{width:32px;height:32px;border-radius:50%;background:rgba(78,201,176,.15);border:1.5px solid rgba(78,201,176,.35);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#4ec9b0;flex-shrink:0}
+.step-title{font-size:14px;font-weight:700;color:#e0e0e0;margin-bottom:3px}
+.step-desc{font-size:12px;color:#888;line-height:1.6}
+.instructions{padding:16px 20px;background:#0e0e0e;border-bottom:1px solid #1a1a1a}
+.instr-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}
+.instr-row:last-child{margin-bottom:0}
+.instr-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.instr-text{font-size:13px;color:#c8c8c8;line-height:1.6}
+.instr-text code{background:#1e1e1e;border:1px solid #2a2a2a;border-radius:3px;padding:1px 6px;font-family:monospace;font-size:12px;color:#4ec9b0}
+.instr-text strong{color:#e0e0e0}
+.screenshot-wrap{position:relative;background:#000}
+.screenshot-wrap img{width:100%;display:block}
+.screenshot-cap{padding:10px 20px;background:#0a0a0a;font-size:11px;color:#555;border-top:1px solid #1a1a1a;font-style:italic}
+.screenshot-missing{color:#444;padding:16px 20px;font-style:italic;background:#0a0a0a;border-top:1px solid #1a1a1a}
+.todo-box{margin:0 20px 16px;padding:14px 18px;background:rgba(255,153,0,.06);border:1px solid rgba(255,153,0,.25);border-radius:8px;border-left:3px solid #FF991F}
+.todo-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF991F;margin-bottom:6px}
+.todo-item{display:flex;gap:8px;align-items:flex-start;margin-bottom:5px;font-size:12px;color:#b08030;line-height:1.5}
+.todo-item:last-child{margin-bottom:0}
+.todo-bullet{color:#FF991F;flex-shrink:0}
+.note-box{margin:0 20px 16px;padding:12px 16px;background:rgba(156,220,254,.05);border:1px solid rgba(156,220,254,.2);border-radius:6px}
+.note-box p{font-size:12px;color:#7a9ab8;line-height:1.6}
+.note-box strong{color:#9cdcfe}
+.cli-box{margin:0 20px 16px;background:#0a0a0a;border:1px solid #1a2a1a;border-radius:6px;padding:12px 16px}
+.cli-box pre{font-family:monospace;font-size:12px;color:#4ec9b0;white-space:pre-wrap;line-height:1.7}
+.cli-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#4ec9b0;margin-bottom:6px;opacity:.7}
+footer{margin:60px 40px 0;color:#333;font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-top">
+    <div class="logo">K</div>
+    <h1>PubMedQA RAG Demo</h1>
+    <span class="demo-badge" style="background:#1a2e28;color:#4ec9b0">BIOMEDICAL QA</span>
+  </div>
+  <div class="header-sub">KVForge Studio &mdash; Step-by-step setup guide</div>
+  <div class="tech-row">
+    <div class="tech-pill">VectorDB: <span>Qdrant</span></div>
+    <div class="tech-pill">LLM: <span>Llama-3.2-3B-Instruct</span></div>
+    <div class="tech-pill">Data: <span>HuggingFace — pubmed_qa</span></div>
+    <div class="tech-pill">Embedding: <span>BAAI/bge-small-en-v1.5</span></div>
+    <div class="tech-pill">Domain: <span>Biomedical Research</span></div>
+  </div>
+</header>
+<div class="guide">
+
+  <!-- Overview -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">0</div>
+      <div>
+        <div class="step-title">What this demo does</div>
+        <div class="step-desc">Builds a biomedical question-answering RAG system from the PubMedQA dataset. The corpus contains 1,000 expert-annotated PubMed research questions with long-form answers derived from abstracts. The model learns to reason over clinical evidence to answer yes/no/maybe research questions.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">📦</span>
+        <div class="instr-text"><strong>Dataset:</strong> <code>pubmed_qa</code> on HuggingFace (config: <code>pqa_labeled</code>, split: <code>train</code>). Contains 1,000 expert-labeled biomedical Q&amp;A pairs. Access at <code>bigbio/pubmed_qa</code>.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">🎯</span>
+        <div class="instr-text"><strong>Goal:</strong> After setup, queries like <em>"Does X drug reduce mortality in Y condition?"</em> are answered by retrieving relevant abstracts and generating evidence-grounded responses.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">⚠</span>
+        <div class="instr-text"><strong>Note:</strong> For production biomedical RAG, consider using BioMistral-7B or a medical-domain fine-tuned model instead of the general-purpose Llama-3.2-3B. The wizard's Domain Presets section (once implemented) will offer BioMistral-7B directly.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">1</div>
+      <div>
+        <div class="step-title">Start KVForge Studio</div>
+        <div class="step-desc">Launch the Studio web UI and navigate to the hub dashboard.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">▶</span>
+        <div class="instr-text">Run: <code>python kvforge_portal.py --port 8080</code> then open <code>http://localhost:8080/studio/</code></div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Studio Hub with "PubMedQA" use-case card visible in the UC list.</div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">2</div>
+      <div>
+        <div class="step-title">Open Wizard &rarr; Step 1: HuggingFace Data Source</div>
+        <div class="step-desc">Click <strong>+ New Use Case</strong>, select <strong>HuggingFace</strong> as the data source, and enter the PubMedQA dataset details.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">👆</span>
+        <div class="instr-text">Click the <strong>HuggingFace</strong> source card (🤗).</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">✏</span>
+        <div class="instr-text"><strong>Dataset ID:</strong> <code>bigbio/pubmed_qa</code></div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">✏</span>
+        <div class="instr-text"><strong>Config name:</strong> <code>pubmed_qa_labeled_fold0_bigbio_qa</code> &nbsp;|&nbsp; <strong>Split:</strong> <code>train</code></div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">✏</span>
+        <div class="instr-text"><strong>Text Column:</strong> <code>context</code> (the PubMed abstract text) &nbsp;|&nbsp; <strong>Max Rows:</strong> <code>1000</code></div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Wizard Step 1 with HuggingFace card selected and pubmed_qa dataset ID entered.</div>
+    <div class="todo-box">
+      <div class="todo-title">TODO: Studio UI — HuggingFace Dataset Sub-panel</div>
+      <div class="todo-item"><span class="todo-bullet">▶</span>The wizard has no HuggingFace dataset sub-panel. Fields for Dataset ID, Config name, Split, Text Column, and Max Rows need to be added to the wizard Step 1 HuggingFace card.</div>
+      <div class="todo-item"><span class="todo-bullet">▶</span><strong>Config name</strong> support is critical for datasets with multiple configurations (like pubmed_qa which has 8 configs). Without it, the HuggingFace dataset loader will fail on multi-config datasets.</div>
+      <div class="todo-item"><span class="todo-bullet">▶</span>Add a <strong>Validate Dataset</strong> button that checks if the dataset + config + split combination is valid before proceeding.</div>
+    </div>
+  </div>
+
+  <!-- Step 3: VDB -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">3</div>
+      <div>
+        <div class="step-title">Step 2 — Vector Database: Qdrant</div>
+        <div class="step-desc">Select Qdrant and configure the collection for biomedical embeddings.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">🐳</span>
+        <div class="instr-text">Start Qdrant: <code>docker run -d --name qdrant -p 6333:6333 qdrant/qdrant</code></div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">👆</span>
+        <div class="instr-text">Click the <strong>Qdrant</strong> tile. Set URL: <code>http://localhost:6333</code>, Collection: <code>pubmedqa</code></div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">ℹ</span>
+        <div class="instr-text">Dimensions stay at <code>384</code>. For higher quality biomedical retrieval, consider using <code>pritamdeka/BioBERT-mnli-snli-scinli-scitail-mednli-stsb</code> as the embedding model (768 dims), but this requires changing the <code>uc_config.json</code> manually.</div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Wizard VDB step with Qdrant selected and collection set to "pubmedqa".</div>
+    <div class="todo-box">
+      <div class="todo-title">TODO: Studio UI — Domain-Specific Embedding Models</div>
+      <div class="todo-item"><span class="todo-bullet">▶</span>The wizard does not offer domain-specific embedding model choices. For biomedical use cases, pre-trained BioBERT-based sentence transformers significantly outperform BAAI/bge-small-en-v1.5 for retrieval recall. Add an embedding model selector to the VDB step.</div>
+    </div>
+  </div>
+
+  <!-- Step 4: Model -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">4</div>
+      <div>
+        <div class="step-title">Step 3 — Select Model</div>
+        <div class="step-desc">For a demo, use <strong>Llama-3.2-3B-Instruct</strong>. For production biomedical QA, BioMistral-7B is strongly recommended.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">👆</span>
+        <div class="instr-text">Click <strong>Llama-3.2-3B</strong> for the demo. It will answer PubMedQA questions but with lower clinical accuracy than a domain-adapted model.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">💡</span>
+        <div class="instr-text">Once the Domain Presets section is added (see TODO), select <strong>BioMistral-7B</strong> instead. It is pre-trained on 1M+ biomedical texts and achieves significantly higher accuracy on PubMedQA benchmarks.</div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Wizard Step 3 with Llama-3.2-3B card selected.</div>
+    <div class="todo-box">
+      <div class="todo-title">TODO: Studio UI — Domain Model Presets</div>
+      <div class="todo-item"><span class="todo-bullet">▶</span>The wizard Step 3 has no domain-specific model presets. Add a "Domain Presets" section with <strong>BioMistral/BioMistral-7B-DARE</strong> (for medical/pharma), which is the recommended model for PubMedQA and FDA use cases.</div>
+    </div>
+  </div>
+
+  <!-- Step 5: Launch -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">5</div>
+      <div>
+        <div class="step-title">Step 4-6 — GPU, Params, Launch</div>
+        <div class="step-desc">Select a free GPU, keep default LoRA parameters, then launch the pipeline.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">👆</span>
+        <div class="instr-text">Step 4: Select a free GPU card.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">✏</span>
+        <div class="instr-text">Step 5: Set FAQ count to <code>50</code> (enough for PubMedQA's 1,000 Q&amp;A pairs). Keep LoRA rank at <code>16</code>.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">🚀</span>
+        <div class="instr-text">Step 6: Confirm summary, click <strong>Launch Pipeline</strong>.</div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Wizard Step 6 review table with PubMedQA configuration summary.</div>
+  </div>
+
+  <!-- CLI -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">6</div>
+      <div>
+        <div class="step-title">Alternative: CLI Setup</div>
+        <div class="step-desc">Set up PubMedQA from the command line.</div>
+      </div>
+    </div>
+    <div class="cli-box">
+      <div class="cli-label">Terminal commands</div>
+      <pre># 1. Initialize
+python kvforge.py init --name pubmedqa
+
+# 2. Index the PubMedQA dataset
+python -m pipeline.kv_indexer \
+  --config datasource_pubmedqa.json \
+  index hf://bigbio/pubmed_qa:pubmed_qa_labeled_fold0_bigbio_qa
+
+# 3. Generate FAQs
+python -m pipeline.sleep_faq_generator \
+  --config datasource_pubmedqa.json \
+  --output pubmedqa_faqs.json --count 50
+
+# 4. Train + evaluate
+python -m pipeline.lora_trainer \
+  --config datasource_pubmedqa.json \
+  --faqs pubmedqa_faqs.json
+
+# 5. Query
+python -m pipeline.kv_inference \
+  --config datasource_pubmedqa.json \
+  "Does metformin reduce cardiovascular mortality in type 2 diabetes patients?"</pre>
+    </div>
+  </div>
+
+</div>
+<footer>Generated by docs/demo-guides/ &mdash; KVForge Studio &mdash; Branch kvforge-demos</footer>
+</body>
+</html>

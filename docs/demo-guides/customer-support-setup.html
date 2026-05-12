@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Customer Support RAG Demo &mdash; KVForge Setup Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d0d;color:#d4d4d4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:0 0 80px}
+header{background:#111;border-bottom:1px solid #1e1e1e;padding:24px 40px;position:sticky;top:0;z-index:10}
+.header-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{width:28px;height:28px;border-radius:7px;background:#0052CC;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;flex-shrink:0}
+h1{color:#e0e0e0;font-size:18px;font-weight:700}
+.demo-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:3px;text-transform:uppercase;letter-spacing:.05em}
+.header-sub{color:#555;font-size:12px;margin-top:6px}
+.tech-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.tech-pill{font-size:10px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:4px;padding:3px 9px;color:#888}
+.tech-pill span{color:#4ec9b0;font-weight:700}
+.guide{max-width:1000px;margin:0 auto;padding:0 40px}
+.step{margin-top:40px;border:1px solid #1e1e1e;border-radius:12px;overflow:hidden}
+.step-header{padding:16px 20px;background:#111;border-bottom:1px solid #1e1e1e;display:flex;align-items:flex-start;gap:14px}
+.step-num{width:32px;height:32px;border-radius:50%;background:rgba(78,201,176,.15);border:1.5px solid rgba(78,201,176,.35);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#4ec9b0;flex-shrink:0}
+.step-title{font-size:14px;font-weight:700;color:#e0e0e0;margin-bottom:3px}
+.step-desc{font-size:12px;color:#888;line-height:1.6}
+.instructions{padding:16px 20px;background:#0e0e0e;border-bottom:1px solid #1a1a1a}
+.instr-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}
+.instr-row:last-child{margin-bottom:0}
+.instr-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.instr-text{font-size:13px;color:#c8c8c8;line-height:1.6}
+.instr-text code{background:#1e1e1e;border:1px solid #2a2a2a;border-radius:3px;padding:1px 6px;font-family:monospace;font-size:12px;color:#4ec9b0}
+.instr-text strong{color:#e0e0e0}
+.screenshot-wrap{position:relative;background:#000}
+.screenshot-wrap img{width:100%;display:block}
+.screenshot-cap{padding:10px 20px;background:#0a0a0a;font-size:11px;color:#555;border-top:1px solid #1a1a1a;font-style:italic}
+.screenshot-missing{color:#444;padding:16px 20px;font-style:italic;background:#0a0a0a;border-top:1px solid #1a1a1a}
+.todo-box{margin:0 20px 16px;padding:14px 18px;background:rgba(255,153,0,.06);border:1px solid rgba(255,153,0,.25);border-radius:8px;border-left:3px solid #FF991F}
+.todo-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF991F;margin-bottom:6px}
+.todo-item{display:flex;gap:8px;align-items:flex-start;margin-bottom:5px;font-size:12px;color:#b08030;line-height:1.5}
+.todo-item:last-child{margin-bottom:0}
+.todo-bullet{color:#FF991F;flex-shrink:0}
+.note-box{margin:0 20px 16px;padding:12px 16px;background:rgba(156,220,254,.05);border:1px solid rgba(156,220,254,.2);border-radius:6px}
+.note-box p{font-size:12px;color:#7a9ab8;line-height:1.6}
+.note-box strong{color:#9cdcfe}
+.cli-box{margin:0 20px 16px;background:#0a0a0a;border:1px solid #1a2a1a;border-radius:6px;padding:12px 16px}
+.cli-box pre{font-family:monospace;font-size:12px;color:#4ec9b0;white-space:pre-wrap;line-height:1.7}
+.cli-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#4ec9b0;margin-bottom:6px;opacity:.7}
+footer{margin:60px 40px 0;color:#333;font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-top">
+    <div class="logo">K</div>
+    <h1>Customer Support RAG Demo</h1>
+    <span class="demo-badge" style="background:#1C3353;color:#579DFF">CUSTOMER SUPPORT</span>
+  </div>
+  <div class="header-sub">KVForge Studio &mdash; Step-by-step setup guide</div>
+  <div class="tech-row">
+    <div class="tech-pill">VectorDB: <span>Qdrant</span></div>
+    <div class="tech-pill">LLM: <span>Llama-3.2-3B-Instruct</span></div>
+    <div class="tech-pill">Data: <span>HuggingFace Dataset</span></div>
+    <div class="tech-pill">Embedding: <span>BAAI/bge-small-en-v1.5</span></div>
+    <div class="tech-pill">Phase: <span>1 → 3</span></div>
+  </div>
+</header>
+<div class="guide">
+
+  <!-- Overview -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">0</div>
+      <div>
+        <div class="step-title">What this demo does</div>
+        <div class="step-desc">Builds a customer support RAG system from a HuggingFace Q&amp;A dataset. The system learns to answer customer queries using the support history corpus, then advances through KVForge's 3 phases: standard RAG &rarr; KV-cache injection &rarr; confidence-gated parametric answering.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">📦</span>
+        <div class="instr-text"><strong>Dataset:</strong> A customer support Q&amp;A dataset from HuggingFace Hub (e.g. <code>bitext/Bitext-customer-support-llm-chatbot-training-dataset</code>). Contains thousands of intent-labeled support exchanges.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">🎯</span>
+        <div class="instr-text"><strong>Goal:</strong> After setup, queries like <em>"How do I cancel my subscription?"</em> are answered using the indexed support history, with accuracy improving after LoRA fine-tuning.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">⏱</span>
+        <div class="instr-text"><strong>Estimated time:</strong> 5 min setup · 20-40 min indexing (GPU) · 1-2 hr training</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 1: Start Studio -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">1</div>
+      <div>
+        <div class="step-title">Start KVForge Studio</div>
+        <div class="step-desc">Launch the Studio web UI on port 8080. All configuration is done through the browser.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">▶</span>
+        <div class="instr-text">In your terminal, run: <code>python kvforge_portal.py --port 8080</code></div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">🌐</span>
+        <div class="instr-text">Open <code>http://localhost:8080/studio/</code> in your browser. You should see the Studio Hub dashboard.</div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Studio Hub dashboard with "Customer Support" use-case card visible in the UC list.</div>
+  </div>
+
+  <!-- Step 2: Open Wizard -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">2</div>
+      <div>
+        <div class="step-title">Open New Use Case Wizard</div>
+        <div class="step-desc">Click the <strong>+ New Use Case</strong> button in the hub sidebar or the green button on the hub page to open the 7-step setup wizard.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">👆</span>
+        <div class="instr-text">Click <strong>+ New Use Case</strong> in the left sidebar (or the green button on the hub page).</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">📋</span>
+        <div class="instr-text">The wizard opens at <strong>Step 1: Data Source</strong>. You'll see 4 source-type cards.</div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Wizard Step 1 open with 4 source cards (Upload Files, Vector DB URL, HuggingFace, Existing Corpus).</div>
+  </div>
+
+  <!-- Step 3: Data Source -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">3</div>
+      <div>
+        <div class="step-title">Step 1 — Select HuggingFace Data Source</div>
+        <div class="step-desc">Select the <strong>HuggingFace</strong> source card and enter the dataset details for the customer support dataset.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">👆</span>
+        <div class="instr-text">Click the <strong>HuggingFace</strong> source card (the 🤗 card). It turns green when selected.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">✏</span>
+        <div class="instr-text">In the <strong>Dataset ID</strong> field, type: <code>bitext/Bitext-customer-support-llm-chatbot-training-dataset</code></div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">✏</span>
+        <div class="instr-text">Set <strong>Split</strong> to <code>train</code> and <strong>Text Column</strong> to <code>instruction</code> (the column with the customer question text).</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">✏</span>
+        <div class="instr-text">Set <strong>Max Rows</strong> to <code>5000</code> for a fast demo. Increase to 26,872 for the full dataset.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">➡</span>
+        <div class="instr-text">Click <strong>Next</strong> to proceed to VDB configuration.</div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Wizard Step 1 with HuggingFace card selected and Dataset ID filled in.</div>
+    <div class="todo-box">
+      <div class="todo-title">TODO: Studio UI — HuggingFace Dataset Support</div>
+      <div class="todo-item"><span class="todo-bullet">▶</span>The wizard currently has no HuggingFace source card with a Dataset ID input field. The <strong>HuggingFace</strong> source type exists in the config but has no dedicated wizard UI panel for specifying <code>dataset_id</code>, <code>split</code>, <code>text_column</code>, and <code>max_rows</code>.</div>
+      <div class="todo-item"><span class="todo-bullet">▶</span>Add a <strong>Dataset browser</strong> sub-panel that appears when the HuggingFace card is selected, with: Dataset ID text input, Split dropdown (train/test/validation), Text Column input, Max Rows slider.</div>
+      <div class="todo-item"><span class="todo-bullet">▶</span>Add a <strong>HuggingFace API token</strong> field for accessing private/gated datasets (e.g. Llama-gated models).</div>
+      <div class="todo-item"><span class="todo-bullet">▶</span>Add a <strong>Preview Dataset</strong> button that calls HuggingFace Datasets API to show the first 3 rows and confirm the right text column is selected.</div>
+    </div>
+  </div>
+
+  <!-- Step 4: VDB -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">4</div>
+      <div>
+        <div class="step-title">Step 2 — Configure Vector Database (Qdrant)</div>
+        <div class="step-desc">Select Qdrant as the vector store. For the demo, run Qdrant locally via Docker.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">🐳</span>
+        <div class="instr-text">Start Qdrant locally (if not running): <code>docker run -d --name qdrant -p 6333:6333 qdrant/qdrant</code></div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">👆</span>
+        <div class="instr-text">In the wizard VDB step, click the <strong>Qdrant</strong> tile. It is the default for this demo.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">✏</span>
+        <div class="instr-text">Set <strong>URL</strong> to <code>http://localhost:6333</code> and <strong>Collection</strong> to <code>customer_support</code>.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">✏</span>
+        <div class="instr-text">Leave <strong>Dimensions</strong> at <code>384</code> (matches the <code>BAAI/bge-small-en-v1.5</code> embedding model).</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">🔵</span>
+        <div class="instr-text">Click <strong>Test Connection</strong> to verify Qdrant is reachable before proceeding.</div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Wizard VDB step with Qdrant tile selected and connection URL filled in, green "Connected" status.</div>
+  </div>
+
+  <!-- Step 5: Model -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">5</div>
+      <div>
+        <div class="step-title">Step 3 — Select Model</div>
+        <div class="step-desc">Choose <strong>Llama-3.2-3B-Instruct</strong>. It runs in 4-bit quantization and fits on a single 24GB GPU.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">👆</span>
+        <div class="instr-text">Click the <strong>Llama-3.2-3B</strong> card. The VRAM badge should show green ✓ if your GPU has &ge;8 GB free.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">ℹ</span>
+        <div class="instr-text">For a customer support RAG system, a 3B model with 4-bit quantization provides a good speed/quality tradeoff. The LoRA fine-tuning step will specialise it further.</div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Wizard Step 3 with Llama-3.2-3B-Instruct card selected and green VRAM badge.</div>
+  </div>
+
+  <!-- Step 6: GPU -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">6</div>
+      <div>
+        <div class="step-title">Step 4 — Select GPU</div>
+        <div class="step-desc">Pick a free GPU from the detected hardware grid. The wizard auto-detects available GPUs.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">👆</span>
+        <div class="instr-text">Click any <strong>free</strong> GPU card (green border, "Free" badge). Busy GPUs (red) are occupied by other use cases.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">ℹ</span>
+        <div class="instr-text">On a g5.xlarge EC2 instance, you will see one NVIDIA A10G (24 GB) listed.</div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Wizard Step 4 showing one free GPU (NVIDIA A10G) selected with green highlight.</div>
+  </div>
+
+  <!-- Step 7: Training Params -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">7</div>
+      <div>
+        <div class="step-title">Step 5 — Training Parameters</div>
+        <div class="step-desc">Configure LoRA fine-tuning parameters and FAQ generation. Defaults work well for the demo.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">✏</span>
+        <div class="instr-text">Leave <strong>LoRA Rank</strong> at <code>16</code>, <strong>Learning Rate</strong> at <code>2e-4</code>, <strong>Epochs</strong> at <code>3</code>.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">✏</span>
+        <div class="instr-text">For FAQ generation, select <strong>Generate via Cloud LLM</strong> and set count to <code>50</code>. This requires a <code>GOOGLE_API_KEY</code> (Gemini) or <code>ANTHROPIC_API_KEY</code> set in your environment.</div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Wizard Step 5 with default LoRA params and FAQ generation toggle set to "Cloud LLM".</div>
+    <div class="todo-box">
+      <div class="todo-title">TODO: Studio UI — Comparison Provider Credentials</div>
+      <div class="todo-item"><span class="todo-bullet">▶</span>The <code>uc_config.json</code> contains <code>"comparison_provider": "gemini"</code> and <code>"comparison_model": "gemini-2.5-flash"</code>, but there is no UI in the wizard to enter a <strong>GOOGLE_API_KEY</strong> or switch providers (Gemini / Anthropic / OpenAI).</div>
+      <div class="todo-item"><span class="todo-bullet">▶</span>Add a <strong>Cloud LLM Credentials</strong> sub-section to the training step: provider dropdown (Gemini / Anthropic / OpenAI) + API key input (stored encrypted in the studio DB, not in uc_config).</div>
+    </div>
+  </div>
+
+  <!-- Step 8: Review & Launch -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">8</div>
+      <div>
+        <div class="step-title">Step 6 — Review &amp; Launch</div>
+        <div class="step-desc">Verify the configuration summary and click Launch to start the pipeline.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">👁</span>
+        <div class="instr-text">The review table shows: Data source, VDB, Model, GPU, LoRA params. Confirm all values match this guide.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">🚀</span>
+        <div class="instr-text">Click <strong>Launch Pipeline</strong>. The wizard transitions to Step 7 (Live) which shows a real-time log stream of the pipeline stages.</div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Wizard Step 6 review table with all fields filled, "Launch Pipeline" button highlighted.</div>
+  </div>
+
+  <!-- Step 9: Monitor Progress -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">9</div>
+      <div>
+        <div class="step-title">Step 7 — Monitor Pipeline Progress</div>
+        <div class="step-desc">Watch the 5 pipeline stages complete: indexing, KV computation, FAQ generation, LoRA training, PRS evaluation.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">📊</span>
+        <div class="instr-text">The live step shows 5 pipeline steps with status dots: <strong>Indexing</strong> &rarr; <strong>KV Cache</strong> &rarr; <strong>FAQ Gen</strong> &rarr; <strong>LoRA Train</strong> &rarr; <strong>PRS Eval</strong></div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">⏱</span>
+        <div class="instr-text">Indexing 5,000 rows takes ~5-10 min. LoRA training for 3 epochs takes ~20-40 min on an A10G.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">✅</span>
+        <div class="instr-text">When all dots are green, the use case is live. Navigate to the UC detail page to see the PRS score history and start querying.</div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Wizard Step 7 with all 5 pipeline stage dots green, showing "Use Case Ready" status.</div>
+  </div>
+
+  <!-- Step 10: CLI alternative -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">10</div>
+      <div>
+        <div class="step-title">Alternative: CLI Setup</div>
+        <div class="step-desc">You can also set up this demo entirely from the command line without the Studio UI.</div>
+      </div>
+    </div>
+    <div class="cli-box">
+      <div class="cli-label">Terminal commands</div>
+      <pre># 1. Initialize the use-case config
+python kvforge.py init --name customer_support
+
+# 2. Index the HuggingFace dataset
+python -m pipeline.kv_indexer \
+  --config datasource_customer_support.json \
+  index hf://bitext/Bitext-customer-support-llm-chatbot-training-dataset
+
+# 3. Generate FAQs (requires GOOGLE_API_KEY)
+python -m pipeline.sleep_faq_generator \
+  --config datasource_customer_support.json \
+  --output customer_support_faqs.json --count 50
+
+# 4. Run LoRA training + PRS evaluation
+python -m pipeline.lora_trainer \
+  --config datasource_customer_support.json \
+  --faqs customer_support_faqs.json
+
+# 5. Ask a question
+python -m pipeline.kv_inference \
+  --config datasource_customer_support.json \
+  "How do I cancel my subscription?"</pre>
+    </div>
+  </div>
+
+</div>
+<footer>Generated by docs/demo-guides/ &mdash; KVForge Studio &mdash; Branch kvforge-demos</footer>
+</body>
+</html>

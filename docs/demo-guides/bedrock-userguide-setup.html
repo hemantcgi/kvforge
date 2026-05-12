@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AWS Bedrock User Guide RAG Demo &mdash; KVForge Setup Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d0d;color:#d4d4d4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:0 0 80px}
+header{background:#111;border-bottom:1px solid #1e1e1e;padding:24px 40px;position:sticky;top:0;z-index:10}
+.header-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{width:28px;height:28px;border-radius:7px;background:#0052CC;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;flex-shrink:0}
+h1{color:#e0e0e0;font-size:18px;font-weight:700}
+.demo-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:3px;text-transform:uppercase;letter-spacing:.05em}
+.header-sub{color:#555;font-size:12px;margin-top:6px}
+.tech-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.tech-pill{font-size:10px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:4px;padding:3px 9px;color:#888}
+.tech-pill span{color:#4ec9b0;font-weight:700}
+.guide{max-width:1000px;margin:0 auto;padding:0 40px}
+.step{margin-top:40px;border:1px solid #1e1e1e;border-radius:12px;overflow:hidden}
+.step-header{padding:16px 20px;background:#111;border-bottom:1px solid #1e1e1e;display:flex;align-items:flex-start;gap:14px}
+.step-num{width:32px;height:32px;border-radius:50%;background:rgba(78,201,176,.15);border:1.5px solid rgba(78,201,176,.35);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#4ec9b0;flex-shrink:0}
+.step-title{font-size:14px;font-weight:700;color:#e0e0e0;margin-bottom:3px}
+.step-desc{font-size:12px;color:#888;line-height:1.6}
+.instructions{padding:16px 20px;background:#0e0e0e;border-bottom:1px solid #1a1a1a}
+.instr-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}
+.instr-row:last-child{margin-bottom:0}
+.instr-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.instr-text{font-size:13px;color:#c8c8c8;line-height:1.6}
+.instr-text code{background:#1e1e1e;border:1px solid #2a2a2a;border-radius:3px;padding:1px 6px;font-family:monospace;font-size:12px;color:#4ec9b0}
+.instr-text strong{color:#e0e0e0}
+.screenshot-wrap{position:relative;background:#000}
+.screenshot-wrap img{width:100%;display:block}
+.screenshot-cap{padding:10px 20px;background:#0a0a0a;font-size:11px;color:#555;border-top:1px solid #1a1a1a;font-style:italic}
+.screenshot-missing{color:#444;padding:16px 20px;font-style:italic;background:#0a0a0a;border-top:1px solid #1a1a1a}
+.todo-box{margin:0 20px 16px;padding:14px 18px;background:rgba(255,153,0,.06);border:1px solid rgba(255,153,0,.25);border-radius:8px;border-left:3px solid #FF991F}
+.todo-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF991F;margin-bottom:6px}
+.todo-item{display:flex;gap:8px;align-items:flex-start;margin-bottom:5px;font-size:12px;color:#b08030;line-height:1.5}
+.todo-item:last-child{margin-bottom:0}
+.todo-bullet{color:#FF991F;flex-shrink:0}
+.note-box{margin:0 20px 16px;padding:12px 16px;background:rgba(156,220,254,.05);border:1px solid rgba(156,220,254,.2);border-radius:6px}
+.note-box p{font-size:12px;color:#7a9ab8;line-height:1.6}
+.note-box strong{color:#9cdcfe}
+.cli-box{margin:0 20px 16px;background:#0a0a0a;border:1px solid #1a2a1a;border-radius:6px;padding:12px 16px}
+.cli-box pre{font-family:monospace;font-size:12px;color:#4ec9b0;white-space:pre-wrap;line-height:1.7}
+.cli-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#4ec9b0;margin-bottom:6px;opacity:.7}
+.alt-source-box{margin:0 20px 16px;padding:14px 18px;background:rgba(78,201,176,.04);border:1px solid rgba(78,201,176,.2);border-radius:8px}
+.alt-source-title{font-size:11px;font-weight:700;color:#4ec9b0;margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em}
+.alt-source-item{font-size:12px;color:#8a9a8a;line-height:1.6;margin-bottom:4px}
+footer{margin:60px 40px 0;color:#333;font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-top">
+    <div class="logo">K</div>
+    <h1>AWS Bedrock User Guide RAG Demo</h1>
+    <span class="demo-badge" style="background:#1a2010;color:#FF9900">AWS DOCUMENTATION</span>
+  </div>
+  <div class="header-sub">KVForge Studio &mdash; Step-by-step setup guide</div>
+  <div class="tech-row">
+    <div class="tech-pill">VectorDB: <span>Qdrant</span></div>
+    <div class="tech-pill">LLM: <span>Llama-3.2-3B-Instruct</span></div>
+    <div class="tech-pill">Data: <span>HuggingFace — AWS Bedrock docs</span></div>
+    <div class="tech-pill">Embedding: <span>BAAI/bge-small-en-v1.5</span></div>
+    <div class="tech-pill">Domain: <span>Technical Documentation QA</span></div>
+  </div>
+</header>
+<div class="guide">
+
+  <!-- Overview -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">0</div>
+      <div>
+        <div class="step-title">What this demo does</div>
+        <div class="step-desc">Builds a technical documentation RAG system over the AWS Bedrock User Guide. Users can ask questions about Bedrock APIs, model providers, pricing, and integration patterns — and get answers grounded in the official documentation. This demonstrates KVForge for enterprise technical support and internal developer tooling.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">📦</span>
+        <div class="instr-text"><strong>Dataset:</strong> The AWS Bedrock documentation can be indexed either from a HuggingFace dataset or directly from PDF/HTML source files. The recommended source is <code>psyche/bedrock-user-guide</code> on HuggingFace (a pre-processed text dataset of the Bedrock docs), or the raw PDFs from the AWS documentation site.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">🎯</span>
+        <div class="instr-text"><strong>Goal:</strong> After setup, questions like <em>"How do I enable model access in Bedrock?"</em>, <em>"What models support streaming?"</em>, or <em>"What is the Bedrock pricing for Claude Sonnet?"</em> are answered with citations from the official docs.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">💡</span>
+        <div class="instr-text"><strong>Use case:</strong> Internal developer knowledge bases, documentation chatbots, and automated support ticket triage are all natural applications of this demo pattern.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">1</div>
+      <div>
+        <div class="step-title">Start KVForge Studio</div>
+        <div class="step-desc">Launch Studio and navigate to the hub.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">▶</span>
+        <div class="instr-text">Run: <code>python kvforge_portal.py --port 8080</code> then open <code>http://localhost:8080/studio/</code></div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Studio Hub with "Bedrock User Guide" use-case card visible.</div>
+  </div>
+
+  <!-- Step 2: Data Source -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">2</div>
+      <div>
+        <div class="step-title">Step 1 — Choose Data Source: HuggingFace or PDF Upload</div>
+        <div class="step-desc">You have two options for sourcing the Bedrock documentation. Choose the approach that fits your setup.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">📋</span>
+        <div class="instr-text"><strong>Option A — HuggingFace:</strong> Click the <strong>HuggingFace</strong> source card. Set Dataset ID to <code>psyche/bedrock-user-guide</code>, Split: <code>train</code>, Text Column: <code>text</code>, Max Rows: <code>5000</code>.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">📄</span>
+        <div class="instr-text"><strong>Option B — PDF Upload:</strong> Download the Bedrock User Guide PDF from the AWS docs site. Click the <strong>Upload Files</strong> source card and drag-drop the PDF into the upload zone.</div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Wizard Step 1 showing either the HuggingFace card selected (with bedrock dataset ID) or the Upload Files zone with a PDF loaded.</div>
+    <div class="todo-box">
+      <div class="todo-title">TODO: Studio UI — PDF Upload Source Card</div>
+      <div class="todo-item"><span class="todo-bullet">▶</span>The wizard's <strong>Upload Files</strong> card shows a drag-drop zone, but uploading large PDF files (the Bedrock User Guide PDF is ~15 MB) times out with the current multipart form handler. The upload endpoint needs chunked upload support or a file-size progress indicator.</div>
+      <div class="todo-item"><span class="todo-bullet">▶</span>The wizard does not surface any feedback when a PDF is being parsed (text extraction can take 10-30 seconds for a large technical document). Add a parsing progress indicator.</div>
+    </div>
+    <div class="alt-source-box">
+      <div class="alt-source-title">Alternative sources for AWS documentation</div>
+      <div class="alt-source-item">• <strong>S3 connector:</strong> If your team stores documentation PDFs in S3, use the S3 connector (connectors page) and configure a scheduled sync to keep the corpus up to date as docs are updated.</div>
+      <div class="alt-source-item">• <strong>Direct HTML scrape:</strong> The AWS docs HTML can be scraped and loaded via the directory loader CLI: <code>python -m pipeline.kv_indexer index ./aws-docs-html/</code></div>
+    </div>
+  </div>
+
+  <!-- Step 3: VDB -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">3</div>
+      <div>
+        <div class="step-title">Step 2 — Vector Database: Qdrant</div>
+        <div class="step-desc">Configure Qdrant with a smaller chunk size for technical documentation.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">🐳</span>
+        <div class="instr-text">Start Qdrant: <code>docker run -d --name qdrant -p 6333:6333 qdrant/qdrant</code></div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">👆</span>
+        <div class="instr-text">Select <strong>Qdrant</strong>. URL: <code>http://localhost:6333</code>, Collection: <code>bedrock_userguide</code></div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">✏</span>
+        <div class="instr-text">Set <strong>Chunk Size</strong> to <code>256</code> (smaller than the default 512). Technical documentation benefits from smaller chunks for more precise retrieval of specific API parameters and configuration options.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">✏</span>
+        <div class="instr-text">Set <strong>Chunk Overlap</strong> to <code>32</code> to preserve context around API examples that may span chunk boundaries.</div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Wizard VDB step with Qdrant selected, collection "bedrock_userguide", chunk size 256.</div>
+    <div class="todo-box">
+      <div class="todo-title">TODO: Studio UI — Chunk Size Guidance Per Source Type</div>
+      <div class="todo-item"><span class="todo-bullet">▶</span>The wizard does not provide guidance on optimal chunk size for different document types. Technical docs benefit from smaller chunks (128-256 tokens), narrative text from larger (512-1024). Add a tooltip or recommendation label next to the chunk size slider based on the selected source type.</div>
+    </div>
+  </div>
+
+  <!-- Step 4: Model -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">4</div>
+      <div>
+        <div class="step-title">Step 3 — Select Model</div>
+        <div class="step-desc">AWS documentation is a technical but general domain. Use <strong>Llama-3.2-3B-Instruct</strong> for the demo, or Llama-3.1-8B for better technical accuracy.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">👆</span>
+        <div class="instr-text">Click <strong>Llama-3.2-3B</strong> for a fast demo. For a production deployment answering detailed developer questions, consider <strong>Llama-3.1-8B-Instruct</strong> (available in Domain Presets once implemented).</div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Wizard Step 3 model selection with Llama-3.2-3B selected.</div>
+  </div>
+
+  <!-- Step 5: S3 Connector for live sync -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">5</div>
+      <div>
+        <div class="step-title">(Optional) Set up S3 Connector for Live Doc Sync</div>
+        <div class="step-desc">If your team maintains AWS documentation in S3, set up a connector to automatically sync new doc versions to the corpus.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">🔌</span>
+        <div class="instr-text">Navigate to <strong>/studio/connectors</strong> and click <strong>+ Add Connector</strong>.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">👆</span>
+        <div class="instr-text">Select <strong>Amazon S3</strong> type. Enter your AWS credentials and the bucket name where documentation PDFs are stored.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">🔵</span>
+        <div class="instr-text">Click <strong>Test Connection</strong> to verify S3 access, then <strong>Save Connector</strong>.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">📅</span>
+        <div class="instr-text">Under the connector's scope, link it to the <code>bedrock_userguide</code> use case. Set a daily cron schedule (<code>0 2 * * *</code>) to auto-sync at 2 AM.</div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Connectors page with an S3 connector for bedrock docs, showing "Healthy" status and a sync schedule.</div>
+    <div class="todo-box">
+      <div class="todo-title">TODO: Studio UI — Connector Schedule UI</div>
+      <div class="todo-item"><span class="todo-bullet">▶</span>The Add Connector modal (and its <code>schedule_cron</code> field) currently has no UI for setting a sync schedule. The cron expression can only be set via the API. Add a <strong>Sync Schedule</strong> field to the modal with friendly presets: Manual only / Every hour / Daily / Weekly.</div>
+    </div>
+  </div>
+
+  <!-- Step 6: Launch -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">6</div>
+      <div>
+        <div class="step-title">Steps 4-7 — GPU, Params, Launch, Monitor</div>
+        <div class="step-desc">Complete remaining wizard steps and launch the pipeline.</div>
+      </div>
+    </div>
+    <div class="instructions">
+      <div class="instr-row">
+        <span class="instr-icon">👆</span>
+        <div class="instr-text">Step 4: Select a free GPU.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">✏</span>
+        <div class="instr-text">Step 5: FAQ count <code>50</code>. Technical docs benefit from FAQs that cover: <em>"How do I configure X?"</em> style questions — the cloud LLM will generate these automatically from the document text.</div>
+      </div>
+      <div class="instr-row">
+        <span class="instr-icon">🚀</span>
+        <div class="instr-text">Step 6: Review and click <strong>Launch Pipeline</strong>.</div>
+      </div>
+    </div>
+    <div class="screenshot-missing">📸 Screenshot: Wizard Step 7 with all pipeline stages complete for the Bedrock User Guide use case.</div>
+  </div>
+
+  <!-- CLI -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">7</div>
+      <div>
+        <div class="step-title">Alternative: CLI Setup</div>
+        <div class="step-desc">Index the Bedrock docs from the command line, using either HuggingFace or local PDFs.</div>
+      </div>
+    </div>
+    <div class="cli-box">
+      <div class="cli-label">Option A — HuggingFace dataset</div>
+      <pre># 1. Initialize
+python kvforge.py init --name bedrock_userguide
+
+# 2. Index via HuggingFace
+python -m pipeline.kv_indexer \
+  --config datasource_bedrock_userguide.json \
+  index hf://psyche/bedrock-user-guide
+
+# 3. Generate FAQs
+python -m pipeline.sleep_faq_generator \
+  --config datasource_bedrock_userguide.json \
+  --output bedrock_faqs.json --count 50
+
+# 4. Train + evaluate
+python -m pipeline.lora_trainer \
+  --config datasource_bedrock_userguide.json \
+  --faqs bedrock_faqs.json
+
+# 5. Query
+python -m pipeline.kv_inference \
+  --config datasource_bedrock_userguide.json \
+  "How do I enable Claude 3 Sonnet in AWS Bedrock?"</pre>
+    </div>
+    <div class="cli-box">
+      <div class="cli-label">Option B — local PDF files</div>
+      <pre># After downloading bedrock-user-guide.pdf
+python -m pipeline.kv_indexer \
+  --config datasource_bedrock_userguide.json \
+  index ./bedrock-user-guide.pdf</pre>
+    </div>
+  </div>
+
+</div>
+<footer>Generated by docs/demo-guides/ &mdash; KVForge Studio &mdash; Branch kvforge-demos</footer>
+</body>
+</html>
