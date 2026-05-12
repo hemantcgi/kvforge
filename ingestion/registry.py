@@ -71,6 +71,17 @@ def get_loader(cfg: dict):
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
         )
+    if name == "huggingface":
+        from ingestion.huggingface_loader import HuggingFaceLoader
+        return HuggingFaceLoader(
+            dataset_id=cfg.get("dataset_id", ""),
+            config_name=cfg.get("hf_config_name"),
+            split=cfg.get("hf_split", "train"),
+            text_column=cfg.get("hf_text_column", "text"),
+            max_rows=int(cfg.get("hf_max_rows", 0)),
+            hf_token=cfg.get("hf_token"),
+            trust_remote_code=bool(cfg.get("hf_trust_remote_code", False)),
+        )
     raise ValueError(
-        f"Unknown loader '{name}'. Choose: pdf, markdown, jsonl, html, directory, docx, pptx, xlsx, zip"
+        f"Unknown loader '{name}'. Choose: pdf, markdown, jsonl, html, directory, docx, pptx, xlsx, zip, huggingface"
     )
