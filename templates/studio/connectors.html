@@ -31,6 +31,39 @@ h1{color:#4ec9b0;font-size:18px}
 .tag-manual{background:rgba(156,220,254,.1);color:#9cdcfe}
 .tag-scheduled{background:rgba(78,201,176,.1);color:#4ec9b0}
 .tag-webhook{background:rgba(206,145,120,.1);color:#ce9178}
+/* Add-Connector Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:#1e1e1e;border:1px solid #2d2d2d;border-radius:10px;width:440px;max-width:95vw;overflow:hidden;}
+.modal-hd{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #2d2d2d;}
+.modal-hd h3{color:#d4d4d4;font-size:14px;font-weight:700;}
+.modal-close{background:none;border:none;color:#555;font-size:16px;cursor:pointer;line-height:1;}
+.modal-close:hover{color:#9cdcfe;}
+.modal-body{padding:16px 18px;}
+.modal-footer{padding:12px 18px;border-top:1px solid #2d2d2d;display:flex;justify-content:flex-end;gap:8px;}
+.type-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+.type-pill{padding:4px 10px;border-radius:5px;border:1px solid #2d2d2d;background:#181818;color:#808080;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;}
+.type-pill:hover{border-color:#4ec9b088;}
+.type-pill.sel{border-color:#4ec9b0;background:#1a2e28;color:#4ec9b0;}
+.m-field{margin-bottom:10px;}
+.m-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;margin-bottom:3px;}
+.m-input{width:100%;background:#181818;border:1px solid #2d2d2d;border-radius:4px;padding:6px 9px;color:#d4d4d4;font-size:12px;font-family:monospace;}
+.m-input:focus{outline:none;border-color:#4ec9b0;}
+.m-textarea{width:100%;background:#181818;border:1px solid #2d2d2d;border-radius:4px;padding:6px 9px;color:#d4d4d4;font-size:11px;font-family:monospace;min-height:80px;resize:vertical;}
+.m-textarea:focus{outline:none;border-color:#4ec9b0;}
+.cred-section{display:none;}
+.cred-section.visible{display:block;}
+.cred-divider{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#4ec9b0;margin:10px 0 8px;padding-bottom:4px;border-bottom:1px solid #2d2d2d;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.test-bar{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.btn-test{background:#264f7822;border:1px solid #264f78;color:#9cdcfe;padding:5px 12px;border-radius:4px;font-size:11px;cursor:pointer;}
+.btn-test:hover{background:#264f7844;}
+.test-status{font-size:11px;min-height:16px;}
+.test-ok{color:#4ec9b0;}.test-err{color:#f87171;}.test-pending{color:#9cdcfe;}
+.btn-cancel{background:none;border:1px solid #2d2d2d;color:#808080;padding:6px 14px;border-radius:5px;font-size:12px;cursor:pointer;}
+.btn-cancel:hover{border-color:#555;color:#d4d4d4;}
+.btn-save{background:linear-gradient(135deg,#264f78,#1e5c4f);border:none;color:#d4d4d4;padding:6px 16px;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;}
+.btn-save:hover{opacity:.9;}
 </style>
 </head><body>
 <div class="header">
@@ -48,10 +81,118 @@ h1{color:#4ec9b0;font-size:18px}
   </table>
 </div>
 
+<div class="modal-overlay" id="add-connector-modal">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <h3>Add Connector</h3>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="m-field">
+        <div class="m-label">Source Type</div>
+        <div class="type-pills">
+          <div class="type-pill" data-type="gdrive" onclick="selectType(this)">Google Drive</div>
+          <div class="type-pill" data-type="s3" onclick="selectType(this)">Amazon S3</div>
+          <div class="type-pill" data-type="sharepoint" onclick="selectType(this)">SharePoint</div>
+          <div class="type-pill" data-type="wikipedia" onclick="selectType(this)">Wikipedia</div>
+          <div class="type-pill" data-type="fda" onclick="selectType(this)">openFDA</div>
+          <div class="type-pill" data-type="edgar" onclick="selectType(this)">SEC EDGAR</div>
+          <div class="type-pill" data-type="espn" onclick="selectType(this)">ESPN Sports</div>
+        </div>
+      </div>
+      <div class="m-field">
+        <div class="m-label">Connector Name</div>
+        <input class="m-input" id="m-name" type="text" placeholder="e.g. My Wikipedia Source" autocomplete="off"/>
+      </div>
+      <div id="creds-gdrive" class="cred-section">
+        <div class="cred-divider">Google Drive Credentials</div>
+        <div class="m-field"><div class="m-label">Service Account JSON</div>
+          <textarea class="m-textarea" id="m-gdrive-sa" placeholder='{"type":"service_account",...}'></textarea></div>
+        <div class="m-field"><div class="m-label">Root Folder ID (optional)</div>
+          <input class="m-input" id="m-gdrive-folder" type="text" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs"/></div>
+      </div>
+      <div id="creds-s3" class="cred-section">
+        <div class="cred-divider">AWS S3 Credentials</div>
+        <div class="row2">
+          <div class="m-field"><div class="m-label">Access Key ID</div>
+            <input class="m-input" id="m-s3-key" type="text" placeholder="AKIA&#x2026;"/></div>
+          <div class="m-field"><div class="m-label">Secret Access Key</div>
+            <input class="m-input" id="m-s3-secret" type="password" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;"/></div>
+        </div>
+        <div class="row2">
+          <div class="m-field"><div class="m-label">Bucket</div>
+            <input class="m-input" id="m-s3-bucket" type="text" placeholder="my-corpus-bucket"/></div>
+          <div class="m-field"><div class="m-label">Region</div>
+            <input class="m-input" id="m-s3-region" type="text" placeholder="us-east-1"/></div>
+        </div>
+      </div>
+      <div id="creds-sharepoint" class="cred-section">
+        <div class="cred-divider">Microsoft SharePoint Credentials</div>
+        <div class="m-field"><div class="m-label">Tenant ID</div>
+          <input class="m-input" id="m-sp-tenant" type="text" placeholder="00000000-0000-0000-0000-000000000000"/></div>
+        <div class="row2">
+          <div class="m-field"><div class="m-label">Client ID</div>
+            <input class="m-input" id="m-sp-client" type="text"/></div>
+          <div class="m-field"><div class="m-label">Client Secret</div>
+            <input class="m-input" id="m-sp-secret" type="password" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;"/></div>
+        </div>
+        <div class="m-field"><div class="m-label">Site URL or ID</div>
+          <input class="m-input" id="m-sp-site" type="text" placeholder="contoso.sharepoint.com:/sites/knowledge"/></div>
+      </div>
+      <div id="creds-wikipedia" class="cred-section">
+        <div class="cred-divider">Wikipedia Configuration</div>
+        <div class="m-field"><div class="m-label">Topics (comma-separated article titles)</div>
+          <input class="m-input" id="m-wiki-topics" type="text" placeholder="Python_(programming_language),Rust_(programming_language)"/></div>
+      </div>
+      <div id="creds-fda" class="cred-section">
+        <div class="cred-divider">openFDA Configuration</div>
+        <div class="m-field"><div class="m-label">Drug Name (brand or generic)</div>
+          <input class="m-input" id="m-fda-drug" type="text" placeholder="e.g. aspirin, TYLENOL"/></div>
+      </div>
+      <div id="creds-edgar" class="cred-section">
+        <div class="cred-divider">SEC EDGAR Configuration</div>
+        <div class="row2">
+          <div class="m-field"><div class="m-label">Ticker Symbol</div>
+            <input class="m-input" id="m-edgar-ticker" type="text" placeholder="AAPL"/></div>
+          <div class="m-field"><div class="m-label">Form Type</div>
+            <input class="m-input" id="m-edgar-form" type="text" placeholder="10-K" value="10-K"/></div>
+        </div>
+      </div>
+      <div id="creds-espn" class="cred-section">
+        <div class="cred-divider">ESPN Sports Configuration</div>
+        <div class="row2">
+          <div class="m-field"><div class="m-label">Sport</div>
+            <input class="m-input" id="m-espn-sport" type="text" placeholder="football"/></div>
+          <div class="m-field"><div class="m-label">League</div>
+            <input class="m-input" id="m-espn-league" type="text" placeholder="nfl"/></div>
+        </div>
+        <div class="m-field"><div class="m-label">Team Filter (optional)</div>
+          <input class="m-input" id="m-espn-team" type="text" placeholder="chiefs"/></div>
+      </div>
+      <div class="test-bar">
+        <button class="btn-test" onclick="testConn()">&#9654; Test Connection</button>
+        <span class="test-status" id="m-test-status"></span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveConn()">Save Connector</button>
+    </div>
+  </div>
+</div>
+
 <script>
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 // ICONS.bg values are hardcoded CSS color literals — never sourced from API data — safe for inline style
-const ICONS = {gdrive:{abbr:'GD',bg:'#0F9D58'}, s3:{abbr:'S3',bg:'#FF9900'}, sharepoint:{abbr:'SP',bg:'#0078D4'}};
+const ICONS = {
+  gdrive:     {abbr:'GD', bg:'#0F9D58'},
+  s3:         {abbr:'S3', bg:'#FF9900'},
+  sharepoint: {abbr:'SP', bg:'#0078D4'},
+  wikipedia:  {abbr:'WP', bg:'#636466'},
+  fda:        {abbr:'FDA',bg:'#1a53a8'},
+  edgar:      {abbr:'SEC',bg:'#c0392b'},
+  espn:       {abbr:'ESPN',bg:'#d00'},
+};
 
 async function load() {
   let connectors;
@@ -125,21 +266,109 @@ async function deleteConn(cid) {
   } catch(e) { alert('Delete error: ' + e.message); }
 }
 
+let _selectedType = null;
+
 function showAddForm() {
-  const t = prompt('Connector type (gdrive/s3/sharepoint):');
-  if (!t) return;
-  const n = prompt('Connector name:');
-  if (!n) return;
-  const creds = prompt('Credentials JSON (paste):');
+  _selectedType = null;
+  document.querySelectorAll('.type-pill').forEach(p=>p.classList.remove('sel'));
+  document.querySelectorAll('.cred-section').forEach(s=>s.classList.remove('visible'));
+  document.getElementById('m-name').value = '';
+  document.getElementById('m-test-status').textContent = '';
+  document.getElementById('add-connector-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('add-connector-modal').classList.remove('open');
+}
+
+function selectType(pill) {
+  _selectedType = pill.dataset.type;
+  document.querySelectorAll('.type-pill').forEach(p=>p.classList.remove('sel'));
+  pill.classList.add('sel');
+  document.querySelectorAll('.cred-section').forEach(s=>s.classList.remove('visible'));
+  const sec = document.getElementById('creds-'+_selectedType);
+  if (sec) sec.classList.add('visible');
+}
+
+function _buildCredentials() {
+  const t = _selectedType;
+  if (t === 'gdrive') {
+    try { return JSON.parse(document.getElementById('m-gdrive-sa').value.trim()); }
+    catch(e) { alert('Service account JSON is not valid JSON'); return null; }
+  }
+  if (t === 's3') return {
+    access_key_id: document.getElementById('m-s3-key').value.trim(),
+    secret_access_key: document.getElementById('m-s3-secret').value.trim(),
+    bucket: document.getElementById('m-s3-bucket').value.trim(),
+    region: document.getElementById('m-s3-region').value.trim() || 'us-east-1',
+  };
+  if (t === 'sharepoint') return {
+    tenant_id: document.getElementById('m-sp-tenant').value.trim(),
+    client_id: document.getElementById('m-sp-client').value.trim(),
+    client_secret: document.getElementById('m-sp-secret').value.trim(),
+    site_url: document.getElementById('m-sp-site').value.trim(),
+  };
+  if (t === 'wikipedia') return { topics: document.getElementById('m-wiki-topics').value.trim() };
+  if (t === 'fda') return { drug_name: document.getElementById('m-fda-drug').value.trim() };
+  if (t === 'edgar') return {
+    ticker: document.getElementById('m-edgar-ticker').value.trim().toUpperCase(),
+    form_type: document.getElementById('m-edgar-form').value.trim() || '10-K',
+  };
+  if (t === 'espn') return {
+    sport: document.getElementById('m-espn-sport').value.trim().toLowerCase(),
+    league: document.getElementById('m-espn-league').value.trim().toLowerCase(),
+    team_filter: document.getElementById('m-espn-team').value.trim().toLowerCase(),
+  };
+  return {};
+}
+
+async function testConn() {
+  if (!_selectedType) { alert('Select a connector type first'); return; }
+  const creds = _buildCredentials();
   if (!creds) return;
-  let parsed;
-  try { parsed = JSON.parse(creds); } catch(e) { alert('Invalid JSON'); return; }
-  fetch('/studio/api/connectors', {
+  const status = document.getElementById('m-test-status');
+  status.className = 'test-status test-pending';
+  status.textContent = 'Testing…';
+  const tempName = '__kvforge_test_' + Date.now();
+  let tempId = null;
+  try {
+    const cr = await fetch('/studio/api/connectors', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({type: _selectedType, name: tempName, credentials: creds}),
+    });
+    if (!cr.ok) { status.className='test-status test-err'; status.textContent='Could not create temp connector'; return; }
+    tempId = (await cr.json()).id;
+    const tr = await fetch(`/studio/api/connectors/${tempId}/test`, {method:'POST', credentials:'include'});
+    const result = await tr.json();
+    status.className = result.ok ? 'test-status test-ok' : 'test-status test-err';
+    status.textContent = result.ok ? ('✓ ' + (result.detail||'Connected')) : ('✗ ' + (result.error||'Failed'));
+  } finally {
+    if (tempId) {
+      fetch(`/studio/api/connectors/${tempId}`, {method:'DELETE', credentials:'include'});
+    }
+  }
+}
+
+async function saveConn() {
+  if (!_selectedType) { alert('Select a connector type first'); return; }
+  const name = document.getElementById('m-name').value.trim();
+  if (!name) { alert('Enter a connector name'); return; }
+  const creds = _buildCredentials();
+  if (!creds) return;
+  const r = await fetch('/studio/api/connectors', {
     method:'POST', credentials:'include',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({type:t, name:n, credentials: parsed})
-  }).then(()=>load());
+    body: JSON.stringify({type: _selectedType, name, credentials: creds}),
+  });
+  if (!r.ok) { alert('Failed to save connector: ' + r.status); return; }
+  closeModal();
+  load();
 }
+
+document.getElementById('add-connector-modal').addEventListener('click', function(e){
+  if (e.target === this) closeModal();
+});
 
 load();
 setInterval(loadHistory, 5000);
