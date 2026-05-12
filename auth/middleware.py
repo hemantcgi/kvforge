@@ -12,13 +12,14 @@ from auth.models import User
 SECRET = os.environ.get("KVFORGE_SECRET_KEY", "dev-secret-change-me")
 
 _PUBLIC_PREFIXES = ("/auth/", "/webhooks/", "/static/", "/api/", "/kvq", "/ab-eval/")
+_PUBLIC_EXACT = ("/",)
 _API_PREFIXES = ("/studio/api/", "/sync/")
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
         path = request.url.path
-        if any(path.startswith(p) for p in _PUBLIC_PREFIXES):
+        if path in _PUBLIC_EXACT or any(path.startswith(p) for p in _PUBLIC_PREFIXES):
             return await call_next(request)
 
         token = request.cookies.get("kvforge_session")
