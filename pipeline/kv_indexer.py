@@ -126,27 +126,41 @@ def build_payload(
     }
 
 
-def cmd_index(pdf_path: Path, cfg: dict) -> None:
-    """Run the full index pipeline for a single PDF file.
+def cmd_index(cfg: dict) -> None:
+    """Run the full index pipeline for a source document or corpus.
+
+    Dispatches through the ingestion registry based on ``cfg["loader"]``.
+    For pdf loaders, ``cfg["_source_path"]`` must be set.  For jsonl/hf
+    loaders, the source path is optional and defaults to
+    ``<version_file_dir>/data/corpus.jsonl``.
 
     Steps:
 
-    1. Read and chunk the PDF using the ``bedrock_rag`` pipeline.
+    1. Load and chunk the source using the configured loader.
     2. Embed all chunks with the configured embedding model.
     3. Load the LLM and compute mean-pooled KV tensors for every chunk.
     4. Upsert the resulting ``Point`` objects to the vector store in batches.
 
     Args:
-        pdf_path: Path to the PDF file to index.
-        cfg: Datasource configuration dict.
+        cfg: Datasource configuration dict (already flattened).
     """
+    from ingestion.registry import get_loader
+
     store = get_store(cfg)
     num_layers, num_kv_heads, head_dim = model_loader.get_kv_shape(cfg)
 
-    # 1. Chunk + embed (reuse bedrock_rag pipeline)
-    pages = read_pdf(pdf_path)
-    chunks = chunk_pages(pages, cfg["chunk_size"], cfg["chunk_overlap"])
-    print(f"  {len(chunks)} chunks from {pdf_path.name}")
+    # Resolve source path
+    source_path = cfg.get("_source_path", "")
+    if not source_path and cfg.get("loader", "pdf") != "pdf":
+        ver_dir = Path(cfg.get("version_file", "version.json")).parent
+        candidate = ver_dir / "data" / "corpus.jsonl"
+        source_path = str(candidate) if candidate.exists() else ""
+
+    # 1. Chunk + embed via ingestion registry
+    loader = get_loader(cfg)
+    chunks = loader.load(source_path)
+    source_label = Path(source_path).name if source_path else cfg.get("dataset_id", "unknown")
+    print(f"  {len(chunks)} chunks from {source_label}")
 
     embedder = TextEmbedding(model_name=cfg["embed_model"],
                               show_download_progress=False)
@@ -157,20 +171,23 @@ def cmd_index(pdf_path: Path, cfg: dict) -> None:
     model, tokenizer = model_loader.load(lora_ckpt)
 
     # 3. Compute KV + upsert
+    import uuid as _uuid
     print(f"Computing KV tensors for {len(chunks)} chunks ...")
     points = []
     for i, (chunk, vec) in enumerate(zip(chunks, vectors)):
         kv_arr = compute_kv_for_chunk(
             chunk["text"], model, tokenizer, num_layers, num_kv_heads, head_dim
         )
+        meta = chunk.get("metadata", {})
         payload = build_payload(
             text=chunk["text"],
-            page=chunk["page"],
-            source_file=pdf_path.name,
+            page=meta.get("page", chunk.get("page", 0)),
+            source_file=source_label,
             kv_array=kv_arr,
-            source_version=chunk.get("metadata", {}).get("modified", ""),
+            source_version=meta.get("modified", ""),
         )
-        points.append(Point(id=chunk["chunk_id"], vector=vec, payload=payload))
+        point_id = chunk.get("chunk_id") or str(_uuid.uuid4())
+        points.append(Point(id=point_id, vector=vec, payload=payload))
         if (i + 1) % 50 == 0:
             print(f"  {i+1}/{len(chunks)}", end="\r", flush=True)
 
@@ -282,7 +299,8 @@ def main() -> None:
     sub = p.add_subparsers(dest="cmd", required=True)
 
     idx = sub.add_parser("index")
-    idx.add_argument("pdf_file")
+    idx.add_argument("pdf_file", nargs="?", default=None,
+                     help="Path to PDF (pdf loader only). Omit for jsonl/hf loaders.")
 
     kv = sub.add_parser("compute-kv")
     kv.add_argument("--filter", choices=["kv_version=null"], default=None)
@@ -291,12 +309,23 @@ def main() -> None:
 
     args = p.parse_args()
     with open(args.config) as f:
-        cfg = json.load(f)
+        raw = json.load(f)
+    # Flatten nested addon_config format used by Studio
+    if "addon_config" in raw:
+        from core.config import KVForgeConfig
+        dc = KVForgeConfig(**raw)
+        cfg = dc.get_merged_config("indexing", "inference", "training")
+        cfg.setdefault("version_file", raw.get("version_file", "version.json"))
+        cfg.setdefault("collection", raw.get("collection", ""))
+    else:
+        cfg = raw
     ver.init(cfg)
     model_loader.init(cfg)
 
     if args.cmd == "index":
-        cmd_index(Path(args.pdf_file), cfg)
+        if args.pdf_file:
+            cfg["_source_path"] = args.pdf_file
+        cmd_index(cfg)
     elif args.cmd == "compute-kv":
         if args.stale_version is not None:
             cmd_compute_kv(cfg, "stale", args.stale_version)
