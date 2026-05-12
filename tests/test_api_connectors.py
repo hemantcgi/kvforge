@@ -142,3 +142,48 @@ def test_edgar_download_returns_bytes(mock_get):
     content = conn.download(sf)
     assert isinstance(content, bytes)
     assert len(content) > 0
+
+
+# ── Sports / ESPN ─────────────────────────────────────────────────────────────
+
+def _espn_response_payload():
+    return {
+        "articles": [
+            {
+                "id": "39001234",
+                "headline": "Chiefs win Super Bowl",
+                "published": "2024-02-12T03:30:00Z",
+                "description": "The Kansas City Chiefs won Super Bowl LVIII.",
+                "links": {"api": {"news": {"href": "https://site.api.espn.com/article/39001234"}}},
+            }
+        ]
+    }
+
+
+@patch("connectors.sports_connector.httpx.get")
+def test_sports_list_files(mock_get):
+    from connectors.sports_connector import SportsConnector
+    mock_get.return_value = MagicMock(status_code=200, json=lambda: _espn_response_payload())
+    conn = SportsConnector(sport="football", league="nfl")
+    files = conn.list_files()
+    assert len(files) == 1
+    assert files[0].id == "39001234"
+    assert "Chiefs" in files[0].name or "39001234" in files[0].name
+
+
+@patch("connectors.sports_connector.httpx.get")
+def test_sports_download(mock_get):
+    from connectors.sports_connector import SportsConnector
+    article_payload = {"id": "39001234", "description": "The Kansas City Chiefs won.", "headline": "Chiefs win"}
+    mock_get.return_value = MagicMock(status_code=200, json=lambda: article_payload)
+    conn = SportsConnector(sport="football", league="nfl")
+    sf = SourceFile(
+        id="39001234",
+        name="Chiefs_win.txt",
+        path="https://site.api.espn.com/article/39001234",
+        size=100,
+        modified_at=datetime.now(timezone.utc),
+        extra={"api_url": "https://site.api.espn.com/article/39001234"},
+    )
+    content = conn.download(sf)
+    assert b"Chiefs" in content
