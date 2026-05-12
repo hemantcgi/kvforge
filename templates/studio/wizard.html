@@ -735,6 +735,7 @@ function selectSource(src) {
   WIZARD.data.existing_uc = (src === 'existing');
 
   document.querySelectorAll('.src-card').forEach(c => {
+    if (c.closest('#api-type-pills')) return;  // skip API type pills
     c.className = 'src-card ' + (c.dataset.src === src ? 'sel' : 'unsel');
   });
 
@@ -752,7 +753,7 @@ function selectSource(src) {
     btn.disabled = true; // enabled after UC is selected
     loadExistingUCs();
   } else if (src === 'api') {
-    btn.disabled = false; // API type selected by user; allow proceeding
+    btn.disabled = true; // enabled only after API sub-type is chosen in selApiType()
   } else {
     btn.disabled = true;
   }
@@ -803,6 +804,10 @@ function selApiType(pill) {
   document.querySelectorAll('.api-cfg-panel').forEach(p => p.style.display='none');
   const panel = document.getElementById('api-cfg-'+pill.dataset.api);
   if (panel) panel.style.display = 'block';
+  // Persist api_type early so buildReview() can read it
+  if (typeof WIZARD !== 'undefined') WIZARD.data.api_type = pill.dataset.api;
+  // Enable Next now that a sub-type has been chosen
+  document.getElementById('step1-next').disabled = false;
 }
 
 // ── PDF Upload ──
