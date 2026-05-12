@@ -192,6 +192,60 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
 .vram-mini{height:4px;border-radius:2px;background:var(--bg-sunken);overflow:hidden;margin-top:4px;}
 .vram-mini-fill{height:100%;border-radius:2px;}
 
+/* GPU ALERT BANNER */
+.gpu-alert{display:none;margin:16px 32px 0;padding:14px 18px;background:#FFF7D6;border:1px solid #F5CD47;border-radius:8px;align-items:flex-start;gap:14px;}
+.gpu-alert.show{display:flex;}
+.gpu-alert.critical{background:#FFEBE6;border-color:#FF7452;}
+[data-theme="dark"] .gpu-alert{background:#2E2000;border-color:#946300;}
+[data-theme="dark"] .gpu-alert.critical{background:#42130E;border-color:#DE350B;}
+.gpu-alert-icon{font-size:22px;flex-shrink:0;line-height:1;}
+.gpu-alert-body{flex:1;}
+.gpu-alert-title{font-size:13px;font-weight:700;color:#172B4D;margin-bottom:3px;}
+[data-theme="dark"] .gpu-alert-title{color:#C7D1DB;}
+.gpu-alert-desc{font-size:12px;color:#626F86;line-height:1.5;}
+[data-theme="dark"] .gpu-alert-desc{color:#8C9BAB;}
+.gpu-alert-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.gpu-alert-btn{font-size:12px;font-weight:600;padding:6px 14px;border-radius:4px;border:none;cursor:pointer;transition:all .15s;}
+.gpu-alert-btn.primary{background:#0052CC;color:#fff;}
+.gpu-alert-btn.primary:hover{background:#0065FF;}
+.gpu-alert-btn.ghost{background:transparent;color:#626F86;border:1px solid #DFE1E6;}
+.gpu-alert-btn.ghost:hover{background:#F7F8F9;color:#172B4D;}
+[data-theme="dark"] .gpu-alert-btn.ghost{color:#8C9BAB;border-color:#3B4651;}
+[data-theme="dark"] .gpu-alert-btn.ghost:hover{background:#2C333A;color:#C7D1DB;}
+
+/* GPU CONNECT MODAL */
+.gpu-modal-backdrop{position:fixed;inset:0;background:rgba(9,30,66,0.54);z-index:800;display:none;align-items:center;justify-content:center;}
+.gpu-modal-backdrop.open{display:flex;}
+.gpu-modal{background:var(--bg-surface);border-radius:12px;box-shadow:var(--shadow-lg);width:600px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;}
+.gpu-modal-head{padding:20px 24px 0;display:flex;align-items:center;justify-content:space-between;}
+.gpu-modal-title{font-size:17px;font-weight:800;color:var(--text-primary);}
+.gpu-modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-subtle);padding:2px 6px;border-radius:4px;transition:all .1s;line-height:1;}
+.gpu-modal-close:hover{background:var(--bg-hover);color:var(--text-primary);}
+.gpu-modal-sub{padding:4px 24px 0;font-size:13px;color:var(--text-secondary);}
+.gpu-tabs{display:flex;gap:0;padding:16px 24px 0;border-bottom:1px solid var(--border);}
+.gpu-tab{font-size:13px;font-weight:600;color:var(--text-secondary);padding:8px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;}
+.gpu-tab:hover{color:var(--text-primary);}
+.gpu-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.gpu-tab-body{flex:1;overflow-y:auto;padding:20px 24px 24px;}
+.gpu-tab-pane{display:none;}
+.gpu-tab-pane.active{display:block;}
+.gpu-step{display:flex;gap:14px;margin-bottom:20px;}
+.gpu-step-num{width:24px;height:24px;border-radius:50%;background:var(--bg-metric-b);color:var(--accent);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.gpu-step-content{flex:1;}
+.gpu-step-title{font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:4px;}
+.gpu-step-desc{font-size:12px;color:var(--text-secondary);line-height:1.6;}
+.gpu-code{background:var(--bg-sunken);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-family:'SF Mono',Monaco,monospace;font-size:11px;color:var(--text-primary);margin-top:6px;position:relative;overflow-x:auto;white-space:pre;}
+.gpu-copy-btn{position:absolute;top:6px;right:8px;background:var(--bg-surface);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600;cursor:pointer;color:var(--text-secondary);transition:all .12s;}
+.gpu-copy-btn:hover{background:var(--bg-active);color:var(--accent);}
+.gpu-callout{background:var(--bg-metric-b);border:1px solid rgba(0,82,204,0.2);border-radius:6px;padding:10px 14px;font-size:12px;color:var(--accent);margin-top:8px;line-height:1.6;}
+[data-theme="dark"] .gpu-callout{border-color:rgba(87,157,255,0.2);}
+.gpu-modal-foot{padding:16px 24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;}
+.gpu-modal-foot-note{font-size:11px;color:var(--text-subtle);}
+.btn-proceed-anyway{background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-size:12px;font-weight:600;padding:7px 16px;border-radius:4px;cursor:pointer;transition:all .15s;}
+.btn-proceed-anyway:hover{background:var(--bg-hover);}
+.btn-done-gpu{background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:700;padding:9px 22px;border-radius:4px;cursor:pointer;transition:background .15s;}
+.btn-done-gpu:hover{background:var(--accent-hover);}
+
 /* TOAST */
 .toast{position:fixed;bottom:24px;right:24px;background:var(--bg-surface);border:1px solid var(--border);color:var(--text-primary);padding:10px 16px;border-radius:6px;font-size:13px;z-index:600;box-shadow:var(--shadow-md);transform:translateY(20px);opacity:0;transition:all .25s;pointer-events:none;max-width:340px;}
 .toast.show{transform:translateY(0);opacity:1;}
@@ -275,7 +329,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
         <div class="page-title">Use Cases</div>
         <div class="page-sub" id="uc-subtitle">Loading…</div>
       </div>
-      <button class="btn-primary" onclick="location.href='/studio/wizard'">+ New Use Case</button>
+      <button class="btn-primary" onclick="handleNewUseCase()">+ New Use Case</button>
+    </div>
+
+    <!-- GPU ALERT BANNER -->
+    <div class="gpu-alert" id="gpu-alert">
+      <div class="gpu-alert-icon" id="gpu-alert-icon">⚠️</div>
+      <div class="gpu-alert-body">
+        <div class="gpu-alert-title" id="gpu-alert-title">No GPU Detected</div>
+        <div class="gpu-alert-desc" id="gpu-alert-desc">KVForge requires an NVIDIA GPU to index documents and run LLM inference. Connect an EC2 g5.xlarge (A10G) or any CUDA-capable GPU to onboard use cases.</div>
+        <div class="gpu-alert-actions">
+          <button class="gpu-alert-btn primary" onclick="openGpuModal()">Connect GPU →</button>
+          <button class="gpu-alert-btn ghost" onclick="document.getElementById('gpu-alert').classList.remove('show')">Dismiss</button>
+        </div>
+      </div>
     </div>
 
     <!-- SYSTEM STATUS BAR -->
@@ -331,7 +398,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
       <div class="empty-icon">🧠</div>
       <div class="empty-title">Welcome to KVForge Studio</div>
       <div class="empty-sub">No use cases configured yet. Create your first one to start building a progressive RAG pipeline that gets smarter over time.</div>
-      <button class="btn-cta-lg" onclick="location.href='/studio/wizard'">+ Create Your First Use Case</button>
+      <button class="btn-cta-lg" onclick="handleNewUseCase()">+ Create Your First Use Case</button>
       <div class="empty-hint">Takes about 5 minutes to configure · ~10 minutes to index</div>
 
       <div class="feature-grid">
@@ -361,10 +428,174 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
 
 <div class="toast" id="toast"></div>
 
+<!-- GPU CONNECT MODAL -->
+<div class="gpu-modal-backdrop" id="gpuModalBackdrop" onclick="closeGpuModal(event)">
+  <div class="gpu-modal" onclick="event.stopPropagation()">
+    <div class="gpu-modal-head">
+      <div class="gpu-modal-title">🖥 Connect a GPU</div>
+      <button class="gpu-modal-close" onclick="closeGpuModal()">✕</button>
+    </div>
+    <div class="gpu-modal-sub">KVForge needs an NVIDIA GPU for KV tensor computation, LLM inference, and LoRA fine-tuning.</div>
+
+    <div class="gpu-tabs">
+      <div class="gpu-tab active" onclick="switchGpuTab('ec2', this)">AWS EC2 (Recommended)</div>
+      <div class="gpu-tab" onclick="switchGpuTab('local', this)">Local NVIDIA GPU</div>
+      <div class="gpu-tab" onclick="switchGpuTab('vllm', this)">Remote vLLM API</div>
+    </div>
+
+    <div class="gpu-tab-body">
+
+      <!-- TAB: AWS EC2 -->
+      <div class="gpu-tab-pane active" id="gpu-tab-ec2">
+        <div class="gpu-step">
+          <div class="gpu-step-num">1</div>
+          <div class="gpu-step-content">
+            <div class="gpu-step-title">Launch an EC2 g5.xlarge instance</div>
+            <div class="gpu-step-desc">The A10G (24 GB VRAM) is the recommended GPU. Use the Deep Learning AMI (Ubuntu 22.04) — it ships with CUDA 12, nvidia-smi, and PyTorch pre-installed.</div>
+            <div class="gpu-code">aws ec2 run-instances \
+  --image-id ami-0c55b159cbfafe1f0 \
+  --instance-type g5.xlarge \
+  --key-name your-keypair \
+  --security-group-ids sg-xxxxxxxx \
+  --block-device-mappings '[{"DeviceName":"/dev/sda1","Ebs":{"VolumeSize":100}}]'
+<button class="gpu-copy-btn" onclick="gpuCopy(this)">Copy</button></div>
+            <div class="gpu-callout">💡 Tip: Use a Spot instance for ~70% cost savings. Request a spot instance through the EC2 console or add <code>--instance-market-options MarketType=spot</code> to the command above.</div>
+          </div>
+        </div>
+
+        <div class="gpu-step">
+          <div class="gpu-step-num">2</div>
+          <div class="gpu-step-content">
+            <div class="gpu-step-title">SSH tunnel to expose port 8080</div>
+            <div class="gpu-step-desc">Forward the KVForge Studio port from the EC2 instance to your local machine so you can use the browser UI.</div>
+            <div class="gpu-code">ssh -i your-keypair.pem -L 8080:localhost:8080 ubuntu@&lt;EC2-PUBLIC-IP&gt;
+<button class="gpu-copy-btn" onclick="gpuCopy(this)">Copy</button></div>
+          </div>
+        </div>
+
+        <div class="gpu-step">
+          <div class="gpu-step-num">3</div>
+          <div class="gpu-step-content">
+            <div class="gpu-step-title">Clone and start KVForge on the instance</div>
+            <div class="gpu-code">git clone https://github.com/your-org/kvforge.git
+cd kvforge
+pip install -r requirements.txt
+python kvforge_portal.py --port 8080
+<button class="gpu-copy-btn" onclick="gpuCopy(this)">Copy</button></div>
+          </div>
+        </div>
+
+        <div class="gpu-step">
+          <div class="gpu-step-num">4</div>
+          <div class="gpu-step-content">
+            <div class="gpu-step-title">Verify GPU visibility</div>
+            <div class="gpu-step-desc">Run this on the EC2 instance to confirm the GPU is visible to KVForge.</div>
+            <div class="gpu-code">nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
+<button class="gpu-copy-btn" onclick="gpuCopy(this)">Copy</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: LOCAL NVIDIA -->
+      <div class="gpu-tab-pane" id="gpu-tab-local">
+        <div class="gpu-step">
+          <div class="gpu-step-num">1</div>
+          <div class="gpu-step-content">
+            <div class="gpu-step-title">Verify NVIDIA driver and nvidia-smi</div>
+            <div class="gpu-step-desc">KVForge requires at least 16 GB VRAM (24 GB recommended). Supported GPUs: RTX 3090/4090, A10G, A100, H100.</div>
+            <div class="gpu-code">nvidia-smi
+<button class="gpu-copy-btn" onclick="gpuCopy(this)">Copy</button></div>
+          </div>
+        </div>
+
+        <div class="gpu-step">
+          <div class="gpu-step-num">2</div>
+          <div class="gpu-step-content">
+            <div class="gpu-step-title">Install CUDA 12 and PyTorch</div>
+            <div class="gpu-code">pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+<button class="gpu-copy-btn" onclick="gpuCopy(this)">Copy</button></div>
+          </div>
+        </div>
+
+        <div class="gpu-step">
+          <div class="gpu-step-num">3</div>
+          <div class="gpu-step-content">
+            <div class="gpu-step-title">Confirm KVForge can see your GPU</div>
+            <div class="gpu-code">python -c "import torch; print(torch.cuda.get_device_name(0))"
+<button class="gpu-copy-btn" onclick="gpuCopy(this)">Copy</button></div>
+            <div class="gpu-callout">Expected output: <strong>NVIDIA GeForce RTX 4090</strong> (or your card name). If you see an error, your CUDA installation may be incomplete.</div>
+          </div>
+        </div>
+
+        <div class="gpu-step">
+          <div class="gpu-step-num">4</div>
+          <div class="gpu-step-content">
+            <div class="gpu-step-title">Restart KVForge Studio</div>
+            <div class="gpu-step-desc">After confirming GPU access, restart the portal and return to this page — the GPU status card should show your device.</div>
+            <div class="gpu-code">python kvforge_portal.py --port 8080
+<button class="gpu-copy-btn" onclick="gpuCopy(this)">Copy</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: REMOTE vLLM API -->
+      <div class="gpu-tab-pane" id="gpu-tab-vllm">
+        <div class="gpu-step">
+          <div class="gpu-step-num">1</div>
+          <div class="gpu-step-content">
+            <div class="gpu-step-title">Deploy vLLM on a remote GPU host</div>
+            <div class="gpu-step-desc">Run vLLM on any GPU server accessible over the network. KVForge will call its OpenAI-compatible API for LLM inference steps.</div>
+            <div class="gpu-code">pip install vllm
+python -m vllm.entrypoints.openai.api_server \
+  --model meta-llama/Llama-3.2-3B-Instruct \
+  --port 8090
+<button class="gpu-copy-btn" onclick="gpuCopy(this)">Copy</button></div>
+          </div>
+        </div>
+
+        <div class="gpu-step">
+          <div class="gpu-step-num">2</div>
+          <div class="gpu-step-content">
+            <div class="gpu-step-title">Add the vLLM URL in KVForge Settings</div>
+            <div class="gpu-step-desc">Open Settings → LLM section and paste the remote vLLM API URL. KVForge will route inference calls to this endpoint.</div>
+            <div class="gpu-callout">📌 Go to <strong>Settings → LLM → vLLM API URL</strong> and enter:<br><code>http://&lt;GPU-HOST-IP&gt;:8090/v1</code></div>
+          </div>
+        </div>
+
+        <div class="gpu-step">
+          <div class="gpu-step-num">3</div>
+          <div class="gpu-step-content">
+            <div class="gpu-step-title">Note: KV tensor computation still needs local GPU</div>
+            <div class="gpu-step-desc">The remote vLLM API handles LLM inference, but Phase 2 KV tensor pre-computation requires direct GPU access (CUDA). For Phase 1 text RAG only, the remote API is sufficient.</div>
+          </div>
+        </div>
+
+        <div class="gpu-step">
+          <div class="gpu-step-num">4</div>
+          <div class="gpu-step-content">
+            <div class="gpu-step-title">Configure the vLLM URL per use case</div>
+            <div class="gpu-step-desc">Each use case can have its own vLLM endpoint set during wizard setup (LLM step → "vLLM URL" field), overriding the global setting.</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /gpu-tab-body -->
+
+    <div class="gpu-modal-foot">
+      <div class="gpu-modal-foot-note">After connecting, <a href="javascript:location.reload()" style="color:var(--accent)">refresh this page</a> to detect your GPU.</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-proceed-anyway" onclick="proceedToWizard()">Skip — Dev Mode</button>
+        <button class="btn-done-gpu" onclick="checkGpuAndClose()">✓ I've Connected a GPU</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // State
 let ucData = [];
 let profileData = null;
+let gpuAvailable = null; // null=unknown, true=ok, false=no GPU
 
 // On load
 document.addEventListener('DOMContentLoaded', () => {
@@ -443,18 +674,55 @@ async function loadGpuStatus() {
     const r = await fetch('/studio/api/gpu/realtime');
     const data = await r.json();
     const gpus = data.gpus || [];
+    const hasError = !!data.error;
+
     if (gpus.length > 0) {
       const avg = Math.round(gpus.reduce(function(s, g) { return s + (g.util_pct || 0); }, 0) / gpus.length);
       document.getElementById('sys-gpu-val').textContent = avg + '%';
       document.getElementById('sys-gpu-bar').style.width = avg + '%';
       document.getElementById('sys-gpu-bar').style.background = avg > 85
         ? 'var(--danger)' : avg > 60 ? 'var(--warning)' : 'var(--accent)';
+
+      const hasFree = data.has_free_gpu;
+      gpuAvailable = hasFree;
+
+      if (!hasFree) {
+        // All GPUs busy
+        showGpuAlert(false,
+          '🔴 All GPUs Busy',
+          'All ' + gpus.length + ' GPU' + (gpus.length > 1 ? 's are' : ' is') + ' currently in use. Free up a GPU or add another to onboard new use cases.',
+          true);
+      } else {
+        hideGpuAlert();
+      }
     } else {
+      // No GPU at all
+      gpuAvailable = false;
       document.getElementById('sys-gpu-val').textContent = 'No GPU';
+      const errMsg = hasError ? data.error : 'nvidia-smi not found';
+      showGpuAlert(false,
+        'No GPU Detected',
+        'KVForge requires an NVIDIA GPU for indexing and LLM inference. ' + errMsg + '. Connect an EC2 g5.xlarge or any CUDA-capable GPU.',
+        false);
     }
   } catch(e) {
     document.getElementById('sys-gpu-val').textContent = '—';
+    gpuAvailable = false;
+    showGpuAlert(false, 'GPU Status Unknown', 'Could not reach the GPU monitoring endpoint. Ensure the KVForge server has access to nvidia-smi.', false);
   }
+}
+
+function showGpuAlert(isCritical, title, desc, allBusy) {
+  const el = document.getElementById('gpu-alert');
+  el.classList.add('show');
+  el.classList.toggle('critical', isCritical);
+  document.getElementById('gpu-alert-icon').textContent = isCritical ? '🔴' : '⚠️';
+  document.getElementById('gpu-alert-title').textContent = title;
+  document.getElementById('gpu-alert-desc').textContent = desc;
+}
+
+function hideGpuAlert() {
+  document.getElementById('gpu-alert').classList.remove('show');
 }
 
 // Render UC grid
@@ -524,7 +792,7 @@ function renderUcCard(uc) {
 }
 
 function renderCreateCard() {
-  return '<div class="uc-card-create" onclick="location.href=\'/studio/wizard\'">'
+  return '<div class="uc-card-create" onclick="handleNewUseCase()">'
     + '<div class="create-icon">＋</div>'
     + '<div class="create-title">New Use Case</div>'
     + '<div class="create-sub">Configure a new RAG pipeline<br>with the setup wizard</div>'
@@ -578,6 +846,64 @@ document.addEventListener('click', function() {
   const m = document.getElementById('profileMenu');
   if (m) m.style.display = 'none';
 });
+
+// GPU modal
+function handleNewUseCase() {
+  if (gpuAvailable === false) {
+    openGpuModal();
+  } else {
+    location.href = '/studio/wizard';
+  }
+}
+
+function openGpuModal() {
+  document.getElementById('gpuModalBackdrop').classList.add('open');
+}
+
+function closeGpuModal(e) {
+  if (!e || e.target === document.getElementById('gpuModalBackdrop')) {
+    document.getElementById('gpuModalBackdrop').classList.remove('open');
+  }
+}
+
+function switchGpuTab(name, el) {
+  document.querySelectorAll('.gpu-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.gpu-tab-pane').forEach(function(p) { p.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('gpu-tab-' + name).classList.add('active');
+}
+
+async function checkGpuAndClose() {
+  const r = await fetch('/studio/api/gpu/realtime').catch(function() { return null; });
+  if (r && r.ok) {
+    const data = await r.json();
+    if (data.has_free_gpu) {
+      closeGpuModal();
+      hideGpuAlert();
+      gpuAvailable = true;
+      showToast('GPU detected — you\'re ready to onboard use cases!');
+      return;
+    }
+  }
+  showToast('No free GPU found yet. Check the instructions and try again.');
+}
+
+function proceedToWizard() {
+  closeGpuModal();
+  location.href = '/studio/wizard';
+}
+
+function gpuCopy(btn) {
+  const pre = btn.parentElement;
+  const text = pre.textContent.replace(/Copy$/, '').trim();
+  navigator.clipboard.writeText(text).then(function() {
+    btn.textContent = '✓ Copied';
+    setTimeout(function() { btn.textContent = 'Copy'; }, 1800);
+  }).catch(function() {
+    btn.textContent = '✗ Failed';
+    setTimeout(function() { btn.textContent = 'Copy'; }, 1800);
+  });
+}
 
 // Toast
 let toastTimer;
