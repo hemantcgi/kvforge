@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 970" width="1400" height="970">
+<defs><marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#475569"/></marker><marker id="arr-enhanced" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#d97706"/></marker><marker id="arr-active" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0d9488"/></marker><marker id="arr-archive" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#64748b"/></marker></defs>
+<rect x="0" y="0" width="1400" height="970" fill="#0a0f1e" stroke="none" stroke-width="1.5" rx="0"/>
+<text x="700" y="28" font-size="20" font-weight="700" fill="#f8fafc" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">KVForge V2 — Corpus Intelligence System</text>
+<text x="700" y="48" font-size="12" font-weight="400" fill="#64748b" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Three storage tiers · CIS-driven curation · TurboQuant compression · User-confirmed archival</text>
+<rect x="30" y="72" width="1340" height="95" fill="#0c1628" stroke="none" stroke-width="1.5" rx="10"/>
+<text x="46" y="62" font-size="10" font-weight="700" fill="#475569" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="start" dominant-baseline="middle">INDEX TIME</text>
+<rect x="127.0" y="52" width="80" height="16" fill="#172554" stroke="none" stroke-width="1.5" rx="3"/>
+<text x="167.0" y="60" font-size="9" font-weight="700" fill="#93c5fd" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">unchanged</text>
+<rect x="55" y="97" width="100" height="44" fill="#1e293b" stroke="#475569" stroke-width="1.5" rx="8"/>
+<text x="105" y="119" font-size="11" font-weight="500" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Documents</text>
+<rect x="195" y="97" width="100" height="44" fill="#1e293b" stroke="#475569" stroke-width="1.5" rx="8"/>
+<text x="245" y="119" font-size="11" font-weight="500" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Chunker</text>
+<rect x="345" y="97" width="100" height="44" fill="#1e293b" stroke="#475569" stroke-width="1.5" rx="8"/>
+<text x="395" y="119" font-size="11" font-weight="500" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Embedder</text>
+<rect x="508" y="97" width="135" height="44" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5" rx="8"/>
+<text x="575" y="119" font-size="11" font-weight="500" fill="#a5b4fc" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">LLM forward pass</text>
+<rect x="695" y="97" width="120" height="44" fill="#1e293b" stroke="#475569" stroke-width="1.5" rx="8"/>
+<text x="755" y="112" font-size="11" font-weight="500" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">mean_pool_kv</text>
+<text x="755" y="127" font-size="9" font-weight="400" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle" opacity="0.75">collapse seq_len</text>
+<rect x="860" y="97" width="200" height="44" fill="#042f2e" stroke="#0d9488" stroke-width="1.5" rx="8"/>
+<text x="960" y="112" font-size="11" font-weight="500" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Active Tier</text>
+<text x="960" y="127" font-size="9" font-weight="400" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle" opacity="0.75">Qdrant: embed + KV blob · kv_token_path=null</text>
+<line x1="155.0" y1="119.0" x2="185.0" y2="119.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="295.0" y1="119.0" x2="335.0" y2="119.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="445.0" y1="119.0" x2="498.0" y2="119.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="642.0" y1="119.0" x2="685.0" y2="119.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="815.0" y1="119.0" x2="850.0" y2="119.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="700" y="179" font-size="10" font-style="italic" fill="#475569" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle">All new chunks land in Active Tier. Enhanced tier promotion happens asynchronously via the sleep-time curation pass.</text>
+<rect x="30" y="198" width="1340" height="365" fill="#0c1628" stroke="none" stroke-width="1.5" rx="10"/>
+<text x="46" y="188" font-size="10" font-weight="700" fill="#475569" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="start" dominant-baseline="middle">SLEEP TIME — CORPUS CURATION PASS</text>
+<rect x="276.5" y="178" width="70" height="16" fill="#14532d" stroke="none" stroke-width="1.5" rx="3"/>
+<text x="311.5" y="186" font-size="9" font-weight="700" fill="#86efac" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">new in V2</text>
+<rect x="95" y="231" width="160" height="44" fill="#052e16" stroke="#16a34a" stroke-width="1.5" rx="8"/>
+<text x="175" y="246" font-size="11" font-weight="500" fill="#86efac" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">FAQ Generator</text>
+<text x="175" y="261" font-size="9" font-weight="400" fill="#86efac" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle" opacity="0.75">cloud LLM · user's provider</text>
+<rect x="613" y="231" width="175" height="44" fill="#1e293b" stroke="#475569" stroke-width="1.5" rx="8"/>
+<text x="700" y="246" font-size="11" font-weight="500" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Embedding distances</text>
+<text x="700" y="261" font-size="9" font-weight="400" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle" opacity="0.75">cosine sim to nearest neighbors</text>
+<rect x="1145" y="231" width="160" height="44" fill="#1e293b" stroke="#475569" stroke-width="1.5" rx="8"/>
+<text x="1225" y="246" font-size="11" font-weight="500" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Access Tracker</text>
+<text x="1225" y="261" font-size="9" font-weight="400" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle" opacity="0.75">retrieval frequency per chunk</text>
+<rect x="490" y="268" width="420" height="80" fill="#061020" stroke="#1e3a5f" stroke-width="1.5" rx="10"/>
+<text x="700" y="286" font-size="12" font-weight="700" fill="#60a5fa" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Corpus Importance Score (CIS)</text>
+<text x="700" y="303" font-size="11" font-weight="500" fill="#34d399" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">CIS = α × access_score  +  β × uniqueness_score  +  γ × coverage_score</text>
+<text x="570" y="323" font-size="10" font-weight="600" fill="#fbbf24" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">access_score</text>
+<text x="700" y="323" font-size="10" font-weight="600" fill="#34d399" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">uniqueness_score</text>
+<text x="830" y="323" font-size="10" font-weight="600" fill="#a78bfa" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">coverage_score</text>
+<line x1="175.0" y1="275.0" x2="175.0" y2="278.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="700.0" y1="275.0" x2="700.0" y2="278.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="1225.0" y1="275.0" x2="1225.0" y2="278.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="700" y="364" font-size="10" font-weight="500" fill="#475569" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">CIS score determines tier action ↓</text>
+<rect x="185" y="388" width="250" height="155" fill="#1c1002" stroke="#d97706" stroke-width="1.5" rx="9"/>
+<text x="310" y="402" font-size="10" font-weight="700" fill="#fcd34d" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">High CIS → Enhanced Tier</text>
+<text x="310" y="420" font-size="9" font-weight="400" fill="#fcd34d" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Background daemon triggers</text>
+<text x="310" y="439" font-size="9" font-weight="400" fill="#fcd34d" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Full LLM forward pass</text>
+<text x="310" y="458" font-size="9" font-weight="400" fill="#fcd34d" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">preserve token sequence</text>
+<text x="310" y="477" font-size="9" font-weight="400" fill="#fcd34d" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">TurboQuant compress (3b keys + 2b values)</text>
+<text x="310" y="496" font-size="9" font-weight="400" fill="#fcd34d" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Write compressed bytes to disk</text>
+<text x="310" y="515" font-size="9" font-weight="400" fill="#fcd34d" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Update kv_token_path in Qdrant</text>
+<line x1="310.0" y1="380.0" x2="310.0" y2="378.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="575" y="388" width="250" height="155" fill="#042f2e" stroke="#0d9488" stroke-width="1.5" rx="9"/>
+<text x="700" y="402" font-size="10" font-weight="700" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Mid CIS → Stay Active</text>
+<text x="700" y="420" font-size="9" font-weight="400" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">No action taken</text>
+<text x="700" y="439" font-size="9" font-weight="400" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Remains in Qdrant with</text>
+<text x="700" y="458" font-size="9" font-weight="400" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">mean-pooled KV blob</text>
+<text x="700" y="477" font-size="9" font-weight="400" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">(V1 behavior unchanged)</text>
+<text x="700" y="496" font-size="9" font-weight="400" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">CIS re-evaluated each</text>
+<text x="700" y="515" font-size="9" font-weight="400" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">sleep cycle</text>
+<line x1="700.0" y1="380.0" x2="700.0" y2="378.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="965" y="388" width="250" height="155" fill="#0f172a" stroke="#64748b" stroke-width="1.5" rx="9"/>
+<text x="1090" y="402" font-size="10" font-weight="700" fill="#94a3b8" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Low CIS + Low Uniqueness → Archive</text>
+<text x="1090" y="420" font-size="9" font-weight="400" fill="#94a3b8" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Dashboard recommendation:</text>
+<text x="1090" y="439" font-size="9" font-weight="400" fill="#94a3b8" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">similarity, FAQ appearances,</text>
+<text x="1090" y="458" font-size="9" font-weight="400" fill="#94a3b8" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">days since last retrieval</text>
+<text x="1090" y="477" font-size="9" font-weight="400" fill="#94a3b8" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">User reviews &amp; confirms</text>
+<text x="1090" y="496" font-size="9" font-weight="400" fill="#94a3b8" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Text → archival backend</text>
+<text x="1090" y="515" font-size="9" font-weight="400" fill="#94a3b8" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Clear kv_cache from Qdrant</text>
+<line x1="1090.0" y1="380.0" x2="1090.0" y2="378.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="250" y="561" width="900" height="28" fill="#061020" stroke="#1e3a5f" stroke-width="1.5" rx="6"/>
+<text x="700" y="575" font-size="10" font-weight="500" fill="#93c5fd" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Archive retrieval count &gt; user threshold  →  Dashboard recommends reinstatement  →  User confirms  →  Chunk returns to Active Tier</text>
+<rect x="30" y="585" width="1340" height="115" fill="#0c1628" stroke="none" stroke-width="1.5" rx="10"/>
+<text x="46" y="575" font-size="10" font-weight="700" fill="#475569" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="start" dominant-baseline="middle">STORAGE TIERS</text>
+<rect x="146.5" y="565" width="70" height="16" fill="#14532d" stroke="none" stroke-width="1.5" rx="3"/>
+<text x="181.5" y="573" font-size="9" font-weight="700" fill="#86efac" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">new in V2</text>
+<rect x="170" y="597" width="280" height="90" fill="#1c1002" stroke="#d97706" stroke-width="1.5" rx="9"/>
+<text x="310" y="615" font-size="11" font-weight="700" fill="#fcd34d" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Enhanced Tier</text>
+<text x="310" y="635" font-size="9" font-weight="400" fill="#fcd34d" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Per-token KV on disk · TurboQuant compressed</text>
+<text x="310" y="660" font-size="9" font-weight="600" fill="#d97706" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">~15 MB / chunk at 4.4× compression</text>
+<rect x="560" y="597" width="280" height="90" fill="#042f2e" stroke="#0d9488" stroke-width="1.5" rx="9"/>
+<text x="700" y="615" font-size="11" font-weight="700" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Active Tier</text>
+<text x="700" y="635" font-size="9" font-weight="400" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Mean-pooled KV blob in Qdrant · V1 behavior</text>
+<text x="700" y="660" font-size="9" font-weight="600" fill="#0d9488" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">~131 KB / chunk · kv_token_path = null</text>
+<rect x="950" y="597" width="280" height="90" fill="#0f172a" stroke="#64748b" stroke-width="1.5" rx="9"/>
+<text x="1090" y="615" font-size="11" font-weight="700" fill="#94a3b8" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Archive Tier</text>
+<text x="1090" y="635" font-size="9" font-weight="400" fill="#94a3b8" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Embedding + pointer in Qdrant · text in archival backend</text>
+<text x="1090" y="660" font-size="9" font-weight="600" fill="#64748b" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">~8 KB in Qdrant · kv_cache blob cleared</text>
+<rect x="30" y="722" width="1340" height="200" fill="#0c1628" stroke="none" stroke-width="1.5" rx="10"/>
+<text x="46" y="712" font-size="10" font-weight="700" fill="#475569" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="start" dominant-baseline="middle">QUERY TIME — DYNAMIC ROUTING ACROSS THREE TIERS</text>
+<rect x="367.5" y="702" width="70" height="16" fill="#14532d" stroke="none" stroke-width="1.5" rx="3"/>
+<text x="402.5" y="710" font-size="9" font-weight="700" fill="#86efac" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">new in V2</text>
+<rect x="40" y="800" width="80" height="44" fill="#2e1065" stroke="#9333ea" stroke-width="1.5" rx="8"/>
+<text x="80" y="822" font-size="11" font-weight="500" fill="#d8b4fe" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Query</text>
+<rect x="165" y="800" width="100" height="44" fill="#1e293b" stroke="#475569" stroke-width="1.5" rx="8"/>
+<text x="215" y="822" font-size="11" font-weight="500" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Embedder</text>
+<rect x="320" y="800" width="130" height="44" fill="#042f2e" stroke="#0d9488" stroke-width="1.5" rx="8"/>
+<text x="385" y="815" font-size="11" font-weight="500" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Qdrant</text>
+<text x="385" y="830" font-size="9" font-weight="400" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle" opacity="0.75">MMR + CIS weighted</text>
+<line x1="120.0" y1="822.0" x2="155.0" y2="822.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="265.0" y1="822.0" x2="310.0" y2="822.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="450.0" y1="822.0" x2="458.4" y2="771.9" stroke="#d97706" stroke-width="1.5" marker-end="url(#arr-enhanced)"/>
+<rect x="505" y="744" width="120" height="36" fill="#1c1002" stroke="#d97706" stroke-width="1.5" rx="6"/>
+<text x="565" y="762" font-size="9" font-weight="500" fill="#fcd34d" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Enhanced chunk</text>
+<line x1="625.0" y1="762.0" x2="625.0" y2="762.0" stroke="#d97706" stroke-width="1.5" marker-end="url(#arr-enhanced)"/>
+<rect x="635" y="744" width="120" height="36" fill="#1c1002" stroke="#d97706" stroke-width="1.5" rx="6"/>
+<text x="695" y="762" font-size="9" font-weight="500" fill="#fcd34d" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Load per-token KV (disk)</text>
+<line x1="755.0" y1="762.0" x2="755.0" y2="762.0" stroke="#d97706" stroke-width="1.5" marker-end="url(#arr-enhanced)"/>
+<rect x="765" y="744" width="120" height="36" fill="#1c1002" stroke="#d97706" stroke-width="1.5" rx="6"/>
+<text x="825" y="762" font-size="9" font-weight="500" fill="#fcd34d" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">TurboQuant attention</text>
+<line x1="885.0" y1="762.0" x2="885.0" y2="762.0" stroke="#d97706" stroke-width="1.5" marker-end="url(#arr-enhanced)"/>
+<rect x="895" y="744" width="120" height="36" fill="#1c1002" stroke="#d97706" stroke-width="1.5" rx="6"/>
+<text x="955" y="762" font-size="9" font-weight="500" fill="#fcd34d" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Full-fidelity inject</text>
+<line x1="1015.0" y1="762.0" x2="1101.5" y2="816.7" stroke="#d97706" stroke-width="1.5" marker-end="url(#arr-enhanced)"/>
+<line x1="450.0" y1="822.0" x2="450.0" y2="822.0" stroke="#0d9488" stroke-width="1.5" marker-end="url(#arr-active)"/>
+<rect x="570" y="804" width="120" height="36" fill="#042f2e" stroke="#0d9488" stroke-width="1.5" rx="6"/>
+<text x="630" y="822" font-size="9" font-weight="500" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Active chunk</text>
+<line x1="690.0" y1="822.0" x2="690.0" y2="822.0" stroke="#0d9488" stroke-width="1.5" marker-end="url(#arr-active)"/>
+<rect x="700" y="804" width="120" height="36" fill="#042f2e" stroke="#0d9488" stroke-width="1.5" rx="6"/>
+<text x="760" y="822" font-size="9" font-weight="500" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Load mean-pool KV (Qdrant)</text>
+<line x1="820.0" y1="822.0" x2="820.0" y2="822.0" stroke="#0d9488" stroke-width="1.5" marker-end="url(#arr-active)"/>
+<rect x="830" y="804" width="120" height="36" fill="#042f2e" stroke="#0d9488" stroke-width="1.5" rx="6"/>
+<text x="890" y="822" font-size="9" font-weight="500" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Mean-pool inject (V1)</text>
+<line x1="950.0" y1="822.0" x2="1100.0" y2="822.0" stroke="#0d9488" stroke-width="1.5" marker-end="url(#arr-active)"/>
+<line x1="450.0" y1="822.0" x2="458.4" y2="872.1" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr-archive)"/>
+<rect x="505" y="864" width="120" height="36" fill="#0f172a" stroke="#64748b" stroke-width="1.5" rx="6"/>
+<text x="565" y="882" font-size="9" font-weight="500" fill="#94a3b8" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Archive chunk</text>
+<line x1="625.0" y1="882.0" x2="625.0" y2="882.0" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr-archive)"/>
+<rect x="635" y="864" width="120" height="36" fill="#0f172a" stroke="#64748b" stroke-width="1.5" rx="6"/>
+<text x="695" y="882" font-size="9" font-weight="500" fill="#94a3b8" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Fetch text (archive backend)</text>
+<line x1="755.0" y1="882.0" x2="755.0" y2="882.0" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr-archive)"/>
+<rect x="765" y="864" width="120" height="36" fill="#0f172a" stroke="#64748b" stroke-width="1.5" rx="6"/>
+<text x="825" y="882" font-size="9" font-weight="500" fill="#94a3b8" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Text-in-context</text>
+<line x1="885.0" y1="882.0" x2="885.0" y2="882.0" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr-archive)"/>
+<rect x="895" y="864" width="120" height="36" fill="#0f172a" stroke="#64748b" stroke-width="1.5" rx="6"/>
+<text x="955" y="882" font-size="9" font-weight="500" fill="#94a3b8" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Track retrieval freq → reinstate</text>
+<line x1="1015.0" y1="882.0" x2="1101.5" y2="827.3" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr-archive)"/>
+<rect x="1110" y="800" width="80" height="44" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5" rx="8"/>
+<text x="1150" y="822" font-size="11" font-weight="500" fill="#a5b4fc" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">LLM</text>
+<line x1="1190.0" y1="822.0" x2="1225.0" y2="822.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="1240" y="800" width="90" height="44" fill="#2e1065" stroke="#9333ea" stroke-width="1.5" rx="8"/>
+<text x="1285" y="822" font-size="11" font-weight="500" fill="#d8b4fe" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Answer</text>
+<rect x="40" y="941" width="12" height="12" fill="#6366f1" stroke="none" stroke-width="1.5" rx="2"/>
+<text x="58" y="948" font-size="10" font-weight="500" fill="#64748b" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="start" dominant-baseline="middle">Model / LLM</text>
+<rect x="147.5" y="941" width="12" height="12" fill="#0d9488" stroke="none" stroke-width="1.5" rx="2"/>
+<text x="165.5" y="948" font-size="10" font-weight="500" fill="#64748b" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="start" dominant-baseline="middle">Vector Store / Active Tier</text>
+<rect x="352.5" y="941" width="12" height="12" fill="#d97706" stroke="none" stroke-width="1.5" rx="2"/>
+<text x="370.5" y="948" font-size="10" font-weight="500" fill="#64748b" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="start" dominant-baseline="middle">Enhanced Tier (TurboQuant)</text>
+<rect x="557.5" y="941" width="12" height="12" fill="#16a34a" stroke="none" stroke-width="1.5" rx="2"/>
+<text x="575.5" y="948" font-size="10" font-weight="500" fill="#64748b" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="start" dominant-baseline="middle">Sleep-time compute</text>
+<rect x="710.5" y="941" width="12" height="12" fill="#64748b" stroke="none" stroke-width="1.5" rx="2"/>
+<text x="728.5" y="948" font-size="10" font-weight="500" fill="#64748b" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="start" dominant-baseline="middle">Archive Tier</text>
+<rect x="824.5" y="941" width="12" height="12" fill="#9333ea" stroke="none" stroke-width="1.5" rx="2"/>
+<text x="842.5" y="948" font-size="10" font-weight="500" fill="#64748b" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="start" dominant-baseline="middle">User / Query</text>
+<rect x="938.5" y="941" width="12" height="12" fill="#ea580c" stroke="none" stroke-width="1.5" rx="2"/>
+<text x="956.5" y="948" font-size="10" font-weight="500" fill="#64748b" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="start" dominant-baseline="middle">Dashboard</text>
+</svg>

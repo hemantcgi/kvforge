@@ -2,7 +2,7 @@
   "id": "usecase1_customer_support",
   "display_name": "Customer Support",
   "type": "example",
-  "created_at": "2026-05-10T03:18:32.396730+00:00",
+  "created_at": "2026-05-12T14:56:36.136268+00:00",
   "data": {
     "source_type": "huggingface",
     "source_path": "",

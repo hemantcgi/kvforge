@@ -51,7 +51,7 @@
     "test": "walkthrough_create_connector_and_sync",
     "step": 2,
     "slug": "connector_added_in_list",
-    "description": "The new connector 'My GDrive 431908' now appears in the connectors list with its type badge (GDrive) and a health status dot.",
+    "description": "The new connector 'My GDrive 0c5638' now appears in the connectors list with its type badge (GDrive) and a health status dot.",
     "action": "Created connector via POST /studio/api/connectors with type='gdrive', then reloaded the page.",
     "file": "walkthrough_create_connector_and_sync__02_connector_added_in_list.png"
   },
