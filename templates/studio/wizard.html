@@ -285,6 +285,16 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
 .wz-preflight{background:#1a1a1a;border:1px solid #333;border-radius:6px;
   padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;font-size:13px}
 .wz-preflight.ok{border-color:#4ec9b0}.wz-preflight.warn{border-color:#e5a231}
+/* Remote GPU profile cards */
+.gpu-section-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+  color:#6b7280;grid-column:span 2;padding-top:6px;margin-bottom:2px;}
+.gpu-remote-card{border-radius:6px;padding:8px 10px;cursor:pointer;transition:all 0.15s;
+  border:1px solid #2d5a8e;background:#0d1929;grid-column:span 2;}
+.gpu-remote-card:hover{border-color:#9cdcfe88;}
+.gpu-remote-card.selected{border:1px solid #4ec9b0;background:#0d2a24;box-shadow:0 0 0 1px #4ec9b022;}
+.gpu-remote-name{font-size:10px;font-weight:700;color:#9cdcfe;}
+.gpu-remote-meta{font-size:8px;color:#6b7280;margin-top:2px;}
+.gpu-remote-badge{font-size:7px;padding:1px 5px;border-radius:3px;background:#1a3a5a;color:#9cdcfe;}
 </style>
 </head>
 <body>
@@ -1206,52 +1216,75 @@ async function loadGpuCards() {
   if (!container) return;
 
   try {
-    // Fetch realtime stats + vLLM process list in parallel
-    const [rtResp, checkResp] = await Promise.all([
+    const [rtResp, checkResp, profilesResp] = await Promise.all([
       fetch('/studio/api/gpu/realtime'),
       fetch('/studio/api/gpu-check', { method: 'POST' }),
+      fetch('/studio/api/remote-gpu/profiles'),
     ]);
-    if (!rtResp.ok) throw new Error(`GPU realtime error ${rtResp.status}`);
-    const data = await rtResp.json();
+    const data = rtResp.ok ? await rtResp.json() : { gpus: [], has_free_gpu: false };
     _vllmProcesses = checkResp.ok ? ((await checkResp.json()).vllm_processes || []) : [];
+    const profiles = profilesResp.ok ? await profilesResp.json() : [];
 
-    if (!data.gpus || data.gpus.length === 0) {
-      container.innerHTML = '<div class="gpu-error" style="grid-column:span 2">No GPUs detected.</div>';
-      return;
+    let html = '';
+    const gpus = data.gpus || [];
+
+    // ── Local GPUs ──
+    if (gpus.length > 0) {
+      if (profiles.length > 0) html += `<div class="gpu-section-label">Local GPUs</div>`;
+      if (!data.has_free_gpu) {
+        html += `<div class="gpu-no-free-banner" style="grid-column:span 2">
+          ⚠️ No free local GPUs. Use <strong>Free up</strong> to release one, or select a Remote GPU below.
+        </div>`;
+      }
+      html += gpus.map(g => {
+        const usedPct = g.total_gb > 0 ? Math.round((g.used_gb / g.total_gb) * 100) : 0;
+        const isFree = g.status === 'free';
+        const freeupBtn = isFree ? '' : `
+          <button class="gpu-freeup-btn" onclick="event.stopPropagation();freeUpGpu(${g.id})">
+            ⚡ Free up GPU
+          </button>
+          <div class="gpu-stop-panel" id="gpu-stop-${g.id}" style="display:none">
+            <input type="number" id="gpu-port-${g.id}" placeholder="vLLM port" min="1" max="65535">
+            <button class="gpu-stop-confirm"
+              onclick="event.stopPropagation();stopVllm(${g.id})">Stop vLLM</button>
+          </div>`;
+        return `
+          <div class="gpu-card ${isFree ? 'free' : 'busy'}" data-gpu-id="${g.id}" onclick="selectGpu(${g.id}, this)">
+            <div class="gpu-hd">
+              <span class="gpu-id">GPU ${g.id}</span>
+              <span class="gpu-badge">${isFree ? 'Free' : 'Busy'}</span>
+            </div>
+            <div class="vbar"><div class="vfill" style="width:${usedPct}%"></div></div>
+            <div class="gpu-mem">${g.used_gb} / ${g.total_gb} GB used</div>
+            <div class="gpu-model-text">${g.name || ''}</div>
+            ${freeupBtn}
+          </div>`;
+      }).join('');
     }
 
-    const noFree = !data.has_free_gpu;
-    const banner = noFree
-      ? `<div class="gpu-no-free-banner" style="grid-column:span 2">
-           ⚠️ No free GPUs available. Use <strong>Free up</strong> on a busy GPU to release it.
-         </div>`
-      : '';
-
-    container.innerHTML = banner + data.gpus.map(g => {
-      const usedPct = g.total_gb > 0 ? Math.round((g.used_gb / g.total_gb) * 100) : 0;
-      const isFree = g.status === 'free';
-      const statusClass = isFree ? 'free' : 'busy';
-      const freeupBtn = isFree ? '' : `
-        <button class="gpu-freeup-btn" onclick="event.stopPropagation();freeUpGpu(${g.id})">
-          ⚡ Free up GPU
-        </button>
-        <div class="gpu-stop-panel" id="gpu-stop-${g.id}" style="display:none">
-          <input type="number" id="gpu-port-${g.id}" placeholder="vLLM port" min="1" max="65535">
-          <button class="gpu-stop-confirm"
-            onclick="event.stopPropagation();stopVllm(${g.id})">Stop vLLM</button>
-        </div>`;
-      return `
-        <div class="gpu-card ${statusClass}" data-gpu-id="${g.id}" onclick="selectGpu(${g.id}, this)">
+    // ── Remote GPU profiles ──
+    if (profiles.length > 0) {
+      if (gpus.length > 0) html += `<div class="gpu-section-label" style="padding-top:10px;">Remote GPU Profiles</div>`;
+      else html += `<div class="gpu-section-label">Remote GPU Profiles</div>`;
+      html += profiles.map(p => `
+        <div class="gpu-remote-card" data-profile-id="${esc(p.id)}"
+             onclick="selectRemoteGpu('${esc(p.id)}','${esc(p.display_name)}',this)">
           <div class="gpu-hd">
-            <span class="gpu-id">GPU ${g.id}</span>
-            <span class="gpu-badge">${isFree ? 'Free' : 'Busy'}</span>
+            <span class="gpu-remote-name">🖥 ${esc(p.display_name)}</span>
+            <span class="gpu-remote-badge">Remote</span>
           </div>
-          <div class="vbar"><div class="vfill" style="width:${usedPct}%"></div></div>
-          <div class="gpu-mem">${g.used_gb} / ${g.total_gb} GB used</div>
-          <div class="gpu-model-text">${g.name || ''}</div>
-          ${freeupBtn}
-        </div>`;
-    }).join('');
+          <div class="gpu-remote-meta">${esc(p.user)}@${esc(p.host)}:${p.port}</div>
+        </div>`).join('');
+    }
+
+    if (!html) {
+      container.innerHTML = `<div class="gpu-error" style="grid-column:span 2">
+        No GPUs detected and no remote GPU profiles saved.
+        <a href="/studio/gpu-connect" style="color:#9cdcfe">Connect a GPU first →</a>
+      </div>`;
+      return;
+    }
+    container.innerHTML = html;
   } catch (e) {
     container.innerHTML = `<div class="gpu-error" style="grid-column:span 2">GPU data unavailable: ${e.message}</div>`;
   }
@@ -1297,10 +1330,23 @@ async function stopVllm(gpuId) {
 }
 
 function selectGpu(id, el) {
-  if (el.classList.contains('busy')) return; // don't select busy GPU
-  document.querySelectorAll('.gpu-card').forEach(c => c.classList.remove('selected'));
+  if (el.classList.contains('busy')) return;
+  document.querySelectorAll('.gpu-card, .gpu-remote-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
   WIZARD.data.gpu_id = id;
+  WIZARD.data.gpu_profile_id = null;
+  WIZARD.data.gpu_profile_name = null;
+  const btn = document.getElementById('step4-next');
+  if (btn) btn.disabled = false;
+  updateFeasibilityBanner();
+}
+
+function selectRemoteGpu(profileId, displayName, el) {
+  document.querySelectorAll('.gpu-card, .gpu-remote-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  WIZARD.data.gpu_id = 'remote';
+  WIZARD.data.gpu_profile_id = profileId;
+  WIZARD.data.gpu_profile_name = displayName;
   const btn = document.getElementById('step4-next');
   if (btn) btn.disabled = false;
   updateFeasibilityBanner();
@@ -1309,11 +1355,23 @@ function selectGpu(id, el) {
 function updateFeasibilityBanner() {
   const banner = document.getElementById('feasibility-banner');
   if (!banner) return;
-  const vramData = WIZARD.data.vram;
-  if (!vramData || WIZARD.data.gpu_id == null) {
-    banner.style.display = 'none';
+  if (WIZARD.data.gpu_id == null) { banner.style.display = 'none'; return; }
+
+  // Remote GPU: always show green — we can't check VRAM remotely
+  if (WIZARD.data.gpu_id === 'remote') {
+    banner.style.display = '';
+    banner.className = 'feasibility feas-ok';
+    banner.innerHTML = `
+      <div class="feas-icon">✅</div>
+      <div>
+        <div class="feas-title">Remote GPU: ${WIZARD.data.gpu_profile_name || 'Connected'}</div>
+        <div class="feas-sub">Model: ${WIZARD.data.model_id || '—'} · Pipeline runs on your remote GPU via SSH</div>
+      </div>`;
     return;
   }
+
+  const vramData = WIZARD.data.vram;
+  if (!vramData) { banner.style.display = 'none'; return; }
   banner.style.display = '';
   if (vramData.fits) {
     banner.className = 'feasibility feas-ok';
@@ -1370,7 +1428,9 @@ function buildReview() {
     : d.source_type==='api' ? `Live API · ${d.api_type || 'not selected'}`
                              : `HuggingFace · ${d.hf_repo || 'not configured'}`;
   document.getElementById('review-model').textContent = d.model_id || '—';
-  document.getElementById('review-gpu').textContent = d.gpu_id != null ? `GPU ${d.gpu_id}` : '—';
+  document.getElementById('review-gpu').textContent =
+    d.gpu_id === 'remote' ? `Remote — ${d.gpu_profile_name || d.gpu_profile_id || 'saved profile'}` :
+    d.gpu_id != null      ? `GPU ${d.gpu_id}` : '—';
   document.getElementById('review-faq').textContent = d.faq_mode || d.gen_mode || 'not configured';
   if (d.lora) {
     document.getElementById('review-lora').textContent =
