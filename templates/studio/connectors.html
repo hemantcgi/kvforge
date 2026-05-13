@@ -164,6 +164,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
 .btn-cancel:hover{border-color:var(--text-secondary);color:var(--text-primary);}
 .btn-save{background:var(--accent);border:none;color:#fff;padding:6px 16px;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;}
 .btn-save:hover{background:var(--accent-hover);}
+.scope-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;}
+.scope-chip{font-size:10px;font-weight:600;padding:1px 8px;border-radius:4px;background:rgba(0,82,204,.1);color:var(--accent);border:1px solid rgba(0,82,204,.2);}
+.scope-empty{font-size:10px;color:var(--text-subtle);font-style:italic;}
+.uc-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background .1s;}
+.uc-row:hover{background:var(--bg-hover);}
+.uc-row input[type=checkbox]{width:14px;height:14px;cursor:pointer;accent-color:var(--accent);}
 
 /* Toast */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
@@ -369,6 +375,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
   </div>
 </div>
 
+<!-- Scope Modal -->
+<div class="modal-overlay" id="scope-modal">
+  <div class="modal-box" style="width:400px">
+    <div class="modal-hd">
+      <h3 id="scope-modal-title">Link Use Cases</h3>
+      <button class="modal-close" onclick="closeScopeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body" id="scope-modal-body" style="max-height:340px;overflow-y:auto">
+      Loading…
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeScopeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -443,12 +465,14 @@ async function load() {
       <div class="conn-info">
         <div class="conn-name">${esc(c.name)}</div>
         <div class="conn-meta">${esc(c.type)} · ${esc(c.schedule_cron || 'manual only')}</div>
+        <div class="scope-chips" id="scopes-${esc(c.id)}"><span class="scope-empty">loading…</span></div>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
         <div class="status-dot ${dot}"></div>
         <div class="status-text">${statusText}</div>
       </div>
       <div class="conn-actions">
+        <button class="btn-sm" onclick="showScopeModal('${esc(c.id)}','${esc(c.name)}')">&#128279; Scopes</button>
         <button class="btn-sm" onclick="syncNow('${esc(c.id)}')">&#8635; Sync Now</button>
         <button class="btn-sm" onclick="deleteConn('${esc(c.id)}')">Delete</button>
       </div>
@@ -456,6 +480,7 @@ async function load() {
   }).join('') + '<button class="btn-add" onclick="showAddForm()">+ Add Connector</button>';
 
   loadHistory();
+  connectors.forEach(c => loadConnectorScopes(c.id));
 }
 
 async function loadHistory() {
@@ -481,7 +506,12 @@ async function loadHistory() {
 async function syncNow(cid) {
   try {
     const r = await fetch(`/studio/api/connectors/${cid}/sync`, {method:'POST', credentials:'include'});
-    if (!r.ok) { showToast('Sync failed: ' + r.status); return; }
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      const msg = d.detail || ('Sync failed: ' + r.status);
+      showToast(msg.includes('scopes') ? 'No use cases linked — click Scopes to link one first' : msg);
+      return;
+    }
     const d = await r.json();
     showToast(d.run_id ? 'Sync started' : 'Sync triggered');
     setTimeout(load, 2000);
@@ -619,6 +649,96 @@ async function saveConn() {
 document.getElementById('add-connector-modal').addEventListener('click', function(e){
   if (e.target === this) closeModal();
 });
+document.getElementById('scope-modal').addEventListener('click', function(e){
+  if (e.target === this) closeScopeModal();
+});
+
+async function loadConnectorScopes(cid) {
+  const el = document.getElementById('scopes-' + cid);
+  if (!el) return;
+  try {
+    const r = await fetch(`/studio/api/connectors/${cid}/scopes`, {credentials:'include'});
+    if (!r.ok) { el.innerHTML = ''; return; }
+    const scopes = await r.json();
+    if (!scopes.length) {
+      el.innerHTML = '<span class="scope-empty">No use cases linked — click Scopes to link one before syncing</span>';
+    } else {
+      el.innerHTML = scopes.map(s => `<span class="scope-chip">${esc(s.uc_id)}</span>`).join('');
+    }
+  } catch(e) { el.innerHTML = ''; }
+}
+
+let _scopeCid = null;
+
+async function showScopeModal(cid, cname) {
+  _scopeCid = cid;
+  document.getElementById('scope-modal-title').textContent = 'Link Use Cases — ' + cname;
+  document.getElementById('scope-modal').classList.add('open');
+  await renderScopeModal();
+}
+
+function closeScopeModal() {
+  document.getElementById('scope-modal').classList.remove('open');
+  _scopeCid = null;
+}
+
+async function renderScopeModal() {
+  const body = document.getElementById('scope-modal-body');
+  body.innerHTML = 'Loading…';
+  try {
+    const [regRes, scopeRes] = await Promise.all([
+      fetch('/studio/api/registry', {credentials:'include'}),
+      fetch(`/studio/api/connectors/${_scopeCid}/scopes`, {credentials:'include'}),
+    ]);
+    const reg = await regRes.json();
+    const scopes = await scopeRes.json();
+    const ucs = (reg.use_cases || []);
+    const linked = new Set(scopes.map(s => s.uc_id));
+    if (!ucs.length) {
+      body.innerHTML = '<p style="color:var(--text-subtle);font-size:13px">No use cases configured yet. Create one from the Use Cases page first.</p>';
+      return;
+    }
+    body.innerHTML = `
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px">
+        Check the use cases this connector should sync data into.
+      </p>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${ucs.map(uc => `
+          <label class="uc-row">
+            <input type="checkbox" ${linked.has(uc.id) ? 'checked' : ''}
+                   onchange="toggleScope('${esc(uc.id)}','${esc(uc.name||uc.id)}',this.checked)">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text-primary)">${esc(uc.name||uc.id)}</div>
+              <div style="font-size:11px;color:var(--text-subtle)">${esc(uc.id)}</div>
+            </div>
+          </label>
+        `).join('')}
+      </div>`;
+  } catch(e) {
+    body.innerHTML = `<p style="color:var(--danger)">Error: ${esc(e.message)}</p>`;
+  }
+}
+
+async function toggleScope(ucId, ucName, add) {
+  try {
+    if (add) {
+      const r = await fetch(`/studio/api/connectors/${_scopeCid}/scopes`, {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({uc_id: ucId}),
+      });
+      if (!r.ok) { showToast('Failed to link: ' + r.status); await renderScopeModal(); return; }
+      showToast('Linked to ' + ucName);
+    } else {
+      const r = await fetch(`/studio/api/connectors/${_scopeCid}/scopes/${encodeURIComponent(ucId)}`, {
+        method:'DELETE', credentials:'include',
+      });
+      if (!r.ok) { showToast('Failed to unlink: ' + r.status); await renderScopeModal(); return; }
+      showToast('Unlinked from ' + ucName);
+    }
+    loadConnectorScopes(_scopeCid);
+  } catch(e) { showToast('Error: ' + e.message); }
+}
 
 load();
 setInterval(loadHistory, 5000);
