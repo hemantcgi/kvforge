@@ -1,96 +1,322 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>KVForge Studio — Settings</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — KVForge Studio</title>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:#0d0d0d;color:#d4d4d4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px;gap:24px}
-h1{color:#4ec9b0;font-size:20px;font-weight:700}
-.card{background:#111;border:1px solid #1e1e1e;border-radius:10px;padding:24px;width:100%;max-width:600px}
-.card h2{font-size:13px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px}
-.field{margin-bottom:16px}
-.field label{display:block;font-size:12px;color:#888;margin-bottom:6px}
-.field input{width:100%;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;
-  padding:8px 12px;color:#d4d4d4;font-size:13px;font-family:monospace;outline:none}
-.field input:focus{border-color:#4ec9b0}
-.field .hint{font-size:11px;color:#555;margin-top:4px}
-.btn{background:#4ec9b0;color:#000;border:none;border-radius:6px;padding:8px 20px;
-  font-size:13px;font-weight:700;cursor:pointer}
-.btn:hover{background:#3ab89f}
-.msg{font-size:12px;margin-top:12px;height:16px}
-.msg.ok{color:#4ec9b0}.msg.err{color:#f87171}
-a.back{font-size:12px;color:#555;text-decoration:none}
-a.back:hover{color:#4ec9b0}
+:root {
+  --bg-page:#F7F8F9;--bg-surface:#FFFFFF;--bg-sunken:#F1F2F4;--bg-input:#FFFFFF;
+  --bg-sidebar:#FFFFFF;--bg-active:#E9F2FF;--bg-hover:#F7F8F9;--bg-topbar:#0052CC;
+  --border:#DFE1E6;--border-focus:#4C9AFF;
+  --text-primary:#172B4D;--text-secondary:#626F86;--text-subtle:#8590A2;
+  --accent:#0052CC;--accent-hover:#0065FF;
+  --success:#22A06B;--danger:#DE350B;
+  --shadow-sm:0 1px 3px rgba(9,30,66,0.12),0 0 1px rgba(9,30,66,0.08);
+  --shadow-md:0 3px 8px rgba(9,30,66,0.1),0 0 1px rgba(9,30,66,0.1);
+  --topbar-text:#FFFFFF;--topbar-muted:rgba(255,255,255,0.7);
+}
+[data-theme="dark"] {
+  --bg-page:#1D2125;--bg-surface:#22272B;--bg-sunken:#161A1D;--bg-input:#22272B;
+  --bg-sidebar:#22272B;--bg-active:#1C3353;--bg-hover:#2C333A;--bg-topbar:#161A1D;
+  --border:#3B4651;--border-focus:#579DFF;
+  --text-primary:#C7D1DB;--text-secondary:#8C9BAB;--text-subtle:#596773;
+  --accent:#579DFF;--accent-hover:#85B8FF;
+  --success:#4BCE97;--danger:#F87462;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.4);--shadow-md:0 3px 8px rgba(0,0,0,0.4);
+  --topbar-text:#C7D1DB;--topbar-muted:#596773;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;
+  line-height:1.5;background:var(--bg-page);color:var(--text-primary);
+  display:flex;flex-direction:column;transition:background .2s,color .2s;}
+
+/* TOPBAR */
+.topbar{height:48px;flex-shrink:0;z-index:200;background:var(--bg-topbar);display:flex;
+  align-items:center;padding:0 16px;gap:12px;border-bottom:1px solid rgba(0,0,0,0.15);}
+.topbar-brand{font-size:15px;font-weight:800;color:var(--topbar-text);letter-spacing:-.3px;
+  display:flex;align-items:center;gap:7px;cursor:pointer;}
+.logo-sq{width:24px;height:24px;border-radius:5px;background:rgba(255,255,255,0.25);
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;}
+.topbar-tag{font-size:10px;color:var(--topbar-muted);background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.2);border-radius:3px;padding:1px 6px;font-weight:600;letter-spacing:.04em;}
+.topbar-sp{flex:1;}
+.topbar-btn{font-size:13px;color:var(--topbar-text);background:transparent;border:none;
+  cursor:pointer;padding:5px 9px;border-radius:4px;transition:background .15s;}
+.topbar-btn:hover{background:rgba(255,255,255,0.12);}
+.profile-wrap{position:relative;}
+.profile-menu{position:absolute;top:calc(100% + 8px);right:0;background:#fff;
+  border:1px solid #DFE1E6;border-radius:8px;
+  box-shadow:0 8px 24px rgba(9,30,66,0.15),0 0 1px rgba(9,30,66,0.1);
+  min-width:220px;z-index:1000;overflow:hidden;display:none;}
+.profile-menu.open{display:block;}
+.profile-menu-header{padding:12px 16px 10px;border-bottom:1px solid #DFE1E6;}
+.pm-name{font-size:13px;font-weight:700;color:#172B4D;}
+.pm-email{font-size:12px;color:#626F86;margin-top:1px;}
+.profile-menu-item{display:block;padding:9px 16px;font-size:13px;color:#172B4D;
+  cursor:pointer;transition:background .1s;text-decoration:none;}
+.profile-menu-item:hover{background:#F7F8F9;}
+.pm-signout{color:#DE350B;}
+.pm-signout:hover{background:#FFEBE6 !important;}
+.profile-menu-sep{height:1px;background:#DFE1E6;margin:4px 0;}
+
+/* SHELL */
+.shell{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:220px;flex-shrink:0;background:var(--bg-sidebar);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;transition:width .22s cubic-bezier(0.4,0,0.2,1);
+  overflow:hidden;position:relative;z-index:100;}
+.sidebar.collapsed{width:48px;}
+.sidebar-toggle{position:absolute;right:-12px;top:20px;width:24px;height:24px;border-radius:50%;
+  background:var(--bg-surface);border:1px solid var(--border);color:var(--text-secondary);
+  cursor:pointer;z-index:101;display:flex;align-items:center;justify-content:center;
+  font-size:10px;box-shadow:var(--shadow-sm);transition:all .15s;}
+.sidebar-toggle:hover{background:var(--bg-active);color:var(--accent);}
+.sidebar-section-title{font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--text-subtle);padding:16px 14px 6px;
+  white-space:nowrap;overflow:hidden;transition:opacity .15s;}
+.sidebar.collapsed .sidebar-section-title{opacity:0;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:7px 12px;cursor:pointer;
+  border-radius:4px;margin:1px 6px;font-size:13px;color:var(--text-secondary);
+  transition:background .12s,color .12s;white-space:nowrap;overflow:hidden;}
+.nav-item:hover{background:var(--bg-hover);color:var(--text-primary);}
+.nav-item.active{background:var(--bg-active);color:var(--accent);font-weight:600;
+  border-left:2px solid var(--accent);margin-left:4px;padding-left:10px;}
+.nav-icon{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.nav-label{flex:1;overflow:hidden;text-overflow:ellipsis;transition:opacity .15s;}
+.sidebar.collapsed .nav-label{opacity:0;width:0;}
+.sidebar.collapsed .nav-item{justify-content:center;padding:7px 0;margin:1px 4px;}
+.sidebar.collapsed .nav-item.active{border-left:2px solid var(--accent);margin-left:4px;padding-left:0;}
+.sidebar-divider{height:1px;background:var(--border);margin:8px 0;}
+.sidebar-footer{margin-top:auto;padding:12px 10px;border-top:1px solid var(--border);}
+.sidebar-version{font-size:10px;color:var(--text-subtle);padding:4px 8px;white-space:nowrap;overflow:hidden;transition:opacity .15s;}
+.sidebar.collapsed .sidebar-version{opacity:0;}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;}
+.page-header{padding:24px 32px 0;}
+.page-title{font-size:20px;font-weight:700;color:var(--text-primary);}
+.page-sub{font-size:13px;color:var(--text-secondary);margin-top:2px;}
+.content{padding:24px 32px 60px;max-width:680px;}
+
+/* SETTINGS CARDS */
+.card{background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;
+  padding:24px;margin-bottom:20px;box-shadow:var(--shadow-sm);}
+.card-title{font-size:13px;font-weight:700;color:var(--text-subtle);text-transform:uppercase;
+  letter-spacing:.06em;margin-bottom:16px;}
+.field{margin-bottom:16px;}
+.field:last-of-type{margin-bottom:0;}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;}
+.field input{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;
+  padding:8px 12px;color:var(--text-primary);font-size:13px;font-family:monospace;outline:none;
+  transition:border-color .15s;}
+.field input:focus{border-color:var(--border-focus);}
+.field .hint{font-size:11px;color:var(--text-subtle);margin-top:4px;line-height:1.5;}
+.btn-save{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:8px 20px;
+  font-size:13px;font-weight:700;cursor:pointer;transition:background .15s;}
+.btn-save:hover{background:var(--accent-hover);}
+.save-msg{font-size:12px;margin-top:12px;min-height:16px;}
+.save-msg.ok{color:var(--success);}
+.save-msg.err{color:var(--danger);}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#172B4D;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;
+  opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
 </head>
 <body>
-<a class="back" href="/studio">← Back to Studio</a>
-<h1>Settings</h1>
 
-<div class="card">
-  <h2>API Keys</h2>
-  <div class="field">
-    <label>HuggingFace Token (HF_TOKEN)</label>
-    <input type="password" id="hf-token" placeholder="hf_..." autocomplete="off">
-    <div class="hint">Required for gated models (Llama). Injected as HF_TOKEN during index &amp; train steps.</div>
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand" onclick="location.href='/studio'">
+    <div class="logo-sq">K</div>
+    KVForge Studio
+    <span class="topbar-tag">v2.1</span>
   </div>
-  <div class="field">
-    <label>Anthropic API Key</label>
-    <input type="password" id="anthropic-key" placeholder="sk-ant-..." autocomplete="off">
-    <div class="hint">Used for FAQ generation via Claude.</div>
+  <div class="topbar-sp"></div>
+  <button class="topbar-btn" onclick="toggleTheme()" title="Toggle theme">☀</button>
+  <div class="profile-wrap">
+    <button class="topbar-btn" id="profile-btn" onclick="toggleProfileMenu()">👤 ▾</button>
+    <div class="profile-menu" id="profile-menu">
+      <div class="profile-menu-header">
+        <div class="pm-name" id="pm-name">—</div>
+        <div class="pm-email" id="pm-email">—</div>
+      </div>
+      <a class="profile-menu-item" href="/studio/settings">⚙ Profile &amp; Settings</a>
+      <div class="profile-menu-sep"></div>
+      <a class="profile-menu-item pm-signout" href="/auth/logout">↩ Sign Out</a>
+    </div>
   </div>
-  <div class="field">
-    <label>OpenAI API Key</label>
-    <input type="password" id="openai-key" placeholder="sk-..." autocomplete="off">
-  </div>
-  <div class="field">
-    <label>Gemini API Key</label>
-    <input type="password" id="gemini-key" placeholder="AIza..." autocomplete="off">
-  </div>
-  <button class="btn" onclick="saveSettings()">Save Settings</button>
-  <div class="msg" id="save-msg"></div>
 </div>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()">‹</button>
+
+    <div class="sidebar-section-title">Navigation</div>
+    <div class="nav-item" onclick="location.href='/studio'">
+      <div class="nav-icon">🗂</div>
+      <span class="nav-label">Use Cases</span>
+    </div>
+    <div class="nav-item" onclick="showToast('Coming soon')">
+      <div class="nav-icon">📊</div>
+      <span class="nav-label">Monitoring</span>
+    </div>
+    <div class="nav-item" onclick="showToast('Coming soon')">
+      <div class="nav-icon">🖥</div>
+      <span class="nav-label">System</span>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-title">Config</div>
+    <div class="nav-item" onclick="location.href='/studio/gpu-connect'">
+      <div class="nav-icon">🔌</div>
+      <span class="nav-label">Remote GPU</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/studio/connectors'">
+      <div class="nav-icon">🧩</div>
+      <span class="nav-label">Addons</span>
+      <span style="font-size:9px;font-weight:700;background:var(--success);color:#fff;border-radius:8px;padding:1px 6px;flex-shrink:0">NEW</span>
+    </div>
+    <div class="nav-item active">
+      <div class="nav-icon">⚙</div>
+      <span class="nav-label">Settings</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/docs/demo-guides/'">
+      <div class="nav-icon">📖</div>
+      <span class="nav-label">Documentation</span>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-version">KVForge v2.1.0</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="page-header">
+      <div class="page-title">Settings</div>
+      <div class="page-sub">API keys and environment configuration for KVForge Studio pipelines.</div>
+    </div>
+
+    <div class="content">
+
+      <div class="card">
+        <div class="card-title">API Keys</div>
+        <div class="field">
+          <label>HuggingFace Token (HF_TOKEN)</label>
+          <input type="password" id="hf-token" placeholder="hf_..." autocomplete="off">
+          <div class="hint">Required for gated models (Llama 3). Injected as HF_TOKEN during index &amp; train steps.</div>
+        </div>
+        <div class="field">
+          <label>Anthropic API Key</label>
+          <input type="password" id="anthropic-key" placeholder="sk-ant-..." autocomplete="off">
+          <div class="hint">Used for FAQ generation via Claude (sleep-time pre-computation).</div>
+        </div>
+        <div class="field">
+          <label>OpenAI API Key</label>
+          <input type="password" id="openai-key" placeholder="sk-..." autocomplete="off">
+          <div class="hint">Used for FAQ generation via GPT-4o when Anthropic key is not set.</div>
+        </div>
+        <div class="field">
+          <label>Gemini API Key</label>
+          <input type="password" id="gemini-key" placeholder="AIza..." autocomplete="off">
+          <div class="hint">Used for FAQ generation via Gemini Pro.</div>
+        </div>
+        <button class="btn-save" onclick="saveSettings()">Save Settings</button>
+        <div class="save-msg" id="save-msg"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 const _s = __SETTINGS_JSON__;
-document.getElementById('hf-token').placeholder = _s.huggingface_token || 'hf_...';
-document.getElementById('anthropic-key').placeholder = _s.anthropic_api_key || 'sk-ant-...';
-document.getElementById('openai-key').placeholder = _s.openai_api_key || 'sk-...';
-document.getElementById('gemini-key').placeholder = _s.gemini_api_key || 'AIza...';
+if (_s.huggingface_token)  document.getElementById('hf-token').placeholder      = _s.huggingface_token;
+if (_s.anthropic_api_key)  document.getElementById('anthropic-key').placeholder  = _s.anthropic_api_key;
+if (_s.openai_api_key)     document.getElementById('openai-key').placeholder     = _s.openai_api_key;
+if (_s.gemini_api_key)     document.getElementById('gemini-key').placeholder     = _s.gemini_api_key;
+
+let sidebarCollapsed = false;
+
+function toggleSidebar() {
+  sidebarCollapsed = !sidebarCollapsed;
+  document.getElementById('sidebar').classList.toggle('collapsed', sidebarCollapsed);
+  document.getElementById('sidebar-toggle-btn').textContent = sidebarCollapsed ? '›' : '‹';
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+}
+
+function toggleProfileMenu() {
+  document.getElementById('profile-menu').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  const wrap = document.querySelector('.profile-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('profile-menu').classList.remove('open');
+  }
+});
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+fetch('/auth/me', {credentials:'include'}).then(r => r.ok ? r.json() : null).then(u => {
+  if (!u) return;
+  document.getElementById('pm-name').textContent = u.email.split('@')[0];
+  document.getElementById('pm-email').textContent = u.email;
+});
 
 async function saveSettings() {
   const body = {};
-  const hf = document.getElementById('hf-token').value.trim();
+  const hf  = document.getElementById('hf-token').value.trim();
   const ant = document.getElementById('anthropic-key').value.trim();
   const oai = document.getElementById('openai-key').value.trim();
   const gem = document.getElementById('gemini-key').value.trim();
-  if (hf)  body.huggingface_token  = hf;
-  if (ant) body.anthropic_api_key  = ant;
-  if (oai) body.openai_api_key     = oai;
-  if (gem) body.gemini_api_key     = gem;
+  if (hf)  body.huggingface_token = hf;
+  if (ant) body.anthropic_api_key = ant;
+  if (oai) body.openai_api_key    = oai;
+  if (gem) body.gemini_api_key    = gem;
   if (!Object.keys(body).length) return;
   const msg = document.getElementById('save-msg');
   try {
-    const r = await fetch('/api/settings', {
+    const r = await fetch('/studio/api/settings', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(body)
+      credentials: 'include',
+      body: JSON.stringify(body),
     });
     if (r.ok) {
-      msg.className = 'msg ok'; msg.textContent = 'Saved.';
-      document.getElementById('hf-token').value = '';
+      msg.className = 'save-msg ok';
+      msg.textContent = '✓ Saved.';
+      document.getElementById('hf-token').value      = '';
       document.getElementById('anthropic-key').value = '';
-      document.getElementById('openai-key').value = '';
-      document.getElementById('gemini-key').value = '';
+      document.getElementById('openai-key').value    = '';
+      document.getElementById('gemini-key').value    = '';
+      setTimeout(() => { msg.textContent = ''; }, 3000);
     } else {
       const d = await r.json();
-      msg.className = 'msg err'; msg.textContent = d.detail || 'Save failed.';
+      msg.className = 'save-msg err';
+      msg.textContent = d.detail || 'Save failed.';
     }
   } catch(e) {
-    msg.className = 'msg err'; msg.textContent = 'Network error.';
+    msg.className = 'save-msg err';
+    msg.textContent = 'Network error.';
   }
 }
 </script>
