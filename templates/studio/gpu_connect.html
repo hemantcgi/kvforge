@@ -381,6 +381,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
         </div>
 
         <!-- Existing profiles -->
+        <div id="existing-profiles-banner" style="display:none;margin-bottom:12px;padding:14px 18px;background:#E3FCEF;border:1px solid #4BCE97;border-radius:8px;display:none;align-items:flex-start;gap:14px">
+          <div style="font-size:22px;flex-shrink:0">✅</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#172B4D;margin-bottom:3px">GPU already connected</div>
+            <div style="font-size:12px;color:#626F86;line-height:1.5">You have saved GPU profiles. You can create a use case now or add another GPU connection below.</div>
+            <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="location.href='/studio/wizard'" style="font-size:12px;font-weight:700;padding:7px 16px;border-radius:5px;border:none;cursor:pointer;background:#0052CC;color:#fff">→ Create Use Case</button>
+              <button onclick="location.href='/studio'" style="font-size:12px;font-weight:600;padding:7px 14px;border-radius:5px;border:1px solid #DFE1E6;background:transparent;color:#626F86;cursor:pointer">← Back to Studio</button>
+            </div>
+          </div>
+        </div>
+
         <div class="card">
           <div class="card-title">🖥️ Saved GPU Profiles</div>
           <div id="profiles-list" class="profiles-list">
@@ -617,13 +629,16 @@ async function saveProfile() {
 // ── Profiles ───────────────────────────────────────────────────────────────────
 async function loadProfiles() {
   const el = document.getElementById('profiles-list');
+  const banner = document.getElementById('existing-profiles-banner');
   try {
     const res = await fetch('/studio/api/remote-gpu/profiles');
     const profiles = await res.json();
     if (!profiles.length) {
       el.innerHTML = '<div style="color:var(--text-subtle);font-size:13px;padding:8px 0">No saved GPU profiles yet.</div>';
+      if (banner) banner.style.display = 'none';
       return;
     }
+    if (banner) banner.style.display = 'flex';
     el.innerHTML = profiles.map(p => `
       <div class="profile-card">
         <div class="profile-icon">🖥️</div>
@@ -632,8 +647,12 @@ async function loadProfiles() {
           <div class="profile-meta">${esc(p.user)}@${esc(p.host)}:${p.port}</div>
           ${p.fingerprint ? `<div class="profile-fp">SHA256:${esc(p.fingerprint)}</div>` : ''}
         </div>
-        <button class="btn btn-ghost" style="color:var(--danger);border-color:var(--danger);font-size:12px;padding:5px 12px"
-                onclick="deleteProfile('${esc(p.id)}')">Delete</button>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-primary" style="font-size:12px;padding:5px 14px"
+                  onclick="location.href='/studio/wizard'">→ Create Use Case</button>
+          <button class="btn btn-ghost" style="color:var(--danger);border-color:var(--danger);font-size:12px;padding:5px 12px"
+                  onclick="deleteProfile('${esc(p.id)}')">Delete</button>
+        </div>
       </div>`).join('');
   } catch { el.innerHTML = '<div style="color:var(--danger);font-size:13px">Failed to load profiles.</div>'; }
 }

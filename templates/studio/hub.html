@@ -848,12 +848,24 @@ document.addEventListener('click', function() {
 });
 
 // GPU modal
-function handleNewUseCase() {
-  if (gpuAvailable === false) {
-    location.href = '/studio/gpu-connect';
-  } else {
+async function handleNewUseCase() {
+  if (gpuAvailable !== false) {
     location.href = '/studio/wizard';
+    return;
   }
+  // Local GPU not detected — check if a remote GPU profile is saved.
+  // If so the user has already gone through setup; send them to the wizard.
+  try {
+    const r = await fetch('/studio/api/remote-gpu/profiles', {credentials:'include'});
+    if (r.ok) {
+      const profiles = await r.json();
+      if (profiles.length > 0) {
+        location.href = '/studio/wizard';
+        return;
+      }
+    }
+  } catch(e) {}
+  location.href = '/studio/gpu-connect';
 }
 
 function openGpuModal() {
