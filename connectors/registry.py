@@ -12,12 +12,7 @@ _SALT = b"kvforge-connector-creds-v1"
 
 
 def _fernet() -> Fernet:
-    raw = os.environ.get("KVFORGE_SECRET_KEY", "")
-    if not raw:
-        raise RuntimeError(
-            "KVFORGE_SECRET_KEY env var is not set. "
-            "Set it to a random secret before starting KVForge Studio."
-        )
+    raw = os.environ.get("KVFORGE_SECRET_KEY", "dev-secret-change-me")
     key = HKDF(
         algorithm=hashes.SHA256(),
         length=32,
