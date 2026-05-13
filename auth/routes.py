@@ -62,7 +62,8 @@ async def login(request: Request, email: str = Form(...), password: str = Form(.
     tok, exp = _create_session(user)
     next_url = request.query_params.get("next", "/studio/")
     resp = RedirectResponse(next_url, status_code=302)
-    resp.set_cookie("kvforge_session", tok, httponly=True, secure=False, samesite="lax")
+    resp.set_cookie("kvforge_session", tok, httponly=True, secure=False, samesite="lax",
+                    max_age=7 * 24 * 3600)
     return resp
 
 
@@ -140,7 +141,8 @@ async def signup(token: str = Form(...), password: str = Form(...)):
     user_row = store.fetchone("SELECT * FROM users WHERE id=?", (uid,))
     tok, _ = _create_session(User.from_row(user_row))
     resp = RedirectResponse("/studio/", status_code=302)
-    resp.set_cookie("kvforge_session", tok, httponly=True, secure=False, samesite="lax")
+    resp.set_cookie("kvforge_session", tok, httponly=True, secure=False, samesite="lax",
+                    max_age=7 * 24 * 3600)
     return resp
 
 
