@@ -7,22 +7,24 @@ import httpx
 
 from connectors.base import SourceFile
 
-_BASE = "https://en.wikipedia.org/api/rest_v1/page/summary"
 _HEADERS = {"User-Agent": "KVForge/2.1 (https://github.com/flotorch/kvforge; contact@flotorch.ai)"}
 
 
 class WikipediaConnector:
     """Fetch Wikipedia article summaries and full extracts by topic."""
 
-    def __init__(self, topics: str):
+    def __init__(self, topics: str, language: str = "en", max_articles: int = 0):
         # topics: comma-separated article titles, e.g. "Python_(programming_language),Rust_(programming_language)"
-        self._topics = [t.strip() for t in topics.split(",") if t.strip()]
+        all_topics = [t.strip() for t in topics.split(",") if t.strip()]
+        self._topics = all_topics[:max_articles] if max_articles > 0 else all_topics
+        self._lang = language.strip().lower() or "en"
+        self._base = f"https://{self._lang}.wikipedia.org/api/rest_v1/page/summary"
         self._cache: dict[str, dict] = {}
 
     def _fetch_summary(self, title: str) -> dict:
         if title not in self._cache:
             encoded = urllib.parse.quote(title, safe="")
-            r = httpx.get(f"{_BASE}/{encoded}", timeout=10, headers=_HEADERS)
+            r = httpx.get(f"{self._base}/{encoded}", timeout=10, headers=_HEADERS)
             r.raise_for_status()
             self._cache[title] = r.json()
         return self._cache[title]

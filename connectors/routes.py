@@ -153,16 +153,17 @@ async def _run_test(connector_type: str, creds: dict) -> dict:
         import httpx, urllib.parse
         raw = creds.get("topics", "").split(",")[0].strip()
         topic = raw or "Python_(programming_language)"
+        lang = creds.get("language", "en").strip().lower() or "en"
         encoded = urllib.parse.quote(topic, safe="()")
         r = httpx.get(
-            f"https://en.wikipedia.org/api/rest_v1/page/summary/{encoded}",
+            f"https://{lang}.wikipedia.org/api/rest_v1/page/summary/{encoded}",
             timeout=8,
             headers={"User-Agent": "KVForge/2.1 (https://github.com/flotorch/kvforge; contact@flotorch.ai)"},
         )
         if r.status_code == 200:
-            return {"ok": True, "detail": f"Wikipedia reachable — '{topic}' found"}
+            return {"ok": True, "detail": f"Wikipedia ({lang}) reachable — '{topic}' found"}
         if r.status_code == 404:
-            return {"ok": False, "error": f"Article '{topic}' not found on Wikipedia — check the title spelling"}
+            return {"ok": False, "error": f"Article '{topic}' not found on {lang}.wikipedia.org — check the title spelling"}
         return {"ok": False, "error": f"Wikipedia returned HTTP {r.status_code}"}
 
     elif connector_type == "fda":

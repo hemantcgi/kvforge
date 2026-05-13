@@ -337,6 +337,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
         <div class="cred-divider">Wikipedia Configuration</div>
         <div class="m-field"><div class="m-label">Topics (comma-separated article titles)</div>
           <input class="m-input" id="m-wiki-topics" type="text" placeholder="Python_(programming_language),Rust_(programming_language)"/></div>
+        <div class="row2">
+          <div class="m-field">
+            <div class="m-label">Language</div>
+            <select class="m-input" id="m-wiki-lang">
+              <option value="en">English (en)</option>
+              <option value="es">Spanish (es)</option>
+              <option value="fr">French (fr)</option>
+              <option value="de">German (de)</option>
+              <option value="it">Italian (it)</option>
+              <option value="pt">Portuguese (pt)</option>
+              <option value="ru">Russian (ru)</option>
+              <option value="zh">Chinese (zh)</option>
+              <option value="ja">Japanese (ja)</option>
+              <option value="ar">Arabic (ar)</option>
+            </select>
+          </div>
+          <div class="m-field">
+            <div class="m-label">Max Articles (0 = unlimited)</div>
+            <input class="m-input" id="m-wiki-max" type="number" min="0" max="500" placeholder="0" value="0"/>
+          </div>
+        </div>
       </div>
       <div id="creds-fda" class="cred-section">
         <div class="cred-divider">openFDA Configuration</div>
@@ -363,6 +384,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
         <div class="m-field"><div class="m-label">Team Filter (optional)</div>
           <input class="m-input" id="m-espn-team" type="text" placeholder="chiefs"/></div>
       </div>
+      <div id="schedule-section" style="display:none">
+        <div class="cred-divider">Sync Schedule</div>
+        <div class="m-field">
+          <div class="m-label">Run Frequency</div>
+          <select class="m-input" id="m-schedule-preset" onchange="onSchedulePreset()">
+            <option value="">Manual only (no automatic sync)</option>
+            <option value="0 * * * *">Hourly</option>
+            <option value="0 */6 * * *">Every 6 hours</option>
+            <option value="0 0 * * *">Daily at midnight</option>
+            <option value="0 0 * * 0">Weekly (Sundays)</option>
+            <option value="custom">Custom cron expression…</option>
+          </select>
+        </div>
+        <div class="m-field" id="m-cron-custom-wrap" style="display:none">
+          <div class="m-label">Cron Expression</div>
+          <input class="m-input" id="m-cron-custom" type="text" placeholder="0 */6 * * *" style="font-family:monospace"/>
+        </div>
+      </div>
+
       <div class="test-bar">
         <button class="btn-test" onclick="testConn()">&#9654; Test Connection</button>
         <span class="test-status" id="m-test-status"></span>
@@ -535,6 +575,12 @@ function showAddForm() {
   document.querySelectorAll('.cred-section').forEach(s=>s.classList.remove('visible'));
   document.getElementById('m-name').value = '';
   document.getElementById('m-test-status').textContent = '';
+  document.getElementById('schedule-section').style.display = 'none';
+  document.getElementById('m-schedule-preset').value = '';
+  document.getElementById('m-cron-custom-wrap').style.display = 'none';
+  document.getElementById('m-cron-custom').value = '';
+  document.getElementById('m-wiki-lang').value = 'en';
+  document.getElementById('m-wiki-max').value = '0';
   document.getElementById('add-connector-modal').classList.add('open');
 }
 
@@ -549,9 +595,22 @@ function selectType(pill) {
   document.querySelectorAll('.cred-section').forEach(s=>s.classList.remove('visible'));
   const sec = document.getElementById('creds-'+_selectedType);
   if (sec) sec.classList.add('visible');
+  document.getElementById('schedule-section').style.display = '';
   const ts = document.getElementById('m-test-status');
   ts.textContent = '';
   ts.className = 'test-status';
+}
+
+function onSchedulePreset() {
+  const val = document.getElementById('m-schedule-preset').value;
+  document.getElementById('m-cron-custom-wrap').style.display = val === 'custom' ? '' : 'none';
+}
+
+function _getScheduleCron() {
+  const preset = document.getElementById('m-schedule-preset').value;
+  if (!preset) return null;
+  if (preset === 'custom') return document.getElementById('m-cron-custom').value.trim() || null;
+  return preset;
 }
 
 function _buildCredentials() {
@@ -572,7 +631,11 @@ function _buildCredentials() {
     client_secret: document.getElementById('m-sp-secret').value.trim(),
     site_url: document.getElementById('m-sp-site').value.trim(),
   };
-  if (t === 'wikipedia') return { topics: document.getElementById('m-wiki-topics').value.trim() };
+  if (t === 'wikipedia') return {
+    topics: document.getElementById('m-wiki-topics').value.trim(),
+    language: document.getElementById('m-wiki-lang').value,
+    max_articles: parseInt(document.getElementById('m-wiki-max').value || '0', 10) || 0,
+  };
   if (t === 'fda') return { drug_name: document.getElementById('m-fda-drug').value.trim() };
   if (t === 'edgar') return {
     ticker: document.getElementById('m-edgar-ticker').value.trim().toUpperCase(),
@@ -631,10 +694,11 @@ async function saveConn() {
   const saveBtn = document.querySelector('.btn-save');
   saveBtn.disabled = true;
   try {
+    const schedule_cron = _getScheduleCron();
     const r = await fetch('/studio/api/connectors', {
       method:'POST', credentials:'include',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({type: _selectedType, name, credentials: creds}),
+      body: JSON.stringify({type: _selectedType, name, credentials: creds, schedule_cron}),
     });
     if (!r.ok) { showToast('Failed to save connector: ' + r.status); return; }
     closeModal();

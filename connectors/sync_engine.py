@@ -151,6 +151,22 @@ def _default_connector_factory(connector_type: str, creds: dict):
     if connector_type == "sharepoint":
         from connectors.sharepoint_connector import SharePointConnector
         return SharePointConnector(creds)
+    if connector_type == "wikipedia":
+        from connectors.wikipedia_connector import WikipediaConnector
+        return WikipediaConnector(
+            topics=creds.get("topics", ""),
+            language=creds.get("language", "en"),
+            max_articles=int(creds.get("max_articles", 0) or 0),
+        )
+    if connector_type == "fda":
+        from connectors.fda_connector import FDAConnector
+        return FDAConnector(creds)
+    if connector_type == "edgar":
+        from connectors.edgar_connector import EDGARConnector
+        return EDGARConnector(creds)
+    if connector_type == "espn":
+        from connectors.espn_connector import ESPNConnector
+        return ESPNConnector(creds)
     raise ValueError(f"unknown connector type: {connector_type}")
 
 
