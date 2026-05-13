@@ -155,6 +155,7 @@ async def _run_test(connector_type: str, creds: dict) -> dict:
         r = httpx.get(
             f"https://en.wikipedia.org/api/rest_v1/page/summary/{topic}",
             timeout=8,
+            headers={"User-Agent": "KVForge/2.1 (https://github.com/flotorch/kvforge; contact@flotorch.ai)"},
         )
         if r.status_code == 200:
             return {"ok": True, "detail": f"Wikipedia reachable — '{topic}' found"}

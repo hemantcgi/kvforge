@@ -8,6 +8,7 @@ import httpx
 from connectors.base import SourceFile
 
 _BASE = "https://en.wikipedia.org/api/rest_v1/page/summary"
+_HEADERS = {"User-Agent": "KVForge/2.1 (https://github.com/flotorch/kvforge; contact@flotorch.ai)"}
 
 
 class WikipediaConnector:
@@ -21,7 +22,7 @@ class WikipediaConnector:
     def _fetch_summary(self, title: str) -> dict:
         if title not in self._cache:
             encoded = urllib.parse.quote(title, safe="")
-            r = httpx.get(f"{_BASE}/{encoded}", timeout=10)
+            r = httpx.get(f"{_BASE}/{encoded}", timeout=10, headers=_HEADERS)
             r.raise_for_status()
             self._cache[title] = r.json()
         return self._cache[title]
