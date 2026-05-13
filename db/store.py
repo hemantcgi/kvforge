@@ -38,6 +38,41 @@ def migrate() -> None:
     schema = (Path(__file__).parent / "schema.sql").read_text()
     _conn().executescript(schema)
     _conn().commit()
+    _migrate_connector_types()
+
+
+def _migrate_connector_types() -> None:
+    """Expand connector_configs.type CHECK constraint to include open-source connector types.
+
+    SQLite does not support ALTER COLUMN, so we recreate the table when the old
+    constraint (gdrive/s3/sharepoint only) is still in place.
+    """
+    row = _conn().execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='connector_configs'"
+    ).fetchone()
+    if not row:
+        return
+    # If all 7 types are already listed, nothing to do
+    if "'espn'" in row[0] and "'wikipedia'" in row[0]:
+        return
+    _conn().executescript("""
+        PRAGMA foreign_keys=OFF;
+        ALTER TABLE connector_configs RENAME TO _connector_configs_old;
+        CREATE TABLE connector_configs (
+            id TEXT PRIMARY KEY,
+            type TEXT NOT NULL CHECK(type IN ('gdrive','s3','sharepoint','wikipedia','fda','edgar','espn')),
+            name TEXT NOT NULL,
+            credentials_json TEXT NOT NULL,
+            schedule_cron TEXT,
+            webhook_secret TEXT,
+            created_by TEXT REFERENCES users(id),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        INSERT INTO connector_configs SELECT * FROM _connector_configs_old;
+        DROP TABLE _connector_configs_old;
+        PRAGMA foreign_keys=ON;
+    """)
+    _conn().commit()
 
 
 def close() -> None:

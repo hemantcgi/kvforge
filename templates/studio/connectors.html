@@ -1,86 +1,274 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
-<title>KVForge Studio — Connectors</title>
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Addons — KVForge Studio</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#111;color:#e0e0e0;font-family:sans-serif;padding:24px}
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
-h1{color:#4ec9b0;font-size:18px}
-.btn-primary{background:rgba(78,201,176,.15);border:1px solid rgba(78,201,176,.3);color:#4ec9b0;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer}
-.conn-list{display:grid;gap:10px;margin-bottom:24px}
-.conn-row{display:flex;align-items:center;gap:14px;background:#1e1e1e;border:1px solid #2a2a2a;border-radius:8px;padding:12px 16px}
-.conn-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
-.conn-info{flex:1}
-.conn-name{font-size:13px;font-weight:700;color:#e0e0e0}
-.conn-meta{font-size:11px;color:#555;margin-top:2px}
-.status-dot{width:7px;height:7px;border-radius:50%;background:#444}
-.status-ok{background:#4ec9b0;box-shadow:0 0 5px rgba(78,201,176,.5)}
-.status-err{background:#ce9178}
-.status-text{font-size:11px;color:#777}
-.conn-actions{display:flex;gap:6px;margin-left:10px}
-.btn-sm{font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px;cursor:pointer;border:1px solid #333;background:transparent;color:#888}
-.btn-sm:hover{border-color:#4ec9b0;color:#4ec9b0}
-.btn-add{background:rgba(78,201,176,.05);border:1.5px dashed rgba(78,201,176,.3);color:#4ec9b0;border-radius:8px;padding:12px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;width:100%}
-.section-title{font-size:11px;font-weight:700;color:#555;letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px}
-.history-table{width:100%;border-collapse:collapse;font-size:12px}
-.history-table th{text-align:left;font-size:10px;color:#444;text-transform:uppercase;letter-spacing:.06em;padding:6px 8px;border-bottom:1px solid #252525}
-.history-table td{padding:7px 8px;border-bottom:1px solid #1e1e1e;color:#999}
-.run-ok{color:#4ec9b0;font-weight:700}
-.run-err{color:#ce9178;font-weight:700}
-.run-running{color:#9cdcfe;font-weight:700}
-.tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px}
-.tag-manual{background:rgba(156,220,254,.1);color:#9cdcfe}
-.tag-scheduled{background:rgba(78,201,176,.1);color:#4ec9b0}
-.tag-webhook{background:rgba(206,145,120,.1);color:#ce9178}
-/* Add-Connector Modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:none;align-items:center;justify-content:center;}
+:root {
+  --bg-page:#F7F8F9;--bg-surface:#FFFFFF;--bg-sunken:#F1F2F4;--bg-input:#FFFFFF;
+  --bg-sidebar:#FFFFFF;--bg-active:#E9F2FF;--bg-hover:#F7F8F9;--bg-topbar:#0052CC;
+  --border:#DFE1E6;--border-focus:#4C9AFF;
+  --text-primary:#172B4D;--text-secondary:#626F86;--text-subtle:#8590A2;--text-disabled:#C7D1DB;
+  --accent:#0052CC;--accent-hover:#0065FF;
+  --success:#22A06B;--danger:#DE350B;--warning:#FF991F;
+  --shadow-sm:0 1px 3px rgba(9,30,66,0.12),0 0 1px rgba(9,30,66,0.08);
+  --shadow-md:0 3px 8px rgba(9,30,66,0.1),0 0 1px rgba(9,30,66,0.1);
+  --topbar-text:#FFFFFF;--topbar-muted:rgba(255,255,255,0.7);
+}
+[data-theme="dark"] {
+  --bg-page:#1D2125;--bg-surface:#22272B;--bg-sunken:#161A1D;--bg-input:#22272B;
+  --bg-sidebar:#22272B;--bg-active:#1C3353;--bg-hover:#2C333A;--bg-topbar:#161A1D;
+  --border:#3B4651;--border-focus:#579DFF;
+  --text-primary:#C7D1DB;--text-secondary:#8C9BAB;--text-subtle:#596773;--text-disabled:#3B4651;
+  --accent:#579DFF;--accent-hover:#85B8FF;
+  --success:#4BCE97;--danger:#F87462;--warning:#F5CD47;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.4);--shadow-md:0 3px 8px rgba(0,0,0,0.4);
+  --topbar-text:#C7D1DB;--topbar-muted:#596773;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;
+  line-height:1.5;background:var(--bg-page);color:var(--text-primary);
+  display:flex;flex-direction:column;transition:background .2s,color .2s;}
+
+/* TOPBAR */
+.topbar{height:48px;flex-shrink:0;z-index:200;background:var(--bg-topbar);display:flex;
+  align-items:center;padding:0 16px;gap:12px;border-bottom:1px solid rgba(0,0,0,0.15);}
+.topbar-brand{font-size:15px;font-weight:800;color:var(--topbar-text);letter-spacing:-.3px;
+  display:flex;align-items:center;gap:7px;cursor:pointer;}
+.logo-sq{width:24px;height:24px;border-radius:5px;background:rgba(255,255,255,0.25);
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;}
+.topbar-tag{font-size:10px;color:var(--topbar-muted);background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.2);border-radius:3px;padding:1px 6px;font-weight:600;letter-spacing:.04em;}
+.topbar-sp{flex:1;}
+.topbar-btn{font-size:13px;color:var(--topbar-text);background:transparent;border:none;
+  cursor:pointer;padding:5px 9px;border-radius:4px;transition:background .15s;}
+.topbar-btn:hover{background:rgba(255,255,255,0.12);}
+.profile-wrap{position:relative;}
+.profile-menu{position:absolute;top:calc(100% + 8px);right:0;background:#fff;
+  border:1px solid #DFE1E6;border-radius:8px;
+  box-shadow:0 8px 24px rgba(9,30,66,0.15),0 0 1px rgba(9,30,66,0.1);
+  min-width:220px;z-index:1000;overflow:hidden;display:none;}
+.profile-menu.open{display:block;}
+.profile-menu-header{padding:12px 16px 10px;border-bottom:1px solid #DFE1E6;}
+.pm-name{font-size:13px;font-weight:700;color:#172B4D;}
+.pm-email{font-size:12px;color:#626F86;margin-top:1px;}
+.profile-menu-item{display:block;padding:9px 16px;font-size:13px;color:#172B4D;
+  cursor:pointer;transition:background .1s;text-decoration:none;}
+.profile-menu-item:hover{background:#F7F8F9;}
+.pm-signout{color:#DE350B;}
+.pm-signout:hover{background:#FFEBE6 !important;}
+.profile-menu-sep{height:1px;background:#DFE1E6;margin:4px 0;}
+
+/* SHELL */
+.shell{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:220px;flex-shrink:0;background:var(--bg-sidebar);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;transition:width .22s cubic-bezier(0.4,0,0.2,1);
+  overflow:hidden;position:relative;z-index:100;}
+.sidebar.collapsed{width:48px;}
+.sidebar-toggle{position:absolute;right:-12px;top:20px;width:24px;height:24px;border-radius:50%;
+  background:var(--bg-surface);border:1px solid var(--border);color:var(--text-secondary);
+  cursor:pointer;z-index:101;display:flex;align-items:center;justify-content:center;
+  font-size:10px;box-shadow:var(--shadow-sm);transition:all .15s;}
+.sidebar-toggle:hover{background:var(--bg-active);color:var(--accent);}
+.sidebar-section-title{font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--text-subtle);padding:16px 14px 6px;
+  white-space:nowrap;overflow:hidden;transition:opacity .15s;}
+.sidebar.collapsed .sidebar-section-title{opacity:0;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:7px 12px;cursor:pointer;
+  border-radius:4px;margin:1px 6px;font-size:13px;color:var(--text-secondary);
+  transition:background .12s,color .12s;white-space:nowrap;overflow:hidden;}
+.nav-item:hover{background:var(--bg-hover);color:var(--text-primary);}
+.nav-item.active{background:var(--bg-active);color:var(--accent);font-weight:600;
+  border-left:2px solid var(--accent);margin-left:4px;padding-left:10px;}
+.nav-icon{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.nav-label{flex:1;overflow:hidden;text-overflow:ellipsis;transition:opacity .15s;}
+.sidebar.collapsed .nav-label{opacity:0;width:0;}
+.sidebar.collapsed .nav-item{justify-content:center;padding:7px 0;margin:1px 4px;}
+.sidebar.collapsed .nav-item.active{border-left:2px solid var(--accent);margin-left:4px;padding-left:0;}
+.sidebar-divider{height:1px;background:var(--border);margin:8px 0;}
+.sidebar-footer{margin-top:auto;padding:12px 10px;border-top:1px solid var(--border);}
+.sidebar-version{font-size:10px;color:var(--text-subtle);padding:4px 8px;white-space:nowrap;overflow:hidden;transition:opacity .15s;}
+.sidebar.collapsed .sidebar-version{opacity:0;}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;}
+.page-header{padding:24px 32px 0;display:flex;align-items:flex-end;justify-content:space-between;}
+.page-title{font-size:20px;font-weight:700;color:var(--text-primary);}
+.page-sub{font-size:13px;color:var(--text-secondary);margin-top:2px;}
+.content{padding:24px 32px 60px;}
+
+/* CONNECTORS */
+.btn-primary{background:var(--accent);border:none;color:#fff;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s;}
+.btn-primary:hover{background:var(--accent-hover);}
+.conn-list{display:grid;gap:10px;margin-bottom:24px;}
+.conn-row{display:flex;align-items:center;gap:14px;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;box-shadow:var(--shadow-sm);}
+.conn-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;}
+.conn-info{flex:1;}
+.conn-name{font-size:13px;font-weight:700;color:var(--text-primary);}
+.conn-meta{font-size:11px;color:var(--text-subtle);margin-top:2px;}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#444;}
+.status-ok{background:#22A06B;box-shadow:0 0 5px rgba(34,160,107,.4);}
+.status-err{background:#DE350B;}
+.status-text{font-size:11px;color:var(--text-secondary);}
+.conn-actions{display:flex;gap:6px;margin-left:10px;}
+.btn-sm{font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-secondary);}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent);}
+.btn-add{background:rgba(0,82,204,.05);border:1.5px dashed rgba(0,82,204,.3);color:var(--accent);border-radius:8px;padding:12px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;width:100%;}
+.btn-add:hover{background:rgba(0,82,204,.08);}
+.section-title{font-size:11px;font-weight:700;color:var(--text-subtle);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px;}
+.history-table{width:100%;border-collapse:collapse;font-size:12px;}
+.history-table th{text-align:left;font-size:10px;color:var(--text-subtle);text-transform:uppercase;letter-spacing:.06em;padding:6px 8px;border-bottom:1px solid var(--border);}
+.history-table td{padding:7px 8px;border-bottom:1px solid var(--border);color:var(--text-secondary);}
+.run-ok{color:#22A06B;font-weight:700;}
+.run-err{color:#DE350B;font-weight:700;}
+.run-running{color:var(--accent);font-weight:700;}
+.tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;}
+.tag-manual{background:rgba(0,82,204,.1);color:var(--accent);}
+.tag-scheduled{background:rgba(34,160,107,.1);color:#22A06B;}
+.tag-webhook{background:rgba(222,53,11,.1);color:#DE350B;}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:center;justify-content:center;}
 .modal-overlay.open{display:flex;}
-.modal-box{background:#1e1e1e;border:1px solid #2d2d2d;border-radius:10px;width:440px;max-width:95vw;overflow:hidden;}
-.modal-hd{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #2d2d2d;}
-.modal-hd h3{color:#d4d4d4;font-size:14px;font-weight:700;}
-.modal-close{background:none;border:none;color:#555;font-size:16px;cursor:pointer;line-height:1;}
-.modal-close:hover{color:#9cdcfe;}
+.modal-box{background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;width:440px;max-width:95vw;overflow:hidden;box-shadow:var(--shadow-md);}
+.modal-hd{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);}
+.modal-hd h3{color:var(--text-primary);font-size:14px;font-weight:700;}
+.modal-close{background:none;border:none;color:var(--text-subtle);font-size:16px;cursor:pointer;line-height:1;}
+.modal-close:hover{color:var(--accent);}
 .modal-body{padding:16px 18px;}
-.modal-footer{padding:12px 18px;border-top:1px solid #2d2d2d;display:flex;justify-content:flex-end;gap:8px;}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
 .type-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
-.type-pill{padding:4px 10px;border-radius:5px;border:1px solid #2d2d2d;background:#181818;color:#808080;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;}
-.type-pill:hover{border-color:#4ec9b088;}
-.type-pill.sel{border-color:#4ec9b0;background:#1a2e28;color:#4ec9b0;}
+.type-pill{padding:4px 10px;border-radius:5px;border:1px solid var(--border);background:var(--bg-sunken);color:var(--text-secondary);font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;}
+.type-pill:hover{border-color:rgba(0,82,204,.5);}
+.type-pill.sel{border-color:var(--accent);background:var(--bg-active);color:var(--accent);}
 .m-field{margin-bottom:10px;}
-.m-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;margin-bottom:3px;}
-.m-input{width:100%;background:#181818;border:1px solid #2d2d2d;border-radius:4px;padding:6px 9px;color:#d4d4d4;font-size:12px;font-family:monospace;}
-.m-input:focus{outline:none;border-color:#4ec9b0;}
-.m-textarea{width:100%;background:#181818;border:1px solid #2d2d2d;border-radius:4px;padding:6px 9px;color:#d4d4d4;font-size:11px;font-family:monospace;min-height:80px;resize:vertical;}
-.m-textarea:focus{outline:none;border-color:#4ec9b0;}
+.m-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-subtle);margin-bottom:3px;}
+.m-input{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;padding:6px 9px;color:var(--text-primary);font-size:12px;font-family:monospace;}
+.m-input:focus{outline:none;border-color:var(--border-focus);}
+.m-textarea{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;padding:6px 9px;color:var(--text-primary);font-size:11px;font-family:monospace;min-height:80px;resize:vertical;}
+.m-textarea:focus{outline:none;border-color:var(--border-focus);}
 .cred-section{display:none;}
 .cred-section.visible{display:block;}
-.cred-divider{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#4ec9b0;margin:10px 0 8px;padding-bottom:4px;border-bottom:1px solid #2d2d2d;}
+.cred-divider{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);margin:10px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border);}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .test-bar{display:flex;align-items:center;gap:8px;margin-top:8px;}
-.btn-test{background:#264f7822;border:1px solid #264f78;color:#9cdcfe;padding:5px 12px;border-radius:4px;font-size:11px;cursor:pointer;}
-.btn-test:hover{background:#264f7844;}
+.btn-test{background:rgba(0,82,204,.08);border:1px solid rgba(0,82,204,.3);color:var(--accent);padding:5px 12px;border-radius:4px;font-size:11px;cursor:pointer;}
+.btn-test:hover{background:rgba(0,82,204,.15);}
 .test-status{font-size:11px;min-height:16px;}
-.test-ok{color:#4ec9b0;}.test-err{color:#f87171;}.test-pending{color:#9cdcfe;}
-.btn-cancel{background:none;border:1px solid #2d2d2d;color:#808080;padding:6px 14px;border-radius:5px;font-size:12px;cursor:pointer;}
-.btn-cancel:hover{border-color:#555;color:#d4d4d4;}
-.btn-save{background:linear-gradient(135deg,#264f78,#1e5c4f);border:none;color:#d4d4d4;padding:6px 16px;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;}
-.btn-save:hover{opacity:.9;}
+.test-ok{color:#22A06B;}.test-err{color:#DE350B;}.test-pending{color:var(--accent);}
+.btn-cancel{background:none;border:1px solid var(--border);color:var(--text-secondary);padding:6px 14px;border-radius:5px;font-size:12px;cursor:pointer;}
+.btn-cancel:hover{border-color:var(--text-secondary);color:var(--text-primary);}
+.btn-save{background:var(--accent);border:none;color:#fff;padding:6px 16px;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;}
+.btn-save:hover{background:var(--accent-hover);}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#172B4D;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;
+  opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
-</head><body>
-<div class="header">
-  <h1>Connectors</h1>
-  <button class="btn-primary" onclick="showAddForm()">+ Add Connector</button>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand" onclick="location.href='/studio'">
+    <div class="logo-sq">K</div>
+    KVForge Studio
+    <span class="topbar-tag">v2.1</span>
+  </div>
+  <div class="topbar-sp"></div>
+  <button class="topbar-btn" onclick="toggleTheme()" title="Toggle theme">☀</button>
+  <div class="profile-wrap">
+    <button class="topbar-btn" id="profile-btn" onclick="toggleProfileMenu()">👤 ▾</button>
+    <div class="profile-menu" id="profile-menu">
+      <div class="profile-menu-header">
+        <div class="pm-name" id="pm-name">—</div>
+        <div class="pm-email" id="pm-email">—</div>
+      </div>
+      <a class="profile-menu-item" href="/studio/settings">⚙ Profile &amp; Settings</a>
+      <div class="profile-menu-sep"></div>
+      <a class="profile-menu-item pm-signout" href="/auth/logout">↩ Sign Out</a>
+    </div>
+  </div>
 </div>
 
-<div id="conn-list" class="conn-list"></div>
+<div class="shell">
 
-<div style="margin-top:24px">
-  <div class="section-title">Sync Run History</div>
-  <table class="history-table">
-    <thead><tr><th>Connector</th><th>Trigger</th><th>Result</th><th>Files</th><th>Duration</th></tr></thead>
-    <tbody id="history-tbody"></tbody>
-  </table>
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()">‹</button>
+
+    <div class="sidebar-section-title">Navigation</div>
+    <div class="nav-item" onclick="location.href='/studio'">
+      <div class="nav-icon">🗂</div>
+      <span class="nav-label">Use Cases</span>
+    </div>
+    <div class="nav-item" onclick="showToast('Coming soon')">
+      <div class="nav-icon">📊</div>
+      <span class="nav-label">Monitoring</span>
+    </div>
+    <div class="nav-item" onclick="showToast('Coming soon')">
+      <div class="nav-icon">🖥</div>
+      <span class="nav-label">System</span>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-title">Config</div>
+    <div class="nav-item" onclick="location.href='/studio/gpu-connect'">
+      <div class="nav-icon">🔌</div>
+      <span class="nav-label">Remote GPU</span>
+    </div>
+    <div class="nav-item active">
+      <div class="nav-icon">🧩</div>
+      <span class="nav-label">Addons</span>
+      <span style="font-size:9px;font-weight:700;background:var(--success);color:#fff;border-radius:8px;padding:1px 6px;flex-shrink:0">NEW</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/studio/settings'">
+      <div class="nav-icon">⚙</div>
+      <span class="nav-label">Settings</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/docs/demo-guides/'">
+      <div class="nav-icon">📖</div>
+      <span class="nav-label">Documentation</span>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-version">KVForge v2.1.0</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Addons</div>
+        <div class="page-sub">Manage data source connectors — Wikipedia, openFDA, SEC EDGAR, Google Drive, S3, SharePoint, and ESPN.</div>
+      </div>
+      <button class="btn-primary" onclick="showAddForm()">+ Add Connector</button>
+    </div>
+
+    <div class="content">
+
+      <div id="conn-list" class="conn-list"></div>
+
+      <div style="margin-top:24px">
+        <div class="section-title">Sync Run History</div>
+        <table class="history-table">
+          <thead><tr><th>Connector</th><th>Trigger</th><th>Result</th><th>Files</th><th>Duration</th></tr></thead>
+          <tbody id="history-tbody"></tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
 </div>
 
+<!-- Add Connector Modal -->
 <div class="modal-overlay" id="add-connector-modal">
   <div class="modal-box">
     <div class="modal-hd">
@@ -181,8 +369,48 @@ h1{color:#4ec9b0;font-size:18px}
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
+let sidebarCollapsed = false;
+
+function toggleSidebar() {
+  sidebarCollapsed = !sidebarCollapsed;
+  document.getElementById('sidebar').classList.toggle('collapsed', sidebarCollapsed);
+  document.getElementById('sidebar-toggle-btn').textContent = sidebarCollapsed ? '›' : '‹';
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+}
+
+function toggleProfileMenu() {
+  document.getElementById('profile-menu').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  const wrap = document.querySelector('.profile-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('profile-menu').classList.remove('open');
+  }
+});
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Load profile info
+fetch('/auth/me', {credentials:'include'}).then(r => r.ok ? r.json() : null).then(u => {
+  if (!u) return;
+  document.getElementById('pm-name').textContent = u.email.split('@')[0];
+  document.getElementById('pm-email').textContent = u.email;
+});
+
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
 // ICONS.bg values are hardcoded CSS color literals — never sourced from API data — safe for inline style
 const ICONS = {
   gdrive:     {abbr:'GD', bg:'#0F9D58'},
@@ -198,11 +426,14 @@ async function load() {
   let connectors;
   try {
     const r = await fetch('/studio/api/connectors', {credentials:'include'});
-    if (!r.ok) { document.getElementById('conn-list').innerHTML = '<div style="color:#ce9178">Failed to load connectors ('+r.status+')</div>'; return; }
+    if (!r.ok) { document.getElementById('conn-list').innerHTML = '<div style="color:var(--danger)">Failed to load connectors ('+r.status+')</div>'; return; }
     connectors = await r.json();
-  } catch(e) { document.getElementById('conn-list').innerHTML = '<div style="color:#ce9178">Network error</div>'; return; }
+  } catch(e) { document.getElementById('conn-list').innerHTML = '<div style="color:var(--danger)">Network error</div>'; return; }
   const list = document.getElementById('conn-list');
-  if (!connectors.length) { list.innerHTML='<div style="color:#555;font-size:13px">No connectors configured yet.</div>'; return; }
+  if (!connectors.length) {
+    list.innerHTML = '<div style="color:var(--text-subtle);font-size:13px;padding:12px 0">No connectors configured yet. Click <strong>+ Add Connector</strong> to get started.</div>';
+    return;
+  }
   list.innerHTML = connectors.map(c => {
     const ic = ICONS[c.type] || {abbr:esc(c.type.toUpperCase().slice(0,2)), bg:'#555'};
     const dot = c.last_error ? 'status-err' : 'status-ok';
@@ -250,20 +481,20 @@ async function loadHistory() {
 async function syncNow(cid) {
   try {
     const r = await fetch(`/studio/api/connectors/${cid}/sync`, {method:'POST', credentials:'include'});
-    if (!r.ok) { alert('Sync failed: ' + r.status); return; }
+    if (!r.ok) { showToast('Sync failed: ' + r.status); return; }
     const d = await r.json();
-    if (d.run_id) alert('Sync started: ' + d.run_id);
+    showToast(d.run_id ? 'Sync started' : 'Sync triggered');
     setTimeout(load, 2000);
-  } catch(e) { alert('Sync error: ' + e.message); }
+  } catch(e) { showToast('Sync error: ' + e.message); }
 }
 
 async function deleteConn(cid) {
   if (!confirm('Delete this connector and all its scopes?')) return;
   try {
     const r = await fetch(`/studio/api/connectors/${cid}`, {method:'DELETE', credentials:'include'});
-    if (!r.ok) { alert('Delete failed: ' + r.status); return; }
+    if (!r.ok) { showToast('Delete failed: ' + r.status); return; }
     load();
-  } catch(e) { alert('Delete error: ' + e.message); }
+  } catch(e) { showToast('Delete error: ' + e.message); }
 }
 
 let _selectedType = null;
@@ -340,7 +571,12 @@ async function testConn() {
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({type: _selectedType, name: tempName, credentials: creds}),
     });
-    if (!cr.ok) { status.className='test-status test-err'; status.textContent='Could not create temp connector'; return; }
+    if (!cr.ok) {
+      const detail = await cr.json().catch(() => ({}));
+      status.className = 'test-status test-err';
+      status.textContent = '✗ ' + (detail.detail || 'Could not create temp connector (HTTP ' + cr.status + ')');
+      return;
+    }
     tempId = (await cr.json()).id;
     const tr = await fetch(`/studio/api/connectors/${tempId}/test`, {method:'POST', credentials:'include'});
     const result = await tr.json();
@@ -370,11 +606,11 @@ async function saveConn() {
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({type: _selectedType, name, credentials: creds}),
     });
-    if (!r.ok) { alert('Failed to save connector: ' + r.status); return; }
+    if (!r.ok) { showToast('Failed to save connector: ' + r.status); return; }
     closeModal();
     load();
   } catch(e) {
-    alert('Network error saving connector: ' + (e.message || e));
+    showToast('Network error: ' + (e.message || e));
   } finally {
     saveBtn.disabled = false;
   }

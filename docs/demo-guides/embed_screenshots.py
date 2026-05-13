@@ -733,7 +733,6 @@ def build_connector_guide(title, badge_bg, badge_fg, badge_label,
       <div class="instr-row"><span class="instr-icon">🧩</span><div class="instr-text">Click <strong>Addons</strong> in the left sidebar to open the connector management page.</div></div>
       {connector_config_steps}
     </div>
-    {img("06_addons_page", "Addons page — manage data source connectors for Wikipedia, APIs, cloud storage")}
     {img("walkthrough_create_connector_and_sync__01_connectors_page_initial", "Connectors page — empty state before adding the first connector")}
     {img("walkthrough_create_connector_and_sync__02_connector_added_in_list", "Connector added to the list and ready to sync")}
   </div>
@@ -795,7 +794,6 @@ def build_connector_guide(title, badge_bg, badge_fg, badge_label,
       <div class="instr-row"><span class="instr-icon">📋</span><div class="instr-text">The sync history table shows each sync run: timestamp, records fetched, chunks added/updated/deleted, and status.</div></div>
     </div>
     {img("walkthrough_create_connector_and_sync__03_sync_triggered", "Connector sync triggered — sync status updates in real time")}
-    {img("walkthrough_create_connector_and_sync__04_sync_history_populated", "Sync history table populated with completed sync run details")}
     {img("walkthrough_monitoring__03_connectors_with_sync_history", "Monitoring view — connector with full sync history")}
   </div>
 

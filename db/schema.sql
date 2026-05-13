@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS invite_tokens (
 );
 CREATE TABLE IF NOT EXISTS connector_configs (
     id TEXT PRIMARY KEY,
-    type TEXT NOT NULL CHECK(type IN ('gdrive','s3','sharepoint')),
+    type TEXT NOT NULL CHECK(type IN ('gdrive','s3','sharepoint','wikipedia','fda','edgar','espn')),
     name TEXT NOT NULL,
     credentials_json TEXT NOT NULL,
     schedule_cron TEXT,

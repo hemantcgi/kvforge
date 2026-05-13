@@ -20,6 +20,7 @@ import httpx
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -127,6 +128,10 @@ app.include_router(_oauth_router)
 app.include_router(connector_router)
 app.include_router(_sync_runs_router)
 app.include_router(progress_router)
+
+_docs_dir = Path(__file__).resolve().parent / "docs" / "demo-guides"
+if _docs_dir.exists():
+    app.mount("/docs/demo-guides", StaticFiles(directory=str(_docs_dir), html=True), name="demo-guides")
 
 from sync.webhook import make_webhook_router as _make_wh
 _engine_for_wh = make_default_engine()
