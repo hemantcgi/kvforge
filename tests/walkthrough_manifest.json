@@ -51,7 +51,7 @@
     "test": "walkthrough_create_connector_and_sync",
     "step": 2,
     "slug": "connector_added_in_list",
-    "description": "The new connector 'My GDrive 0c5638' now appears in the connectors list with its type badge (GDrive) and a health status dot.",
+    "description": "The new connector 'My GDrive 7027ec' now appears in the connectors list with its type badge (GDrive) and a health status dot.",
     "action": "Created connector via POST /studio/api/connectors with type='gdrive', then reloaded the page.",
     "file": "walkthrough_create_connector_and_sync__02_connector_added_in_list.png"
   },
@@ -115,8 +115,8 @@
     "test": "walkthrough_monitoring",
     "step": 2,
     "slug": "uc_detail_page",
-    "description": "UC detail page for 'usecase1_customer_support' \u2014 shows the use-case's current pipeline phase, PRS score history, training controls, and live sync status.",
-    "action": "Navigated to /studio/uc/usecase1_customer_support \u2014 the UC ID was fetched from GET /studio/api/registry.",
+    "description": "UC detail page for 'uc1' \u2014 shows the use-case's current pipeline phase, PRS score history, training controls, and live sync status.",
+    "action": "Navigated to /studio/uc/uc1 \u2014 the UC ID was fetched from GET /studio/api/registry.",
     "file": "walkthrough_monitoring__02_uc_detail_page.png"
   },
   {
