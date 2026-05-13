@@ -5,12 +5,82 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KVForge Studio — New Use Case Setup</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #111827; color: #d4d4d4; font-family: system-ui, sans-serif; font-size: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+/* ── Studio design tokens ── */
+:root {
+  --bg-page:#F7F8F9;--bg-surface:#FFFFFF;--bg-sunken:#F1F2F4;
+  --bg-sidebar:#FFFFFF;--bg-active:#E9F2FF;--bg-hover:#F7F8F9;--bg-topbar:#0052CC;
+  --border:#DFE1E6;--border-focus:#4C9AFF;
+  --text-primary:#172B4D;--text-secondary:#626F86;--text-subtle:#8590A2;
+  --accent:#0052CC;--accent-hover:#0065FF;--success:#22A06B;--danger:#DE350B;
+  --shadow-sm:0 1px 3px rgba(9,30,66,0.12),0 0 1px rgba(9,30,66,0.08);
+  --topbar-text:#FFFFFF;--topbar-muted:rgba(255,255,255,0.7);
+}
+[data-theme="dark"] {
+  --bg-page:#1D2125;--bg-surface:#22272B;--bg-sunken:#161A1D;
+  --bg-sidebar:#22272B;--bg-active:#1C3353;--bg-hover:#2C333A;--bg-topbar:#161A1D;
+  --border:#3B4651;--text-primary:#C7D1DB;--text-secondary:#8C9BAB;--text-subtle:#596773;
+  --accent:#579DFF;--success:#4BCE97;--danger:#F87462;
+  --topbar-text:#C7D1DB;--topbar-muted:#596773;
+}
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html,body{height:100%;}
+body { background: var(--bg-page); font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif; font-size: 14px; display: flex; flex-direction: column; min-height: 100vh; }
+/* ── Topbar ── */
+.topbar{height:48px;flex-shrink:0;z-index:200;background:var(--bg-topbar);display:flex;
+  align-items:center;padding:0 16px;gap:12px;border-bottom:1px solid rgba(0,0,0,0.15);}
+.topbar-brand{font-size:15px;font-weight:800;color:var(--topbar-text);letter-spacing:-.3px;
+  display:flex;align-items:center;gap:7px;cursor:pointer;}
+.logo-sq{width:24px;height:24px;border-radius:5px;background:rgba(255,255,255,0.25);
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;}
+.topbar-tag{font-size:10px;color:var(--topbar-muted);background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.2);border-radius:3px;padding:1px 6px;font-weight:600;letter-spacing:.04em;}
+.topbar-sp{flex:1;}
+.topbar-btn{font-size:13px;color:var(--topbar-text);background:transparent;border:none;
+  cursor:pointer;padding:5px 9px;border-radius:4px;transition:background .15s;}
+.topbar-btn:hover{background:rgba(255,255,255,0.12);}
+/* ── Shell ── */
+.shell{display:flex;flex:1;overflow:hidden;}
+/* ── Sidebar ── */
+.sidebar{width:220px;flex-shrink:0;background:var(--bg-sidebar);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;transition:width .22s cubic-bezier(0.4,0,0.2,1);
+  overflow:hidden;position:relative;z-index:100;}
+.sidebar.collapsed{width:48px;}
+.sidebar-toggle{position:absolute;right:-12px;top:20px;width:24px;height:24px;border-radius:50%;
+  background:var(--bg-surface);border:1px solid var(--border);color:var(--text-secondary);
+  cursor:pointer;z-index:101;display:flex;align-items:center;justify-content:center;
+  font-size:10px;box-shadow:var(--shadow-sm);transition:all .15s;}
+.sidebar-toggle:hover{background:var(--bg-active);color:var(--accent);}
+.sidebar-section-title{font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--text-subtle);padding:16px 14px 6px;
+  white-space:nowrap;overflow:hidden;transition:opacity .15s;}
+.sidebar.collapsed .sidebar-section-title{opacity:0;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:7px 12px;cursor:pointer;
+  border-radius:4px;margin:1px 6px;font-size:13px;color:var(--text-secondary);
+  transition:background .12s,color .12s;white-space:nowrap;overflow:hidden;}
+.nav-item:hover{background:var(--bg-hover);color:var(--text-primary);}
+.nav-item.active{background:var(--bg-active);color:var(--accent);font-weight:600;
+  border-left:2px solid var(--accent);margin-left:4px;padding-left:10px;}
+.nav-icon{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.nav-label{flex:1;overflow:hidden;text-overflow:ellipsis;transition:opacity .15s;}
+.sidebar.collapsed .nav-label{opacity:0;width:0;}
+.sidebar.collapsed .nav-item{justify-content:center;padding:7px 0;margin:1px 4px;}
+.sidebar.collapsed .nav-item.active{border-left:2px solid var(--accent);margin-left:4px;padding-left:0;}
+.sidebar-divider{height:1px;background:var(--border);margin:8px 0;}
+.sidebar-footer{margin-top:auto;padding:12px 10px;border-top:1px solid var(--border);}
+.sidebar-version{font-size:10px;color:var(--text-subtle);padding:4px 8px;white-space:nowrap;overflow:hidden;transition:opacity .15s;}
+.sidebar.collapsed .sidebar-version{opacity:0;}
+/* ── Main ── */
+.main-area{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:32px 24px 60px;}
+/* ── Toast ── */
+.std-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#172B4D;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;
+  opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999;}
+.std-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
 h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
 .subtitle { color: #6b7280; font-size: 11px; margin-bottom: 20px; }
 
-.wizard-outer { width: 100%; max-width: 480px; }
+.wizard-outer { width: 100%; max-width: 500px; }
 
 /* Topbar */
 .wiz-top { background: #181818; border-bottom: 1px solid #2d2d2d; padding: 8px 12px; display: flex; align-items: center; gap: 8px; border-radius: 10px 10px 0 0; }
@@ -219,13 +289,59 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
 </head>
 <body>
 
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand" onclick="location.href='/studio'">
+    <div class="logo-sq">K</div>
+    KVForge Studio
+    <span class="topbar-tag">v2.1</span>
+  </div>
+  <div class="topbar-sp"></div>
+  <button class="topbar-btn" onclick="toggleTheme()" title="Toggle theme">☀</button>
+  <button class="topbar-btn" onclick="location.href='/studio'">← Back to Studio</button>
+</div>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()">‹</button>
+    <div class="sidebar-section-title">Navigation</div>
+    <div class="nav-item active">
+      <div class="nav-icon">🗂</div>
+      <span class="nav-label">Use Cases</span>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-title">Config</div>
+    <div class="nav-item" onclick="location.href='/studio/gpu-connect'">
+      <div class="nav-icon">🔌</div>
+      <span class="nav-label">Remote GPU</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/studio/connectors'">
+      <div class="nav-icon">🧩</div>
+      <span class="nav-label">Addons</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/studio/settings'">
+      <div class="nav-icon">⚙</div>
+      <span class="nav-label">Settings</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/docs/demo-guides/'">
+      <div class="nav-icon">📖</div>
+      <span class="nav-label">Documentation</span>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sidebar-version">KVForge v2.1.0</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-area">
 <div class="wizard-outer">
   <div class="wiz-frame">
     <!-- Topbar (shared across steps via JS control) -->
     <div class="wiz-top">
       <div class="wiz-logo">KV</div>
       <span class="wiz-title">New Use Case Setup</span>
-      <span class="wiz-close" onclick="window.history.back()">✕</span>
+      <span class="wiz-close" onclick="location.href='/studio'">✕</span>
     </div>
 
     <!-- Progress bar — updated by goStep() -->
@@ -1494,6 +1610,27 @@ WIZARD.data.source_type = 'pdf';
 
 // Start on step 1
 goStep(1);
+
+// ── Studio shell helpers ──────────────────────────────────
+let _sidebarCollapsed = false;
+function toggleSidebar() {
+  _sidebarCollapsed = !_sidebarCollapsed;
+  document.getElementById('sidebar').classList.toggle('collapsed', _sidebarCollapsed);
+  document.getElementById('sidebar-toggle-btn').textContent = _sidebarCollapsed ? '›' : '‹';
+}
+function toggleTheme() {
+  document.documentElement.dataset.theme =
+    document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+}
+function showStudioToast(msg) {
+  const t = document.getElementById('studio-toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
 </script>
+  </div><!-- /main-area -->
+</div><!-- /shell -->
+<div class="std-toast" id="studio-toast"></div>
 </body>
 </html>
