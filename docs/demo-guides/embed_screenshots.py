@@ -145,7 +145,6 @@ def step_hub():
       <div class="instr-row"><span class="instr-icon">📊</span><div class="instr-text">The top system status bar shows live GPU utilisation, Qdrant connection status, active jobs, and overall system health.</div></div>
     </div>
     {img("03_hub_empty", "Studio Hub — empty state on first login, with system status bar and 'Create Your First Use Case' CTA")}
-    {img("walkthrough_login_to_dashboard__04_studio_hub_authenticated", "Studio Hub with authenticated session showing the full sidebar and navigation")}
   </div>"""
 
 
