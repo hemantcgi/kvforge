@@ -214,13 +214,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
       <div class="nav-icon">🗂</div>
       <span class="nav-label">Use Cases</span>
     </div>
-    <div class="nav-item" onclick="showToast('Coming soon')">
+    <div class="nav-item" onclick="goToActiveUC('')">
       <div class="nav-icon">📊</div>
-      <span class="nav-label">Monitoring</span>
+      <span class="nav-label">Pipeline</span>
     </div>
-    <div class="nav-item" onclick="showToast('Coming soon')">
-      <div class="nav-icon">🖥</div>
-      <span class="nav-label">System</span>
+    <div class="nav-item" onclick="goToActiveUC('#logs')">
+      <div class="nav-icon">📋</div>
+      <span class="nav-label">Logs</span>
     </div>
 
     <div class="sidebar-divider"></div>
@@ -435,6 +435,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
 
 <script>
 let sidebarCollapsed = false;
+
+async function goToActiveUC(hash) {
+  try {
+    const r = await fetch('/studio/api/registry', {credentials:'include'});
+    const d = await r.json();
+    const ucs = d.use_cases || [];
+    if (ucs.length) { location.href = '/studio/uc/' + ucs[0].id + (hash || ''); return; }
+  } catch(e) {}
+  location.href = '/studio';
+}
 
 function toggleSidebar() {
   sidebarCollapsed = !sidebarCollapsed;

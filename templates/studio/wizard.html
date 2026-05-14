@@ -1672,6 +1672,16 @@ WIZARD.data.source_type = 'pdf';
 goStep(1);
 
 // ── Studio shell helpers ──────────────────────────────────
+async function goToActiveUC(hash) {
+  try {
+    const r = await fetch('/studio/api/registry', {credentials:'include'});
+    const d = await r.json();
+    const ucs = d.use_cases || [];
+    if (ucs.length) { location.href = '/studio/uc/' + ucs[0].id + (hash || ''); return; }
+  } catch(e) {}
+  location.href = '/studio';
+}
+
 let _sidebarCollapsed = false;
 function toggleSidebar() {
   _sidebarCollapsed = !_sidebarCollapsed;
