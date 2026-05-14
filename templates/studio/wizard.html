@@ -1285,6 +1285,13 @@ async function loadGpuCards() {
       return;
     }
     container.innerHTML = html;
+
+    // Auto-select: if no free local GPU but a remote profile exists, pre-select the first one
+    const hasFreeLocal = gpus.some(g => g.status === 'free');
+    if (!hasFreeLocal && profiles.length > 0) {
+      const firstCard = container.querySelector('.gpu-remote-card');
+      if (firstCard) selectRemoteGpu(profiles[0].id, profiles[0].display_name, firstCard);
+    }
   } catch (e) {
     container.innerHTML = `<div class="gpu-error" style="grid-column:span 2">GPU data unavailable: ${e.message}</div>`;
   }
