@@ -1211,6 +1211,8 @@ async function checkCustomVram() {
 // ═══════════════════════════════════════════════════════════
 let _vllmProcesses = [];  // populated by loadGpuCards, consumed by freeUpGpu
 
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
 async function loadGpuCards() {
   const container = document.getElementById('gpu-cards');
   if (!container) return;
