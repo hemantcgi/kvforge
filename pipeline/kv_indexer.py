@@ -22,6 +22,8 @@ import argparse
 import json
 import sys
 import time
+import traceback
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -126,7 +128,6 @@ def cmd_index(cfg: dict) -> None:
     # 2. Load LLM for KV computation (optional — skipped gracefully on CPU/no-GPU)
     lora_ckpt = ver.load().get("checkpoint_path")
     model, tokenizer = None, None
-    import traceback as _tb
     if model_loader.DEVICE == "cpu":
         print(
             "⚠️  No CUDA GPU detected — skipping KV tensor computation.\n"
@@ -139,13 +140,12 @@ def cmd_index(cfg: dict) -> None:
         except Exception as exc:
             print(
                 f"⚠️  LLM load failed ({exc.__class__.__name__}: {exc})\n"
-                + _tb.format_exc() +
+                + traceback.format_exc() +
                 "   KV tensors will be skipped — Phase 1 (text RAG) will still work.\n"
                 "   Run 'recompute' on a GPU machine to enable Phase 2 (KV injection)."
             )
 
     # 3. Compute KV (if model available) + upsert
-    import uuid as _uuid
     kv_label = "with KV" if model is not None else "without KV (Phase 1 only)"
     print(f"Upserting {len(chunks)} chunks {kv_label} ...")
     points = []
@@ -163,7 +163,7 @@ def cmd_index(cfg: dict) -> None:
             kv_array=kv_arr,
             source_version=meta.get("modified", ""),
         )
-        point_id = chunk.get("chunk_id") or str(_uuid.uuid4())
+        point_id = chunk.get("chunk_id") or str(uuid.uuid4())
         points.append(Point(id=point_id, vector=vec, payload=payload))
         if (i + 1) % 50 == 0:
             print(f"  {i+1}/{len(chunks)}", end="\r", flush=True)
@@ -181,11 +181,10 @@ def cmd_index(cfg: dict) -> None:
     # Cluster embeddings and tag each chunk with its cluster_id
     try:
         from core.cluster_manager import cluster_embeddings, save_clusters
-        from pathlib import Path as _Path
         vec_array = np.array(vectors)
         k_range = tuple(cfg.get("cluster_k_range", [3, 20]))
         centroids, labels = cluster_embeddings(vec_array, k_range=k_range)
-        cluster_file = str(_Path(cfg["checkpoint_dir"]) / "clusters.json")
+        cluster_file = str(Path(cfg["checkpoint_dir"]) / "clusters.json")
         save_clusters(cluster_file, centroids, labels, lora_version=ver.get_lora_version())
         for point, label in zip(points, labels):
             store.set_payload(cfg["collection"], point.id, {"cluster_id": str(int(label))})
@@ -201,79 +200,62 @@ def cmd_index(cfg: dict) -> None:
 def cmd_compute_kv(cfg: dict, filter_type: str, filter_value) -> None:
     """Recompute KV tensors for chunks that match the specified filter.
 
-    Scrolls through the collection with the appropriate Qdrant filter and
-    calls ``compute_kv_for_chunk`` for each matching point, then updates its
-    ``kv_cache`` and ``kv_version`` payload fields in-place.
+    Uses ChunkStreamer to page through any VectorStore backend and dispatches
+    batches to the configured ComputeBackend (local or remote GPU worker).
+    Pipelining: the next batch is computed while the previous batch is written
+    back to the VectorStore, halving wall-clock time for remote backends.
 
     Args:
         cfg: Datasource configuration dict.
         filter_type: One of:
-
-            * ``'null'`` — select chunks where ``kv_version`` is null.
-            * ``'stale'`` — select chunks where ``kv_version < filter_value``.
-            * ``'source'`` — select chunks with ``source_file == filter_value``.
+            * ``'null'`` — chunks where ``kv_version`` is absent/None.
+            * ``'stale'`` — chunks where ``kv_version < filter_value``.
+            * ``'source'`` — chunks with ``source_file == filter_value``.
         filter_value: Numeric version threshold (for ``'stale'``) or source
             filename string (for ``'source'``); ignored for ``'null'``.
     """
+    from concurrent.futures import ThreadPoolExecutor
+
+    from addons.compute import get_backend
+    from addons.compute.chunk_streamer import ChunkStreamer
+
     store = get_store(cfg)
+    backend = get_backend(cfg)
     num_layers, num_kv_heads, head_dim = model_loader.get_kv_shape(cfg)
-
-    lora_ckpt = ver.load().get("checkpoint_path")
     current_ver = ver.get_lora_version()
-    model, tokenizer = model_loader.load(lora_ckpt)
+    batch_size = cfg.get("addon_config", {}).get("compute", {}).get("batch_size", 16)
 
-    # Build scroll_filter for Qdrant (passed through store.scroll as scroll_filter kwarg)
-    scroll_filter = None
-    if cfg.get("vector_store", "qdrant") == "qdrant":
-        from qdrant_client.models import Filter, FieldCondition, IsNullCondition, Range
-        if filter_type == "null":
-            scroll_filter = Filter(must=[IsNullCondition(is_null={"key": "kv_version"})])
-        elif filter_type == "stale":
-            # Qdrant drops null payload fields so IsNullCondition misses absent
-            # kv_version; do a full scan and rely on the client-side filter.
-            scroll_filter = None
-        else:
-            scroll_filter = Filter(must=[
-                FieldCondition(key="source_file", match={"value": filter_value})
-            ])
+    streamer = ChunkStreamer(store)
 
-    offset = None
-    updated = 0
-    while True:
-        results, offset = store.scroll(
-            cfg["collection"],
-            limit=50,
-            with_payload=True,
-            offset=offset,
-            scroll_filter=scroll_filter,
-        )
-        if not results:
-            break
-        for point in results:
-            # For non-Qdrant stores scroll_filter is None, so all chunks are
-            # returned. Apply the equivalent filter client-side.
-            if filter_type == "null" and point.payload.get("kv_version") is not None:
-                continue
-            if filter_type == "stale" and point.payload.get("kv_version") is not None:
-                try:
-                    if int(point.payload["kv_version"]) >= int(filter_value):
-                        continue
-                except (TypeError, ValueError):
-                    pass
-            kv_arr = compute_kv_for_chunk(
-                point.payload["text"], model, tokenizer,
-                num_layers, num_kv_heads, head_dim
-            )
+    def _write_batch(points: list, tensors: list[np.ndarray]) -> int:
+        for point, kv_arr in zip(points, tensors):
             store.set_payload(
                 cfg["collection"],
                 point.id,
                 {"kv_cache": kv_utils.serialize_kv(kv_arr), "kv_version": current_ver},
             )
-            updated += 1
-        if offset is None:
-            break
+        return len(points)
 
-    # Flush any remaining buffered writes (FAISSStore batches saves).
+    updated = 0
+    pending_future = None
+    pending_points: list = []
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        for batch in streamer.stream(cfg["collection"], filter_type, filter_value, batch_size):
+            texts = [p.payload["text"] for p in batch]
+            future = executor.submit(
+                backend.compute_kv_batch, texts, num_layers, num_kv_heads, head_dim
+            )
+            # Write previous batch while GPU computes the current one
+            if pending_future is not None:
+                updated += _write_batch(pending_points, pending_future.result())
+            pending_future = future
+            pending_points = batch
+
+        # Write the last batch
+        if pending_future is not None:
+            updated += _write_batch(pending_points, pending_future.result())
+
     if hasattr(store, "flush"):
         store.flush()
     print(f"Recomputed KV for {updated} chunks -> kv_version={current_ver}")
