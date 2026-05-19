@@ -92,10 +92,10 @@ def health() -> HealthResponse:
 
 @app.post("/compute_kv", response_model=ComputeKVResponse, dependencies=[Depends(_check_auth)])
 def compute_kv(req: ComputeKVRequest) -> ComputeKVResponse:
-    if _model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded — call load_model() first")
     if not req.texts:
         return ComputeKVResponse(tensors=[], shape=[req.num_layers, 2, req.num_kv_heads, req.head_dim], elapsed_ms=0.0, count=0)
+    if _model is None:
+        raise HTTPException(status_code=503, detail="Model not loaded — call load_model() first")
 
     from core.compute import compute_kv_for_chunk
 
