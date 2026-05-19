@@ -81,6 +81,8 @@ def get_loader(cfg: dict):
             max_rows=int(cfg.get("hf_max_rows", 0)),
             hf_token=cfg.get("hf_token"),
             trust_remote_code=bool(cfg.get("hf_trust_remote_code", False)),
+            min_chunk_words=int(cfg.get("min_chunk_words", 30)),
+            target_chunk_words=int(cfg.get("target_chunk_words", 250)),
         )
     raise ValueError(
         f"Unknown loader '{name}'. Choose: pdf, markdown, jsonl, html, directory, docx, pptx, xlsx, zip, huggingface"

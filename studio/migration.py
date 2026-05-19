@@ -88,3 +88,22 @@ def add_to_registry(uc_id: str, display_name: str, root: Path = ROOT):
     if not any(uc["id"] == uc_id for uc in registry["use_cases"]):
         registry["use_cases"].append({"id": uc_id, "display_name": display_name, "type": "custom"})
     registry_path.write_text(json.dumps(registry, indent=2))
+
+
+def set_archived_in_registry(uc_id: str, archived: bool, root: Path = ROOT):
+    registry_path = root / "kvforge_registry.json"
+    registry = json.loads(registry_path.read_text()) if registry_path.exists() else {"use_cases": []}
+    for uc in registry["use_cases"]:
+        if uc["id"] == uc_id:
+            if archived:
+                uc["archived"] = True
+            else:
+                uc.pop("archived", None)
+    registry_path.write_text(json.dumps(registry, indent=2))
+
+
+def remove_from_registry(uc_id: str, root: Path = ROOT):
+    registry_path = root / "kvforge_registry.json"
+    registry = json.loads(registry_path.read_text()) if registry_path.exists() else {"use_cases": []}
+    registry["use_cases"] = [uc for uc in registry["use_cases"] if uc["id"] != uc_id]
+    registry_path.write_text(json.dumps(registry, indent=2))

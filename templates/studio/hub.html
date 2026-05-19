@@ -192,6 +192,34 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
 .vram-mini{height:4px;border-radius:2px;background:var(--bg-sunken);overflow:hidden;margin-top:4px;}
 .vram-mini-fill{height:100%;border-radius:2px;}
 
+/* UC CARD DROPDOWN */
+.uc-card-wrap{position:relative;}
+.uc-dropdown{position:absolute;top:44px;right:14px;background:var(--bg-surface);border:1px solid var(--border);border-radius:7px;box-shadow:var(--shadow-lg);z-index:500;min-width:170px;overflow:hidden;display:none;}
+.uc-dropdown.open{display:block;}
+.uc-dropdown-item{display:flex;align-items:center;gap:9px;padding:9px 14px;font-size:13px;font-weight:500;color:var(--text-primary);cursor:pointer;transition:background .1s;border:none;background:none;width:100%;text-align:left;}
+.uc-dropdown-item:hover{background:var(--bg-hover);}
+.uc-dropdown-item.danger{color:var(--danger);}
+.uc-dropdown-item.danger:hover{background:#FFEBE6;}
+[data-theme="dark"] .uc-dropdown-item.danger:hover{background:#42130E;}
+.uc-dropdown-sep{height:1px;background:var(--border);margin:4px 0;}
+.uc-card.archived{opacity:0.6;}
+.uc-card.archived .uc-card-accent{background:var(--text-subtle)!important;}
+.archived-tag{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:3px;background:var(--tag-bg);color:var(--text-subtle);margin-left:4px;}
+.archived-toggle{font-size:12px;color:var(--accent);cursor:pointer;font-weight:500;text-decoration:underline;background:none;border:none;padding:0;}
+
+/* CONFIRM DELETE MODAL */
+.confirm-backdrop{position:fixed;inset:0;background:rgba(9,30,66,0.54);z-index:900;display:none;align-items:center;justify-content:center;}
+.confirm-backdrop.open{display:flex;}
+.confirm-modal{background:var(--bg-surface);border-radius:10px;box-shadow:var(--shadow-lg);width:420px;max-width:95vw;padding:28px 28px 22px;}
+.confirm-title{font-size:16px;font-weight:800;color:var(--text-primary);margin-bottom:10px;}
+.confirm-body{font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:22px;}
+.confirm-body strong{color:var(--text-primary);}
+.confirm-actions{display:flex;justify-content:flex-end;gap:10px;}
+.btn-cancel{background:var(--bg-sunken);color:var(--text-secondary);border:1px solid var(--border);padding:8px 18px;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer;}
+.btn-cancel:hover{background:var(--bg-hover);}
+.btn-delete-confirm{background:var(--danger);color:#fff;border:none;padding:8px 18px;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer;}
+.btn-delete-confirm:hover{opacity:0.88;}
+
 /* GPU ALERT BANNER */
 .gpu-alert{display:none;margin:16px 32px 0;padding:14px 18px;background:#FFF7D6;border:1px solid #F5CD47;border-radius:8px;align-items:flex-start;gap:14px;}
 .gpu-alert.show{display:flex;}
@@ -287,7 +315,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
     <div class="sidebar-section-title">Navigation</div>
     <div class="nav-item active">
       <div class="nav-icon">🗂</div>
-      <span class="nav-label">Use Cases</span>
+      <span class="nav-label">Dashboard</span>
       <span class="nav-count" id="uc-count">0</span>
     </div>
     <div class="nav-item" onclick="goToActiveUC('')">
@@ -300,15 +328,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
     </div>
 
     <div class="sidebar-divider"></div>
-    <div class="sidebar-section-title">Config</div>
-    <div class="nav-item" onclick="location.href='/studio/connectors'">
-      <div class="nav-icon">🧩</div>
-      <span class="nav-label">Addons</span>
-      <span style="font-size:9px;font-weight:700;background:var(--success);color:#fff;border-radius:8px;padding:1px 6px;flex-shrink:0">NEW</span>
+    <div class="sidebar-section-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding-right:10px" onclick="location.href='/studio/resources'" title="Resource Providers">Resources <span style="font-size:9px;opacity:.6">›</span></div>
+    <div class="nav-item" onclick="location.href='/studio/resources'" style="padding-left:20px;margin-left:8px;">
+      <div class="nav-icon">🖥</div>
+      <span class="nav-label">Resource Providers</span>
     </div>
+    <div class="nav-item" onclick="location.href='/studio/connectors'" style="padding-left:20px;margin-left:8px;">
+      <div class="nav-icon">🔗</div>
+      <span class="nav-label">Data Connectors</span>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding-right:10px" onclick="location.href='/studio/settings'" title="Settings">Config <span style="font-size:9px;opacity:.6">›</span></div>
     <div class="nav-item" onclick="location.href='/studio/settings'">
       <div class="nav-icon">⚙</div>
       <span class="nav-label">Settings</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/studio/logs'">
+      <div class="nav-icon">📋</div>
+      <span class="nav-label">Activity Logs</span>
     </div>
     <div class="nav-item" onclick="location.href='/docs/demo-guides/'">
       <div class="nav-icon">📖</div>
@@ -387,6 +425,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
     <div id="uc-section" class="uc-section" style="display:none">
       <div class="uc-section-head">
         <div class="uc-section-title">Use Cases</div>
+        <button class="archived-toggle" id="archived-toggle-btn" style="display:none" onclick="toggleShowArchived()"></button>
       </div>
       <div class="uc-grid" id="uc-grid">
         <!-- UC cards injected by JS -->
@@ -427,6 +466,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
 </div><!-- /shell -->
 
 <div class="toast" id="toast"></div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="confirm-backdrop" id="confirmBackdrop" onclick="closeConfirmModal(event)">
+  <div class="confirm-modal" onclick="event.stopPropagation()">
+    <div class="confirm-title">Delete Use Case?</div>
+    <div class="confirm-body" id="confirm-body">This will permanently delete <strong id="confirm-uc-name"></strong> and all its data (index, checkpoints, logs). This cannot be undone.</div>
+    <div class="confirm-actions">
+      <button class="btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+      <button class="btn-delete-confirm" id="confirm-delete-btn" onclick="executeDeleteUc()">Delete permanently</button>
+    </div>
+  </div>
+</div>
 
 <!-- GPU CONNECT MODAL -->
 <div class="gpu-modal-backdrop" id="gpuModalBackdrop" onclick="closeGpuModal(event)">
@@ -726,19 +777,39 @@ function hideGpuAlert() {
 }
 
 // Render UC grid
+let showArchived = false;
 function renderUcGrid() {
   const grid = document.getElementById('uc-grid');
-  grid.innerHTML = ucData.map(function(uc) { return renderUcCard(uc); }).join('') + renderCreateCard();
+  const activeUCs = ucData.filter(function(u) { return !u.archived; });
+  const archivedUCs = ucData.filter(function(u) { return u.archived; });
+
+  // Show/hide archived toggle in section header
+  const toggleEl = document.getElementById('archived-toggle-btn');
+  if (toggleEl) {
+    if (archivedUCs.length > 0) {
+      toggleEl.style.display = '';
+      toggleEl.textContent = showArchived
+        ? 'Hide archived (' + archivedUCs.length + ')'
+        : 'Show archived (' + archivedUCs.length + ')';
+    } else {
+      toggleEl.style.display = 'none';
+      showArchived = false;
+    }
+  }
+
+  const visible = showArchived ? activeUCs.concat(archivedUCs) : activeUCs;
+  grid.innerHTML = visible.map(function(uc) { return renderUcCard(uc); }).join('') + renderCreateCard();
 }
 
 function renderUcCard(uc) {
   const phase = uc.phase || 1;
-  const isIndexing = uc.active_job && uc.active_job.status !== 'done';
-  const isRunning = uc.has_index && !isIndexing;
-  const statusClass = isIndexing ? 'indexing' : isRunning ? 'running' : 'stopped';
-  const statusText = isIndexing ? '↻ Indexing…' : isRunning ? '● Running' : '● Stopped';
+  const isArchived = !!uc.archived;
+  const isIndexing = !isArchived && uc.active_job && uc.active_job.status !== 'done';
+  const isRunning = !isArchived && uc.has_index && !isIndexing;
+  const statusClass = isArchived ? 'stopped' : isIndexing ? 'indexing' : isRunning ? 'running' : 'stopped';
+  const statusText = isArchived ? '● Archived' : isIndexing ? '↻ Indexing…' : isRunning ? '● Running' : '● Stopped';
 
-  const accentClass = phase === 3 ? 'green' : phase === 2 ? '' : 'gray';
+  const accentClass = isArchived ? 'gray' : phase === 3 ? 'green' : phase === 2 ? '' : 'gray';
   const phaseIcons = {1: '📄', 2: '⚡', 3: '🏆'};
   const phaseLabels = {1: 'Text RAG', 2: 'KV Injection', 3: 'Parametric'};
 
@@ -749,45 +820,67 @@ function renderUcCard(uc) {
   const metricLabel = phase === 3 ? 'Parametric rate' : phase === 2 ? 'KV hit rate' : 'Training';
   const metricVal = '—';
 
-  const statusLabel = isIndexing ? 'Indexing' : isRunning ? 'Ready' : 'Stopped';
+  const statusLabel = isArchived ? 'Archived' : isIndexing ? 'Indexing' : isRunning ? 'Ready' : 'Stopped';
   const jobInfo = uc.active_job ? 'Step: ' + (uc.active_job.step || 'running') : 'No active job';
 
   const syncText = uc.has_index ? '🔄 Indexed' : '📦 Not yet indexed';
 
-  const btnText = isIndexing ? 'View Progress'
+  const btnText = isArchived ? 'Unarchive'
+    : isIndexing ? 'View Progress'
     : uc.dashboard_port ? 'Open Dashboard →'
     : isRunning ? 'Open Studio →'
     : 'Configure';
-  const btnClass = (!uc.has_index && !isIndexing) ? ' stopped' : '';
+  const btnClass = (isArchived || (!uc.has_index && !isIndexing)) ? ' stopped' : '';
 
   const ucIdSafe = escHtml(uc.id);
+  const ucNameSafe = escHtml(uc.display_name || uc.id);
   const portArg = uc.dashboard_port ? uc.dashboard_port : 'null';
+  const dropId = 'drop-' + ucIdSafe;
 
-  return '<div class="uc-card" onclick="openUcDetail(\'' + ucIdSafe + '\',' + portArg + ')">'
-    + '<div class="uc-card-accent' + (accentClass ? ' ' + accentClass : '') + '"></div>'
-    + '<div class="uc-card-body">'
-    +   '<div class="uc-card-head">'
-    +     '<div class="uc-name-row">'
-    +       '<div class="uc-status-dot ' + statusClass + '"></div>'
-    +       '<div class="uc-name">' + escHtml(uc.display_name || uc.id) + '</div>'
+  const archiveItem = isArchived
+    ? '<button class="uc-dropdown-item" onclick="unarchiveUc(\'' + ucIdSafe + '\')">📤 Restore</button>'
+    : '<button class="uc-dropdown-item" onclick="archiveUc(\'' + ucIdSafe + '\')">📦 Archive</button>';
+
+  const dropdown = '<div class="uc-dropdown" id="' + dropId + '">'
+    + '<button class="uc-dropdown-item" onclick="openUcDetail(\'' + ucIdSafe + '\',' + portArg + ')">🔍 Open Details</button>'
+    + archiveItem
+    + '<div class="uc-dropdown-sep"></div>'
+    + '<button class="uc-dropdown-item danger" onclick="promptDeleteUc(\'' + ucIdSafe + '\',\'' + ucNameSafe + '\')">🗑 Delete…</button>'
+    + '</div>';
+
+  const cardClick = isArchived ? '' : 'onclick="openUcDetail(\'' + ucIdSafe + '\',' + portArg + ')"';
+  const footBtn = isArchived
+    ? '<button class="btn-open-dash stopped" onclick="event.stopPropagation();unarchiveUc(\'' + ucIdSafe + '\')">Restore</button>'
+    : '<button class="btn-open-dash' + btnClass + '" onclick="event.stopPropagation();openDashboard(\'' + ucIdSafe + '\',' + portArg + ')">' + btnText + '</button>';
+
+  return '<div class="uc-card-wrap">'
+    + '<div class="uc-card' + (isArchived ? ' archived' : '') + '" ' + cardClick + '>'
+    +   '<div class="uc-card-accent' + (accentClass ? ' ' + accentClass : '') + '"></div>'
+    +   '<div class="uc-card-body">'
+    +     '<div class="uc-card-head">'
+    +       '<div class="uc-name-row">'
+    +         '<div class="uc-status-dot ' + statusClass + '"></div>'
+    +         '<div class="uc-name">' + ucNameSafe + (isArchived ? '<span class="archived-tag">archived</span>' : '') + '</div>'
+    +       '</div>'
+    +       '<button class="uc-more-btn" onclick="event.stopPropagation();toggleUcMenu(\'' + dropId + '\',event)">⋯</button>'
     +     '</div>'
-    +     '<button class="uc-more-btn" onclick="event.stopPropagation()">⋯</button>'
+    +     '<div class="uc-phase-row">'
+    +       '<span class="phase-badge phase-' + phase + '">' + (phaseIcons[phase] || '') + ' Phase ' + phase + ' — ' + phaseLabels[phase] + '</span>'
+    +       '<span class="uc-status-tag ' + statusClass + '">' + statusText + '</span>'
+    +     '</div>'
+    +     '<div class="uc-metrics">'
+    +       '<div class="uc-metric"><div class="um-label">PRS Score</div><div class="um-val ' + prsColorClass + '">' + prs + '</div><div class="um-sub">' + prsSub + '</div></div>'
+    +       '<div class="uc-metric"><div class="um-label">Chunks Indexed</div><div class="um-val' + (uc.has_index ? ' accent' : ' muted') + '">' + (uc.has_index ? '✓' : '—') + '</div><div class="um-sub">' + (uc.has_index ? 'Index ready' : 'Not indexed') + '</div></div>'
+    +       '<div class="uc-metric"><div class="um-label">' + metricLabel + '</div><div class="um-val muted">' + metricVal + '</div><div class="um-sub">No data yet</div></div>'
+    +       '<div class="uc-metric"><div class="um-label">Status</div><div class="um-val" style="font-size:13px">' + statusLabel + '</div><div class="um-sub">' + jobInfo + '</div></div>'
+    +     '</div>'
     +   '</div>'
-    +   '<div class="uc-phase-row">'
-    +     '<span class="phase-badge phase-' + phase + '">' + (phaseIcons[phase] || '') + ' Phase ' + phase + ' — ' + phaseLabels[phase] + '</span>'
-    +     '<span class="uc-status-tag ' + statusClass + '">' + statusText + '</span>'
-    +   '</div>'
-    +   '<div class="uc-metrics">'
-    +     '<div class="uc-metric"><div class="um-label">PRS Score</div><div class="um-val ' + prsColorClass + '">' + prs + '</div><div class="um-sub">' + prsSub + '</div></div>'
-    +     '<div class="uc-metric"><div class="um-label">Chunks Indexed</div><div class="um-val' + (uc.has_index ? ' accent' : ' muted') + '">' + (uc.has_index ? '✓' : '—') + '</div><div class="um-sub">' + (uc.has_index ? 'Index ready' : 'Not indexed') + '</div></div>'
-    +     '<div class="uc-metric"><div class="um-label">' + metricLabel + '</div><div class="um-val muted">' + metricVal + '</div><div class="um-sub">No data yet</div></div>'
-    +     '<div class="uc-metric"><div class="um-label">Status</div><div class="um-val" style="font-size:13px">' + statusLabel + '</div><div class="um-sub">' + jobInfo + '</div></div>'
+    +   '<div class="uc-card-foot">'
+    +     '<span class="uc-sync-time">' + syncText + '</span>'
+    +     footBtn
     +   '</div>'
     + '</div>'
-    + '<div class="uc-card-foot">'
-    +   '<span class="uc-sync-time">' + syncText + '</span>'
-    +   '<button class="btn-open-dash' + btnClass + '" onclick="event.stopPropagation();openDashboard(\'' + ucIdSafe + '\',' + portArg + ')">' + btnText + '</button>'
-    + '</div>'
+    + dropdown
     + '</div>';
 }
 
@@ -809,6 +902,84 @@ function openUcDetail(id, port) {
 
 function openDashboard(id, port) {
   openUcDetail(id, port);
+}
+
+// ── UC dropdown menu ──────────────────────────────────────────────────────────
+let _openDropId = null;
+function toggleUcMenu(dropId, event) {
+  if (_openDropId && _openDropId !== dropId) {
+    const prev = document.getElementById(_openDropId);
+    if (prev) prev.classList.remove('open');
+  }
+  const el = document.getElementById(dropId);
+  if (!el) return;
+  const isOpen = el.classList.toggle('open');
+  _openDropId = isOpen ? dropId : null;
+}
+document.addEventListener('click', function(e) {
+  if (_openDropId) {
+    const el = document.getElementById(_openDropId);
+    if (el && !el.contains(e.target)) {
+      el.classList.remove('open');
+      _openDropId = null;
+    }
+  }
+});
+
+function toggleShowArchived() {
+  showArchived = !showArchived;
+  renderUcGrid();
+}
+
+// ── Archive / Unarchive ───────────────────────────────────────────────────────
+async function archiveUc(ucId) {
+  if (_openDropId) { const d = document.getElementById(_openDropId); if(d) d.classList.remove('open'); _openDropId=null; }
+  try {
+    const r = await fetch('/studio/api/uc/' + ucId + '/archive', {method:'POST', credentials:'include'});
+    if (!r.ok) { const e = await r.json().catch(()=>({})); showToast('Archive failed: ' + (e.detail||r.status)); return; }
+    await loadRegistry();
+    showToast('Use case archived');
+  } catch(e) { showToast('Archive failed'); }
+}
+
+async function unarchiveUc(ucId) {
+  if (_openDropId) { const d = document.getElementById(_openDropId); if(d) d.classList.remove('open'); _openDropId=null; }
+  try {
+    const r = await fetch('/studio/api/uc/' + ucId + '/unarchive', {method:'POST', credentials:'include'});
+    if (!r.ok) { const e = await r.json().catch(()=>({})); showToast('Restore failed: ' + (e.detail||r.status)); return; }
+    await loadRegistry();
+    showToast('Use case restored');
+  } catch(e) { showToast('Restore failed'); }
+}
+
+// ── Delete ────────────────────────────────────────────────────────────────────
+let _pendingDeleteId = null;
+function promptDeleteUc(ucId, ucName) {
+  if (_openDropId) { const d = document.getElementById(_openDropId); if(d) d.classList.remove('open'); _openDropId=null; }
+  _pendingDeleteId = ucId;
+  document.getElementById('confirm-uc-name').textContent = ucName;
+  document.getElementById('confirmBackdrop').classList.add('open');
+}
+function closeConfirmModal(e) {
+  if (e && e.target !== document.getElementById('confirmBackdrop')) return;
+  document.getElementById('confirmBackdrop').classList.remove('open');
+  _pendingDeleteId = null;
+}
+async function executeDeleteUc() {
+  if (!_pendingDeleteId) return;
+  const ucId = _pendingDeleteId;
+  const btn = document.getElementById('confirm-delete-btn');
+  btn.disabled = true;
+  btn.textContent = 'Deleting…';
+  document.getElementById('confirmBackdrop').classList.remove('open');
+  _pendingDeleteId = null;
+  try {
+    const r = await fetch('/studio/api/uc/' + ucId, {method:'DELETE', credentials:'include'});
+    if (!r.ok) { const e = await r.json().catch(()=>({})); showToast('Delete failed: ' + (e.detail||r.status)); }
+    else { showToast('Use case deleted'); await loadRegistry(); }
+  } catch(e) { showToast('Delete failed'); }
+  btn.disabled = false;
+  btn.textContent = 'Delete permanently';
 }
 
 function escHtml(s) {

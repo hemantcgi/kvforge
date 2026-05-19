@@ -166,18 +166,38 @@ def cmd_index(cfg: dict) -> None:
                               show_download_progress=False)
     vectors = embed_chunks(chunks, embedder, cfg["embed_batch"])
 
-    # 2. Load LLM for KV computation
+    # 2. Load LLM for KV computation (optional — skipped gracefully on CPU/no-GPU)
     lora_ckpt = ver.load().get("checkpoint_path")
-    model, tokenizer = model_loader.load(lora_ckpt)
+    model, tokenizer = None, None
+    import traceback as _tb
+    if model_loader.DEVICE == "cpu":
+        print(
+            "⚠️  No CUDA GPU detected — skipping KV tensor computation.\n"
+            "   Phase 1 (text RAG) will work normally.\n"
+            "   Run 'Recompute KV' on a GPU machine later to enable Phase 2."
+        )
+    else:
+        try:
+            model, tokenizer = model_loader.load(lora_ckpt)
+        except Exception as exc:
+            print(
+                f"⚠️  LLM load failed ({exc.__class__.__name__}: {exc})\n"
+                + _tb.format_exc() +
+                "   KV tensors will be skipped — Phase 1 (text RAG) will still work.\n"
+                "   Run 'recompute' on a GPU machine to enable Phase 2 (KV injection)."
+            )
 
-    # 3. Compute KV + upsert
+    # 3. Compute KV (if model available) + upsert
     import uuid as _uuid
-    print(f"Computing KV tensors for {len(chunks)} chunks ...")
+    kv_label = "with KV" if model is not None else "without KV (Phase 1 only)"
+    print(f"Upserting {len(chunks)} chunks {kv_label} ...")
     points = []
     for i, (chunk, vec) in enumerate(zip(chunks, vectors)):
-        kv_arr = compute_kv_for_chunk(
-            chunk["text"], model, tokenizer, num_layers, num_kv_heads, head_dim
-        )
+        kv_arr = None
+        if model is not None:
+            kv_arr = compute_kv_for_chunk(
+                chunk["text"], model, tokenizer, num_layers, num_kv_heads, head_dim
+            )
         meta = chunk.get("metadata", {})
         payload = build_payload(
             text=chunk["text"],
@@ -191,10 +211,15 @@ def cmd_index(cfg: dict) -> None:
         if (i + 1) % 50 == 0:
             print(f"  {i+1}/{len(chunks)}", end="\r", flush=True)
 
+    # Ensure collection exists before upserting
+    if not store.collection_exists(cfg["collection"]):
+        store.create_collection(cfg["collection"], cfg["vector_dim"])
+        print(f"Created collection '{cfg['collection']}' (dim={cfg['vector_dim']})")
+
     # batch upsert
     for start in range(0, len(points), cfg["upsert_batch"]):
         store.upsert(cfg["collection"], points[start:start + cfg["upsert_batch"]])
-    print(f"\nIndexed {len(points)} chunks with KV (kv_version=null)")
+    print(f"\nIndexed {len(points)} chunks {kv_label}")
 
     # Cluster embeddings and tag each chunk with its cluster_id
     try:
@@ -210,6 +235,10 @@ def cmd_index(cfg: dict) -> None:
         print(f"Clustered {len(points)} chunks into {len(centroids)} clusters")
     except Exception as exc:
         print(f"  (clustering skipped: {exc})")
+
+    # Write version.json to signal Phase 1 complete (has_index=True in Studio)
+    state = ver.load()
+    ver.save(state)
 
 
 def cmd_compute_kv(cfg: dict, filter_type: str, filter_value) -> None:

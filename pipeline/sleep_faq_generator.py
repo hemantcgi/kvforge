@@ -152,7 +152,7 @@ def _load_uc_config(config_path: Path) -> dict:
 
 
 def _resolve_provider_config(uc_config: dict) -> tuple[str, str, str]:
-    """Return (provider, model, api_key) from uc_config + env vars."""
+    """Return (provider, model, api_key) from uc_config + env vars + Studio settings."""
     llm = uc_config.get("llm", {})
     provider = (llm.get("sleep_faq_provider")
                 or os.environ.get("SLEEP_FAQ_PROVIDER", "gemini"))
@@ -163,7 +163,19 @@ def _resolve_provider_config(uc_config: dict) -> tuple[str, str, str]:
         "claude": "ANTHROPIC_API_KEY",
         "openai": "OPENAI_API_KEY",
     }.get(provider, "GEMINI_API_KEY")
+    # Priority: env var → Studio settings DB
     api_key = os.environ.get(key_env, "")
+    if not api_key:
+        try:
+            from studio.settings_manager import get_setting
+            setting_key = {
+                "gemini": "gemini_api_key",
+                "claude": "anthropic_api_key",
+                "openai": "openai_api_key",
+            }.get(provider, "gemini_api_key")
+            api_key = get_setting(setting_key) or ""
+        except Exception:
+            pass
     return provider, model, api_key
 
 
@@ -176,8 +188,13 @@ def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
     if not api_key:
         key_env = {"gemini": "GEMINI_API_KEY", "claude": "ANTHROPIC_API_KEY",
                    "openai": "OPENAI_API_KEY"}.get(provider, "GEMINI_API_KEY")
-        print(f"WARNING: No API key found for provider '{provider}'. "
-              f"Set {key_env} env var or configure in Studio LLM panel.")
+        print(
+            f"ERROR: No API key found for provider '{provider}'.\n"
+            f"  • Set the {key_env} environment variable, or\n"
+            f"  • Add the key in Studio → Settings → API Keys ({provider} field).",
+            flush=True,
+        )
+        sys.exit(1)
 
     print(f"[sleep-faq] provider={provider} model={model} target={count} FAQs")
 
