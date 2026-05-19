@@ -69,6 +69,8 @@ def serialize_kv(arr: np.ndarray) -> str:
     Returns:
         Base64-encoded ASCII string representing the raw bytes of the array.
     """
+    if arr is None:
+        return None
     return base64.b64encode(arr.astype(np.float16).tobytes()).decode("ascii")
 
 

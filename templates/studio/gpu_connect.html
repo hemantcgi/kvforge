@@ -253,7 +253,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
     <div class="sidebar-section-title">Navigation</div>
     <div class="nav-item" onclick="location.href='/studio'">
       <div class="nav-icon">🗂</div>
-      <span class="nav-label">Use Cases</span>
+      <span class="nav-label">Dashboard</span>
     </div>
     <div class="nav-item" onclick="goToActiveUC('')">
       <div class="nav-icon">📊</div>
@@ -265,19 +265,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
     </div>
 
     <div class="sidebar-divider"></div>
-    <div class="sidebar-section-title">Config</div>
-    <div class="nav-item active">
-      <div class="nav-icon">🔌</div>
-      <span class="nav-label">Remote GPU</span>
+    <div class="sidebar-section-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding-right:10px" onclick="location.href='/studio/resources'" title="Resource Providers">Resources <span style="font-size:9px;opacity:.6">›</span></div>
+    <div class="nav-item" onclick="location.href='/studio/resources'" style="padding-left:20px;margin-left:8px;">
+      <div class="nav-icon">🖥</div>
+      <span class="nav-label">Resource Providers</span>
     </div>
-    <div class="nav-item" onclick="location.href='/studio/connectors'">
-      <div class="nav-icon">🧩</div>
-      <span class="nav-label">Addons</span>
-      <span style="font-size:9px;font-weight:700;background:var(--success);color:#fff;border-radius:8px;padding:1px 6px;flex-shrink:0">NEW</span>
+    <div class="nav-item" onclick="location.href='/studio/connectors'" style="padding-left:20px;margin-left:8px;">
+      <div class="nav-icon">🔗</div>
+      <span class="nav-label">Data Connectors</span>
     </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding-right:10px" onclick="location.href='/studio/settings'" title="Settings">Config <span style="font-size:9px;opacity:.6">›</span></div>
     <div class="nav-item" onclick="location.href='/studio/settings'">
       <div class="nav-icon">⚙</div>
       <span class="nav-label">Settings</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/studio/logs'">
+      <div class="nav-icon">📋</div>
+      <span class="nav-label">Activity Logs</span>
     </div>
     <div class="nav-item" onclick="location.href='/docs/demo-guides/'">
       <div class="nav-icon">📖</div>

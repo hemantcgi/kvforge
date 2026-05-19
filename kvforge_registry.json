@@ -1,3 +1,9 @@
 {
-  "use_cases": []
+  "use_cases": [
+    {
+      "id": "my-wiki-corpus",
+      "display_name": "my-wiki-corpus",
+      "type": "custom"
+    }
+  ]
 }

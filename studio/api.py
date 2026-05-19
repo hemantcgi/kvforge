@@ -63,11 +63,46 @@ def get_registry():
                 cfg = json.loads(cfg_path.read_text())
                 if "dashboard_port" in cfg:
                     uc_data["dashboard_port"] = cfg["dashboard_port"]
+                inf = cfg.get("addon_config", {}).get("inference", cfg)
+                uc_data["vllm_url"]   = inf.get("vllm_url", "")
+                uc_data["vllm_model"] = inf.get("vllm_model", "")
+                uc_data["llm_model"]  = inf.get("llm_model", "")
             except Exception:
                 pass
         uc_data["has_index"] = version_path.exists()
         faqs_path = ROOT / "examples" / uc["id"] / "faqs.json"
         uc_data["has_faqs"] = faqs_path.exists()
+        uc_cfg_path = ROOT / "examples" / uc["id"] / "uc_config.json"
+        if uc_cfg_path.exists():
+            try:
+                uc_cfg = json.loads(uc_cfg_path.read_text())
+                uc_data["gpu_profile_id"] = uc_cfg.get("gpu_profile_id")
+                # Surface llm section for A/B defaults
+                llm = uc_cfg.get("llm", {})
+                if llm.get("local_model"):
+                    uc_data["llm_model"] = llm["local_model"]
+                if llm.get("vllm_url"):
+                    uc_data["vllm_url"] = llm["vllm_url"]
+                # vllm_served_model is the --served-model-name used when launching vLLM
+                # (separate from the HuggingFace model path in local_model)
+                uc_data["vllm_served_model"] = llm.get("vllm_served_model", "kvforge-local")
+                uc_data["comparison_provider"] = llm.get("comparison_provider", "anthropic")
+                uc_data["comparison_model"]    = llm.get("comparison_model", "claude-haiku-4-5-20251001")
+                # Resolve GPU profile host → derive vllm_url if not explicitly set
+                profile_id = uc_cfg.get("gpu_profile_id")
+                if profile_id and not uc_data.get("vllm_url"):
+                    try:
+                        from studio.remote_gpu import list_profiles
+                        profile = next((p for p in list_profiles() if p["id"] == profile_id), None)
+                        if profile and profile.get("host"):
+                            vllm_port = profile.get("vllm_port", 8090)
+                            uc_data["vllm_url"] = f"http://{profile['host']}:{vllm_port}/v1"
+                            uc_data["gpu_profile_host"] = profile["host"]
+                            uc_data["gpu_profile_name"] = profile.get("display_name", profile["host"])
+                    except Exception:
+                        pass
+            except Exception:
+                pass
         jm = get_manager()
         active = next((j for j in jm.list_active() if j["uc_id"] == uc["id"]), None)
         uc_data["active_job"] = active
@@ -145,6 +180,35 @@ def create_new_uc(req: NewUCRequest):
     (uc_dir / "uc_config.json").write_text(json.dumps(uc_config, indent=2))
     add_to_registry(req.id, req.display_name, root=ROOT)
     return {"status": "created", "id": req.id}
+
+
+# ── UC Archive / Delete ───────────────────────────────────────────────────────
+
+@api_router.post("/uc/{uc_id}/archive")
+def archive_uc(uc_id: str):
+    from studio.migration import set_archived_in_registry
+    _uc_path(uc_id)  # path-traversal guard (raises 400 if invalid)
+    set_archived_in_registry(uc_id, archived=True, root=ROOT)
+    return {"status": "archived", "id": uc_id}
+
+
+@api_router.post("/uc/{uc_id}/unarchive")
+def unarchive_uc(uc_id: str):
+    from studio.migration import set_archived_in_registry
+    _uc_path(uc_id)
+    set_archived_in_registry(uc_id, archived=False, root=ROOT)
+    return {"status": "active", "id": uc_id}
+
+
+@api_router.delete("/uc/{uc_id}")
+def delete_uc(uc_id: str):
+    import shutil
+    from studio.migration import remove_from_registry
+    uc_dir = _uc_path(uc_id)  # path-traversal guard; raises 400 if invalid
+    remove_from_registry(uc_id, root=ROOT)
+    if uc_dir.exists():
+        shutil.rmtree(uc_dir)
+    return {"status": "deleted", "id": uc_id}
 
 
 # ── GPU ───────────────────────────────────────────────────────────────────────
@@ -233,20 +297,29 @@ async def wizard_validate(request: Request):
 class RunStepRequest(BaseModel):
     uc_id: str
     step: str  # "setup" | "index" | "train" | "recompute" | "prs-eval" | "ab-eval" | "sleep-faq"
+    gpu_profile_id: str | None = None  # set when user chose a remote GPU profile
 
 
 @api_router.post("/run-step")
 async def run_step(req: RunStepRequest, background_tasks: BackgroundTasks):
     from studio.pipeline_runner import STEP_MODULES, run_step_background
+    from studio.activity_log import log_event
     if req.step not in STEP_MODULES:
         raise HTTPException(400, f"Unknown step: {req.step}. Valid: {list(STEP_MODULES)}")
     jm = get_manager()
     try:
         job_id = jm.create(req.uc_id, req.step)
-    except DuplicateJobError as e:
-        raise HTTPException(409, str(e))
-    # Launch subprocess immediately as a background task, independent of any SSE connection
-    background_tasks.add_task(run_step_background, req.uc_id, req.step, job_id, jm)
+    except DuplicateJobError:
+        existing_job_id = jm._uc_locks.get(req.uc_id)
+        return JSONResponse(
+            {"detail": "already_running", "job_id": existing_job_id},
+            status_code=409,
+        )
+    log_event("pipeline", f"{req.step}.started",
+              f"Pipeline step '{req.step}' started for use case '{req.uc_id}'",
+              details={"step": req.step, "job_id": job_id, "gpu_profile_id": req.gpu_profile_id},
+              uc_id=req.uc_id, severity="info")
+    background_tasks.add_task(run_step_background, req.uc_id, req.step, job_id, jm, req.gpu_profile_id)
     return {"job_id": job_id, "uc_id": req.uc_id, "step": req.step}
 
 
@@ -288,6 +361,85 @@ async def save_settings_endpoint(request: Request):
 @api_router.get("/gpu/realtime")
 def gpu_realtime_endpoint():
     return JSONResponse(get_gpu_realtime())
+
+
+@api_router.get("/gpu/remote-stats/{profile_id}")
+async def remote_gpu_stats(profile_id: str):
+    """SSH to a registered GPU profile and return live nvidia-smi stats."""
+    import asyncio
+    from studio.remote_gpu import _load_profiles, _decrypt, _make_client, _run_command
+
+    profiles = _load_profiles()
+    profile = next((p for p in profiles if p["id"] == profile_id), None)
+    if not profile:
+        return JSONResponse({"error": "Profile not found", "gpus": []}, status_code=404)
+
+    def _fetch():
+        pem = _decrypt(profile["pem_enc"])
+        client = _make_client(profile["host"], profile["user"], profile["port"], pem)
+        try:
+            code, out, _ = _run_command(
+                client,
+                "nvidia-smi --query-gpu=index,name,memory.used,memory.total,"
+                "utilization.gpu,temperature.gpu,power.draw "
+                "--format=csv,noheader,nounits",
+            )
+            if code != 0:
+                return {"error": "nvidia-smi not available on this host", "gpus": []}
+
+            _, proc_out, _ = _run_command(
+                client,
+                "nvidia-smi --query-compute-apps=pid,used_memory,name "
+                "--format=csv,noheader,nounits 2>/dev/null || true",
+            )
+        finally:
+            client.close()
+
+        gpus = []
+        for line in out.strip().splitlines():
+            parts = [p.strip() for p in line.split(",")]
+            if len(parts) < 7:
+                continue
+            try:
+                gpus.append({
+                    "id":       int(parts[0]),
+                    "name":     parts[1],
+                    "used_gb":  round(int(parts[2]) / 1024, 2),
+                    "total_gb": round(int(parts[3]) / 1024, 2),
+                    "util_pct": int(parts[4]),
+                    "temp_c":   int(parts[5]),
+                    "power_w":  round(float(parts[6]), 1),
+                    "status":   "busy" if int(parts[4]) > 10 else "free",
+                    "processes": [],
+                })
+            except (ValueError, IndexError):
+                pass
+
+        procs: list[dict] = []
+        for line in proc_out.strip().splitlines():
+            parts = [p.strip() for p in line.split(",")]
+            if len(parts) >= 3:
+                try:
+                    procs.append({"pid": int(parts[0]), "used_mem_mb": int(parts[1]), "name": parts[2]})
+                except (ValueError, IndexError):
+                    pass
+        if gpus and procs:
+            gpus[0]["processes"] = procs
+
+        return {
+            "gpus": gpus,
+            "has_free_gpu": any(g["status"] == "free" for g in gpus),
+            "host": profile["host"],
+            "display_name": profile.get("display_name", profile["host"]),
+        }
+
+    try:
+        result = await asyncio.wait_for(asyncio.to_thread(_fetch), timeout=12)
+        return JSONResponse(result)
+    except asyncio.TimeoutError:
+        return JSONResponse({"error": "SSH timed out — check host reachability", "gpus": []})
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:120], "gpus": []})
 
 
 # ── Job logs ───────────────────────────────────────────────────────────────────
@@ -611,3 +763,116 @@ async def wizard_estimate_vram(request: Request):
         "fits_with_reduced_batch": vram_reduced <= _GPU_VRAM_GB,
         "params_billions": params_b,
     })
+
+
+# ── Resource Providers ────────────────────────────────────────────────────────
+
+@api_router.get("/resources")
+def list_resources(provider_type: str | None = None):
+    from studio.resource_registry import list_providers
+    return list_providers(provider_type)
+
+
+@api_router.post("/resources")
+async def create_resource(request: Request):
+    from studio.resource_registry import create_provider, PROVIDER_TYPES, BACKENDS
+    from studio.activity_log import log_event
+    body = await request.json()
+    missing = [f for f in ("type", "backend", "display_name") if not body.get(f)]
+    if missing:
+        return JSONResponse({"detail": f"missing fields: {missing}"}, status_code=400)
+    if body["type"] not in PROVIDER_TYPES:
+        return JSONResponse({"detail": f"type must be one of {PROVIDER_TYPES}"}, status_code=400)
+    try:
+        rec = create_provider(
+            provider_type=body["type"],
+            backend=body["backend"],
+            display_name=body["display_name"],
+            config=body.get("config", {}),
+        )
+        log_event("resource", "resource.created",
+                  f"Resource provider '{rec['display_name']}' ({rec['backend']}) added",
+                  details={"id": rec["id"], "type": rec["type"], "backend": rec["backend"]},
+                  severity="success")
+        return rec
+    except ValueError as e:
+        return JSONResponse({"detail": str(e)}, status_code=400)
+
+
+@api_router.put("/resources/{provider_id}")
+async def update_resource(provider_id: str, request: Request):
+    from studio.resource_registry import update_provider, get_provider
+    from studio.activity_log import log_event
+    body = await request.json()
+    try:
+        rec = update_provider(provider_id, **{k: body[k] for k in ("display_name", "config", "backend") if k in body})
+        log_event("resource", "resource.updated",
+                  f"Resource provider '{rec.get('display_name', provider_id)}' updated",
+                  details={"id": provider_id, "fields": list(body.keys())},
+                  severity="info")
+        return rec
+    except KeyError:
+        return JSONResponse({"detail": "not found"}, status_code=404)
+
+
+@api_router.delete("/resources/{provider_id}")
+def delete_resource(provider_id: str):
+    from studio.resource_registry import delete_provider, get_provider
+    from studio.activity_log import log_event
+    p = get_provider(provider_id)
+    if p is None:
+        return JSONResponse({"detail": "not found"}, status_code=404)
+    log_event("resource", "resource.deleted",
+              f"Resource provider '{p.get('display_name', provider_id)}' ({p.get('backend', '')}) removed",
+              details={"id": provider_id, "type": p.get("type"), "backend": p.get("backend")},
+              severity="warning")
+    delete_provider(provider_id)
+    return {"ok": True}
+
+
+@api_router.post("/resources/{provider_id}/test")
+async def test_resource(provider_id: str):
+    from studio.resource_registry import test_provider, get_provider
+    from studio.activity_log import log_event
+    p = get_provider(provider_id)
+    result = await __import__("asyncio").to_thread(test_provider, provider_id)
+    if p:
+        sev = "success" if result.get("ok") else "error"
+        msg = f"Connectivity test for '{p.get('display_name', provider_id)}': " + \
+              (result.get("detail", "OK") if result.get("ok") else result.get("error", "failed"))
+        log_event("resource", "resource.tested", msg,
+                  details={"id": provider_id, "backend": p.get("backend"), "result": result},
+                  severity=sev)
+    return result
+
+
+# ── Activity Logs ──────────────────────────────────────────────────────────────
+
+@api_router.get("/logs")
+def get_logs(
+    categories: str | None = None,
+    severities: str | None = None,
+    since: str | None = None,
+    until: str | None = None,
+    search: str | None = None,
+    uc_id: str | None = None,
+    limit: int = 500,
+):
+    from studio.activity_log import query_logs
+    cat_list = [c.strip() for c in categories.split(",")] if categories else None
+    sev_list = [s.strip() for s in severities.split(",")] if severities else None
+    return query_logs(
+        categories=cat_list,
+        severities=sev_list,
+        since=since,
+        until=until,
+        search=search or None,
+        uc_id=uc_id or None,
+        limit=min(limit, 2000),
+    )
+
+
+@api_router.get("/logs/stats")
+def get_logs_stats():
+    from studio.activity_log import get_stats
+    return get_stats()

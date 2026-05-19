@@ -318,14 +318,10 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
     <div class="sidebar-section-title">Navigation</div>
     <div class="nav-item active">
       <div class="nav-icon">🗂</div>
-      <span class="nav-label">Use Cases</span>
+      <span class="nav-label">Dashboard</span>
     </div>
     <div class="sidebar-divider"></div>
-    <div class="sidebar-section-title">Config</div>
-    <div class="nav-item" onclick="location.href='/studio/gpu-connect'">
-      <div class="nav-icon">🔌</div>
-      <span class="nav-label">Remote GPU</span>
-    </div>
+    <div class="sidebar-section-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding-right:10px" onclick="location.href='/studio/settings'" title="Settings">Config <span style="font-size:9px;opacity:.6">›</span></div>
     <div class="nav-item" onclick="location.href='/studio/connectors'">
       <div class="nav-icon">🧩</div>
       <span class="nav-label">Addons</span>
@@ -333,6 +329,10 @@ h2 { color: #d4d4d4; font-size: 15px; margin-bottom: 4px; }
     <div class="nav-item" onclick="location.href='/studio/settings'">
       <div class="nav-icon">⚙</div>
       <span class="nav-label">Settings</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/studio/logs'">
+      <div class="nav-icon">📋</div>
+      <span class="nav-label">Activity Logs</span>
     </div>
     <div class="nav-item" onclick="location.href='/docs/demo-guides/'">
       <div class="nav-icon">📖</div>
@@ -1588,10 +1588,14 @@ async function startPipelineStep(step) {
   if (stepEl) stepEl.dataset.status = 'running';
   updateStepDots();
 
+  const stepBody = {uc_id: WIZARD.data.uc_id, step};
+  if (WIZARD.data.gpu_id === 'remote' && WIZARD.data.gpu_profile_id) {
+    stepBody.gpu_profile_id = WIZARD.data.gpu_profile_id;
+  }
   const resp = await fetch('/studio/api/run-step', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({uc_id: WIZARD.data.uc_id, step}),
+    body: JSON.stringify(stepBody),
   });
   if (!resp.ok) {
     if (stepEl) stepEl.dataset.status = 'failed';

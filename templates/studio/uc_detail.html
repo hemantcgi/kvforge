@@ -1,1058 +1,2141 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="page-title">Use Case — KVForge Studio</title>
 <script>
-  // Extract uc_id from URL path: /studio/uc/{uc_id}
   const UC_ID = window.location.pathname.split('/').filter(Boolean).pop();
 </script>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #111827; color: #d4d4d4; font-family: system-ui, sans-serif; font-size: 12px; padding: 16px; }
-h2 { color: #d4d4d4; font-size: 14px; margin-bottom: 4px; }
-.subtitle { color: #6b7280; font-size: 10px; margin-bottom: 14px; }
-
-.uc-frame {
-  background: #1e1e1e; border: 1px solid #2d2d2d; border-radius: 10px;
-  overflow: hidden; display: flex; flex-direction: column;
-  height: 640px; max-width: 1100px; margin: 0 auto;
+/* ── Design tokens ─────────────────────────────────────────────────────────── */
+:root {
+  --bg-page:#F7F8F9;--bg-surface:#FFFFFF;--bg-sunken:#F1F2F4;--bg-input:#FFFFFF;
+  --bg-sidebar:#FFFFFF;--bg-active:#E9F2FF;--bg-hover:#F7F8F9;--bg-topbar:#0052CC;
+  --bg-metric-b:#E9F2FF;--bg-metric-r:#FFEBE6;--bg-metric-g:#E3FCEF;--bg-metric-y:#FFF7D6;
+  --border:#DFE1E6;--border-focus:#4C9AFF;
+  --text-primary:#172B4D;--text-secondary:#626F86;--text-subtle:#8590A2;--text-disabled:#C7D1DB;
+  --accent:#0052CC;--accent-hover:#0065FF;
+  --success:#22A06B;--danger:#DE350B;--warning:#FF991F;
+  --tag-bg:#EBECF0;--tag-clr:#626F86;
+  --shadow-sm:0 1px 3px rgba(9,30,66,0.12),0 0 1px rgba(9,30,66,0.08);
+  --shadow-md:0 3px 8px rgba(9,30,66,0.1),0 0 1px rgba(9,30,66,0.1);
+  --shadow-lg:0 8px 24px rgba(9,30,66,0.12),0 0 1px rgba(9,30,66,0.1);
+  --topbar-text:#FFFFFF;--topbar-muted:rgba(255,255,255,0.7);
+  --topbar-badge:rgba(255,255,255,0.15);--topbar-badge-border:rgba(255,255,255,0.3);
+  /* uc-specific palette */
+  --uc-p1-bg:#EAF2FF;--uc-p1-border:#C0D9F5;--uc-p1-clr:#0052CC;
+  --uc-p2-bg:#E3FCEF;--uc-p2-border:#A3E6C8;--uc-p2-clr:#22A06B;
+  --uc-p3-bg:#E3FCEF;--uc-p3-border:#22A06B;--uc-p3-clr:#006644;
+  --chart-line:#22A06B;--chart-dot:#22A06B;--chart-grid:#DFE1E6;--chart-threshold:#FF991F;
+}
+[data-theme="dark"] {
+  --bg-page:#1D2125;--bg-surface:#22272B;--bg-sunken:#161A1D;--bg-input:#22272B;
+  --bg-sidebar:#22272B;--bg-active:#1C3353;--bg-hover:#2C333A;--bg-topbar:#161A1D;
+  --bg-metric-b:#1C3353;--bg-metric-r:#42130E;--bg-metric-g:#164B35;--bg-metric-y:#2E2000;
+  --border:#3B4651;--border-focus:#579DFF;
+  --text-primary:#C7D1DB;--text-secondary:#8C9BAB;--text-subtle:#596773;--text-disabled:#3B4651;
+  --accent:#579DFF;--accent-hover:#85B8FF;
+  --success:#4BCE97;--danger:#F87462;--warning:#F5CD47;
+  --tag-bg:#2C333A;--tag-clr:#8C9BAB;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.4);--shadow-md:0 3px 8px rgba(0,0,0,0.4);
+  --shadow-lg:0 8px 24px rgba(0,0,0,0.5);
+  --topbar-text:#C7D1DB;--topbar-muted:#596773;
+  --topbar-badge:rgba(255,255,255,0.06);--topbar-badge-border:#3B4651;
+  --uc-p1-bg:#1C3353;--uc-p1-border:#264f78;--uc-p1-clr:#579DFF;
+  --uc-p2-bg:#164B35;--uc-p2-border:#1e5c4f;--uc-p2-clr:#4BCE97;
+  --uc-p3-bg:#164B35;--uc-p3-border:#4BCE97;--uc-p3-clr:#4BCE97;
+  --chart-line:#4BCE97;--chart-dot:#4BCE97;--chart-grid:#3B4651;--chart-threshold:#F5CD47;
 }
 
-/* Topbar */
-.topbar { background: #181818; border-bottom: 1px solid #2d2d2d; padding: 0 14px; height: 42px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.tb-logo { width: 22px; height: 22px; background: linear-gradient(135deg, #264f78, #4ec9b0); border-radius: 5px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 8px; flex-shrink: 0; }
-.tb-bc { font-size: 11px; color: #6b7280; }
-.tb-bc a { color: #6b7280; }
-.tb-bc b { color: #9cdcfe; }
-.tb-bc .sep { color: #374151; margin: 0 5px; }
-.tb-pills { margin-left: auto; display: flex; gap: 5px; align-items: center; }
-.pill { padding: 2px 8px; border-radius: 8px; font-size: 9px; font-weight: 700; }
-.pill-p3 { background: #1a3a2a; color: #4ec9b0; border: 1px solid #1e5c4f; }
-.pill-prs { background: #1a2a3a; color: #9cdcfe; border: 1px solid #264f78; }
-.pill-gpu { background: #181818; color: #4ec9b0; border: 1px solid #1e5c4f; font-family: monospace; }
-.tb-btn { padding: 3px 10px; border-radius: 4px; font-size: 9px; font-weight: 600; cursor: pointer; border: 1px solid #2d2d2d; color: #808080; background: #181818; }
+/* ── Reset & base ──────────────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;line-height:1.5;background:var(--bg-page);color:var(--text-primary);display:flex;flex-direction:column;transition:background .2s,color .2s;}
 
-/* Body */
-.uc-body { flex: 1; display: flex; overflow: hidden; }
+/* ── Topbar ────────────────────────────────────────────────────────────────── */
+.topbar{height:48px;flex-shrink:0;z-index:200;background:var(--bg-topbar);display:flex;align-items:center;padding:0 16px;gap:12px;border-bottom:1px solid rgba(0,0,0,0.15);}
+.topbar-brand{font-size:15px;font-weight:800;color:var(--topbar-text);letter-spacing:-.3px;display:flex;align-items:center;gap:7px;cursor:pointer;}
+.logo-sq{width:24px;height:24px;border-radius:5px;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;}
+.topbar-tag{font-size:10px;color:var(--topbar-muted);background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:3px;padding:1px 6px;font-weight:600;letter-spacing:.04em;}
+.topbar-sep{color:rgba(255,255,255,0.35);margin:0 2px;font-size:16px;}
+.topbar-bc{font-size:13px;color:rgba(255,255,255,0.8);}
+.topbar-bc-cur{font-size:13px;font-weight:700;color:#fff;}
+.topbar-sp{flex:1;}
+.topbar-btn{font-size:13px;color:var(--topbar-text);background:transparent;border:none;cursor:pointer;padding:5px 9px;border-radius:4px;transition:background .15s;}
+.topbar-btn:hover{background:rgba(255,255,255,0.12);}
+.pill-gpu-btn{font-size:11px;font-weight:600;padding:4px 10px;border-radius:12px;cursor:pointer;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.12);color:#fff;transition:all .15s;user-select:none;}
+.pill-gpu-btn:hover,.pill-gpu-btn.open{background:rgba(255,255,255,0.22);}
 
-/* Left rail */
-.rail { width: 168px; background: #181818; border-right: 1px solid #2d2d2d; padding: 10px 8px; flex-shrink: 0; overflow-y: auto; }
-.rail-section { font-size: 8px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #374151; margin: 0 4px 6px; }
-.rail-step { display: flex; align-items: flex-start; gap: 7px; padding: 5px 5px; border-radius: 5px; cursor: pointer; margin-bottom: 1px; position: relative; transition: background .12s; }
-.rail-step:not(:last-child)::after { content: ''; position: absolute; left: 12px; top: 23px; bottom: -2px; width: 1px; background: #252525; }
-.rail-step:hover { background: #252525; }
-.rail-step.active { background: #1a2a3a; }
-.rs-icon { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 8px; margin-top: 1px; }
-.rs-done { background: #1a3a2a; color: #4ec9b0; }
-.rs-active { background: #1a2a3a; color: #9cdcfe; box-shadow: 0 0 5px #264f7844; border: 1px solid #264f78; }
-.rs-name { font-size: 10px; font-weight: 600; line-height: 1.2; }
-.done .rs-name { color: #4ec9b0; }
-.active .rs-name { color: #9cdcfe; }
-.rs-meta { font-size: 8px; color: #374151; margin-top: 1px; }
-.done .rs-meta { color: #1e5c4f; }
-.active .rs-meta { color: #264f78; }
-.rail-divider { height: 1px; background: #252525; margin: 8px 4px; }
-.rail-actions { padding: 0 4px; }
-.rail-action { display: flex; align-items: center; gap: 6px; padding: 5px 4px; border-radius: 4px; cursor: pointer; color: #6b7280; font-size: 10px; transition: color .12s; }
-.rail-action:hover { color: #9cdcfe; background: #1a2a3a; }
+/* ── Shell ─────────────────────────────────────────────────────────────────── */
+.shell{display:flex;flex:1;overflow:hidden;}
 
-/* Main */
-.main { flex: 1; overflow-y: auto; padding: 14px 16px; min-width: 0; }
-.main-title { color: #d4d4d4; font-size: 14px; font-weight: 700; margin-bottom: 2px; }
-.main-sub { color: #6b7280; font-size: 10px; margin-bottom: 14px; }
+/* ── Sidebar ───────────────────────────────────────────────────────────────── */
+.sidebar{width:220px;flex-shrink:0;background:var(--bg-sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;position:relative;z-index:100;transition:width .22s cubic-bezier(0.4,0,0.2,1);}
+.sidebar.collapsed{width:48px;}
+.sidebar-toggle{position:absolute;right:-12px;top:20px;width:24px;height:24px;border-radius:50%;background:var(--bg-surface);border:1px solid var(--border);color:var(--text-secondary);cursor:pointer;z-index:101;display:flex;align-items:center;justify-content:center;font-size:10px;box-shadow:var(--shadow-sm);transition:all .15s;}
+.sidebar-toggle:hover{background:var(--bg-active);color:var(--accent);}
+.sidebar-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-subtle);padding:16px 14px 6px;white-space:nowrap;overflow:hidden;transition:opacity .15s;}
+.sidebar.collapsed .sidebar-section-title{opacity:0;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:7px 12px;cursor:pointer;border-radius:4px;margin:1px 6px;font-size:13px;color:var(--text-secondary);transition:background .12s,color .12s;white-space:nowrap;overflow:hidden;}
+.nav-item:hover{background:var(--bg-hover);color:var(--text-primary);}
+.nav-item.active{background:var(--bg-active);color:var(--accent);font-weight:600;border-left:2px solid var(--accent);margin-left:4px;padding-left:10px;}
+.nav-icon{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.nav-label{flex:1;overflow:hidden;text-overflow:ellipsis;transition:opacity .15s;}
+.sidebar.collapsed .nav-label{opacity:0;width:0;}
+.sidebar.collapsed .nav-item{justify-content:center;padding:7px 0;margin:1px 4px;}
+.sidebar.collapsed .nav-item.active{border-left:2px solid var(--accent);margin-left:4px;padding-left:0;}
+.sidebar-divider{height:1px;background:var(--border);margin:8px 0;}
 
-/* Phase cards */
-.phase-row { display: flex; gap: 8px; margin-bottom: 14px; }
-.phase-card { flex: 1; border-radius: 7px; padding: 10px 12px; position: relative; }
-.pc1 { background: #111a24; border: 1px solid #1a2d40; }
-.pc2 { background: #111a14; border: 1px solid #1a3020; }
-.pc3 { background: #111a1a; border: 2px solid #4ec9b0; box-shadow: 0 0 14px #4ec9b011; }
-.pc-label { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
-.pc1 .pc-label { color: #9cdcfe; } .pc2 .pc-label { color: #4ec9b0; } .pc3 .pc-label { color: #4ec9b0; }
-.pc-val { font-size: 22px; font-weight: 700; margin-bottom: 1px; }
-.pc1 .pc-val { color: #9cdcfe; } .pc2 .pc-val { color: #4ec9b0; } .pc3 .pc-val { color: #4ec9b0; }
-.pc-sub { font-size: 9px; color: #4b5563; }
-.pc3 .pc-sub { color: #1e5c4f; }
-.pc-active-badge { position: absolute; top: 8px; right: 8px; background: #1e5c4f; color: #4ec9b0; font-size: 7px; font-weight: 700; padding: 2px 6px; border-radius: 3px; }
+/* UC-specific sidebar sections */
+.uc-nav-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-subtle);padding:12px 14px 4px;white-space:nowrap;overflow:hidden;}
+.sidebar.collapsed .uc-nav-label{opacity:0;}
+.pipeline-step{display:flex;align-items:flex-start;gap:8px;padding:5px 12px;margin:0 6px;border-radius:4px;cursor:default;position:relative;}
+.pipeline-step:not(:last-child)::after{content:'';position:absolute;left:19px;top:22px;bottom:-4px;width:1px;background:var(--border);}
+.ps-icon{width:16px;height:16px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;margin-top:2px;}
+.ps-done{background:var(--bg-metric-g);color:var(--success);}
+.ps-active{background:var(--bg-metric-b);color:var(--accent);border:1px solid var(--border-focus);}
+.ps-pending{background:var(--bg-sunken);color:var(--text-disabled);}
+.ps-text{font-size:11px;color:var(--text-secondary);line-height:1.3;}
+.ps-text.done{color:var(--success);}
+.ps-text.active{color:var(--accent);font-weight:600;}
+.ps-meta{font-size:9px;color:var(--text-subtle);}
+.sidebar.collapsed .pipeline-step .ps-text,.sidebar.collapsed .pipeline-step .ps-meta{display:none;}
 
-/* Two-col */
-.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-.panel { background: #181818; border: 1px solid #2d2d2d; border-radius: 7px; padding: 11px 12px; }
-.panel-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #6b7280; margin-bottom: 9px; display: flex; align-items: center; justify-content: space-between; }
-.panel-action { font-size: 8px; color: #4ec9b0; cursor: pointer; font-weight: 400; text-transform: none; letter-spacing: 0; }
+.action-item{display:flex;align-items:center;gap:8px;padding:6px 12px;margin:1px 6px;border-radius:4px;cursor:pointer;font-size:12px;color:var(--text-secondary);transition:background .12s,color .12s;}
+.action-item:hover{background:var(--bg-hover);color:var(--accent);}
+.sidebar.collapsed .action-item .nav-label{opacity:0;width:0;}
 
-/* PRS big number */
-.prs-big { font-size: 28px; font-weight: 700; color: #4ec9b0; margin-bottom: 2px; }
-.prs-sub { font-size: 8px; color: #4b5563; margin-bottom: 10px; }
-.prs-threshold-note { font-size: 8px; color: #374151; margin-top: 4px; }
-.prs-threshold-note span { color: #fcd34d; }
+.sidebar-footer{margin-top:auto;padding:12px 10px;border-top:1px solid var(--border);}
+.sidebar-version{font-size:10px;color:var(--text-subtle);padding:4px 8px;white-space:nowrap;overflow:hidden;transition:opacity .15s;}
+.sidebar.collapsed .sidebar-version{opacity:0;}
 
-/* ── SVG Line Chart ── */
-.chart-wrap { position: relative; }
-svg.prs-chart { width: 100%; height: 130px; display: block; overflow: visible; }
+/* ── Main area ─────────────────────────────────────────────────────────────── */
+.main{flex:1;overflow-y:auto;background:var(--bg-page);}
+.main-inner{padding:24px 28px 40px;max-width:1200px;}
 
-/* Tooltip */
-.chart-tooltip {
-  position: absolute;
-  background: #111;
-  border: 1px solid #4ec9b0;
-  border-radius: 6px;
-  padding: 7px 10px;
-  font-size: 9px;
-  color: #d4d4d4;
-  pointer-events: none;
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity .15s;
-  z-index: 10;
-  min-width: 150px;
-}
-.chart-tooltip.visible { opacity: 1; }
-.tt-version { font-size: 11px; font-weight: 700; color: #4ec9b0; margin-bottom: 3px; }
-.tt-row { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 1px; }
-.tt-key { color: #6b7280; }
-.tt-val { color: #d4d4d4; font-family: monospace; }
-.tt-note { color: #4b5563; font-size: 8px; margin-top: 4px; border-top: 1px solid #252525; padding-top: 4px; }
+.page-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;}
+.page-title{font-size:20px;font-weight:700;color:var(--text-primary);}
+.page-sub{font-size:13px;color:var(--text-secondary);margin-top:2px;}
+.btn-primary{background:var(--accent);color:#fff;border:none;padding:8px 18px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s;}
+.btn-primary:hover{background:var(--accent-hover);}
+.btn-ghost{background:var(--bg-sunken);color:var(--text-secondary);border:1px solid var(--border);padding:7px 16px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;}
+.btn-ghost:hover{background:var(--bg-hover);}
 
-/* Latency bars */
-.lat-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
-.lat-label { font-size: 9px; width: 58px; flex-shrink: 0; }
-.lat-bar-wrap { flex: 1; height: 5px; background: #2d2d2d; border-radius: 3px; overflow: hidden; }
-.lat-fill { height: 100%; border-radius: 3px; }
-.lat-p1 { background: #9cdcfe; width: 100%; }
-.lat-p2 { background: #4ec9b0; width: 25%; }
-.lat-p3 { background: #ce9178; width: 13%; }
-.lat-val { font-size: 9px; font-family: monospace; width: 34px; text-align: right; flex-shrink: 0; }
-.lv1 { color: #9cdcfe; } .lv2 { color: #4ec9b0; } .lv3 { color: #ce9178; }
-.lat-speedup { font-size: 8px; color: #1e5c4f; background: #1a3a2a; padding: 2px 6px; border-radius: 3px; margin-left: 4px; }
+/* ── Pipeline progress panel ───────────────────────────────────────────────── */
+.pipeline-progress-panel{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px;margin-bottom:20px;box-shadow:var(--shadow-sm);}
+.pp-header{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-subtle);margin-bottom:14px;}
+.pp-track{display:flex;align-items:flex-start;margin-bottom:0;position:relative;}
+.pp-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;}
+.pp-step:not(:last-child)::after{content:'';position:absolute;top:13px;left:calc(50% + 14px);right:calc(-50% + 14px);height:2px;background:var(--border);z-index:0;}
+.pp-step.s-done:not(:last-child)::after{background:var(--success);}
+.pp-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;position:relative;z-index:1;flex-shrink:0;}
+.pp-dot.s-done{background:var(--success);color:#fff;}
+.pp-dot.s-active{background:var(--accent);color:#fff;box-shadow:0 0 0 4px rgba(0,82,204,0.15);}
+.pp-dot.s-pending{background:var(--bg-sunken);color:var(--text-disabled);border:2px solid var(--border);}
+.pp-dot.s-locked{background:var(--bg-sunken);color:var(--text-disabled);border:2px dashed var(--border);}
+.pp-name{font-size:11px;font-weight:600;color:var(--text-subtle);margin-top:6px;text-align:center;line-height:1.2;}
+.pp-name.s-done{color:var(--success);}
+.pp-name.s-active{color:var(--accent);}
+.pp-name.s-locked{color:var(--text-disabled);}
+.pp-action-area{display:flex;align-items:center;gap:14px;border-top:1px solid var(--border);margin-top:14px;padding-top:14px;}
+.pp-action-copy{flex:1;}
+.pp-action-label{font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:3px;}
+.pp-action-desc{font-size:12px;color:var(--text-secondary);line-height:1.5;}
+.pp-action-meta{font-size:11px;color:var(--text-subtle);margin-top:4px;}
+.pp-action-btns{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0;}
+.pp-cta{background:var(--accent);color:#fff;border:none;padding:8px 18px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s;}
+.pp-cta:hover{background:var(--accent-hover);}
+.pp-reindex{background:transparent;color:var(--text-secondary);border:1px solid var(--border);padding:5px 12px;border-radius:4px;font-size:11px;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.pp-reindex:hover{border-color:var(--accent);color:var(--accent);}
 
-/* LoRA timeline */
-.lora-timeline { display: flex; gap: 0; align-items: flex-start; margin-top: 8px; }
-.lora-item { flex: 1; position: relative; }
-.lora-item:not(:last-child)::after { content: ''; position: absolute; top: 8px; left: 50%; right: -50%; height: 1px; background: #2d2d2d; z-index: 0; }
-.lora-dot { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; margin: 0 auto 5px; position: relative; z-index: 1; }
-.lora-past { background: #1a2a3a; color: #9cdcfe; border: 1px solid #264f78; }
-.lora-cur { background: #1a3a2a; color: #4ec9b0; border: 1px solid #1e5c4f; box-shadow: 0 0 8px #4ec9b033; }
-.lora-meta { text-align: center; font-size: 8px; color: #4b5563; }
-.lora-prs { text-align: center; font-size: 9px; font-weight: 700; color: #9cdcfe; margin-top: 1px; }
-.lora-cur-label { text-align: center; font-size: 7px; color: #4ec9b0; margin-top: 1px; }
+/* ── Phase cards (informative) ─────────────────────────────────────────────── */
+.phase-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:8px;}
+.phase-card{border-radius:10px;padding:18px 18px 14px;position:relative;display:flex;flex-direction:column;cursor:pointer;transition:transform .12s,box-shadow .12s;}
+.phase-card:hover:not(.locked){transform:translateY(-1px);}
+.phase-card.selected{outline:2px solid var(--accent);outline-offset:2px;}
 
-/* A/B panel */
-.ab-panel { background: #181818; border: 1px solid #2d2d2d; border-radius: 7px; padding: 11px 12px; margin-bottom: 14px; }
-.ab-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
-.ab-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #6b7280; }
-.ab-models { font-size: 9px; color: #4b5563; }
-.ab-query-row { display: flex; gap: 7px; margin-bottom: 10px; }
-.ab-input { flex: 1; background: #111; border: 1px solid #2d2d2d; border-radius: 5px; padding: 7px 10px; color: #d4d4d4; font-size: 11px; }
-.ab-input:focus { outline: none; border-color: #4ec9b0; }
-.ab-run { background: linear-gradient(135deg, #264f78, #1e5c4f); color: #d4d4d4; font-size: 10px; font-weight: 700; padding: 7px 16px; border-radius: 5px; cursor: pointer; white-space: nowrap; }
-.ab-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.ab-col { border-radius: 6px; padding: 9px 10px; }
-.ab-col-a { background: #111a24; border: 1px solid #1a2d40; }
-.ab-col-b { background: #111a14; border: 1px solid #1a3020; }
-.ab-col-label { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between; }
-.ab-col-a .ab-col-label { color: #9cdcfe; }
-.ab-col-b .ab-col-label { color: #4ec9b0; }
-.ab-badge { font-size: 7px; font-weight: 600; padding: 1px 5px; border-radius: 3px; }
-.ab-col-a .ab-badge { background: #1a2d40; color: #9cdcfe; }
-.ab-col-b .ab-badge { background: #1a3020; color: #4ec9b0; }
-.ab-text { font-size: 10px; color: #808080; line-height: 1.6; }
-.ab-meta { display: flex; gap: 10px; margin-top: 6px; }
-.ab-meta-item { font-size: 8px; color: #374151; }
-.ab-meta-item b { color: #6b7280; }
+/* Phase detail expand panel */
+.phase-detail-panel{background:var(--bg-surface);border:1px solid var(--border);border-top:none;
+  border-radius:0 0 10px 10px;margin-bottom:20px;overflow:hidden;
+  max-height:0;opacity:0;transition:max-height .3s cubic-bezier(0.4,0,0.2,1),opacity .2s;}
+.phase-detail-panel.open{max-height:600px;opacity:1;}
+.pdp-inner{padding:20px 22px 18px;display:grid;grid-template-columns:1fr 200px;gap:20px;}
+.pdp-left{}
+.pdp-heading{font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:8px;display:flex;align-items:center;gap:7px;}
+.pdp-heading-icon{font-size:16px;}
+.pdp-desc{font-size:12px;color:var(--text-secondary);line-height:1.65;margin-bottom:14px;}
+.pdp-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--text-subtle);margin-bottom:6px;}
+.pdp-accuracy{font-size:12px;color:var(--text-secondary);line-height:1.55;margin-bottom:14px;}
+.pdp-bestfor{display:flex;flex-wrap:wrap;gap:5px;}
+.pdp-bf-chip{font-size:10px;font-weight:600;padding:3px 9px;border-radius:12px;
+  background:var(--bg-sunken);color:var(--text-secondary);border:1px solid var(--border);}
+.pdp-right{border-left:1px solid var(--border);padding-left:20px;}
+.pdp-lat-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--text-subtle);margin-bottom:10px;}
+.pdp-lat-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.pdp-lat-label{font-size:10px;font-weight:600;width:52px;flex-shrink:0;color:var(--text-secondary);}
+.pdp-lat-bar-wrap{flex:1;height:8px;background:var(--bg-sunken);border-radius:4px;overflow:hidden;}
+.pdp-lat-fill{height:100%;border-radius:4px;transition:width .4s cubic-bezier(0.4,0,0.2,1);}
+.pdp-lat-val{font-size:10px;font-family:monospace;width:30px;text-align:right;flex-shrink:0;}
+.pdp-lat-gain{font-size:10px;font-weight:700;background:var(--bg-metric-g);color:var(--success);
+  padding:1px 6px;border-radius:3px;white-space:nowrap;}
+.pdp-close{font-size:10px;color:var(--text-subtle);cursor:pointer;margin-top:14px;display:inline-block;}
+.pdp-close:hover{color:var(--accent);}
+.pdp-acc-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.pdp-acc-label{font-size:10px;font-weight:600;width:60px;color:var(--text-secondary);}
+.pdp-acc-pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;}
+.acc-same{background:#FFF7D6;color:#974F0C;}
+.acc-up{background:#E3FCEF;color:#006644;}
+.acc-base{background:#EAF2FF;color:#0052CC;}
+.pc1{background:var(--uc-p1-bg);border:1px solid var(--uc-p1-border);}
+.pc2{background:var(--uc-p2-bg);border:1px solid var(--uc-p2-border);}
+.pc3{background:var(--uc-p3-bg);border:2px solid var(--uc-p3-border);box-shadow:0 0 0 4px rgba(34,160,107,0.08);}
+.phase-card.locked{background:var(--bg-sunken);border:1px dashed var(--border);}
+.phase-card.active-phase{box-shadow:0 0 0 2px var(--accent),0 0 0 5px rgba(0,82,204,0.1);}
+.pc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.pc-phase-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:2px 7px;border-radius:3px;}
+.pc1 .pc-phase-tag{background:var(--uc-p1-border);color:var(--uc-p1-clr);}
+.pc2 .pc-phase-tag{background:var(--uc-p2-border);color:var(--uc-p2-clr);}
+.pc3 .pc-phase-tag{background:var(--uc-p3-border);color:var(--uc-p3-clr);}
+.phase-card.locked .pc-phase-tag{background:var(--border);color:var(--text-disabled);}
+.pc-active-badge{background:var(--success);color:#fff;font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;letter-spacing:.04em;}
+.pc-name-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.pc-icon{font-size:20px;line-height:1;}
+.pc-name{font-size:14px;font-weight:700;}
+.pc1 .pc-name{color:var(--uc-p1-clr);}
+.pc2 .pc-name{color:var(--uc-p2-clr);}
+.pc3 .pc-name{color:var(--uc-p3-clr);}
+.phase-card.locked .pc-name{color:var(--text-disabled);}
+.pc-tagline{font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:8px;line-height:1.35;}
+.phase-card.locked .pc-tagline{color:var(--text-subtle);}
+.pc-desc{font-size:11px;color:var(--text-secondary);line-height:1.55;margin-bottom:10px;flex:1;}
+.phase-card.locked .pc-desc{color:var(--text-subtle);}
+.pc-chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;}
+.pc-chip{font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px;}
+.chip-speed{background:#E3FCEF;color:#006644;}
+.chip-gpu{background:#FFF7D6;color:#974F0C;}
+.chip-nogpu{background:#EAF2FF;color:#0052CC;}
+.chip-lock{background:var(--bg-page);color:var(--text-disabled);border:1px solid var(--border);}
+.pc-status{border-top:1px solid rgba(0,0,0,0.07);padding-top:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;}
+.pc-status-text{font-size:11px;color:var(--text-secondary);}
+.pc-metric{font-size:12px;font-weight:700;}
+.pc1 .pc-metric{color:var(--uc-p1-clr);}
+.pc2 .pc-metric{color:var(--uc-p2-clr);}
+.pc3 .pc-metric{color:var(--uc-p3-clr);}
+.phase-card.locked .pc-metric{color:var(--text-disabled);}
+/* keep legacy selectors that JS still reads */
+.pc-label{display:none;}
+.pc-val{display:none;}
+.pc-sub{display:none;}
+/* locked-notice: placeholder shown inside panels when content isn't available yet */
+.locked-notice{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:28px 16px;text-align:center;color:var(--text-subtle);font-size:12px;}
+.locked-notice .ln-icon{font-size:22px;opacity:.5;}
+.locked-notice .ln-msg{font-size:12px;color:var(--text-secondary);}
+.locked-notice .ln-hint{font-size:11px;color:var(--text-subtle);}
 
-/* Verdict buttons */
-.verdict-btn { font-size:9px; padding:3px 10px; border-radius:4px; cursor:pointer; transition: opacity .15s; }
-.verdict-btn-a { background:#1a2a3a; border:1px solid #264f78; color:#9cdcfe; }
-.verdict-btn-b { background:#1a3020; border:1px solid #1e5c4f; color:#4ec9b0; }
+/* ── Panels ────────────────────────────────────────────────────────────────── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.panel{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:16px;box-shadow:var(--shadow-sm);}
+.panel-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-subtle);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.panel-action{font-size:11px;color:var(--accent);cursor:pointer;font-weight:500;text-transform:none;letter-spacing:0;}
+.panel-action:hover{text-decoration:underline;}
 
-/* Status bar */
-.statusbar { background: #181818; border-top: 1px solid #2d2d2d; padding: 5px 14px; display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
-.sb-item { display: flex; align-items: center; gap: 5px; font-size: 9px; }
-.sb-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
-.sb-green { background: #4ec9b0; box-shadow: 0 0 4px #4ec9b088; }
-.sb-blue { background: #9cdcfe; }
-.sb-amber { background: #fcd34d; }
-.sb-label { color: #4b5563; }
-.sb-val { color: #808080; font-weight: 600; font-family: monospace; }
-.sb-actions { margin-left: auto; display: flex; gap: 6px; }
-.sb-btn { font-size: 8px; padding: 3px 9px; border-radius: 4px; cursor: pointer; border: 1px solid #2d2d2d; color: #6b7280; background: transparent; transition: all .12s; }
-.sb-btn:hover { border-color: #4ec9b0; color: #4ec9b0; }
-.sb-btn.primary { border-color: #264f78; color: #9cdcfe; }
+/* ── PRS ───────────────────────────────────────────────────────────────────── */
+.prs-big{font-size:32px;font-weight:700;color:var(--success);margin-bottom:4px;}
+.prs-sub{font-size:11px;color:var(--text-secondary);margin-bottom:12px;}
+.prs-threshold-note{font-size:11px;color:var(--text-subtle);margin-top:6px;}
+.prs-threshold-note span{color:var(--warning);font-weight:600;}
 
-/* ── GPU Overlay ── */
-.pill-gpu-btn {
-  background: #181818; color: #4ec9b0; border: 1px solid #1e5c4f;
-  font-family: monospace; font-size: 9px; font-weight: 700;
-  padding: 2px 8px; border-radius: 8px; cursor: pointer;
-  transition: all .15s; position: relative; user-select: none;
-}
-.pill-gpu-btn:hover, .pill-gpu-btn.open { background: #1a3020; border-color: #4ec9b0; }
+/* SVG chart */
+.chart-wrap{position:relative;}
+svg.prs-chart{width:100%;height:140px;display:block;overflow:visible;}
+.chart-tooltip{position:absolute;background:var(--bg-surface);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:11px;color:var(--text-primary);pointer-events:none;white-space:nowrap;opacity:0;transition:opacity .15s;z-index:10;min-width:160px;box-shadow:var(--shadow-md);}
+.chart-tooltip.visible{opacity:1;}
+.tt-version{font-size:12px;font-weight:700;color:var(--success);margin-bottom:4px;}
+.tt-row{display:flex;justify-content:space-between;gap:16px;margin-bottom:2px;}
+.tt-key{color:var(--text-secondary);}
+.tt-val{color:var(--text-primary);font-family:monospace;}
+.tt-note{color:var(--text-subtle);font-size:10px;margin-top:4px;border-top:1px solid var(--border);padding-top:4px;}
 
-.gpu-overlay {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  z-index: 100; display: none;
-}
-.gpu-overlay.visible { display: block; }
-.gpu-backdrop { position: absolute; inset: 0; }
+/* ── Latency bars ──────────────────────────────────────────────────────────── */
+.lat-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.lat-label{font-size:11px;width:60px;flex-shrink:0;color:var(--text-secondary);}
+.lat-bar-wrap{flex:1;height:6px;background:var(--bg-sunken);border-radius:3px;overflow:hidden;}
+.lat-fill{height:100%;border-radius:3px;}
+.lat-p1{background:var(--accent);width:100%;}
+.lat-p2{background:var(--success);width:25%;}
+.lat-p3{background:#FF991F;width:13%;}
+.lat-val{font-size:11px;font-family:monospace;width:40px;text-align:right;flex-shrink:0;color:var(--text-primary);}
+.lat-speedup{font-size:10px;background:var(--bg-metric-g);color:var(--success);padding:2px 7px;border-radius:3px;margin-left:4px;font-weight:600;}
 
-.gpu-panel {
-  position: absolute; top: 52px; right: 20px;
-  width: 580px; background: #0d0d0d; border: 1px solid #1e5c4f;
-  border-radius: 9px; overflow: hidden;
-  box-shadow: 0 8px 32px #00000080, 0 0 0 1px #4ec9b020;
-}
-.gpu-panel-header {
-  background: #111; border-bottom: 1px solid #1a1a1a;
-  padding: 8px 12px; display: flex; align-items: center; gap: 8px;
-}
-.gpu-panel-title { font-size: 10px; font-weight: 700; color: #4ec9b0; flex: 1; font-family: monospace; }
-.gpu-panel-host { font-size: 9px; color: #374151; font-family: monospace; }
-.gpu-refresh-badge {
-  font-size: 8px; font-family: monospace;
-  color: #1e5c4f; background: #0a1a12; border: 1px solid #1a3020;
-  padding: 1px 6px; border-radius: 3px;
-}
-.gpu-close { font-size: 14px; color: #374151; cursor: pointer; line-height: 1; padding: 0 4px; }
-.gpu-close:hover { color: #f87171; }
+/* ── LoRA timeline ─────────────────────────────────────────────────────────── */
+.lora-timeline{display:flex;align-items:flex-start;margin-top:10px;gap:0;}
+.lora-item{flex:1;position:relative;}
+.lora-item:not(:last-child)::after{content:'';position:absolute;top:8px;left:50%;right:-50%;height:1px;background:var(--border);z-index:0;}
+.lora-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;margin:0 auto 5px;position:relative;z-index:1;}
+.lora-past{background:var(--bg-metric-b);color:var(--accent);border:1px solid var(--border-focus);}
+.lora-cur{background:var(--bg-metric-g);color:var(--success);border:1px solid var(--success);box-shadow:0 0 0 3px rgba(34,160,107,0.15);}
+.lora-meta{text-align:center;font-size:10px;color:var(--text-subtle);}
+.lora-prs{text-align:center;font-size:11px;font-weight:700;color:var(--text-secondary);margin-top:1px;}
+.lora-cur-label{text-align:center;font-size:9px;color:var(--success);margin-top:1px;font-weight:600;}
 
-.gpu-table { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+/* ── A/B panel ─────────────────────────────────────────────────────────────── */
+.ab-panel{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:20px;box-shadow:var(--shadow-sm);}
+.ab-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.ab-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-subtle);}
+.ab-models{font-size:11px;color:var(--text-secondary);}
+.ab-query-row{display:flex;gap:8px;margin-bottom:12px;}
+.ab-input{flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:5px;padding:8px 12px;color:var(--text-primary);font-size:13px;outline:none;transition:border-color .15s;}
+.ab-input:focus{border-color:var(--border-focus);}
+.ab-run{background:var(--accent);color:#fff;font-size:12px;font-weight:600;padding:8px 18px;border-radius:5px;cursor:pointer;white-space:nowrap;border:none;transition:background .15s;}
+.ab-run:hover{background:var(--accent-hover);}
+.ab-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.ab-col{border-radius:6px;padding:12px;}
+.ab-col-a{background:var(--uc-p1-bg);border:1px solid var(--uc-p1-border);}
+.ab-col-b{background:var(--uc-p2-bg);border:1px solid var(--uc-p2-border);}
+.ab-col-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+.ab-col-a .ab-col-label{color:var(--uc-p1-clr);}
+.ab-col-b .ab-col-label{color:var(--uc-p2-clr);}
+.ab-badge{font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;background:var(--tag-bg);color:var(--tag-clr);}
+.ab-phase-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:4px;letter-spacing:.02em;white-space:nowrap;}
+.ab-phase-1{background:var(--uc-p1-bg);color:var(--uc-p1-clr);border:1px solid var(--uc-p1-border);}
+.ab-phase-2{background:var(--uc-p2-bg);color:var(--uc-p2-clr);border:1px solid var(--uc-p2-border);}
+.ab-phase-3{background:#E3FCEF;color:#006644;border:1px solid #22A06B;}
+.ab-phase-fallback{background:var(--bg-sunken);color:var(--text-subtle);border:1px solid var(--border);}
+.ab-phase-row{display:flex;align-items:center;gap:7px;margin-bottom:8px;flex-wrap:wrap;}
+.ab-phase-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;}
+.ab-col-a .ab-phase-label{color:var(--uc-p1-clr);}
+.ab-phase-path{font-size:10px;color:var(--text-subtle);font-style:italic;}
+.ab-text{font-size:12px;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap;}
+.ab-meta{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;}
+.ab-meta-item{font-size:11px;color:var(--text-subtle);}
+.ab-meta-item b{color:var(--text-secondary);}
+.verdict-btn{font-size:11px;padding:4px 12px;border-radius:4px;cursor:pointer;transition:opacity .15s;font-weight:600;}
+.verdict-btn-a{background:var(--uc-p1-bg);border:1px solid var(--uc-p1-border);color:var(--uc-p1-clr);}
+.verdict-btn-b{background:var(--uc-p2-bg);border:1px solid var(--uc-p2-border);color:var(--uc-p2-clr);}
+/* Model settings panels */
+.ab-settings-toggle{font-size:10px;font-weight:600;color:var(--text-subtle);cursor:pointer;user-select:none;padding:2px 6px;border-radius:3px;border:1px solid var(--border);background:var(--bg-sunken);letter-spacing:.03em;}
+.ab-settings-toggle:hover{color:var(--text-secondary);}
+.ab-settings{display:none;margin:8px 0 4px;padding:10px;background:var(--bg-sunken);border-radius:5px;border:1px solid var(--border);}
+.ab-settings.open{display:block;}
+.ab-settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;}
+.ab-settings-field{display:flex;flex-direction:column;gap:3px;}
+.ab-settings-field.full{grid-column:1/-1;}
+.ab-settings-field label{font-size:10px;font-weight:600;color:var(--text-subtle);text-transform:uppercase;letter-spacing:.05em;}
+.ab-settings-field input,.ab-settings-field select,.ab-settings-field textarea{background:var(--bg-input);border:1px solid var(--border);border-radius:4px;padding:5px 8px;color:var(--text-primary);font-size:11px;outline:none;}
+.ab-settings-field input:focus,.ab-settings-field select:focus,.ab-settings-field textarea:focus{border-color:var(--border-focus);}
+.ab-settings-field textarea{resize:vertical;min-height:48px;font-family:inherit;}
+.ab-error{color:var(--danger);font-size:11px;margin-top:4px;}
 
-.gpu-row { background: #111; border: 1px solid #1a1a1a; border-radius: 6px; overflow: hidden; }
-.gpu-row-head {
-  display: grid; grid-template-columns: 28px 1fr 90px 90px 50px 50px 60px;
-  gap: 6px; padding: 7px 10px; align-items: center;
-  border-bottom: 1px solid #151515; cursor: pointer;
-}
-.gpu-row-head:hover { background: #141414; }
-.gpu-id { font-size: 10px; font-weight: 800; font-family: monospace; color: #4ec9b0; }
-.gpu-name { font-size: 9px; font-family: monospace; color: #808080; }
-.gpu-mem { font-size: 9px; font-family: monospace; text-align: right; }
-.gpu-util-cell { text-align: right; }
-.gpu-util-val { font-size: 9px; font-family: monospace; }
-.util-high { color: #f87171; }
-.util-med  { color: #fcd34d; }
-.util-low  { color: #4ec9b0; }
-.gpu-temp { font-size: 9px; font-family: monospace; color: #6b7280; text-align: right; }
-.gpu-power { font-size: 9px; font-family: monospace; color: #4b5563; text-align: right; }
+/* ── Pipeline logs panel ───────────────────────────────────────────────────── */
+.logs-panel{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:20px;}
+.logs-header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg-sunken);}
+.logs-title{font-size:13px;font-weight:700;color:var(--text-primary);flex:1;}
+.logs-step-badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px;background:var(--tag-bg);color:var(--tag-clr);}
+.logs-step-badge.running{background:var(--bg-metric-b);color:var(--accent);}
+.logs-step-badge.done{background:var(--bg-metric-g);color:var(--success);}
+.logs-step-badge.failed{background:var(--bg-metric-r);color:var(--danger);}
+.logs-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.logs-status-dot.running{background:var(--accent);animation:pulse-log 1.2s infinite;}
+.logs-status-dot.done{background:var(--success);}
+.logs-status-dot.failed{background:var(--danger);}
+.logs-status-dot.idle{background:var(--text-disabled);}
+@keyframes pulse-log{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.logs-actions{display:flex;gap:6px;}
+.logs-btn{font-size:11px;font-weight:600;padding:4px 12px;border-radius:4px;border:1px solid var(--border);background:var(--bg-surface);color:var(--text-secondary);cursor:pointer;transition:all .15s;}
+.logs-btn:hover{background:var(--bg-hover);color:var(--text-primary);}
+.logs-btn.danger{border-color:var(--danger);color:var(--danger);}
+.logs-btn.danger:hover{background:var(--bg-metric-r);}
+.logs-body{font-family:'SF Mono',Menlo,'Cascadia Code',monospace;font-size:11px;line-height:1.55;background:var(--bg-sunken);height:320px;overflow-y:auto;padding:12px 16px;}
+[data-theme="dark"] .logs-body{background:#161A1D;}
+.log-line{white-space:pre-wrap;word-break:break-all;color:var(--text-secondary);padding:1px 0;}
+.log-line.err{color:var(--danger);}
+.log-line.ok{color:var(--success);}
+.log-line.hdr{color:var(--accent);font-weight:600;}
+.log-line.warn{color:var(--warning);}
+.logs-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-subtle);font-size:12px;font-family:inherit;gap:6px;}
+.logs-footer{padding:8px 16px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg-sunken);}
+.logs-footer-info{font-size:11px;color:var(--text-subtle);}
+.autoscroll-toggle{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary);cursor:pointer;user-select:none;}
+.autoscroll-toggle input{cursor:pointer;}
 
-.gpu-util-bar-wrap { height: 3px; background: #1a1a1a; border-radius: 2px; margin-top: 3px; overflow: hidden; }
-.gpu-util-bar { height: 100%; border-radius: 2px; transition: width .8s; }
-.bar-high { background: linear-gradient(90deg, #7f1d1d, #f87171); }
-.bar-med  { background: linear-gradient(90deg, #78350f, #fcd34d); }
-.bar-low  { background: linear-gradient(90deg, #134e4a, #4ec9b0); }
+/* ── Sync history ──────────────────────────────────────────────────────────── */
+.sync-section{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:20px;}
+.sync-section summary{cursor:pointer;padding:12px 16px;font-size:12px;font-weight:600;color:var(--text-secondary);user-select:none;display:flex;align-items:center;gap:6px;}
+.sync-section summary:hover{background:var(--bg-hover);}
+.sync-table-wrap{padding:0 16px 12px;overflow-x:auto;}
+.sync-table{width:100%;border-collapse:collapse;font-size:12px;}
+.sync-table th{text-align:left;padding:6px 8px;color:var(--text-subtle);font-weight:600;font-size:11px;border-bottom:1px solid var(--border);}
+.sync-table td{padding:6px 8px;color:var(--text-secondary);border-bottom:1px solid var(--bg-sunken);}
+.sync-table tr:last-child td{border-bottom:none;}
 
-.gpu-procs { padding: 0 10px 8px; display: none; }
-.gpu-procs.open { display: block; }
-.gpu-procs-title { font-size: 7px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #374151; margin-bottom: 5px; padding-top: 2px; }
-.gpu-proc-row {
-  display: grid; grid-template-columns: 52px 1fr 80px;
-  gap: 6px; padding: 3px 0; border-top: 1px solid #151515;
-  align-items: center;
-}
-.gpu-proc-pid { font-size: 8px; font-family: monospace; color: #4b5563; }
-.gpu-proc-name { font-size: 8px; font-family: monospace; color: #6b7280; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gpu-proc-mem { font-size: 8px; font-family: monospace; color: #9cdcfe; text-align: right; }
+/* ── GPU overlay (fixed, theme-aware) ─────────────────────────────────────── */
+.gpu-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:500;display:none;}
+.gpu-overlay.visible{display:block;}
+.gpu-backdrop{position:absolute;inset:0;}
+.gpu-panel{position:absolute;top:56px;right:20px;width:580px;background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow-lg);}
+.gpu-panel-header{background:var(--bg-sunken);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:8px;}
+.gpu-panel-title{font-size:12px;font-weight:700;color:var(--text-primary);flex:1;font-family:monospace;}
+.gpu-panel-host{font-size:10px;color:var(--text-subtle);font-family:monospace;}
+.gpu-refresh-badge{font-size:10px;font-family:monospace;color:var(--success);background:var(--bg-metric-g);border:1px solid var(--uc-p2-border);padding:1px 7px;border-radius:3px;}
+.gpu-close{font-size:16px;color:var(--text-subtle);cursor:pointer;line-height:1;padding:0 4px;background:none;border:none;}
+.gpu-close:hover{color:var(--danger);}
+.gpu-table-panel{padding:12px;display:flex;flex-direction:column;gap:8px;}
+.gpu-row{background:var(--bg-sunken);border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+.gpu-row-head{display:grid;grid-template-columns:28px 1fr 90px 90px 50px 50px 60px;gap:6px;padding:8px 10px;align-items:center;border-bottom:1px solid var(--border);cursor:pointer;}
+.gpu-row-head:hover{background:var(--bg-hover);}
+.gpu-id{font-size:11px;font-weight:800;font-family:monospace;color:var(--success);}
+.gpu-name{font-size:10px;font-family:monospace;color:var(--text-secondary);}
+.gpu-mem,.gpu-util-cell,.gpu-temp,.gpu-power{text-align:right;}
+.gpu-util-val{font-size:10px;font-family:monospace;}
+.util-high{color:var(--danger);}
+.util-med{color:var(--warning);}
+.util-low{color:var(--success);}
+.gpu-temp,.gpu-power{font-size:10px;font-family:monospace;color:var(--text-subtle);}
+.gpu-util-bar-wrap{height:3px;background:var(--border);border-radius:2px;margin-top:3px;overflow:hidden;}
+.gpu-util-bar{height:100%;border-radius:2px;transition:width .8s;}
+.bar-high{background:var(--danger);}
+.bar-med{background:var(--warning);}
+.bar-low{background:var(--success);}
+.gpu-procs{padding:0 10px 8px;display:none;}
+.gpu-procs.open{display:block;}
+.gpu-procs-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-subtle);margin-bottom:5px;padding-top:4px;}
+.gpu-proc-row{display:grid;grid-template-columns:52px 1fr 80px;gap:6px;padding:3px 0;border-top:1px solid var(--border);align-items:center;}
+.gpu-proc-pid{font-size:9px;font-family:monospace;color:var(--text-subtle);}
+.gpu-proc-name{font-size:9px;font-family:monospace;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gpu-proc-mem{font-size:9px;font-family:monospace;color:var(--accent);text-align:right;}
+.gpu-footer-panel{border-top:1px solid var(--border);padding:6px 14px;display:flex;align-items:center;gap:12px;background:var(--bg-sunken);}
+.gpu-footer-item{font-size:10px;font-family:monospace;color:var(--text-subtle);}
+.gpu-footer-item span{color:var(--text-secondary);}
 
-.gpu-footer {
-  border-top: 1px solid #1a1a1a; padding: 5px 12px;
-  display: flex; align-items: center; gap: 10px;
-  background: #0a0a0a;
-}
-.gpu-footer-item { font-size: 8px; font-family: monospace; color: #374151; }
-.gpu-footer-item span { color: #4b5563; }
+/* ── Toast ─────────────────────────────────────────────────────────────────── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg-surface);border:1px solid var(--border);color:var(--text-primary);padding:10px 16px;border-radius:6px;font-size:13px;z-index:600;box-shadow:var(--shadow-md);transform:translateY(20px);opacity:0;transition:all .25s;pointer-events:none;max-width:340px;}
+.toast.show{transform:translateY(0);opacity:1;}
 </style>
 </head>
 <body>
 
-<h2>UC Operations Page — PRS as Line Chart (updated)</h2>
-<p class="subtitle">Hover over the dots on the PRS chart to see version details.</p>
-
-<div class="uc-frame">
-  <div class="topbar">
-    <div class="tb-logo">KV</div>
-    <div class="tb-bc"><a href="/studio/">Studio Hub</a><span class="sep">›</span><b id="uc-title">Loading…</b></div>
-    <div class="tb-pills">
-      <span class="pill pill-p3">● Phase 3</span>
-      <span class="pill pill-prs">PRS 0.8531</span>
-      <span class="pill-gpu-btn" id="gpu-pill-btn" onclick="toggleGpuOverlay()">⬛ 4 GPUs · click for details</span>
-    </div>
-    <div class="tb-btn">⚙ Settings</div>
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand" onclick="location.href='/studio/'">
+    <div class="logo-sq">K</div>
+    KVForge
+    <span class="topbar-tag">STUDIO</span>
   </div>
+  <span class="topbar-sep">›</span>
+  <a class="topbar-bc" href="/studio/" style="color:rgba(255,255,255,0.7);text-decoration:none;">Use Cases</a>
+  <span class="topbar-sep">›</span>
+  <span class="topbar-bc-cur" id="topbar-uc-name">Loading…</span>
+  <div class="topbar-sp"></div>
+  <span class="pill-gpu-btn" id="gpu-pill-btn" onclick="toggleGpuOverlay()">⬛ GPU</span>
+  <button class="topbar-btn" onclick="toggleTheme()"><span id="theme-icon">🌙</span></button>
+  <button class="topbar-btn" onclick="location.href='/studio/'">← Studio</button>
+</div>
 
-  <!-- GPU Monitor Overlay -->
-  <div class="gpu-overlay" id="gpu-overlay">
-    <div class="gpu-backdrop" onclick="closeGpuOverlay()"></div>
-    <div class="gpu-panel">
-      <div class="gpu-panel-header">
-        <span class="gpu-panel-title">nvidia-smi · GPU Monitor</span>
-        <span class="gpu-panel-host" id="gpu-host">ec2-100-48-17-48 · Driver 535.104 · CUDA 12.2</span>
-        <span class="gpu-refresh-badge" id="gpu-refresh-badge">↻ live · 0s ago</span>
-        <span class="gpu-close" onclick="closeGpuOverlay()">✕</span>
-      </div>
+<div class="shell">
 
-      <div class="gpu-table" id="gpu-table">
-        <!-- GPU 0 -->
-        <div class="gpu-row" id="gpu-row-0">
-          <div class="gpu-row-head" onclick="toggleProcs(0)">
-            <span class="gpu-id">GPU 0</span>
-            <span class="gpu-name">NVIDIA A10G · 22 GB</span>
-            <div class="gpu-mem" style="text-align:left">
-              <div style="font-size:8px;color:#374151">VRAM</div>
-              <div id="mem-0" style="color:#4ec9b0">1.2 / 22.0 GB</div>
-              <div class="gpu-util-bar-wrap"><div class="gpu-util-bar bar-low" id="membar-0" style="width:5%"></div></div>
-            </div>
-            <div class="gpu-util-cell">
-              <div style="font-size:8px;color:#374151">GPU Util</div>
-              <div class="gpu-util-val util-low" id="util-0">8%</div>
-              <div class="gpu-util-bar-wrap"><div class="gpu-util-bar bar-low" id="utilbar-0" style="width:8%"></div></div>
-            </div>
-            <span class="gpu-temp" id="temp-0">36°C</span>
-            <span class="gpu-power" id="pwr-0">72W</span>
-            <span style="font-size:8px;color:#374151;text-align:right">▸ procs</span>
-          </div>
-          <div class="gpu-procs" id="procs-0">
-            <div class="gpu-procs-title">Processes (1)</div>
-            <div class="gpu-proc-row">
-              <span class="gpu-proc-pid">PID 1 (C)</span>
-              <span class="gpu-proc-name">python monitoring_dashboard</span>
-              <span class="gpu-proc-mem">512 MiB</span>
-            </div>
-          </div>
-        </div>
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()">‹</button>
 
-        <!-- GPU 1 -->
-        <div class="gpu-row" id="gpu-row-1">
-          <div class="gpu-row-head" onclick="toggleProcs(1)">
-            <span class="gpu-id">GPU 1</span>
-            <span class="gpu-name">NVIDIA A10G · 22 GB</span>
-            <div class="gpu-mem" style="text-align:left">
-              <div style="font-size:8px;color:#374151">VRAM</div>
-              <div id="mem-1" style="color:#f87171">19.4 / 22.0 GB</div>
-              <div class="gpu-util-bar-wrap"><div class="gpu-util-bar bar-high" id="membar-1" style="width:88%"></div></div>
-            </div>
-            <div class="gpu-util-cell">
-              <div style="font-size:8px;color:#374151">GPU Util</div>
-              <div class="gpu-util-val util-high" id="util-1">94%</div>
-              <div class="gpu-util-bar-wrap"><div class="gpu-util-bar bar-high" id="utilbar-1" style="width:94%"></div></div>
-            </div>
-            <span class="gpu-temp" id="temp-1">71°C</span>
-            <span class="gpu-power" id="pwr-1">195W</span>
-            <span style="font-size:8px;color:#374151;text-align:right">▸ procs</span>
-          </div>
-          <div class="gpu-procs" id="procs-1">
-            <div class="gpu-procs-title">Processes (1)</div>
-            <div class="gpu-proc-row">
-              <span class="gpu-proc-pid">PID 28431 (C)</span>
-              <span class="gpu-proc-name">python vllm.entrypoints.openai.api_server --port 8091</span>
-              <span class="gpu-proc-mem">19,397 MiB</span>
-            </div>
-          </div>
-        </div>
+    <div class="sidebar-section-title">Navigation</div>
+    <div class="nav-item" onclick="location.href='/studio/'">
+      <div class="nav-icon">🗂</div>
+      <span class="nav-label">Dashboard</span>
+    </div>
+    <div class="nav-item active">
+      <div class="nav-icon">📊</div>
+      <span class="nav-label">Pipeline</span>
+    </div>
+    <div class="nav-item" onclick="location.href='#logs'">
+      <div class="nav-icon">📋</div>
+      <span class="nav-label">Logs</span>
+    </div>
 
-        <!-- GPU 2 -->
-        <div class="gpu-row" id="gpu-row-2">
-          <div class="gpu-row-head" onclick="toggleProcs(2)">
-            <span class="gpu-id">GPU 2</span>
-            <span class="gpu-name">NVIDIA A10G · 22 GB</span>
-            <div class="gpu-mem" style="text-align:left">
-              <div style="font-size:8px;color:#374151">VRAM</div>
-              <div id="mem-2" style="color:#f87171">18.9 / 22.0 GB</div>
-              <div class="gpu-util-bar-wrap"><div class="gpu-util-bar bar-high" id="membar-2" style="width:86%"></div></div>
-            </div>
-            <div class="gpu-util-cell">
-              <div style="font-size:8px;color:#374151">GPU Util</div>
-              <div class="gpu-util-val util-high" id="util-2">91%</div>
-              <div class="gpu-util-bar-wrap"><div class="gpu-util-bar bar-high" id="utilbar-2" style="width:91%"></div></div>
-            </div>
-            <span class="gpu-temp" id="temp-2">69°C</span>
-            <span class="gpu-power" id="pwr-2">190W</span>
-            <span style="font-size:8px;color:#374151;text-align:right">▸ procs</span>
-          </div>
-          <div class="gpu-procs" id="procs-2">
-            <div class="gpu-procs-title">Processes (1)</div>
-            <div class="gpu-proc-row">
-              <span class="gpu-proc-pid">PID 28432 (C)</span>
-              <span class="gpu-proc-name">python vllm.entrypoints.openai.api_server --port 8092</span>
-              <span class="gpu-proc-mem">18,892 MiB</span>
-            </div>
-          </div>
-        </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding-right:10px" onclick="location.href='/studio/resources'" title="Resource Providers">Resources <span style="font-size:9px;opacity:.6">›</span></div>
+    <div class="nav-item" onclick="location.href='/studio/resources'" style="padding-left:20px;margin-left:8px;">
+      <div class="nav-icon">🖥</div>
+      <span class="nav-label">Resource Providers</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/studio/connectors'" style="padding-left:20px;margin-left:8px;">
+      <div class="nav-icon">🔗</div>
+      <span class="nav-label">Data Connectors</span>
+    </div>
 
-        <!-- GPU 3 -->
-        <div class="gpu-row" id="gpu-row-3">
-          <div class="gpu-row-head" onclick="toggleProcs(3)">
-            <span class="gpu-id">GPU 3</span>
-            <span class="gpu-name">NVIDIA A10G · 22 GB</span>
-            <div class="gpu-mem" style="text-align:left">
-              <div style="font-size:8px;color:#374151">VRAM</div>
-              <div id="mem-3" style="color:#f87171">19.1 / 22.0 GB</div>
-              <div class="gpu-util-bar-wrap"><div class="gpu-util-bar bar-high" id="membar-3" style="width:87%"></div></div>
-            </div>
-            <div class="gpu-util-cell">
-              <div style="font-size:8px;color:#374151">GPU Util</div>
-              <div class="gpu-util-val util-high" id="util-3">93%</div>
-              <div class="gpu-util-bar-wrap"><div class="gpu-util-bar bar-high" id="utilbar-3" style="width:93%"></div></div>
-            </div>
-            <span class="gpu-temp" id="temp-3">70°C</span>
-            <span class="gpu-power" id="pwr-3">192W</span>
-            <span style="font-size:8px;color:#374151;text-align:right">▸ procs</span>
-          </div>
-          <div class="gpu-procs" id="procs-3">
-            <div class="gpu-procs-title">Processes (1)</div>
-            <div class="gpu-proc-row">
-              <span class="gpu-proc-pid">PID 28433 (C)</span>
-              <span class="gpu-proc-name">python vllm.entrypoints.openai.api_server --port 8093</span>
-              <span class="gpu-proc-mem">19,112 MiB</span>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding-right:10px" onclick="location.href='/studio/settings'" title="Settings">Config <span style="font-size:9px;opacity:.6">›</span></div>
+    <div class="nav-item" onclick="location.href='/studio/settings'">
+      <div class="nav-icon">⚙</div>
+      <span class="nav-label">Settings</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/studio/logs'">
+      <div class="nav-icon">📋</div>
+      <span class="nav-label">Activity Logs</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/docs/demo-guides/'">
+      <div class="nav-icon">📖</div>
+      <span class="nav-label">Documentation</span>
+    </div>
 
-      <div class="gpu-footer">
-        <span class="gpu-footer-item">Total VRAM: <span id="total-vram">58.6 / 88.0 GB</span></span>
-        <span class="gpu-footer-item">Avg Util: <span id="avg-util">69%</span></span>
-        <span class="gpu-footer-item">Max Temp: <span id="max-temp">71°C</span></span>
-        <span class="gpu-footer-item" style="margin-left:auto">Refreshes every 3s · click GPU row to expand processes</span>
-      </div>
+    <div class="sidebar-divider"></div>
+    <div class="uc-nav-label">Pipeline Steps</div>
+    <div class="pipeline-step">
+      <div class="ps-icon ps-done">✓</div>
+      <div><div class="ps-text done">Data Source</div><div class="ps-meta" id="ps-meta-data">—</div></div>
+    </div>
+    <div class="pipeline-step">
+      <div class="ps-icon" id="ps-icon-faq">·</div>
+      <div><div class="ps-text" id="ps-text-faq">FAQ Generation</div><div class="ps-meta" id="ps-meta-faq">—</div></div>
+    </div>
+    <div class="pipeline-step">
+      <div class="ps-icon" id="ps-icon-lora">·</div>
+      <div><div class="ps-text" id="ps-text-lora">LoRA Fine-tune</div><div class="ps-meta" id="ps-meta-lora">—</div></div>
+    </div>
+    <div class="pipeline-step">
+      <div class="ps-icon" id="ps-icon-prs">·</div>
+      <div><div class="ps-text" id="ps-text-prs">PRS Evaluation</div><div class="ps-meta" id="ps-meta-prs">—</div></div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="uc-nav-label">Actions</div>
+    <div class="action-item" onclick="runPipelineStep('faq-gen-cloud')">
+      <div class="nav-icon">⟳</div>
+      <span class="nav-label">Re-generate FAQs</span>
+    </div>
+    <div class="action-item" onclick="runPipelineStep('train')">
+      <div class="nav-icon">↑</div>
+      <span class="nav-label">Re-train LoRA</span>
+    </div>
+    <div class="action-item" onclick="runPipelineStep('prs-eval')">
+      <div class="nav-icon">🎯</div>
+      <span class="nav-label">Re-run PRS Eval</span>
+    </div>
+    <div class="action-item" onclick="runPipelineStep('recompute')">
+      <div class="nav-icon">🔄</div>
+      <span class="nav-label">Recompute KV</span>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-version">KVForge Studio</div>
     </div>
   </div>
 
-  <div class="uc-body">
-    <div class="rail">
-      <div class="rail-section">Pipeline</div>
-      <div class="rail-step done"><div class="rs-icon rs-done">✓</div><div><div class="rs-name">Data Source</div><div class="rs-meta">2,520 chunks · Qdrant</div></div></div>
-      <div class="rail-step done"><div class="rs-icon rs-done">✓</div><div><div class="rs-name">FAQ Generation</div><div class="rs-meta">1,027 Q&amp;A pairs</div></div></div>
-      <div class="rail-step done"><div class="rs-icon rs-done">✓</div><div><div class="rs-name">Model</div><div class="rs-meta">Llama 3.2 3B · v3</div></div></div>
-      <div class="rail-step done"><div class="rs-icon rs-done">✓</div><div><div class="rs-name">GPU</div><div class="rs-meta">GPU 0 · A10G</div></div></div>
-      <div class="rail-step done"><div class="rs-icon rs-done">✓</div><div><div class="rs-name">Fine-tuning</div><div class="rs-meta">LoRA v3 · 2 passes</div></div></div>
-      <div class="rail-step active"><div class="rs-icon rs-active">▶</div><div><div class="rs-name">Phases &amp; PRS</div><div class="rs-meta">Phase 3 active</div></div></div>
-      <div class="rail-step active"><div class="rs-icon rs-active">⇄</div><div><div class="rs-name">A/B Comparison</div><div class="rs-meta">Live query test</div></div></div>
-      <div class="rail-divider"></div>
-      <div class="rail-section">Actions</div>
-      <div class="rail-actions">
-        <div class="rail-action"><span>⟳</span>Re-generate FAQs</div>
-        <div class="rail-action"><span>↑</span>Re-train LoRA</div>
-        <div class="rail-action"><span>🎯</span>Re-run PRS eval</div>
-        <div class="rail-action"><span>🔄</span>Recompute KV</div>
-        <div class="rail-action"><span>📋</span>Export config</div>
+  <!-- MAIN -->
+  <div class="main">
+    <div class="main-inner">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <div class="page-title" id="uc-page-title">Loading…</div>
+          <div class="page-sub" id="uc-page-sub">Use case detail</div>
+        </div>
       </div>
-    </div>
 
-    <div class="main">
-      <div class="main-title">Phase Progression · PRS · A/B Comparison</div>
-      <div class="main-sub">UC4 · Amazon Bedrock User Guide · LoRA v3 · vLLM pool · 4 GPUs · Qdrant 2,520 chunks</div>
+      <!-- Pipeline progress panel -->
+      <div class="pipeline-progress-panel">
+        <div class="pp-header">Pipeline Progress</div>
+        <div class="pp-track">
+          <div class="pp-step s-pending" id="ps-index">
+            <div class="pp-dot s-pending" id="ps-index-dot">1</div>
+            <div class="pp-name s-pending" id="ps-index-name">Index</div>
+          </div>
+          <div class="pp-step s-locked" id="ps-kv">
+            <div class="pp-dot s-locked" id="ps-kv-dot">2</div>
+            <div class="pp-name s-locked" id="ps-kv-name">KV Tensors</div>
+          </div>
+          <div class="pp-step s-locked" id="ps-faqs">
+            <div class="pp-dot s-locked" id="ps-faqs-dot">3</div>
+            <div class="pp-name s-locked" id="ps-faqs-name">FAQs</div>
+          </div>
+          <div class="pp-step s-locked" id="ps-lora">
+            <div class="pp-dot s-locked" id="ps-lora-dot">4</div>
+            <div class="pp-name s-locked" id="ps-lora-name">Train LoRA</div>
+          </div>
+          <div class="pp-step s-locked" id="ps-prs">
+            <div class="pp-dot s-locked" id="ps-prs-dot">5</div>
+            <div class="pp-name s-locked" id="ps-prs-name">Evaluate</div>
+          </div>
+        </div>
+        <div class="pp-action-area" id="pp-action-area" style="display:none">
+          <div class="pp-action-copy">
+            <div class="pp-action-label" id="pp-action-label"></div>
+            <div class="pp-action-desc" id="pp-action-desc"></div>
+            <div class="pp-action-meta" id="pp-action-meta" style="display:none"></div>
+          </div>
+          <div class="pp-action-btns">
+            <button class="pp-cta" id="pp-cta-btn" style="display:none"></button>
+            <button class="pp-reindex" id="pp-reindex-btn" onclick="runPipelineStep('index')" style="display:none">↺ Re-index</button>
+          </div>
+        </div>
+      </div>
 
+      <!-- Phase cards (informative) -->
       <div class="phase-row">
-        <div class="phase-card pc1"><div class="pc-label">Phase 1 — Text RAG</div><div class="pc-val">6.1s</div><div class="pc-sub">Retrieve + text-in-context · baseline</div></div>
-        <div class="phase-card pc2"><div class="pc-label">Phase 2 — KV Injection</div><div class="pc-val">1.5s</div><div class="pc-sub">Pre-computed tensors · 4× faster</div></div>
-        <div class="phase-card pc3"><div class="pc-active-badge">● ACTIVE</div><div class="pc-label">Phase 3 — Parametric</div><div class="pc-val">0.8s</div><div class="pc-sub">Answer from LoRA weights · 7.6× faster</div></div>
+
+        <!-- Phase 1 -->
+        <div class="phase-card pc1" id="phase1-card" onclick="togglePhaseDetail(1)" title="Click to learn more about Phase 1">
+          <div class="pc-header">
+            <span class="pc-phase-tag">Phase 1</span>
+            <span class="pc-active-badge" id="pc1-active-badge" style="display:none">● ACTIVE</span>
+          </div>
+          <div class="pc-name-row">
+            <span class="pc-icon">📄</span>
+            <span class="pc-name">Text RAG</span>
+          </div>
+          <div class="pc-tagline">Answer questions from your documents — no GPU needed</div>
+          <div class="pc-desc">Your documents are split into chunks, embedded as vectors, and stored in a vector database. When a question comes in, the most relevant chunks are retrieved and passed to the LLM as reading context. This is the fastest path to a working question-answering system.</div>
+          <div class="pc-chips">
+            <span class="pc-chip chip-nogpu">No GPU required</span>
+            <span class="pc-chip chip-speed">~6 s / query</span>
+          </div>
+          <div class="pc-status">
+            <span class="pc-status-text" id="pc1-status-text">Not indexed yet</span>
+            <span class="pc-metric" id="pc1-metric"></span>
+          </div>
+        </div>
+
+        <!-- Phase 2 -->
+        <div class="phase-card pc2" id="phase2-card" onclick="togglePhaseDetail(2)" title="Click to learn more about Phase 2">
+          <div class="pc-header">
+            <span class="pc-phase-tag">Phase 2</span>
+            <span class="pc-active-badge" id="pc2-active-badge" style="display:none">● ACTIVE</span>
+          </div>
+          <div class="pc-name-row">
+            <span class="pc-icon">⚡</span>
+            <span class="pc-name">KV Injection</span>
+          </div>
+          <div class="pc-tagline">4× faster answers — pre-computed attention cache</div>
+          <div class="pc-desc">KV (key-value) tensors are pre-computed for every document chunk using your GPU, then stored alongside embeddings. At query time, the LLM reuses these cached tensors instead of re-processing text — skipping the most expensive encoding step entirely.</div>
+          <div class="pc-chips">
+            <span class="pc-chip chip-gpu">GPU required</span>
+            <span class="pc-chip chip-speed">~1.5 s / query</span>
+          </div>
+          <div class="pc-status">
+            <span class="pc-status-text" id="pc2-status-text">Requires Phase 1 + KV Indexer run</span>
+            <span class="pc-metric" id="pc2-metric"></span>
+          </div>
+        </div>
+
+        <!-- Phase 3 -->
+        <div class="phase-card pc3" id="phase3-card" onclick="togglePhaseDetail(3)" title="Click to learn more about Phase 3">
+          <div class="pc-header">
+            <span class="pc-phase-tag">Phase 3</span>
+            <span class="pc-active-badge" id="pc3-active-badge" style="display:none">● ACTIVE</span>
+          </div>
+          <div class="pc-name-row">
+            <span class="pc-icon">🧠</span>
+            <span class="pc-name">Parametric</span>
+          </div>
+          <div class="pc-tagline">7× faster — model answers from memory</div>
+          <div class="pc-desc">After LoRA fine-tuning on your corpus, the model learns to answer frequently-asked queries directly from its weights — no retrieval or chunk lookup needed. It falls back to KV/text RAG for questions it's not confident about (confidence gate at PRS ≥ 0.75).</div>
+          <div class="pc-chips">
+            <span class="pc-chip chip-gpu">GPU required</span>
+            <span class="pc-chip chip-speed">~0.8 s / query</span>
+          </div>
+          <div class="pc-status">
+            <span class="pc-status-text" id="pc3-status-text">Requires LoRA training + PRS ≥ 0.75</span>
+            <span class="pc-metric" id="pc3-metric"></span>
+          </div>
+        </div>
+
       </div>
 
-      <div class="two-col">
+      <!-- Phase detail expand panel (shown when a card is clicked) -->
+      <div class="phase-detail-panel" id="phase-detail-panel">
+        <div class="pdp-inner" id="pdp-inner"></div>
+      </div>
 
-        <!-- PRS Panel with line chart -->
+      <!-- PRS + Latency two-col (hidden until LoRA has been trained) -->
+      <div class="two-col" id="advanced-panels" style="display:none">
         <div class="panel">
-          <div class="panel-title">Parametric Readiness Score <span class="panel-action">⟳ Re-run</span></div>
-          <div class="prs-big">0.8531</div>
-          <div class="prs-sub">Threshold 0.75 exceeded · Phase 3 auto-activated · LoRA round 3</div>
-
-          <div class="chart-wrap" id="chart-wrap">
-            <svg class="prs-chart" id="prs-svg" viewBox="0 0 280 120" preserveAspectRatio="none"></svg>
-            <div class="chart-tooltip" id="chart-tt">
-              <div class="tt-version" id="tt-version"></div>
-              <div class="tt-row"><span class="tt-key">PRS</span><span class="tt-val" id="tt-prs"></span></div>
-              <div class="tt-row"><span class="tt-key">Date</span><span class="tt-val" id="tt-date"></span></div>
-              <div class="tt-row"><span class="tt-key">Training</span><span class="tt-val" id="tt-train"></span></div>
-              <div class="tt-row"><span class="tt-key">Loss</span><span class="tt-val" id="tt-loss"></span></div>
-              <div class="tt-note" id="tt-note"></div>
+          <div class="panel-title">Parametric Readiness Score <span class="panel-action" onclick="runPipelineStep('prs-eval')">⟳ Re-run</span></div>
+          <div id="prs-content">
+            <div class="locked-notice">
+              <div class="ln-icon">📊</div>
+              <div class="ln-msg">No evaluation yet</div>
+              <div class="ln-hint">Run PRS Eval after LoRA training to see scores here</div>
             </div>
           </div>
-          <div class="prs-threshold-note">— <span>0.75</span> threshold · yellow dashes = Phase 3 unlock</div>
         </div>
 
-        <!-- Latency + LoRA -->
         <div class="panel">
-          <div class="panel-title">Inference Latency Comparison</div>
-          <div class="lat-row"><span class="lat-label" style="color:#9cdcfe">Phase 1</span><div class="lat-bar-wrap"><div class="lat-fill lat-p1"></div></div><span class="lat-val lv1">6.1 s</span><span class="lat-speedup">baseline</span></div>
-          <div class="lat-row"><span class="lat-label" style="color:#4ec9b0">Phase 2</span><div class="lat-bar-wrap"><div class="lat-fill lat-p2"></div></div><span class="lat-val lv2">1.5 s</span><span class="lat-speedup">4× faster</span></div>
-          <div class="lat-row"><span class="lat-label" style="color:#ce9178">Phase 3</span><div class="lat-bar-wrap"><div class="lat-fill lat-p3"></div></div><span class="lat-val lv3">0.8 s</span><span class="lat-speedup">7.6× faster</span></div>
-          <div style="height:1px;background:#252525;margin:10px 0"></div>
-          <div class="panel-title" style="margin-bottom:7px">LoRA Version History</div>
-          <div class="lora-timeline">
-            <div class="lora-item"><div class="lora-dot lora-past">v1</div><div class="lora-meta">raw chunks</div><div class="lora-prs">0.72</div></div>
-            <div class="lora-item"><div class="lora-dot lora-past">v2</div><div class="lora-meta">+Q&amp;A pass</div><div class="lora-prs">0.78</div></div>
-            <div class="lora-item"><div class="lora-dot lora-cur">v3</div><div class="lora-meta">full corpus</div><div class="lora-prs">0.8531</div><div class="lora-cur-label">● current</div></div>
+          <div class="panel-title">Inference Latency</div>
+          <div id="latency-content">
+            <div class="lat-row"><span class="lat-label">Phase 1</span><div class="lat-bar-wrap"><div class="lat-fill lat-p1"></div></div><span class="lat-val">~6 s</span><span class="lat-speedup">baseline</span></div>
+            <div class="lat-row" id="lat-p2-row" style="display:none"><span class="lat-label">Phase 2</span><div class="lat-bar-wrap"><div class="lat-fill lat-p2"></div></div><span class="lat-val">~1.5 s</span><span class="lat-speedup">4× faster</span></div>
+            <div class="lat-row" id="lat-p3-row" style="display:none"><span class="lat-label">Phase 3</span><div class="lat-bar-wrap"><div class="lat-fill lat-p3"></div></div><span class="lat-val">~0.8 s</span><span class="lat-speedup">7× faster</span></div>
+          </div>
+
+          <div style="height:1px;background:var(--border);margin:14px 0"></div>
+          <div class="panel-title" style="margin-bottom:10px">LoRA Version History</div>
+          <div class="lora-timeline" id="lora-timeline">
+            <div style="font-size:12px;color:var(--text-subtle)">No training runs yet</div>
           </div>
         </div>
       </div>
 
-      <!-- A/B panel -->
-      <div class="ab-panel">
+      <!-- A/B panel (hidden until Phase 1 indexed) -->
+      <div class="ab-panel" id="ab-panel" style="display:none">
         <div class="ab-header">
           <span class="ab-title">Live A/B Query Comparison</span>
-          <span class="ab-models">Model A = KVForge Llama 3.2 3B LoRA v3 &nbsp;·&nbsp; Model B = Claude Haiku 4.5 (FloTorch)</span>
+          <span class="ab-models">Both models retrieve the same corpus chunks · Model A = GPU LLM · Model B = Cloud LLM</span>
         </div>
         <div class="ab-query-row">
-          <input class="ab-input" id="ab-query-input" value="What are the default quota limits for Amazon Bedrock on-demand throughput?" placeholder="Enter your question…" onkeydown="if(event.key==='Enter') runQuery()">
-          <div class="ab-run" id="ab-run-btn" onclick="runQuery()">▶ Run both</div>
+          <input class="ab-input" id="ab-query-input" placeholder="Enter your question…" onkeydown="if(event.key==='Enter') runQuery()">
+          <button class="ab-run" id="ab-run-btn" onclick="runQuery()">▶ Run both</button>
         </div>
         <div class="ab-cols">
+
+          <!-- ── Model A ─────────────────────────────────────────── -->
           <div class="ab-col ab-col-a">
-            <div class="ab-col-label">Model A · KVForge LoRA<span class="ab-badge" id="ab-badge-a">0.81 s · Phase 3</span></div>
-            <div class="ab-text" id="ab-text-a">Amazon Bedrock enforces default service quotas per AWS region. On-demand throughput is limited to 60 requests per minute with up to 100 concurrent invocations per model. You can request quota increases via the AWS Service Quotas console.</div>
-            <div class="ab-meta"><div class="ab-meta-item"><b>Latency</b> <span id="ab-latency-a">0.81 s</span></div><div class="ab-meta-item"><b>Source</b> <span id="ab-source-a">parametric weights</span></div><div class="ab-meta-item"><b>Confidence</b> —</div></div>
-            <div style="margin-top:8px"><button id="verdict-btn-a" onclick="verdict('a')" class="verdict-btn verdict-btn-a" style="opacity:0.3;pointer-events:none">▲ Prefer A</button></div>
+            <div class="ab-col-label">
+              Model A · KVForge RAG + GPU LLM
+              <span style="display:flex;align-items:center;gap:6px">
+                <span class="ab-badge" id="ab-badge-a">—</span>
+                <button class="ab-settings-toggle" onclick="toggleSettings('a')">⚙ Settings</button>
+              </span>
+            </div>
+            <!-- Phase indicator row — updates before and after each query -->
+            <div class="ab-phase-row">
+              <span class="ab-phase-label">Inference via</span>
+              <span class="ab-phase-badge ab-phase-1" id="ab-phase-badge-a">Phase 1 — Text RAG</span>
+              <span class="ab-phase-path" id="ab-phase-path-a"></span>
+            </div>
+            <div class="ab-settings" id="ab-settings-a">
+              <div class="ab-settings-grid">
+                <div class="ab-settings-field full">
+                  <label>vLLM Endpoint URL</label>
+                  <input type="text" id="a-endpoint" placeholder="http://host:8090/v1">
+                </div>
+                <div class="ab-settings-field">
+                  <label>Model name</label>
+                  <input type="text" id="a-model" placeholder="kvforge-local" value="kvforge-local">
+                </div>
+                <div class="ab-settings-field">
+                  <label>Top-K chunks retrieved</label>
+                  <input type="number" id="a-top-k" value="5" min="1" max="20" step="1">
+                </div>
+                <div class="ab-settings-field">
+                  <label>Temperature <span style="font-weight:400;text-transform:none">(recommended: 0.1)</span></label>
+                  <input type="number" id="a-temperature" value="0.1" min="0" max="2" step="0.05">
+                </div>
+                <div class="ab-settings-field">
+                  <label>Max tokens <span style="font-weight:400;text-transform:none">(recommended: 512)</span></label>
+                  <input type="number" id="a-max-tokens" value="512" min="64" max="4096" step="64">
+                </div>
+                <div class="ab-settings-field full">
+                  <label>System prompt</label>
+                  <textarea id="a-system-prompt" rows="2">You are a precise assistant. Answer the question using ONLY the provided context passages. Cite passages by number e.g. [1]. If the context lacks sufficient information, say so.</textarea>
+                </div>
+              </div>
+            </div>
+            <div class="ab-text" id="ab-text-a" style="color:var(--text-subtle)">Run a query to see results</div>
+            <div class="ab-meta">
+              <div class="ab-meta-item"><b>Chunks</b> <span id="ab-chunks-a" class="ab-chunks-link" onclick="showChunksPopup('a')" title="Click to view retrieved chunks" style="cursor:pointer;text-decoration:underline dotted;">—</span></div>
+              <div class="ab-meta-item"><b>Retrieval</b> <span id="ab-retrieval-a">—</span></div>
+              <div class="ab-meta-item"><b>Inference</b> <span id="ab-inference-a">—</span></div>
+              <div class="ab-meta-item"><b>Total</b> <span id="ab-latency-a">—</span></div>
+              <div class="ab-meta-item"><b>Source</b> <span id="ab-source-a">—</span></div>
+            </div>
+            <div style="margin-top:10px"><button id="verdict-btn-a" onclick="verdict('a')" class="verdict-btn verdict-btn-a" style="opacity:0.3;pointer-events:none">▲ Prefer A</button></div>
           </div>
+
+          <!-- ── Model B ─────────────────────────────────────────── -->
           <div class="ab-col ab-col-b">
-            <div class="ab-col-label">Model B · Haiku 4.5<span class="ab-badge" id="ab-badge-b">1.24 s · API</span></div>
-            <div class="ab-text" id="ab-text-b">Amazon Bedrock quota limits vary by model and AWS region. Default limits include restrictions on requests per minute and tokens per minute per foundation model. View or request increases via Service Quotas in the AWS Management Console.</div>
-            <div class="ab-meta"><div class="ab-meta-item"><b>Latency</b> <span id="ab-latency-b">1.24 s</span></div><div class="ab-meta-item"><b>Source</b> <span id="ab-source-b">API call</span></div><div class="ab-meta-item"><b>Cost</b> —</div></div>
-            <div style="margin-top:8px"><button id="verdict-btn-b" onclick="verdict('b')" class="verdict-btn verdict-btn-b" style="opacity:0.3;pointer-events:none">▲ Prefer B</button></div>
+            <div class="ab-col-label">
+              Model B · Cloud LLM
+              <span style="display:flex;align-items:center;gap:6px">
+                <span class="ab-badge" id="ab-badge-b">—</span>
+                <button class="ab-settings-toggle" onclick="toggleSettings('b')">⚙ Settings</button>
+              </span>
+            </div>
+            <div class="ab-settings" id="ab-settings-b">
+              <div class="ab-settings-grid">
+                <div class="ab-settings-field">
+                  <label>Provider</label>
+                  <select id="b-provider" onchange="onProviderChange()">
+                    <option value="anthropic">Anthropic</option>
+                    <option value="openai">OpenAI</option>
+                    <option value="gemini">Gemini</option>
+                  </select>
+                </div>
+                <div class="ab-settings-field">
+                  <label>Model</label>
+                  <input type="text" id="b-model" value="claude-haiku-4-5-20251001">
+                </div>
+                <div class="ab-settings-field full">
+                  <label>API Key <span style="font-weight:400;text-transform:none">(leave blank to use Studio setting)</span></label>
+                  <input type="password" id="b-api-key" placeholder="sk-…  (optional)">
+                </div>
+                <div class="ab-settings-field">
+                  <label>Top-K chunks retrieved</label>
+                  <input type="number" id="b-top-k" value="5" min="1" max="20" step="1">
+                </div>
+                <div class="ab-settings-field">
+                  <label>Temperature <span style="font-weight:400;text-transform:none">(recommended: 0.2)</span></label>
+                  <input type="number" id="b-temperature" value="0.2" min="0" max="2" step="0.05">
+                </div>
+                <div class="ab-settings-field">
+                  <label>Max tokens <span style="font-weight:400;text-transform:none">(recommended: 1024)</span></label>
+                  <input type="number" id="b-max-tokens" value="1024" min="64" max="4096" step="64">
+                </div>
+                <div class="ab-settings-field full">
+                  <label>System prompt</label>
+                  <textarea id="b-system-prompt" rows="2">You are a precise assistant. Answer the question using ONLY the provided context passages. Cite passages by number e.g. [1]. If the context lacks sufficient information, say so.</textarea>
+                </div>
+              </div>
+            </div>
+            <div class="ab-text" id="ab-text-b" style="color:var(--text-subtle)">Run a query to see results</div>
+            <div class="ab-meta">
+              <div class="ab-meta-item"><b>Chunks</b> <span id="ab-chunks-b" class="ab-chunks-link" onclick="showChunksPopup('b')" title="Click to view retrieved chunks" style="cursor:pointer;text-decoration:underline dotted;">—</span></div>
+              <div class="ab-meta-item"><b>Retrieval</b> <span id="ab-retrieval-b">—</span></div>
+              <div class="ab-meta-item"><b>Inference</b> <span id="ab-inference-b">—</span></div>
+              <div class="ab-meta-item"><b>Total</b> <span id="ab-latency-b">—</span></div>
+              <div class="ab-meta-item"><b>Source</b> <span id="ab-source-b">—</span></div>
+              <div class="ab-meta-item"><b>Cost</b> <span id="ab-cost-b">—</span></div>
+            </div>
+            <div style="margin-top:10px"><button id="verdict-btn-b" onclick="verdict('b')" class="verdict-btn verdict-btn-b" style="opacity:0.3;pointer-events:none">▲ Prefer B</button></div>
+          </div>
+
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text-subtle)">
+          Curation: <span id="curate-count">—</span> / <span id="curate-threshold">—</span> pairs curated
+          <span id="curate-at-threshold" style="display:none;color:var(--success);margin-left:8px;font-weight:600">✓ threshold reached</span>
+        </div>
+      </div>
+
+      <!-- Pipeline Logs -->
+      <div class="logs-panel" id="logs-panel">
+        <div class="logs-header">
+          <div class="logs-status-dot idle" id="logs-dot"></div>
+          <div class="logs-title">Pipeline Logs</div>
+          <span class="logs-step-badge" id="logs-badge" style="display:none"></span>
+          <div class="logs-actions">
+            <button class="logs-btn" onclick="_logsCleared=false; refreshLogs()">⟳ Refresh</button>
+            <button class="logs-btn" id="copy-logs-btn" onclick="copyLogs()">⎘ Copy</button>
+            <button class="logs-btn" onclick="clearLogsDisplay()">✕ Clear</button>
+            <button class="logs-btn danger" id="stop-job-btn" style="display:none" onclick="stopJob()">■ Stop</button>
           </div>
         </div>
-        <div style="margin-top:8px;font-size:8px;color:#374151">Curation: <span id="curate-count">—</span> / <span id="curate-threshold">—</span> pairs curated <span id="curate-at-threshold" style="display:none;color:#4ec9b0;margin-left:6px">✓ threshold reached</span></div>
+        <div class="logs-body" id="logs-body">
+          <div class="logs-empty" id="logs-empty">
+            <span style="font-size:24px">📋</span>
+            <span>No pipeline logs yet</span>
+            <span>Start indexing or training from the Actions menu to see logs here</span>
+          </div>
+        </div>
+        <div class="logs-footer">
+          <span class="logs-footer-info" id="logs-footer-info">Idle — no active job</span>
+          <label class="autoscroll-toggle">
+            <input type="checkbox" id="autoscroll-cb" checked> Auto-scroll
+          </label>
+        </div>
       </div>
-    </div>
-  </div>
 
-  <div class="statusbar">
-    <div class="sb-item"><div class="sb-dot sb-green"></div><span class="sb-label">Qdrant</span><span class="sb-val">online · 6333</span></div>
-    <div class="sb-item"><div class="sb-dot sb-blue"></div><span class="sb-label">vLLM</span><span class="sb-val">4 workers · 8091–8094</span></div>
-    <div class="sb-item"><div class="sb-dot sb-green"></div><span class="sb-label">GPU 0</span><span class="sb-val">1.2 / 22 GB</span></div>
-    <div class="sb-item"><div class="sb-dot sb-green"></div><span class="sb-label">GPU 1</span><span class="sb-val">19.4 / 22 GB</span></div>
-    <div class="sb-item"><div class="sb-dot sb-amber"></div><span class="sb-label">GPU 3</span><span class="sb-val">18.9 / 22 GB</span></div>
-    <div class="sb-item"><div class="sb-dot sb-green"></div><span class="sb-label">LoRA</span><span class="sb-val">v3 active</span></div>
-    <div class="sb-actions">
-      <div class="sb-btn">↑ Re-train</div>
-      <div class="sb-btn">🎯 PRS eval</div>
-      <div class="sb-btn primary">⟳ Refresh</div>
+      <!-- Sync history -->
+      <details class="sync-section" id="sync-history-panel">
+        <summary>📋 Sync History</summary>
+        <div class="sync-table-wrap">
+          <table class="sync-table">
+            <thead>
+              <tr>
+                <th>Started</th><th>Checked</th><th>Changed</th>
+                <th>Added</th><th>Superseded</th><th>PII</th><th>Errors</th>
+              </tr>
+            </thead>
+            <tbody id="sync-history-rows"></tbody>
+          </table>
+        </div>
+      </details>
+
+    </div><!-- /main-inner -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- GPU Monitor Overlay -->
+<div class="gpu-overlay" id="gpu-overlay">
+  <div class="gpu-backdrop" onclick="closeGpuOverlay()"></div>
+  <div class="gpu-panel">
+    <div class="gpu-panel-header">
+      <span class="gpu-panel-title">nvidia-smi · GPU Monitor</span>
+      <span class="gpu-panel-host" id="gpu-host"></span>
+      <span class="gpu-refresh-badge" id="gpu-refresh-badge">↻ live</span>
+      <button class="gpu-close" onclick="closeGpuOverlay()">✕</button>
+    </div>
+    <div class="gpu-table-panel" id="gpu-table">
+      <div style="padding:16px;font-size:12px;color:var(--text-subtle);text-align:center">Loading GPU data…</div>
+    </div>
+    <div style="padding:8px 12px;border-top:1px solid var(--border);background:var(--bg-sunken);display:flex;align-items:center;gap:8px;">
+      <label style="font-size:11px;color:var(--text-secondary);flex-shrink:0">Run steps on:</label>
+      <select id="gpu-profile-select" onchange="onGpuProfileChange(this)"
+        style="flex:1;font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;">
+        <option value="">Local GPU</option>
+      </select>
+    </div>
+    <div class="gpu-footer-panel">
+      <span class="gpu-footer-item">Total VRAM: <span id="total-vram">—</span></span>
+      <span class="gpu-footer-item">Avg Util: <span id="avg-util">—</span></span>
+      <span class="gpu-footer-item">Max Temp: <span id="max-temp">—</span></span>
+      <span class="gpu-footer-item" style="margin-left:auto">Refreshes every 3s · click row for processes</span>
     </div>
   </div>
 </div>
 
-<script>
-// Module-level state for A/B panel
-let lastQuery = '', lastResponseA = '', lastResponseB = '';
+<!-- Chunks popup modal -->
+<div id="chunks-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;">
+  <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;width:620px;max-width:96vw;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--text-primary)" id="chunks-modal-title">Retrieved Chunks</div>
+        <div style="font-size:11px;color:var(--text-subtle);margin-top:2px" id="chunks-modal-sub"></div>
+      </div>
+      <button onclick="closeChunksModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-subtle);padding:4px 8px;">✕</button>
+    </div>
+    <div id="chunks-modal-body" style="overflow-y:auto;padding:14px 18px;flex:1;"></div>
+    <div style="padding:10px 18px;border-top:1px solid var(--border);font-size:11px;color:var(--text-subtle);">
+      These are the document passages retrieved by the vector database for this query. Higher-ranked chunks contributed more to the answer.
+    </div>
+  </div>
+</div>
 
-// PRS data points with version, date, and training details
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let lastQuery = '', lastResponseA = '', lastResponseB = '';
+const PRS_POINTS = [];
+
+// ── Chunks popup ─────────────────────────────────────────────────────────────
+let _lastChunks = {a: [], b: []};
+
+function showChunksPopup(side) {
+  const chunks = _lastChunks[side];
+  const modal = document.getElementById('chunks-modal');
+  const title = document.getElementById('chunks-modal-title');
+  const sub   = document.getElementById('chunks-modal-sub');
+  const body  = document.getElementById('chunks-modal-body');
+  title.textContent = `Retrieved Chunks — Model ${side.toUpperCase()}`;
+  if (!chunks || !chunks.length) {
+    sub.textContent = 'No chunk data available — run a query first.';
+    body.innerHTML = '<div style="padding:20px;color:var(--text-subtle);font-size:12px;text-align:center">No chunks to display. Run a query to see retrieved passages.</div>';
+    modal.style.display = 'flex';
+    return;
+  }
+  sub.textContent = `${chunks.length} chunk${chunks.length!==1?'s':''} retrieved for the last query`;
+  body.innerHTML = chunks.map((c, i) => {
+    const score  = c.score != null ? `<span style="font-size:10px;font-weight:700;background:#E3FCEF;color:#006644;padding:2px 7px;border-radius:3px;margin-left:6px">score ${c.score.toFixed(3)}</span>` : '';
+    const source = c.source || c.metadata?.source || c.metadata?.file_name || '';
+    const srcHtml = source ? `<div style="font-size:10px;color:var(--text-subtle);margin-bottom:6px;font-family:monospace">${_esc(source)}</div>` : '';
+    const text = c.text || c.content || c.payload?.text || '(no text)';
+    return `<div style="border:1px solid var(--border);border-radius:7px;padding:12px 14px;margin-bottom:10px;background:var(--bg-page)">
+      <div style="display:flex;align-items:center;margin-bottom:6px">
+        <span style="font-size:10px;font-weight:700;color:var(--text-subtle);text-transform:uppercase;letter-spacing:.06em">Chunk ${i+1}</span>
+        ${score}
+      </div>
+      ${srcHtml}
+      <div style="font-size:12px;color:var(--text-primary);line-height:1.65;white-space:pre-wrap">${_esc(text)}</div>
+    </div>`;
+  }).join('');
+  modal.style.display = 'flex';
+}
+function closeChunksModal() {
+  document.getElementById('chunks-modal').style.display = 'none';
+}
+document.getElementById('chunks-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('chunks-modal')) closeChunksModal();
+});
+function _esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Phase badge helper ─────────────────────────────────────────────────────────
+const _PHASE_BADGE_INFO = {
+  'phase1-rag':        { cls: 'ab-phase-1', label: 'Phase 1 — Text RAG',     path: 'retrieved chunks → LLM context' },
+  'phase2-kv':         { cls: 'ab-phase-2', label: 'Phase 2 — KV Injection',  path: 'cached KV tensors → skip re-encoding' },
+  'phase3-parametric': { cls: 'ab-phase-3', label: 'Phase 3 — Parametric',    path: 'answered from model weights' },
+  'phase2-kv-fallback':{ cls: 'ab-phase-fallback', label: 'Phase 2 (fallback)', path: 'Phase 3 confidence gate not met → KV injection used' },
+};
+
+function _setPhaseA(phaseKey) {
+  const badge = document.getElementById('ab-phase-badge-a');
+  const path  = document.getElementById('ab-phase-path-a');
+  if (!badge) return;
+  const info = _PHASE_BADGE_INFO[phaseKey] || _PHASE_BADGE_INFO['phase1-rag'];
+  badge.className = `ab-phase-badge ${info.cls}`;
+  badge.textContent = info.label;
+  if (path) path.textContent = info.path;
+}
+
+// ── Phase detail panel ──────────────────────────────────────────────────────
+const _PHASE_DETAIL = {
+  1: {
+    icon: '📄', heading: 'Phase 1 — Text RAG: How it works',
+    desc: 'Your documents are split into chunks, embedded as vectors, and stored in a vector database. Every query retrieves the most relevant chunks and passes them as reading context to the LLM to generate an answer.',
+    latency: [
+      { label: 'Phase 1', s: 6.0, max: 6.0, current: true },
+    ],
+    accuracy: { label: 'Baseline', cls: 'acc-base', note: 'Answer quality depends on retrieval precision — the better the match, the better the answer.' },
+    bestFor: ['Getting started', 'Exploratory / diverse questions', 'Frequently-changing content', 'No GPU available'],
+  },
+  2: {
+    icon: '⚡', heading: 'Phase 2 — KV Injection: What changes',
+    desc: 'KV (key-value attention) tensors are pre-computed for every document chunk using your GPU and cached in the vector store. At query time the LLM reuses these tensors directly — bypassing expensive text re-encoding entirely. The same chunks are retrieved; they just process 4× faster.',
+    latency: [
+      { label: 'Phase 1', s: 6.0, max: 6.0 },
+      { label: 'Phase 2', s: 1.5, max: 6.0, current: true, gain: '4× faster' },
+    ],
+    accuracy: { label: 'Unchanged', cls: 'acc-same', note: 'Same chunks are retrieved and the same information reaches the model — only the encoding path is different.' },
+    bestFor: ['Production with latency SLAs', 'High-traffic / interactive UX', 'Real-time customer-facing apps'],
+  },
+  3: {
+    icon: '🧠', heading: 'Phase 3 — Parametric: What changes',
+    desc: 'LoRA fine-tuning trains the model on FAQs generated from your corpus. For questions it\'s confident about (PRS ≥ 0.75), the model answers directly from its weights — no retrieval step at all. For uncertain or novel queries it automatically falls back to Phase 2 (KV injection), so accuracy never degrades.',
+    latency: [
+      { label: 'Phase 1', s: 6.0, max: 6.0 },
+      { label: 'Phase 2', s: 1.5, max: 6.0 },
+      { label: 'Phase 3', s: 0.8, max: 6.0, current: true, gain: '7× total' },
+    ],
+    accuracy: { label: 'Improves', cls: 'acc-up', note: 'For repetitive, corpus-specific queries the model answers with higher fidelity. Novel queries fall back to Phase 2 — no accuracy loss on unknowns.' },
+    bestFor: ['Customer support', 'Product / policy Q&A', 'Compliance documentation', 'Repetitive query patterns'],
+  },
+};
+
+let _openPhase = null;
+
+function togglePhaseDetail(phase) {
+  const panel = document.getElementById('phase-detail-panel');
+  const inner = document.getElementById('pdp-inner');
+  [1,2,3].forEach(n => document.getElementById(`phase${n}-card`).classList.remove('selected'));
+
+  if (_openPhase === phase) {
+    // Close
+    panel.classList.remove('open');
+    _openPhase = null;
+    return;
+  }
+  _openPhase = phase;
+  document.getElementById(`phase${phase}-card`).classList.add('selected');
+
+  const d = _PHASE_DETAIL[phase];
+  const latBars = d.latency.map(r => {
+    const pct = ((r.s / r.max) * 100).toFixed(1);
+    const color = r.current ? 'var(--accent)' : 'var(--border)';
+    const gainHtml = r.gain
+      ? `<span class="pdp-lat-gain">${r.gain}</span>`
+      : '';
+    const bold = r.current ? 'font-weight:700;color:var(--text-primary)' : '';
+    return `<div class="pdp-lat-row">
+      <span class="pdp-lat-label" style="${bold}">${r.label}</span>
+      <div class="pdp-lat-bar-wrap"><div class="pdp-lat-fill" style="width:${pct}%;background:${color}"></div></div>
+      <span class="pdp-lat-val" style="${bold}">${r.s}s</span>
+      ${gainHtml}
+    </div>`;
+  }).join('');
+
+  const bestForHtml = d.bestFor.map(b => `<span class="pdp-bf-chip">${b}</span>`).join('');
+
+  inner.innerHTML = `
+    <div class="pdp-left">
+      <div class="pdp-heading"><span class="pdp-heading-icon">${d.icon}</span>${d.heading}</div>
+      <div class="pdp-desc">${d.desc}</div>
+      <div class="pdp-section-label">Accuracy impact</div>
+      <div style="margin-bottom:10px">
+        <div class="pdp-acc-row">
+          <span class="pdp-acc-label">vs baseline</span>
+          <span class="pdp-acc-pill ${d.accuracy.cls}">${d.accuracy.label}</span>
+        </div>
+        <div class="pdp-accuracy">${d.accuracy.note}</div>
+      </div>
+      <div class="pdp-section-label">Best for</div>
+      <div class="pdp-bestfor">${bestForHtml}</div>
+      <span class="pdp-close" onclick="togglePhaseDetail(${phase})">▲ collapse</span>
+    </div>
+    <div class="pdp-right">
+      <div class="pdp-lat-title">Query latency comparison</div>
+      ${latBars}
+      <div style="margin-top:10px;font-size:10px;color:var(--text-subtle);line-height:1.5">
+        Latency figures are estimates on an A10G GPU (24 GB VRAM) with a 3B-parameter model and ~512-token chunks.
+      </div>
+    </div>`;
+
+  panel.classList.add('open');
+  // Scroll panel into view
+  setTimeout(() => panel.scrollIntoView({behavior:'smooth', block:'nearest'}), 50);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
 async function loadUCState() {
   try {
-    const resp = await fetch(`/studio/api/uc/${UC_ID}/config`);
-    if (!resp.ok) return;
-    const cfg = await resp.json();
-    document.getElementById('uc-title').textContent = cfg.name || UC_ID;
-  } catch (e) {
-    document.getElementById('uc-title').textContent = UC_ID;
-  }
-
-  try {
-    const resp = await fetch(`/studio/api/registry`);
-    if (!resp.ok) return;
-    const reg = await resp.json();
-    const uc = (reg.use_cases || reg).find(u => u.id === UC_ID);
+    const r = await fetch(`/studio/api/registry`, {credentials:'include'});
+    const reg = await r.json();
+    const uc = (reg.use_cases || []).find(u => u.id === UC_ID);
     if (uc) {
-      if (uc.phase) {
-        const phases = { 1: 'Phase 1', 2: 'Phase 2', 3: 'Phase 3' };
-        const phaseEl = document.querySelector('.pill-p3');
-        if (phaseEl) phaseEl.textContent = `● ${phases[uc.phase] || 'Phase ' + uc.phase}`;
-      }
-      if (uc.prs != null) {
-        const prsEl = document.querySelector('.pill-prs');
-        if (prsEl) prsEl.textContent = `PRS ${uc.prs.toFixed(4)}`;
-      }
-    }
-  } catch (e) { /* non-fatal */ }
+      const name = uc.display_name || UC_ID;
+      document.getElementById('topbar-uc-name').textContent = name;
+      document.getElementById('uc-page-title').textContent = name;
+      document.title = name + ' — KVForge Studio';
 
+      const phase = uc.phase || 1;
+      const hasIndex = !!uc.has_index;
+      const loraVer = uc.lora_version || 0;
+      const hasPRS = uc.prs != null;
+      const hasFaqs = !!uc.has_faqs;
+
+      const phaseLabels = ['', 'Text RAG', 'KV Injection', 'Parametric'];
+      document.getElementById('uc-page-sub').textContent =
+        `Phase ${phase} · ${phaseLabels[phase] || ''}`;
+
+      // ── Phase cards (informative) ─────────────────────────────────────────
+      const pc1 = document.getElementById('phase1-card');
+      const pc2 = document.getElementById('phase2-card');
+      const pc3 = document.getElementById('phase3-card');
+
+      // Phase 1 status
+      if (hasIndex) {
+        document.getElementById('pc1-status-text').textContent = 'Indexed and ready';
+        document.getElementById('pc1-metric').textContent = 'Phase 1 ✓';
+      }
+      if (phase === 1 && hasIndex) {
+        pc1.classList.add('active-phase');
+        document.getElementById('pc1-active-badge').style.display = '';
+        document.getElementById('pc1-status-text').textContent = 'Currently active';
+        document.getElementById('pc1-metric').textContent = 'LIVE';
+      }
+
+      // Phase 2 status
+      if (!hasIndex) {
+        pc2.classList.add('locked');
+        document.getElementById('pc2-status-text').textContent = 'Complete Phase 1 first';
+      } else if (phase < 2) {
+        document.getElementById('pc2-status-text').textContent = 'Run KV Indexer to activate';
+      } else {
+        document.getElementById('pc2-status-text').textContent = 'KV tensors computed';
+        document.getElementById('pc2-metric').textContent = 'Phase 2 ✓';
+        if (phase === 2) {
+          pc2.classList.add('active-phase');
+          document.getElementById('pc2-active-badge').style.display = '';
+          document.getElementById('pc2-status-text').textContent = 'Currently active';
+          document.getElementById('pc2-metric').textContent = 'LIVE';
+        }
+      }
+
+      // Phase 3 status
+      if (!hasIndex || phase < 2) {
+        pc3.classList.add('locked');
+        document.getElementById('pc3-status-text').textContent =
+          !hasIndex ? 'Complete Phase 1 first' : 'Reach Phase 2 first';
+      } else if (loraVer === 0) {
+        document.getElementById('pc3-status-text').textContent = 'Train LoRA to unlock';
+      } else if (!hasPRS || uc.prs < 0.75) {
+        const prsStr = hasPRS ? ` (current: ${uc.prs.toFixed(3)})` : '';
+        document.getElementById('pc3-status-text').textContent = `PRS score needed ≥ 0.75${prsStr}`;
+        document.getElementById('pc3-metric').textContent = hasPRS ? uc.prs.toFixed(3) : '—';
+      } else {
+        document.getElementById('pc3-status-text').textContent = 'Model answers from weights';
+        document.getElementById('pc3-metric').textContent = `PRS ${uc.prs.toFixed(3)}`;
+        if (phase === 3) {
+          pc3.classList.add('active-phase');
+          document.getElementById('pc3-active-badge').style.display = '';
+          document.getElementById('pc3-status-text').textContent = 'Currently active';
+        }
+      }
+
+      // ── A/B phase badge — set expected phase before any query runs ──────────
+      {
+        const expectedKey = phase === 3 ? 'phase3-parametric' : phase === 2 ? 'phase2-kv' : 'phase1-rag';
+        _setPhaseA(expectedKey);
+      }
+
+      // ── Pipeline progress panel ───────────────────────────────────────────
+      // Steps: Index → KV Tensors → FAQs → Train LoRA → Evaluate (PRS)
+      function _setStep(id, status, label) {
+        const el = document.getElementById(id);
+        const dot = document.getElementById(id + '-dot');
+        const name = document.getElementById(id + '-name');
+        if (!el) return;
+        ['s-done','s-active','s-pending','s-locked'].forEach(c => {
+          el.classList.remove(c); dot.classList.remove(c); name.classList.remove(c);
+        });
+        el.classList.add(status); dot.classList.add(status); name.classList.add(status);
+        if (label) name.textContent = label;
+        if (status === 's-done') dot.textContent = '✓';
+        if (status === 's-locked') dot.textContent = '🔒';
+      }
+
+      const kvDone   = phase >= 2;
+      const faqsDone = hasFaqs && phase >= 2;
+      const loraDone = loraVer > 0;
+      const prsDone  = hasPRS && uc.prs >= 0.75;
+
+      _setStep('ps-index', hasIndex ? 's-done' : 's-active', 'Index');
+      _setStep('ps-kv',    kvDone   ? 's-done' : hasIndex ? 's-active' : 's-locked', 'KV Tensors');
+      _setStep('ps-faqs',  faqsDone ? 's-done' : kvDone ? 's-active' : 's-locked', 'FAQs');
+      _setStep('ps-lora',  loraDone ? 's-done' : faqsDone ? 's-active' : 's-locked', 'Train LoRA');
+      _setStep('ps-prs',   prsDone  ? 's-done' : loraDone ? 's-active' : 's-locked', 'Evaluate');
+
+      // Determine the current step's action content
+      const actionArea  = document.getElementById('pp-action-area');
+      const actionLabel = document.getElementById('pp-action-label');
+      const actionDesc  = document.getElementById('pp-action-desc');
+      const actionMeta  = document.getElementById('pp-action-meta');
+      const ctaBtn      = document.getElementById('pp-cta-btn');
+      const reindexBtn  = document.getElementById('pp-reindex-btn');
+      actionArea.style.display = '';
+
+      if (!hasIndex) {
+        actionLabel.textContent = 'Step 1 — Index your data source';
+        actionDesc.textContent  = 'Embed your documents and store them in the vector database to enable text-based retrieval (Phase 1).';
+        ctaBtn.textContent      = '▶ Index Now';
+        ctaBtn.style.display    = '';
+        ctaBtn.onclick          = () => runPipelineStep('index');
+        reindexBtn.style.display = 'none';
+        actionMeta.style.display = 'none';
+      } else if (!kvDone) {
+        actionLabel.textContent  = 'Step 2 — Compute KV Tensors';
+        actionDesc.textContent   = 'Run the KV Indexer on your GPU to pre-compute key-value tensors for every chunk. This unlocks Phase 2 (KV injection) — up to 4× faster inference.';
+        actionMeta.textContent   = 'Requires a GPU resource provider (local or remote SSH).';
+        actionMeta.style.display = '';
+        ctaBtn.textContent       = '▶ Run KV Indexer';
+        ctaBtn.style.display     = '';
+        ctaBtn.onclick           = () => runPipelineStep('recompute');
+        reindexBtn.style.display = '';
+      } else if (!faqsDone) {
+        actionLabel.textContent  = 'Step 3 — Generate FAQs';
+        actionDesc.textContent   = 'Use a cloud LLM to generate question-answer pairs from your corpus. FAQs are required for LoRA fine-tuning.';
+        actionMeta.style.display = 'none';
+        ctaBtn.textContent       = '▶ Generate FAQs';
+        ctaBtn.style.display     = '';
+        ctaBtn.onclick           = () => runPipelineStep('faq-gen-cloud');
+        reindexBtn.style.display = '';
+      } else if (!loraDone) {
+        actionLabel.textContent  = 'Step 4 — Train LoRA';
+        actionDesc.textContent   = 'Fine-tune the model on your corpus using the generated FAQs and a tier-weighted replay buffer.';
+        actionMeta.style.display = 'none';
+        ctaBtn.textContent       = '▶ Train LoRA';
+        ctaBtn.style.display     = '';
+        ctaBtn.onclick           = () => runPipelineStep('train');
+        reindexBtn.style.display = '';
+      } else if (!prsDone) {
+        const prsStr = hasPRS ? ` (current: ${uc.prs.toFixed(3)})` : '';
+        actionLabel.textContent  = 'Step 5 — Evaluate (PRS)';
+        actionDesc.textContent   = `Run Parametric Readiness Score evaluation. A score ≥ 0.75 unlocks Phase 3 — the model will answer directly from its weights when confident.${prsStr}`;
+        actionMeta.style.display = 'none';
+        ctaBtn.textContent       = hasPRS ? '▶ Re-run PRS Eval' : '▶ Run PRS Eval';
+        ctaBtn.style.display     = '';
+        ctaBtn.onclick           = () => runPipelineStep('prs-eval');
+        reindexBtn.style.display = '';
+      } else {
+        // Phase 3 active — all done
+        actionLabel.textContent  = 'Phase 3 active — pipeline complete';
+        actionDesc.textContent   = `PRS ${uc.prs != null ? uc.prs.toFixed(3) : '—'} — the model answers from weights when confident. You can re-train LoRA at any time to improve accuracy.`;
+        actionMeta.style.display = 'none';
+        ctaBtn.style.display     = 'none';
+        reindexBtn.style.display = '';
+      }
+
+      // ── PRS card value (Phase 3 card) ──────────────────────────────────
+      if (hasPRS && !pc3.classList.contains('locked')) {
+        document.getElementById('pc3-val').textContent = uc.prs.toFixed(3);
+        document.getElementById('pc3-sub').textContent = uc.prs >= 0.75 ? 'Phase 3 active' : 'Phase 3 not yet unlocked';
+        if (uc.prs >= 0.75) {
+          const badge = document.createElement('div');
+          badge.className = 'pc-active-badge';
+          badge.textContent = '● ACTIVE';
+          pc3.appendChild(badge);
+        }
+      }
+
+      // ── Show advanced panels (PRS chart + latency + LoRA history) ────────
+      // Show only once LoRA has been trained at least once
+      if (loraVer > 0 || hasPRS) {
+        document.getElementById('advanced-panels').style.display = '';
+
+        // Expand PRS content with real widget if we have a score
+        if (hasPRS) {
+          document.getElementById('prs-content').innerHTML = `
+            <div class="prs-big" id="prs-big">${uc.prs.toFixed(4)}</div>
+            <div class="prs-sub" id="prs-sub">${uc.prs >= 0.75 ? 'Threshold 0.75 exceeded · Phase 3 eligible' : `Phase 3 at 0.75 · currently ${uc.prs.toFixed(4)}`}</div>
+            <div class="chart-wrap" id="chart-wrap">
+              <svg class="prs-chart" id="prs-svg" viewBox="0 0 280 130" preserveAspectRatio="none"></svg>
+              <div class="chart-tooltip" id="chart-tt">
+                <div class="tt-version" id="tt-version"></div>
+                <div class="tt-row"><span class="tt-key">PRS</span><span class="tt-val" id="tt-prs"></span></div>
+                <div class="tt-row"><span class="tt-key">Date</span><span class="tt-val" id="tt-date"></span></div>
+                <div class="tt-row"><span class="tt-key">Training</span><span class="tt-val" id="tt-train"></span></div>
+                <div class="tt-row"><span class="tt-key">Loss</span><span class="tt-val" id="tt-loss"></span></div>
+                <div class="tt-note" id="tt-note"></div>
+              </div>
+            </div>
+            <div class="prs-threshold-note">— <span>0.75</span> threshold for Phase 3 unlock</div>`;
+        } else {
+          document.getElementById('prs-content').innerHTML = `
+            <div class="prs-big" id="prs-big">—</div>
+            <div class="prs-sub" id="prs-sub">Not yet evaluated</div>
+            <div class="chart-wrap" id="chart-wrap">
+              <svg class="prs-chart" id="prs-svg" viewBox="0 0 280 130" preserveAspectRatio="none"></svg>
+              <div class="chart-tooltip" id="chart-tt">
+                <div class="tt-version" id="tt-version"></div>
+                <div class="tt-row"><span class="tt-key">PRS</span><span class="tt-val" id="tt-prs"></span></div>
+                <div class="tt-row"><span class="tt-key">Date</span><span class="tt-val" id="tt-date"></span></div>
+                <div class="tt-row"><span class="tt-key">Training</span><span class="tt-val" id="tt-train"></span></div>
+                <div class="tt-row"><span class="tt-key">Loss</span><span class="tt-val" id="tt-loss"></span></div>
+                <div class="tt-note" id="tt-note"></div>
+              </div>
+            </div>
+            <div class="prs-threshold-note">— <span>0.75</span> threshold for Phase 3 unlock</div>`;
+        }
+
+        // Latency: show Phase 2 row when phase >= 2, Phase 3 when phase >= 3
+        if (phase >= 2) document.getElementById('lat-p2-row').style.display = '';
+        if (phase >= 3) document.getElementById('lat-p3-row').style.display = '';
+      }
+
+      // ── A/B query panel: show once indexing is done ────────────────────
+      if (hasIndex) {
+        document.getElementById('ab-panel').style.display = '';
+        _applyABDefaults(uc);
+      }
+
+      // ── Sidebar pipeline steps ─────────────────────────────────────────
+      setPipelineStep('faq', hasFaqs, hasFaqs ? `${loraVer > 0 ? loraVer + ' runs' : 'done'}` : 'pending');
+      setPipelineStep('lora', loraVer > 0, loraVer > 0 ? `v${loraVer} trained` : 'pending');
+      setPipelineStep('prs', hasPRS, hasPRS ? `PRS ${uc.prs.toFixed(3)}` : 'pending');
+      document.getElementById('ps-meta-data').textContent = hasIndex ? 'indexed' : 'not indexed';
+    }
+  } catch(e) {
+    document.getElementById('topbar-uc-name').textContent = UC_ID;
+    document.getElementById('uc-page-title').textContent = UC_ID;
+  }
   loadCurationStatus();
 }
 
-loadUCState();
-
-const PRS_POINTS = [];  // populated by loadPRSHistory()
-
-async function loadPRSHistory() {
-  try {
-    const resp = await fetch(`/studio/api/uc/${UC_ID}/prs-history`);
-    if (!resp.ok) return;
-    const data = await resp.json();
-    PRS_POINTS.length = 0;
-    data.forEach(entry => PRS_POINTS.push({
-      version: entry.label || `LoRA v${entry.round}`,
-      date: entry.date || `Round ${entry.round}`,
-      prs: entry.prs,
-      train: entry.train || '—',
-      loss: entry.loss || '—',
-      note: entry.note || '',
-    }));
-    if (PRS_POINTS.length > 0) {
-      drawChart();
-      const latest = PRS_POINTS[PRS_POINTS.length - 1];
-      const bigEl = document.querySelector('.prs-big');
-      if (bigEl && latest.prs != null) bigEl.textContent = latest.prs.toFixed(4);
-    }
-  } catch (e) {
-    console.warn('PRS history load failed:', e);
+function setPipelineStep(key, done, meta) {
+  const icon = document.getElementById(`ps-icon-${key}`);
+  const text = document.getElementById(`ps-text-${key}`);
+  const metaEl = document.getElementById(`ps-meta-${key}`);
+  if (!icon) return;
+  if (done) {
+    icon.className = 'ps-icon ps-done'; icon.textContent = '✓';
+    text.className = 'ps-text done';
+  } else {
+    icon.className = 'ps-icon ps-pending'; icon.textContent = '·';
+    text.className = 'ps-text';
   }
+  if (metaEl && meta) metaEl.textContent = meta;
 }
 
-loadPRSHistory();
+// ── PRS Chart ──────────────────────────────────────────────────────────────
+async function loadPRSHistory() {
+  try {
+    const r = await fetch(`/studio/api/uc/${UC_ID}/prs-history`, {credentials:'include'});
+    if (!r.ok) return;
+    const data = await r.json();
+    PRS_POINTS.length = 0;
+    data.forEach(e => PRS_POINTS.push({
+      version: e.label || `LoRA v${e.round}`,
+      date: e.date || `Round ${e.round}`,
+      prs: e.prs,
+      train: e.train || '—',
+      loss: e.loss || '—',
+      note: e.note || '',
+    }));
+    if (PRS_POINTS.length > 0) {
+      // prs-svg only exists in DOM after loadUCState injected prs-content
+      if (document.getElementById('prs-svg')) drawChart();
+      const latest = PRS_POINTS[PRS_POINTS.length - 1];
+      const prsEl = document.getElementById('prs-big');
+      if (latest.prs != null && prsEl) prsEl.textContent = latest.prs.toFixed(4);
+      renderLoraTimeline();
+    }
+  } catch(e) { console.warn('PRS history:', e); }
+}
+
+function renderLoraTimeline() {
+  const el = document.getElementById('lora-timeline');
+  if (!el || PRS_POINTS.length === 0) return;
+  el.innerHTML = PRS_POINTS.map((p, i) => {
+    const isCur = i === PRS_POINTS.length - 1;
+    return `<div class="lora-item">
+      <div class="lora-dot ${isCur ? 'lora-cur' : 'lora-past'}">${p.version.replace('LoRA ','')}</div>
+      <div class="lora-meta">${p.date.split(' ').slice(0,2).join(' ')}</div>
+      <div class="lora-prs">${p.prs != null ? p.prs.toFixed(3) : '—'}</div>
+      ${isCur ? '<div class="lora-cur-label">● current</div>' : ''}
+    </div>`;
+  }).join('');
+}
 
 function drawChart() {
   if (PRS_POINTS.length === 0) return;
   const svg = document.getElementById('prs-svg');
-  const W = 280, H = 120;
-  const PAD = { top: 14, right: 20, bottom: 28, left: 28 };
+  if (!svg) return;
+  // Use CSS variable colors via JS (read from computed style)
+  const root = getComputedStyle(document.documentElement);
+  const lineClr = root.getPropertyValue('--chart-line').trim() || '#22A06B';
+  const gridClr = root.getPropertyValue('--chart-grid').trim() || '#DFE1E6';
+  const threshClr = root.getPropertyValue('--chart-threshold').trim() || '#FF991F';
+  const dotClr = lineClr;
+  const bgClr = root.getPropertyValue('--bg-surface').trim() || '#fff';
+
+  const W = 280, H = 130;
+  const PAD = { top: 14, right: 20, bottom: 28, left: 32 };
   const cW = W - PAD.left - PAD.right;
   const cH = H - PAD.top - PAD.bottom;
-
   const minPRS = 0.60, maxPRS = 1.0;
-  const xStep = cW / (PRS_POINTS.length - 1);
+  const xStep = PRS_POINTS.length > 1 ? cW / (PRS_POINTS.length - 1) : cW;
 
   function xOf(i) { return PAD.left + i * xStep; }
   function yOf(v) { return PAD.top + cH - ((v - minPRS) / (maxPRS - minPRS)) * cH; }
 
   let html = '';
-
-  // Grid lines
   [0.65, 0.70, 0.75, 0.80, 0.85, 0.90].forEach(v => {
     const y = yOf(v);
-    const isThreshold = v === 0.75;
+    const isThr = v === 0.75;
     html += `<line x1="${PAD.left}" y1="${y}" x2="${W - PAD.right}" y2="${y}"
-      stroke="${isThreshold ? '#fcd34d' : '#252525'}"
-      stroke-width="${isThreshold ? 1 : 0.5}"
-      stroke-dasharray="${isThreshold ? '4,3' : 'none'}"
-      opacity="${isThreshold ? 0.8 : 1}"/>`;
-    html += `<text x="${PAD.left - 3}" y="${y + 3}" text-anchor="end"
-      font-size="7" fill="${isThreshold ? '#fcd34d' : '#374151'}">${v.toFixed(2)}</text>`;
+      stroke="${isThr ? threshClr : gridClr}" stroke-width="${isThr ? 1 : 0.5}"
+      stroke-dasharray="${isThr ? '4,3' : ''}" opacity="${isThr ? 0.9 : 1}"/>`;
+    html += `<text x="${PAD.left-3}" y="${y+3}" text-anchor="end" font-size="7"
+      fill="${isThr ? threshClr : gridClr}">${v.toFixed(2)}</text>`;
   });
 
-  // Area fill under the line
-  const areaPoints = PRS_POINTS.map((p, i) => `${xOf(i)},${yOf(p.prs)}`).join(' ');
-  const areaPath = `M ${xOf(0)},${yOf(PRS_POINTS[0].prs)} ` +
-    PRS_POINTS.slice(1).map((p, i) => `L ${xOf(i+1)},${yOf(p.prs)}`).join(' ') +
-    ` L ${xOf(PRS_POINTS.length-1)},${H - PAD.bottom} L ${xOf(0)},${H - PAD.bottom} Z`;
-  html += `<defs>
-    <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#4ec9b0" stop-opacity="0.18"/>
-      <stop offset="100%" stop-color="#4ec9b0" stop-opacity="0.02"/>
-    </linearGradient>
-  </defs>`;
-  html += `<path d="${areaPath}" fill="url(#areaGrad)"/>`;
+  if (PRS_POINTS.length > 1) {
+    const areaPath = `M ${xOf(0)},${yOf(PRS_POINTS[0].prs)} ` +
+      PRS_POINTS.slice(1).map((p,i) => `L ${xOf(i+1)},${yOf(p.prs)}`).join(' ') +
+      ` L ${xOf(PRS_POINTS.length-1)},${H-PAD.bottom} L ${xOf(0)},${H-PAD.bottom} Z`;
+    html += `<defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${lineClr}" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="${lineClr}" stop-opacity="0.02"/>
+    </linearGradient></defs>`;
+    html += `<path d="${areaPath}" fill="url(#ag)"/>`;
+    const linePath = PRS_POINTS.map((p,i) => `${i===0?'M':'L'} ${xOf(i)},${yOf(p.prs)}`).join(' ');
+    html += `<path d="${linePath}" fill="none" stroke="${lineClr}" stroke-width="1.5" stroke-linejoin="round"/>`;
+  }
 
-  // Line
-  const linePath = PRS_POINTS.map((p, i) => `${i === 0 ? 'M' : 'L'} ${xOf(i)},${yOf(p.prs)}`).join(' ');
-  html += `<path d="${linePath}" fill="none" stroke="#4ec9b0" stroke-width="1.5" stroke-linejoin="round"/>`;
-
-  // X-axis labels
-  PRS_POINTS.forEach((p, i) => {
-    html += `<text x="${xOf(i)}" y="${H - PAD.bottom + 10}" text-anchor="middle"
-      font-size="7" fill="#374151">${p.version}</text>`;
-    html += `<text x="${xOf(i)}" y="${H - PAD.bottom + 18}" text-anchor="middle"
-      font-size="6.5" fill="#2d2d2d">${p.date.split(' ')[0]} ${p.date.split(' ')[1]}</text>`;
+  PRS_POINTS.forEach((p,i) => {
+    html += `<text x="${xOf(i)}" y="${H-PAD.bottom+10}" text-anchor="middle" font-size="7" fill="${gridClr}">${p.version}</text>`;
   });
 
-  // Dots (interactive — drawn last so they're on top)
-  PRS_POINTS.forEach((p, i) => {
-    const isLast = i === PRS_POINTS.length - 1;
-    html += `<circle
-      cx="${xOf(i)}" cy="${yOf(p.prs)}" r="${isLast ? 5 : 4}"
-      fill="${isLast ? '#4ec9b0' : '#1e1e1e'}"
-      stroke="${isLast ? '#4ec9b0' : '#9cdcfe'}"
-      stroke-width="${isLast ? 2 : 1.5}"
-      class="prs-dot"
-      data-idx="${i}"
-      style="cursor:pointer"
-    />`;
+  PRS_POINTS.forEach((p,i) => {
+    const isLast = i === PRS_POINTS.length-1;
+    html += `<circle cx="${xOf(i)}" cy="${yOf(p.prs)}" r="${isLast?5:4}"
+      fill="${isLast ? dotClr : bgClr}" stroke="${dotClr}"
+      stroke-width="${isLast?2:1.5}" class="prs-dot" data-idx="${i}" style="cursor:pointer"/>`;
     if (isLast) {
-      html += `<circle cx="${xOf(i)}" cy="${yOf(p.prs)}" r="8"
-        fill="none" stroke="#4ec9b0" stroke-width="1" opacity="0.35"
-        style="animation:pulse 2s infinite"/>`;
+      html += `<circle cx="${xOf(i)}" cy="${yOf(p.prs)}" r="9"
+        fill="none" stroke="${dotClr}" stroke-width="1" opacity="0.25"/>`;
     }
   });
 
   svg.innerHTML = html;
 
-  // Wire hover events
   const tt = document.getElementById('chart-tt');
   const wrap = document.getElementById('chart-wrap');
   svg.querySelectorAll('.prs-dot').forEach(dot => {
     dot.addEventListener('mouseenter', e => {
-      const idx = parseInt(dot.dataset.idx);
-      const p = PRS_POINTS[idx];
+      const p = PRS_POINTS[parseInt(dot.dataset.idx)];
       document.getElementById('tt-version').textContent = p.version;
-      document.getElementById('tt-prs').textContent = p.prs.toFixed(4);
+      document.getElementById('tt-prs').textContent = p.prs != null ? p.prs.toFixed(4) : '—';
       document.getElementById('tt-date').textContent = p.date;
       document.getElementById('tt-train').textContent = p.train;
       document.getElementById('tt-loss').textContent = p.loss;
       document.getElementById('tt-note').textContent = p.note;
-
-      const rect = wrap.getBoundingClientRect();
-      const dotRect = dot.getBoundingClientRect();
-      let left = dotRect.left - rect.left + 10;
-      let top = dotRect.top - rect.top - 10;
-      if (left + 170 > wrap.offsetWidth) left = dotRect.left - rect.left - 165;
-      tt.style.left = left + 'px';
-      tt.style.top = top + 'px';
+      const wr = wrap.getBoundingClientRect(), dr = dot.getBoundingClientRect();
+      let left = dr.left - wr.left + 10, top = dr.top - wr.top - 10;
+      if (left + 180 > wrap.offsetWidth) left = dr.left - wr.left - 175;
+      tt.style.left = left + 'px'; tt.style.top = top + 'px';
       tt.classList.add('visible');
-      dot.setAttribute('r', parseInt(dot.dataset.idx) === PRS_POINTS.length - 1 ? 7 : 5);
     });
-    dot.addEventListener('mouseleave', () => {
-      tt.classList.remove('visible');
-      dot.setAttribute('r', parseInt(dot.dataset.idx) === PRS_POINTS.length - 1 ? 5 : 4);
-    });
+    dot.addEventListener('mouseleave', () => tt.classList.remove('visible'));
   });
 }
 
-// ── A/B Query Panel ──
+// ── A/B panel ──────────────────────────────────────────────────────────────
+function toggleSettings(side) {
+  const el = document.getElementById(`ab-settings-${side}`);
+  el.classList.toggle('open');
+}
+
+function onProviderChange() {
+  const provider = document.getElementById('b-provider').value;
+  const modelDefaults = {
+    anthropic: 'claude-haiku-4-5-20251001',
+    openai: 'gpt-4o-mini',
+    gemini: 'gemini-1.5-flash',
+  };
+  document.getElementById('b-model').value = modelDefaults[provider] || '';
+}
+
+function _getModelASettings() {
+  return {
+    endpoint_url:  document.getElementById('a-endpoint').value.trim(),
+    model_name:    document.getElementById('a-model').value.trim(),
+    top_k:         parseInt(document.getElementById('a-top-k').value) || 5,
+    temperature:   parseFloat(document.getElementById('a-temperature').value),
+    max_tokens:    parseInt(document.getElementById('a-max-tokens').value),
+    system_prompt: document.getElementById('a-system-prompt').value.trim(),
+  };
+}
+
+function _getModelBSettings() {
+  return {
+    provider:      document.getElementById('b-provider').value,
+    model:         document.getElementById('b-model').value.trim(),
+    api_key:       document.getElementById('b-api-key').value.trim(),
+    top_k:         parseInt(document.getElementById('b-top-k').value) || 5,
+    temperature:   parseFloat(document.getElementById('b-temperature').value),
+    max_tokens:    parseInt(document.getElementById('b-max-tokens').value),
+    system_prompt: document.getElementById('b-system-prompt').value.trim(),
+  };
+}
 
 async function runQuery() {
-  const input = document.getElementById('ab-query-input');
-  const query = (input.value || '').trim();
+  const query = (document.getElementById('ab-query-input').value || '').trim();
   if (!query) return;
 
-  const textA = document.getElementById('ab-text-a');
-  const textB = document.getElementById('ab-text-b');
-  const badgeA = document.getElementById('ab-badge-a');
-  const badgeB = document.getElementById('ab-badge-b');
-  const latA = document.getElementById('ab-latency-a');
-  const latB = document.getElementById('ab-latency-b');
-  const srcA = document.getElementById('ab-source-a');
-  const srcB = document.getElementById('ab-source-b');
-  const btn = document.getElementById('ab-run-btn');
-  const btnA = document.getElementById('verdict-btn-a');
-  const btnB = document.getElementById('verdict-btn-b');
+  const g = id => document.getElementById(id);
+  const tA=g('ab-text-a'), tB=g('ab-text-b'), btn=g('ab-run-btn');
+  const bA=g('ab-badge-a'), bB=g('ab-badge-b');
+  const vA=g('verdict-btn-a'), vB=g('verdict-btn-b');
 
-  textA.textContent = 'Querying…';
-  textB.textContent = 'Querying…';
-  btn.style.opacity = '0.5';
-  btn.style.pointerEvents = 'none';
-
+  [tA,tB].forEach(el => { el.textContent='Querying…'; el.style.color='var(--text-subtle)'; });
+  btn.disabled = true;
   try {
-    const resp = await fetch(`/studio/api/uc/${UC_ID}/ab-query`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, model_a_settings: {}, model_b_settings: {} }),
+    const r = await fetch(`/studio/api/uc/${UC_ID}/ab-query`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include',
+      body: JSON.stringify({
+        query,
+        model_a_settings: _getModelASettings(),
+        model_b_settings: _getModelBSettings(),
+      }),
     });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    const ra = d.response_a || {}, rb = d.response_b || {};
+    lastQuery = query; lastResponseA = ra.text || ''; lastResponseB = rb.text || '';
 
-    const ra = data.response_a || {};
-    const rb = data.response_b || {};
+    const ms2s = ms => (ms/1000).toFixed(2)+' s';
+    const set = (id, val) => { const el=g(id); if(el && val!=null) el.textContent=val; };
 
-    lastQuery = query;
-    lastResponseA = ra.text || '';
-    lastResponseB = rb.text || '';
-
-    textA.textContent = ra.text || '(no response)';
-    textB.textContent = rb.text || '(no response)';
-
-    if (ra.latency_ms != null) {
-      const s = (ra.latency_ms / 1000).toFixed(2);
-      latA.textContent = s + ' s';
-      badgeA.textContent = s + ' s · ' + (ra.source || 'local');
+    // Model A
+    // Model A
+    if (ra.error) {
+      tA.textContent = ra.error; tA.style.color = 'var(--danger)';
+    } else {
+      tA.textContent = ra.text || '(no response)'; tA.style.color = '';
     }
-    if (rb.latency_ms != null) {
-      const s = (rb.latency_ms / 1000).toFixed(2);
-      latB.textContent = s + ' s';
-      badgeB.textContent = s + ' s · ' + (rb.source || 'cloud');
-    }
-    // Source updates are unconditional — applied whenever present, regardless of latency
-    if (ra.source) srcA.textContent = ra.source;
-    if (rb.source) srcB.textContent = rb.source;
+    if (ra.latency_ms   != null) { bA.textContent=ms2s(ra.latency_ms); set('ab-latency-a', ms2s(ra.latency_ms)); }
+    if (ra.retrieval_ms != null) set('ab-retrieval-a', ms2s(ra.retrieval_ms));
+    if (ra.inference_ms != null) set('ab-inference-a', ms2s(ra.inference_ms));
+    if (ra.source)               set('ab-source-a', ra.source);
+    // Phase badge — use actual phase_used from response, fall back to UC phase
+    _setPhaseA(ra.phase_used || (ra.source && ra.source.includes('kv') ? 'phase2-kv' : 'phase1-rag'));
+    // Store chunks for popup
+    _lastChunks.a = ra.chunks || [];
+    const nA = ra.chunks_retrieved ?? (ra.chunks ? ra.chunks.length : null);
+    if (nA != null) set('ab-chunks-a', nA + ' chunks');
 
-    // Enable verdict buttons now that a query result is available
-    btnA.style.opacity = '1';
-    btnA.style.pointerEvents = 'auto';
-    btnB.style.opacity = '1';
-    btnB.style.pointerEvents = 'auto';
-  } catch (err) {
-    textA.textContent = 'Error: ' + err.message;
-    textB.textContent = 'Error: ' + err.message;
-  } finally {
-    btn.style.opacity = '';
-    btn.style.pointerEvents = '';
-  }
+    // Model B
+    if (rb.error) {
+      tB.textContent = rb.error; tB.style.color = 'var(--danger)';
+    } else {
+      tB.textContent = rb.text || '(no response)'; tB.style.color = '';
+    }
+    if (rb.latency_ms   != null) { bB.textContent=ms2s(rb.latency_ms); set('ab-latency-b', ms2s(rb.latency_ms)); }
+    if (rb.retrieval_ms != null) set('ab-retrieval-b', ms2s(rb.retrieval_ms));
+    if (rb.inference_ms != null) set('ab-inference-b', ms2s(rb.inference_ms));
+    if (rb.source)               set('ab-source-b', rb.source);
+    _lastChunks.b = rb.chunks || [];
+    const nB = rb.chunks_retrieved ?? (rb.chunks ? rb.chunks.length : null);
+    if (nB != null) set('ab-chunks-b', nB + ' chunks');
+    if (rb.cost_est_usd != null) set('ab-cost-b', '$'+rb.cost_est_usd.toFixed(6));
+
+    if (!ra.error && !rb.error)
+      [vA,vB].forEach(b => { b.style.opacity='1'; b.style.pointerEvents='auto'; });
+  } catch(err) {
+    [tA,tB].forEach(el => { el.textContent='Error: '+err.message; el.style.color='var(--danger)'; });
+  } finally { btn.disabled = false; }
 }
 
 async function verdict(choice) {
   if (!lastQuery) return;
-  const btnA = document.getElementById('verdict-btn-a');
-  const btnB = document.getElementById('verdict-btn-b');
-  // In-flight guard: disable both buttons and dim them to prevent duplicate votes
-  btnA.disabled = true;
-  btnB.disabled = true;
-  btnA.style.opacity = '0.5';
-  btnB.style.opacity = '0.5';
-  const answer = choice === 'a' ? lastResponseA : lastResponseB;
-  const source_model = 'model_' + choice;
+  const vA = document.getElementById('verdict-btn-a'), vB = document.getElementById('verdict-btn-b');
+  vA.disabled = vB.disabled = true;
+  vA.style.opacity = vB.style.opacity = '0.5';
   try {
-    const resp = await fetch(`/studio/api/uc/${UC_ID}/ab-curate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question: lastQuery, answer, source_model }),
+    const r = await fetch(`/studio/api/uc/${UC_ID}/ab-curate`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include',
+      body: JSON.stringify({question:lastQuery, answer: choice==='a'?lastResponseA:lastResponseB, source_model:'model_'+choice}),
     });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
-    const countEl = document.getElementById('curate-count');
-    if (countEl && data.count != null) countEl.textContent = data.count;
-    if (data.at_threshold) {
-      const badge = document.getElementById('curate-at-threshold');
-      if (badge) badge.style.display = '';
-    }
-  } catch (err) {
-    console.error('Curate error:', err);
-    // Show brief error in the curation count area, then restore after 3s
-    const countEl = document.getElementById('curate-count');
-    if (countEl) {
-      const prev = countEl.textContent;
-      countEl.textContent = 'Vote failed — try again';
-      setTimeout(() => { countEl.textContent = prev; }, 3000);
-    }
-  } finally {
-    // Restore buttons
-    btnA.disabled = false;
-    btnB.disabled = false;
-    btnA.style.opacity = '1';
-    btnB.style.opacity = '1';
-  }
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    if (d.count != null) document.getElementById('curate-count').textContent = d.count;
+    if (d.at_threshold) document.getElementById('curate-at-threshold').style.display='';
+    showToast('Verdict saved');
+  } catch(err) { showToast('Vote failed — try again'); }
+  finally { vA.disabled=vB.disabled=false; vA.style.opacity=vB.style.opacity='1'; }
 }
 
 async function loadCurationStatus() {
   try {
-    const resp = await fetch(`/studio/api/uc/${UC_ID}/curation-status`);
-    if (!resp.ok) return;
-    const data = await resp.json();
-    const countEl = document.getElementById('curate-count');
-    const threshEl = document.getElementById('curate-threshold');
-    const badge = document.getElementById('curate-at-threshold');
-    if (countEl && data.count != null) countEl.textContent = data.count;
-    if (threshEl && data.threshold != null) threshEl.textContent = data.threshold;
-    if (badge && data.at_threshold) badge.style.display = '';
-  } catch (err) {
-    console.warn('Curation status load failed:', err);
+    const r = await fetch(`/studio/api/uc/${UC_ID}/curation-status`, {credentials:'include'});
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d.count != null) document.getElementById('curate-count').textContent = d.count;
+    if (d.threshold != null) document.getElementById('curate-threshold').textContent = d.threshold;
+    if (d.at_threshold) document.getElementById('curate-at-threshold').style.display='';
+  } catch(e) {}
+}
+
+// ── Pipeline actions ───────────────────────────────────────────────────────
+function _scrollToLogs() {
+  const panel = document.getElementById('logs-panel');
+  if (panel) panel.scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+async function runPipelineStep(step) {
+  showToast(`Starting ${step}…`);
+  try {
+    const body = {uc_id: UC_ID, step};
+    if (_selectedGpuProfileId) body.gpu_profile_id = _selectedGpuProfileId;
+    const r = await fetch('/studio/api/run-step', {
+      method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include',
+      body: JSON.stringify(body),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 409) {
+      // Job already running — attach to it and show progress
+      showToast('Already running — showing live progress below');
+      const existingId = d.job_id;
+      if (existingId && existingId !== _currentJobId) {
+        _logsCleared = false;
+        _startSSE(existingId);
+      }
+      _scrollToLogs();
+      return;
+    }
+    if (!r.ok) { showToast('Failed: ' + (d.detail || r.status)); return; }
+    showToast('Job started — watching logs…');
+    _currentJobId = d.job_id;
+    _scrollToLogs();
+    // Give the background task a moment to write its first line, then start SSE
+    setTimeout(() => { _startSSE(d.job_id); }, 600);
+  } catch(e) { showToast('Error: '+e.message); }
+}
+
+// ── GPU Monitor ────────────────────────────────────────────────────────────
+let gpuOverlayOpen=false, gpuRefreshInterval=null, gpuTickInterval=null, gpuSecondsAgo=0;
+let _selectedGpuProfileId = null;  // set when user picks a remote GPU profile
+
+// ── A/B default settings derived from UC config ────────────────────────────
+function _applyABDefaults(uc) {
+  // Model A — GPU LLM
+  const endpointEl = document.getElementById('a-endpoint');
+  const modelAEl   = document.getElementById('a-model');
+  if (endpointEl && uc.vllm_url)  endpointEl.value = uc.vllm_url;
+  if (modelAEl)                    modelAEl.value   = uc.vllm_served_model || uc.vllm_model || 'kvforge-local';
+
+  // Model B — Cloud LLM
+  const providerEl = document.getElementById('b-provider');
+  const modelBEl   = document.getElementById('b-model');
+  if (providerEl && uc.comparison_provider) {
+    providerEl.value = uc.comparison_provider;
+  }
+  if (modelBEl && uc.comparison_model) {
+    modelBEl.value = uc.comparison_model;
+  }
+
+  // Show a hint in the endpoint field if GPU is configured but URL came from profile
+  if (uc.gpu_profile_name && endpointEl && uc.vllm_url) {
+    endpointEl.title = `Auto-set from GPU profile: ${uc.gpu_profile_name}`;
   }
 }
 
-// ── GPU Monitor ──
-let gpuOverlayOpen = false;
-let gpuRefreshInterval = null;
-let gpuTickInterval = null;
-let gpuSecondsAgo = 0;
-
-function barClass(util) {
-  return util >= 80 ? 'bar-high' : util >= 50 ? 'bar-med' : 'bar-low';
-}
-function textClass(util) {
-  return util >= 80 ? 'util-high' : util >= 50 ? 'util-med' : 'util-low';
-}
-function memColor(used, total) {
-  const pct = total > 0 ? used / total : 0;
-  return pct >= 0.8 ? '#f87171' : pct >= 0.6 ? '#fcd34d' : '#4ec9b0';
-}
-
-async function refreshGpuData() {
-  gpuSecondsAgo = 0;
-  const badge = document.getElementById('gpu-refresh-badge');
-  if (badge) badge.textContent = '↻ live · 0s ago';
-
-  let result;
-  try {
-    const resp = await fetch('/studio/api/gpu/realtime');
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    result = await resp.json();
-  } catch (err) {
-    // Network/fetch error — show error state in pill and badge
-    const pill = document.getElementById('gpu-pill-btn');
-    if (pill) { pill.textContent = 'GPU — error'; pill.style.background = '#1a1a1a'; pill.style.color = '#6b7280'; pill.style.borderColor = '#374151'; }
-    const errBadge = document.getElementById('gpu-refresh-badge');
-    if (errBadge) errBadge.textContent = '↻ error';
+// ── Update Model A endpoint when GPU profile selection changes ──────────────
+function _updateModelAEndpointFromProfile(profiles, selectedId) {
+  const endpointEl = document.getElementById('a-endpoint');
+  if (!endpointEl) return;
+  if (!selectedId) {
+    // Switched to local — clear only if it was auto-set from a profile
+    if (endpointEl.dataset.fromProfile) {
+      endpointEl.value = '';
+      delete endpointEl.dataset.fromProfile;
+    }
     return;
   }
+  const profile = profiles.find(p => p.id === selectedId);
+  if (profile && profile.host) {
+    const port = profile.vllm_port || 8090;
+    endpointEl.value = `http://${profile.host}:${port}/v1`;
+    endpointEl.dataset.fromProfile = '1';
+  }
+}
 
-  // Error state: nvidia-smi not available or similar
-  if (result.error && (!result.gpus || result.gpus.length === 0)) {
-    const pill = document.getElementById('gpu-pill-btn');
-    if (pill) { pill.textContent = 'No GPU available'; pill.style.background = '#1a1a1a'; pill.style.color = '#6b7280'; pill.style.borderColor = '#374151'; }
-    const unavailBadge = document.getElementById('gpu-refresh-badge');
-    if (unavailBadge) unavailBadge.textContent = '↻ unavailable';
-    // Show error message in gpu-table area
-    const table = document.getElementById('gpu-table');
-    if (table) {
-      // Only update if not already showing error to avoid re-rendering on every tick
-      if (!table.dataset.errorShown) {
-        // Hide existing static GPU rows
-        Array.from(table.querySelectorAll('.gpu-row')).forEach(r => { r.style.display = 'none'; });
-        const errDiv = document.createElement('div');
-        errDiv.id = 'gpu-error-msg';
-        errDiv.style.cssText = 'padding:16px 12px;font-size:10px;color:#6b7280;font-family:monospace;text-align:center;';
-        errDiv.textContent = result.error || 'GPU monitoring unavailable';
-        table.appendChild(errDiv);
-        table.dataset.errorShown = '1';
+async function loadGpuProfiles() {
+  try {
+    const [profR, cfgR] = await Promise.all([
+      fetch('/studio/api/remote-gpu/profiles', {credentials:'include'}),
+      fetch(`/studio/api/uc/${UC_ID}/config`, {credentials:'include'}),
+    ]);
+    const profiles = profR.ok ? await profR.json() : [];
+    const savedProfileId = cfgR.ok ? (await cfgR.json()).gpu_profile_id || null : null;
+
+    const sel = document.getElementById('gpu-profile-select');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Local GPU</option>' +
+      profiles.map(p => `<option value="${p.id}">${p.display_name || p.host} — ${p.host}</option>`).join('');
+
+    // Restore saved selection; fall back to the only profile if exactly one exists
+    const toSelect = savedProfileId || (profiles.length === 1 ? profiles[0].id : null);
+    if (toSelect) {
+      sel.value = toSelect;
+      _selectedGpuProfileId = toSelect;
+      const pill = document.getElementById('gpu-pill-btn');
+      if (pill) {
+        const p = profiles.find(x => x.id === toSelect);
+        pill.textContent = p ? `Remote: ${p.display_name || p.host}` : 'Remote GPU ✓';
+      }
+      // Set Model A endpoint from selected profile (if not already set by vllm_url)
+      const endpointEl = document.getElementById('a-endpoint');
+      if (endpointEl && !endpointEl.value) {
+        _updateModelAEndpointFromProfile(profiles, toSelect);
       }
     }
+    // Store profiles list for onGpuProfileChange to use
+    sel._profiles = profiles;
+  } catch(e) {}
+}
+
+function onGpuProfileChange(sel) {
+  _selectedGpuProfileId = sel.value || null;
+  const pill = document.getElementById('gpu-pill-btn');
+  const profiles = [...sel.options].map(o => ({id: o.value, label: o.text}));
+  const chosen = profiles.find(p => p.id === _selectedGpuProfileId);
+  if (pill) pill.textContent = _selectedGpuProfileId ? `Remote: ${chosen?.label || _selectedGpuProfileId}` : 'GPU —';
+  showToast(_selectedGpuProfileId ? 'Remote GPU selected — pipeline steps will use it' : 'Switched to local GPU');
+  // Keep Model A endpoint in sync with GPU profile selection
+  _updateModelAEndpointFromProfile(sel._profiles || [], _selectedGpuProfileId);
+  // Persist to uc_config.json so the choice survives server restarts
+  fetch(`/studio/api/uc/${UC_ID}/config`, {
+    method: 'POST', headers: {'Content-Type':'application/json'}, credentials: 'include',
+    body: JSON.stringify({gpu_profile_id: _selectedGpuProfileId || null}),
+  }).catch(() => {});
+}
+
+function barClass(u){return u>=80?'bar-high':u>=50?'bar-med':'bar-low';}
+function textClass(u){return u>=80?'util-high':u>=50?'util-med':'util-low';}
+
+async function refreshGpuData() {
+  gpuSecondsAgo=0;
+  const badge=document.getElementById('gpu-refresh-badge');
+  if(badge) badge.textContent='↻ live · 0s ago';
+
+  // When a remote GPU profile is active, SSH and fetch live nvidia-smi stats
+  if (_selectedGpuProfileId) {
+    try {
+      const r = await fetch(`/studio/api/gpu/remote-stats/${_selectedGpuProfileId}`, {credentials:'include'});
+      const data = await r.json();
+      const pill = document.getElementById('gpu-pill-btn');
+      const hostLabel = data.display_name || data.host || 'remote';
+      document.getElementById('gpu-host').textContent = hostLabel;
+
+      if (data.error || !data.gpus || !data.gpus.length) {
+        const tbl = document.getElementById('gpu-table');
+        if (tbl) tbl.innerHTML = `<div style="padding:16px;font-size:12px;color:var(--text-subtle);text-align:center">
+          ${data.error || 'No GPUs detected'}<br>
+          <span style="font-size:11px">Check SSH connectivity in Resource Providers.</span></div>`;
+        if (pill) pill.textContent = 'Remote GPU —';
+        return;
+      }
+
+      // Reuse the same rendering path as local GPUs
+      const gpus = data.gpus;
+      if (pill) {
+        if (data.has_free_gpu) {
+          const fg = gpus.find(g => g.status === 'free');
+          pill.textContent = 'GPU ' + (fg ? fg.util_pct + '%' : 'free') + ' ☁';
+        } else {
+          const avg = Math.round(gpus.reduce((s,g) => s+g.util_pct, 0) / (gpus.length||1));
+          pill.textContent = `GPU ${avg}% · ${gpus.length} busy ☁`;
+        }
+      }
+
+      const tbl = document.getElementById('gpu-table');
+      if (tbl) {
+        tbl.innerHTML = gpus.map(g => {
+          const mp = g.total_gb > 0 ? (g.used_gb/g.total_gb*100).toFixed(1) : 0;
+          return `<div class="gpu-row">
+            <div class="gpu-row-head" onclick="this.nextElementSibling.classList.toggle('open')">
+              <span class="gpu-id">GPU ${g.id}</span>
+              <span class="gpu-name">${g.name||'NVIDIA GPU'}</span>
+              <div class="gpu-mem">
+                <div style="font-size:9px;color:var(--text-subtle)">VRAM</div>
+                <div style="font-size:10px;font-family:monospace;color:var(--text-secondary)">${g.used_gb.toFixed(1)} / ${g.total_gb.toFixed(1)} GB</div>
+                <div class="gpu-util-bar-wrap"><div class="gpu-util-bar ${barClass(mp)}" style="width:${mp}%"></div></div>
+              </div>
+              <div class="gpu-util-cell">
+                <div style="font-size:9px;color:var(--text-subtle)">Util</div>
+                <div class="gpu-util-val ${textClass(g.util_pct)}">${g.util_pct}%</div>
+                <div class="gpu-util-bar-wrap"><div class="gpu-util-bar ${barClass(g.util_pct)}" style="width:${g.util_pct}%"></div></div>
+              </div>
+              <span class="gpu-temp">${g.temp_c}°C</span>
+              <span class="gpu-power">${g.power_w}W</span>
+              <span style="font-size:9px;color:var(--text-subtle);text-align:right">▸</span>
+            </div>
+            <div class="gpu-procs">
+              <div class="gpu-procs-title">Processes (${(g.processes||[]).length})</div>
+              ${(g.processes||[]).map(p=>`<div class="gpu-proc-row">
+                <span class="gpu-proc-pid">PID ${p.pid}</span>
+                <span class="gpu-proc-name">${p.name||'—'}</span>
+                <span class="gpu-proc-mem">${p.used_mem_mb||0} MiB</span>
+              </div>`).join('')}
+            </div>
+          </div>`;
+        }).join('');
+      }
+
+      let totM=0,totT=0,totU=0,maxTemp=0;
+      gpus.forEach(g=>{totM+=g.used_gb;totT+=g.total_gb;totU+=g.util_pct;maxTemp=Math.max(maxTemp,g.temp_c);});
+      const n = gpus.length||1;
+      const vr=document.getElementById('total-vram'); if(vr) vr.textContent=totM.toFixed(1)+' / '+totT.toFixed(1)+' GB';
+      const au=document.getElementById('avg-util');   if(au) au.textContent=Math.round(totU/n)+'%';
+      const mt=document.getElementById('max-temp');   if(mt) mt.textContent=maxTemp+'°C';
+    } catch(err) {
+      const pill=document.getElementById('gpu-pill-btn');
+      if(pill) pill.textContent='Remote GPU —';
+    }
     return;
   }
 
-  // Restore static rows if a previous error was displayed
-  const table = document.getElementById('gpu-table');
-  if (table && table.dataset.errorShown) {
-    Array.from(table.querySelectorAll('.gpu-row')).forEach(r => { r.style.display = ''; });
-    const errDiv = document.getElementById('gpu-error-msg');
-    if (errDiv) errDiv.remove();
-    delete table.dataset.errorShown;
-  }
-
-  // Update GPU pill in topbar
-  const pill = document.getElementById('gpu-pill-btn');
-  if (pill) {
-    const gpuCount = result.gpus.length;
-    if (result.has_free_gpu) {
-      const freeGpu = result.gpus.find(g => g.status === 'free');
-      const utilStr = freeGpu ? `${freeGpu.util_pct}%` : 'free';
-      pill.textContent = `GPU ${utilStr}`;
-      pill.style.background = '#1a3020';
-      pill.style.color = '#4ec9b0';
-      pill.style.borderColor = '#1e5c4f';
-    } else {
-      const avgUtil = Math.round(result.gpus.reduce((s, g) => s + g.util_pct, 0) / gpuCount);
-      pill.textContent = `GPU ${avgUtil}% · ${gpuCount} busy`;
-      pill.style.background = '#2a1e00';
-      pill.style.color = '#fcd34d';
-      pill.style.borderColor = '#78350f';
+  try {
+    const r=await fetch('/studio/api/gpu/realtime', {credentials:'include'});
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data=await r.json();
+    const pill=document.getElementById('gpu-pill-btn');
+    if(data.error && (!data.gpus||!data.gpus.length)){
+      // Only update pill when no remote profile is selected
+      if(pill && !_selectedGpuProfileId) pill.textContent='No GPU';
+      const tbl=document.getElementById('gpu-table');
+      if(tbl) tbl.innerHTML=`<div style="padding:16px;font-size:12px;color:var(--text-subtle);text-align:center">${data.error}<br><br><span style="font-size:11px">Select a Remote GPU profile below to run pipeline steps on EC2.</span></div>`;
+      return;
     }
+    const gpus=data.gpus||[];
+    if(pill && !_selectedGpuProfileId){
+      if(data.has_free_gpu){
+        const fg=gpus.find(g=>g.status==='free');
+        pill.textContent='GPU '+(fg?fg.util_pct+'%':'free');
+      } else {
+        const avg=Math.round(gpus.reduce((s,g)=>s+g.util_pct,0)/(gpus.length||1));
+        pill.textContent=`GPU ${avg}% · ${gpus.length} busy`;
+      }
+    }
+
+    const tbl=document.getElementById('gpu-table');
+    if(tbl){
+      tbl.innerHTML=gpus.map(g=>{
+        const mp=g.total_gb>0?(g.used_gb/g.total_gb*100).toFixed(1):0;
+        return `<div class="gpu-row">
+          <div class="gpu-row-head" onclick="this.nextElementSibling.classList.toggle('open')">
+            <span class="gpu-id">GPU ${g.id}</span>
+            <span class="gpu-name">${g.name||'NVIDIA GPU'}</span>
+            <div class="gpu-mem">
+              <div style="font-size:9px;color:var(--text-subtle)">VRAM</div>
+              <div style="font-size:10px;font-family:monospace;color:var(--text-secondary)">${g.used_gb.toFixed(1)} / ${g.total_gb.toFixed(1)} GB</div>
+              <div class="gpu-util-bar-wrap"><div class="gpu-util-bar ${barClass(mp)}" style="width:${mp}%"></div></div>
+            </div>
+            <div class="gpu-util-cell">
+              <div style="font-size:9px;color:var(--text-subtle)">Util</div>
+              <div class="gpu-util-val ${textClass(g.util_pct)}">${g.util_pct}%</div>
+              <div class="gpu-util-bar-wrap"><div class="gpu-util-bar ${barClass(g.util_pct)}" style="width:${g.util_pct}%"></div></div>
+            </div>
+            <span class="gpu-temp">${g.temp_c}°C</span>
+            <span class="gpu-power">${g.power_w}W</span>
+            <span style="font-size:9px;color:var(--text-subtle);text-align:right">▸</span>
+          </div>
+          <div class="gpu-procs">
+            <div class="gpu-procs-title">Processes (${(g.processes||[]).length})</div>
+            ${(g.processes||[]).map(p=>`<div class="gpu-proc-row">
+              <span class="gpu-proc-pid">PID ${p.pid}</span>
+              <span class="gpu-proc-name">${p.name||'—'}</span>
+              <span class="gpu-proc-mem">${p.used_mem_mb||0} MiB</span>
+            </div>`).join('')}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    let totM=0,totT=0,totU=0,maxTemp=0;
+    gpus.forEach(g=>{totM+=g.used_gb;totT+=g.total_gb;totU+=g.util_pct;maxTemp=Math.max(maxTemp,g.temp_c);});
+    const n=gpus.length||1;
+    const vr=document.getElementById('total-vram'); if(vr) vr.textContent=totM.toFixed(1)+' / '+totT.toFixed(1)+' GB';
+    const au=document.getElementById('avg-util'); if(au) au.textContent=Math.round(totU/n)+'%';
+    const mt=document.getElementById('max-temp'); if(mt) mt.textContent=maxTemp+'°C';
+  } catch(err) {
+    const pill=document.getElementById('gpu-pill-btn');
+    if(pill) pill.textContent='GPU —';
   }
-
-  // Update each GPU row with live data
-  let totalMem = 0, totalTotal = 0, totalUtil = 0, maxTemp = 0;
-
-  result.gpus.forEach(g => {
-    const id = g.id;
-    const util = g.util_pct;
-    const memUsed = g.used_gb;
-    const memTotal = g.total_gb;
-    const temp = g.temp_c;
-    const pwr = g.power_w;
-    const memPct = memTotal > 0 ? (memUsed / memTotal) * 100 : 0;
-    const bc = barClass(util);
-
-    const utilEl = document.getElementById(`util-${id}`);
-    if (utilEl) { utilEl.textContent = util + '%'; utilEl.className = `gpu-util-val ${textClass(util)}`; }
-    const utilbarEl = document.getElementById(`utilbar-${id}`);
-    if (utilbarEl) { utilbarEl.style.width = util + '%'; utilbarEl.className = `gpu-util-bar ${bc}`; }
-    const memEl = document.getElementById(`mem-${id}`);
-    if (memEl) { memEl.textContent = memUsed.toFixed(1) + ' / ' + memTotal.toFixed(1) + ' GB'; memEl.style.color = memColor(memUsed, memTotal); }
-    const membarEl = document.getElementById(`membar-${id}`);
-    if (membarEl) { membarEl.style.width = memPct.toFixed(1) + '%'; membarEl.className = `gpu-util-bar ${bc}`; }
-    const tempEl = document.getElementById(`temp-${id}`);
-    if (tempEl) tempEl.textContent = temp + '°C';
-    const pwrEl = document.getElementById(`pwr-${id}`);
-    if (pwrEl) pwrEl.textContent = pwr + 'W';
-
-    totalMem += memUsed;
-    totalTotal += memTotal;
-    totalUtil += util;
-    maxTemp = Math.max(maxTemp, temp);
-  });
-
-  const gpuCount = result.gpus.length || 1;
-  const avgUtilEl = document.getElementById('avg-util');
-  if (avgUtilEl) avgUtilEl.textContent = Math.round(totalUtil / gpuCount) + '%';
-  const maxTempEl = document.getElementById('max-temp');
-  if (maxTempEl) maxTempEl.textContent = maxTemp + '°C';
-  const vramEl = document.getElementById('total-vram');
-  if (vramEl) vramEl.textContent = totalMem.toFixed(1) + ' / ' + totalTotal.toFixed(1) + ' GB';
 }
 
-function tickRefreshBadge() {
+function tickRefreshBadge(){
   gpuSecondsAgo++;
-  if (gpuSecondsAgo < 4) {
-    const tickBadge = document.getElementById('gpu-refresh-badge');
-    if (tickBadge) tickBadge.textContent = `↻ live · ${gpuSecondsAgo}s ago`;
-  }
+  const b=document.getElementById('gpu-refresh-badge');
+  if(b&&gpuSecondsAgo<10) b.textContent=`↻ live · ${gpuSecondsAgo}s ago`;
 }
 
-function toggleProcs(id) {
-  const procs = document.getElementById('procs-' + id);
-  procs.classList.toggle('open');
-}
-
-async function scheduleNextRefresh() {
+async function scheduleNextRefresh(){
   await refreshGpuData();
-  if (gpuOverlayOpen) {
-    gpuRefreshInterval = setTimeout(scheduleNextRefresh, 3000);
-  }
+  if(gpuOverlayOpen) gpuRefreshInterval=setTimeout(scheduleNextRefresh,3000);
 }
 
-function toggleGpuOverlay() {
-  if (gpuOverlayOpen) { closeGpuOverlay(); return; }
-  gpuOverlayOpen = true;
+function toggleGpuOverlay(){
+  if(gpuOverlayOpen){closeGpuOverlay();return;}
+  gpuOverlayOpen=true;
   document.getElementById('gpu-overlay').classList.add('visible');
   document.getElementById('gpu-pill-btn').classList.add('open');
   scheduleNextRefresh();
-  gpuTickInterval = setInterval(tickRefreshBadge, 1000);
+  gpuTickInterval=setInterval(tickRefreshBadge,1000);
 }
 
-function closeGpuOverlay() {
-  gpuOverlayOpen = false;
+function closeGpuOverlay(){
+  gpuOverlayOpen=false;
   document.getElementById('gpu-overlay').classList.remove('visible');
   document.getElementById('gpu-pill-btn').classList.remove('open');
-  clearTimeout(gpuRefreshInterval);
-  gpuRefreshInterval = null;
-  clearInterval(gpuTickInterval);
-  gpuTickInterval = null;
+  clearTimeout(gpuRefreshInterval); gpuRefreshInterval=null;
+  clearInterval(gpuTickInterval); gpuTickInterval=null;
 }
+
+// ── Sync history ───────────────────────────────────────────────────────────
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+document.getElementById('sync-history-panel').addEventListener('toggle', function(){
+  if(!this.open) return;
+  fetch(`/studio/api/uc/${UC_ID}/sync-history`, {credentials:'include'})
+    .then(r=>r.json())
+    .then(d=>{
+      document.getElementById('sync-history-rows').innerHTML=(d.runs||[]).map(r=>`<tr>
+        <td>${esc(r.started_at?r.started_at.slice(0,19).replace('T',' '):'—')}</td>
+        <td style="text-align:right">${r.files_checked??0}</td>
+        <td style="text-align:right;color:${r.files_changed>0?'var(--warning)':'inherit'}">${r.files_changed??0}</td>
+        <td style="text-align:right;color:var(--success)">${r.chunks_added??0}</td>
+        <td style="text-align:right;color:var(--danger)">${r.chunks_superseded??0}</td>
+        <td style="text-align:right;color:${r.pii_detections>0?'var(--danger)':'inherit'}">${r.pii_detections??0}</td>
+        <td style="color:var(--danger);max-width:200px;overflow:hidden;text-overflow:ellipsis">${esc(r.errors||'')}</td>
+      </tr>`).join('');
+    }).catch(e=>console.error(e));
+});
+
+// ── Shell controls ─────────────────────────────────────────────────────────
+let sidebarCollapsed=false;
+function toggleSidebar(){
+  sidebarCollapsed=!sidebarCollapsed;
+  document.getElementById('sidebar').classList.toggle('collapsed',sidebarCollapsed);
+  document.getElementById('sidebar-toggle-btn').textContent=sidebarCollapsed?'›':'‹';
+}
+
+function toggleTheme(){
+  const html=document.documentElement;
+  const isDark=html.dataset.theme==='dark';
+  html.dataset.theme=isDark?'light':'dark';
+  document.getElementById('theme-icon').textContent=isDark?'🌙':'☀️';
+  // Redraw chart with new theme colors
+  if(PRS_POINTS.length>0) setTimeout(drawChart,50);
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+let _toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── Pipeline Logs ──────────────────────────────────────────────────────────
+let _currentJobId = null;
+let _liveEs = null;
+let _pollInterval = null;
+let _lineCount = 0;
+let _logsCleared = false;  // true after user clicks Clear; suppresses poll re-render until next job or manual Refresh
+
+function _classify(line) {
+  const l = line.toLowerCase();
+  if (l.includes('[studio]')) return 'hdr';
+  if (l.includes('error') || l.includes('traceback') || l.includes('exception')) return 'err';
+  if (l.includes('warning') || l.includes('warn')) return 'warn';
+  if (l.includes('done') || l.includes('success') || l.includes('complete') || l.includes('✓')) return 'ok';
+  return '';
+}
+
+function _appendLine(text) {
+  const body = document.getElementById('logs-body');
+  const empty = document.getElementById('logs-empty');
+  if (empty) empty.remove();
+
+  const div = document.createElement('div');
+  div.className = 'log-line ' + _classify(text);
+  div.textContent = text;
+  body.appendChild(div);
+  _lineCount++;
+
+  if (document.getElementById('autoscroll-cb').checked) {
+    body.scrollTop = body.scrollHeight;
+  }
+}
+
+function _setStatus(status, step, jobId, lineCount) {
+  const dot = document.getElementById('logs-dot');
+  const badge = document.getElementById('logs-badge');
+  const stopBtn = document.getElementById('stop-job-btn');
+  const info = document.getElementById('logs-footer-info');
+
+  const stepLabels = {
+    'index':'Indexing VDB', 'faq-gen-cloud':'Generating FAQs', 'sleep-faq':'Generating FAQs',
+    'train':'LoRA Training', 'recompute':'KV Recompute', 'prs-eval':'PRS Evaluation',
+    'setup':'Setup', 'ab-eval':'A/B Eval',
+  };
+
+  const running = status === 'running';
+  dot.className = 'logs-status-dot ' + (status || 'idle');
+  if (step) {
+    badge.style.display = '';
+    badge.className = 'logs-step-badge ' + (status || '');
+    badge.textContent = (stepLabels[step] || step) + (running ? ' ▸ running' : status === 'done' ? ' ✓' : status === 'failed' ? ' ✗' : '');
+  } else {
+    badge.style.display = 'none';
+  }
+  stopBtn.style.display = running ? '' : 'none';
+  info.textContent = running
+    ? `Job ${jobId || '…'} · ${lineCount} lines · streaming live`
+    : step
+      ? `Last run: ${stepLabels[step] || step} · ${status} · ${lineCount} lines`
+      : 'Idle — no active job';
+}
+
+function _startSSE(jobId) {
+  if (_liveEs) { _liveEs.close(); _liveEs = null; }
+  _currentJobId = jobId;
+
+  const body = document.getElementById('logs-body');
+  body.innerHTML = '';  // clear old lines for a fresh job stream
+  _lineCount = 0;
+  const empty = document.getElementById('logs-empty');
+  if (empty) empty.remove();
+
+  _liveEs = new EventSource(`/studio/api/stream/${jobId}`);
+  _liveEs.onmessage = e => {
+    let text = e.data;
+    try {
+      const d = JSON.parse(text);
+      if (d.type === 'done') {
+        _liveEs.close(); _liveEs = null;
+        loadUCState();   // advance pipeline progress panel to next step
+        refreshLogs();
+        return;
+      }
+      if (d.message) text = d.message;
+    } catch(_) {}
+    _appendLine(text);
+  };
+  _liveEs.onerror = () => {
+    _liveEs.close(); _liveEs = null;
+    refreshLogs();  // fetch final state from REST
+  };
+}
+
+let _wasRunning = false;
+
+async function refreshLogs() {
+  try {
+    const r = await fetch(`/studio/api/uc/${UC_ID}/logs`, {credentials:'include'});
+    if (!r.ok) return;
+    const d = await r.json();
+
+    const isRunning = d.status === 'running';
+    _setStatus(d.status, d.step, d.job_id, (d.lines||[]).length);
+
+    // Job just finished — refresh pipeline progress panel to show next step
+    if (!isRunning && _wasRunning) {
+      _wasRunning = false;
+      loadUCState();
+    } else {
+      _wasRunning = isRunning;
+    }
+
+    // If there's a live job and we're not already streaming it, start SSE
+    if (isRunning && d.job_id && d.job_id !== _currentJobId) {
+      _logsCleared = false;  // new job — always show its output
+      _startSSE(d.job_id);
+      _scrollToLogs();
+      return;
+    }
+
+    // Not running — render lines from REST unless user cleared and no new job arrived
+    if (!isRunning && !_logsCleared && d.lines && d.lines.length > 0) {
+      const body = document.getElementById('logs-body');
+      body.innerHTML = '';
+      _lineCount = 0;
+      d.lines.forEach(l => _appendLine(l));
+    } else if (!isRunning && (!d.lines || d.lines.length === 0) && !_liveEs) {
+      const body = document.getElementById('logs-body');
+      if (!body.querySelector('.log-line')) {
+        body.innerHTML = `<div class="logs-empty" id="logs-empty">
+          <span style="font-size:24px">📋</span>
+          <span>No pipeline logs yet</span>
+          <span>Start indexing or training from the Actions menu to see logs here</span>
+        </div>`;
+      }
+    }
+  } catch(e) { console.warn('refreshLogs:', e); }
+}
+
+async function copyLogs() {
+  const body = document.getElementById('logs-body');
+  const text = [...body.querySelectorAll('.log-line')].map(el => el.textContent).join('\n');
+  if (!text.trim()) { showToast('No logs to copy'); return; }
+  await navigator.clipboard.writeText(text);
+  const btn = document.getElementById('copy-logs-btn');
+  btn.textContent = '✓ Copied';
+  setTimeout(() => { btn.textContent = '⎘ Copy'; }, 1800);
+}
+
+function clearLogsDisplay() {
+  _logsCleared = true;
+  const body = document.getElementById('logs-body');
+  body.innerHTML = `<div class="logs-empty" id="logs-empty">
+    <span style="font-size:24px">📋</span><span>Cleared</span>
+  </div>`;
+  _lineCount = 0;
+}
+
+async function stopJob() {
+  if (!_currentJobId) return;
+  if (!confirm('Stop the running job?')) return;
+  try {
+    await fetch(`/studio/api/job/${_currentJobId}`, {method:'DELETE', credentials:'include'});
+    if (_liveEs) { _liveEs.close(); _liveEs = null; }
+    _currentJobId = null;
+    showToast('Job stopped');
+    setTimeout(refreshLogs, 800);
+  } catch(e) { showToast('Stop failed: ' + e.message); }
+}
+
+// Poll every 4 s so new jobs started from sidebar actions appear automatically
+function _startLogPoll() {
+  if (_pollInterval) clearInterval(_pollInterval);
+  _pollInterval = setInterval(() => {
+    if (!_liveEs) refreshLogs();  // only poll when not streaming
+  }, 4000);
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+loadUCState();
+loadPRSHistory();
+refreshLogs();
+_startLogPoll();
+loadGpuProfiles();
+refreshGpuData();
 </script>
 <script src="/helper.js"></script>
-
-<details id="sync-history-panel" style="margin-top:16px">
-  <summary style="cursor:pointer;color:#7af;font-size:0.9em">Sync History</summary>
-  <div id="sync-history-body" style="margin-top:8px;font-size:0.82em">
-    <table style="width:100%;border-collapse:collapse">
-      <thead>
-        <tr style="color:#888">
-          <th style="text-align:left;padding:4px 8px">Started</th>
-          <th style="text-align:right;padding:4px 8px">Checked</th>
-          <th style="text-align:right;padding:4px 8px">Changed</th>
-          <th style="text-align:right;padding:4px 8px">Added</th>
-          <th style="text-align:right;padding:4px 8px">Superseded</th>
-          <th style="text-align:right;padding:4px 8px">PII</th>
-          <th style="text-align:left;padding:4px 8px">Errors</th>
-        </tr>
-      </thead>
-      <tbody id="sync-history-rows"></tbody>
-    </table>
-  </div>
-</details>
-
-<script>
-(function loadSyncHistory() {
-  function escHtml(s) {
-    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  }
-  const panel = document.getElementById('sync-history-panel');
-  if (!panel) return;
-  panel.addEventListener('toggle', function() {
-    if (!panel.open) return;
-    fetch(`/studio/api/uc/${UC_ID}/sync-history`)
-      .then(r => r.json())
-      .then(data => {
-        const tbody = document.getElementById('sync-history-rows');
-        tbody.innerHTML = (data.runs || []).map(r =>
-          `<tr>
-            <td style="padding:4px 8px;color:#aaa">${escHtml(r.started_at ? r.started_at.slice(0,19).replace('T',' ') : '—')}</td>
-            <td style="text-align:right;padding:4px 8px">${r.files_checked ?? 0}</td>
-            <td style="text-align:right;padding:4px 8px;color:${r.files_changed > 0 ? '#fa7' : '#666'}">${r.files_changed ?? 0}</td>
-            <td style="text-align:right;padding:4px 8px;color:#4f9">${r.chunks_added ?? 0}</td>
-            <td style="text-align:right;padding:4px 8px;color:#f87">${r.chunks_superseded ?? 0}</td>
-            <td style="text-align:right;padding:4px 8px;color:${r.pii_detections > 0 ? '#f87' : '#666'}">${r.pii_detections ?? 0}</td>
-            <td style="padding:4px 8px;color:#f87;max-width:200px;overflow:hidden;text-overflow:ellipsis">${escHtml(r.errors || '')}</td>
-          </tr>`
-        ).join('');
-      })
-      .catch(err => console.error('sync-history fetch failed:', err));
-  });
-})();
-</script>
 </body>
 </html>

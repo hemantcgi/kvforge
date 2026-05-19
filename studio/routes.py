@@ -69,12 +69,28 @@ def settings_page():
     return HTMLResponse(tmpl)
 
 
+@router.get("/resources", response_class=HTMLResponse)
+def resources_page(request: Request):
+    u = getattr(request.state, "user", None)
+    if not u or u.role not in ("admin", "editor"):
+        return Response("<h1>403 Forbidden</h1>", status_code=403, media_type="text/html")
+    return (TEMPLATES / "resources.html").read_text()
+
+
 @router.get("/connectors", response_class=HTMLResponse)
 def connectors_page(request: Request):
     u = getattr(request.state, "user", None)
     if not u or u.role not in ("admin", "editor"):
         return Response("<h1>403 Forbidden</h1>", status_code=403, media_type="text/html")
     return (TEMPLATES / "connectors.html").read_text()
+
+
+@router.get("/logs", response_class=HTMLResponse)
+def logs_page(request: Request):
+    u = getattr(request.state, "user", None)
+    if not u or u.role not in ("admin", "editor"):
+        return Response("<h1>403 Forbidden</h1>", status_code=403, media_type="text/html")
+    return (TEMPLATES / "logs.html").read_text()
 
 
 @router.get("/gpu-connect", response_class=HTMLResponse)

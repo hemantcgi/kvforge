@@ -33,6 +33,117 @@ STEP_EXTRA_ARGS = {
 }
 
 
+def _ensure_config_json(uc_id: str) -> None:
+    """Generate config.json from uc_config.json if it doesn't exist.
+
+    Pipeline modules (kv_indexer, lora_trainer, etc.) all expect the
+    addon_config-format config.json.  Wizard-created UCs only have
+    uc_config.json, so we derive config.json automatically.
+    """
+    config_path = ROOT / "examples" / uc_id / "config.json"
+    if config_path.exists():
+        return  # already present (example UCs or previously generated)
+
+    uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
+    if not uc_cfg_path.exists():
+        return  # nothing to derive from
+
+    try:
+        uc = json.loads(uc_cfg_path.read_text())
+    except Exception:
+        return
+
+    data = uc.get("data", {})
+    vdb = uc.get("vectordb", {})
+    llm = uc.get("llm", {})
+
+    source_type = data.get("source_type", "")
+    loader_map = {
+        "pdf": "pdf", "huggingface": "huggingface", "jsonl": "jsonl",
+        "directory": "directory", "markdown": "markdown", "html": "html",
+        "api": "jsonl",  # connector-synced data lands as jsonl
+    }
+    loader = loader_map.get(source_type, "jsonl")
+
+    local_model = llm.get("local_model", "meta-llama/Llama-3.2-3B-Instruct")
+    collection = uc_id.replace("_", "-")
+
+    cfg = {
+        "use_case_name": uc.get("display_name", uc_id),
+        "collection": collection,
+        "version_file": f"examples/{uc_id}/version.json",
+        "addons": ["indexing", "inference", "training", "background", "sync", "monitoring"],
+        "addon_config": {
+            "indexing": {
+                "loader": loader,
+                "chunk_size": vdb.get("chunk_size", 512),
+                "chunk_overlap": vdb.get("chunk_overlap", 64),
+                "embed_batch": 64,
+                "upsert_batch": 128,
+                "embed_model": vdb.get("embedding_model", "BAAI/bge-small-en-v1.5"),
+                "embedder_backend": "fastembed",
+                "vector_dim": vdb.get("dimensions", 384),
+                "vector_store": vdb.get("store", "qdrant"),
+                "qdrant_host": "localhost",
+                "qdrant_port": 6333,
+                "dataset_id": data.get("dataset_id", ""),
+                "split": data.get("split", "train"),
+                "jsonl_text_key": data.get("text_column", "text"),
+                "max_rows": data.get("max_rows", 5000),
+                "source_path": data.get("source_path", f"examples/{uc_id}/data/"),
+                # HuggingFace-specific keys (used by ingestion/registry.py when loader=huggingface)
+                **({"hf_config_name": data.get("hf_config_name"),
+                    "hf_split": data.get("split", "train"),
+                    "hf_text_column": data.get("text_column", "text"),
+                    "hf_max_rows": data.get("max_rows", 5000)} if loader == "huggingface" else {}),
+                "model_library": {
+                    local_model: {"kv_num_layers": 28, "kv_num_heads": 8, "kv_head_dim": 128}
+                },
+            },
+            "inference": {
+                "top_k": 5,
+                "llm_model": local_model,
+                "quantization": llm.get("quantization", "4bit"),
+                "vllm_url": llm.get("vllm_url", ""),
+                "vllm_model": uc_id,
+                "max_new_tokens": 256,
+                "gate_threshold": 0.75,
+            },
+            "training": {
+                "lora_rank": 16,
+                "lora_alpha": 32,
+                "lora_target_modules": ["q_proj", "k_proj", "v_proj"],
+                "lora_dropout": 0.05,
+                "lora_epochs": 3,
+                "lora_lr": 0.0002,
+                "checkpoint_dir": f"examples/{uc_id}/lora_checkpoints/",
+                "replay_db": f"examples/{uc_id}/replay.db",
+                "prs_threshold": 0.75,
+                "prs_weights": {"accuracy": 0.5, "calibration": 0.3, "consistency": 0.2},
+                "prs_advancement_threshold": 0.72,
+                "prs_regression_threshold": 0.60,
+                "faq_question_key": "question",
+                "faq_answer_key": "answer",
+            },
+            "background": {"flush_seconds": 300, "flush_queries": 50},
+            "sync": {
+                "interval_minutes": 1440,
+                "hitl_mode": "auto",
+                "sync_regression_mode": "pct",
+                "sync_regression_pct_threshold": 0.10,
+                "sync_regression_tier_threshold": 0.15,
+            },
+            "monitoring": {"port": 8085},
+        },
+    }
+
+    # Ensure data directory exists for connector-synced / local sources
+    data_dir = ROOT / "examples" / uc_id / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    config_path.write_text(json.dumps(cfg, indent=2))
+
+
 def _build_cmd(uc_id: str, step: str) -> list[str]:
     if step == "setup":
         setup_script = str(ROOT / "examples" / uc_id / "setup.py")
@@ -158,22 +269,16 @@ def _log_path(uc_id: str) -> Path:
     return ROOT / "examples" / uc_id / "last_run.log"
 
 
-async def run_step_background(uc_id: str, step: str, job_id: str, job_manager) -> None:
+async def run_step_background(
+    uc_id: str, step: str, job_id: str, job_manager, gpu_profile_id: str | None = None
+) -> None:
     """
     Run pipeline step subprocess as a background task, independent of any SSE
     connection. Buffers all output in job_manager AND writes to disk so logs
     survive studio restarts.
     """
-    from studio.gpu_monitor import get_gpu_status
-
-    if step in GPU_REQUIRED_STEPS:
-        gpu_status = get_gpu_status()
-        if not gpu_status.get("has_free_gpu"):
-            job_manager.fail(job_id, "No free GPU available")
-            return
-
-    cmd = _build_cmd(uc_id, step)
-    env = _build_env(uc_id, step)
+    # Ensure config.json exists (wizard UCs only have uc_config.json)
+    _ensure_config_json(uc_id)
 
     def _append(line: str):
         job_manager.append_log(job_id, line)
@@ -183,11 +288,26 @@ async def run_step_background(uc_id: str, step: str, job_id: str, job_manager) -
         except OSError:
             pass
 
-    # Truncate log file for new run
+    # Truncate log file at the start of every run so the logs panel always
+    # reflects the current job (even if the job fails early below)
     try:
         _log_path(uc_id).write_text(f"[studio] step={step} job={job_id}\n")
     except OSError:
         pass
+
+    from studio.gpu_monitor import get_gpu_status
+
+    if step in GPU_REQUIRED_STEPS and gpu_profile_id is None:
+        # Only check local GPU when no remote profile was selected
+        gpu_status = get_gpu_status()
+        if not gpu_status.get("has_free_gpu"):
+            msg = "No free GPU available — select a Remote GPU profile before running GPU steps"
+            job_manager.fail(job_id, msg)
+            _append(f"[studio] error: {msg}")
+            return
+
+    cmd = _build_cmd(uc_id, step)
+    env = _build_env(uc_id, step)
 
     _append(f"[studio] starting: {_redact_cmd(cmd)}")
 
@@ -198,12 +318,21 @@ async def run_step_background(uc_id: str, step: str, job_id: str, job_manager) -
             stderr=asyncio.subprocess.STDOUT,
             cwd=str(ROOT),
             env=env,
+            limit=1024 * 1024,  # 1 MB per line — handles long model-loader progress bars
         )
         job_manager.set_pid(job_id, proc.pid)
 
-        async for raw_line in proc.stdout:
-            line = raw_line.decode("utf-8", errors="replace").rstrip()
-            _append(line)
+        while True:
+            try:
+                raw_line = await proc.stdout.readline()
+                if not raw_line:
+                    break
+                line = raw_line.decode("utf-8", errors="replace").rstrip()
+                _append(line)
+            except asyncio.LimitOverrunError:
+                # Line exceeded buffer; drain and log a truncated placeholder
+                await proc.stdout.read(1024 * 1024)
+                _append("[studio] (line too long — truncated)")
 
         exit_code = await proc.wait()
         if exit_code == 0:
