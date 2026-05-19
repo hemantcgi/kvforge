@@ -103,6 +103,7 @@ class AddonRegistry:
             "addons.analytics",
             "addons.turboquant",
             "addons.corpus_intelligence",
+            "addons.compute",
         ]
         for mod_name in _builtin_modules:
             try:
