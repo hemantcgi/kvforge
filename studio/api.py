@@ -25,10 +25,9 @@ api_router = APIRouter()
 
 def _uc_path(uc_id: str) -> Path:
     """Return the UC directory path, raising 400 on path traversal attempts."""
-    path = (ROOT / "examples" / uc_id).resolve()
-    if not path.is_relative_to((ROOT / "examples").resolve()):
+    if not uc_id or ".." in uc_id or "/" in uc_id or "\\" in uc_id:
         raise HTTPException(400, "Invalid use case ID")
-    return path
+    return ROOT / "examples" / uc_id
 
 
 # ── Registry ──────────────────────────────────────────────────────────────────
@@ -47,6 +46,7 @@ def get_registry():
                 history = v.get("prs_history", [])
                 uc_data["prs"] = history[-1]["prs"] if history else None
                 uc_data["lora_version"] = v.get("current_lora_version", 0)
+                uc_data["kv_lora_version"] = v.get("kv_computed_for_lora_version", 0)
                 # Round number of the last PRS evaluation — used by UI to detect
                 # whether training has happened since the last eval
                 last_prs_entry = history[-1] if history else None
@@ -71,7 +71,11 @@ def get_registry():
                 pass
         uc_data["has_index"] = version_path.exists()
         faqs_path = ROOT / "examples" / uc["id"] / "faqs.json"
-        uc_data["has_faqs"] = faqs_path.exists()
+        try:
+            import json as _json
+            uc_data["has_faqs"] = faqs_path.exists() and bool(_json.loads(faqs_path.read_text()))
+        except Exception:
+            uc_data["has_faqs"] = False
         uc_cfg_path = ROOT / "examples" / uc["id"] / "uc_config.json"
         if uc_cfg_path.exists():
             try:
@@ -323,6 +327,154 @@ async def run_step(req: RunStepRequest, background_tasks: BackgroundTasks):
     return {"job_id": job_id, "uc_id": req.uc_id, "step": req.step}
 
 
+@api_router.post("/uc/{uc_id}/reattach")
+async def reattach_job(uc_id: str, request: Request, background_tasks: BackgroundTasks):
+    """Reattach to an already-running nohup job on EC2 without relaunching it.
+
+    Expects JSON body: {"job_id": "<hex>", "step": "<step>", "gpu_profile_id": "<id>"}
+    The nohup process must still be running on EC2 (log + pid files present).
+    Creates a fresh in-memory job that tails the existing log from the start.
+    """
+    from studio.pipeline_runner import run_step_background
+    body = await request.json()
+    job_id = body.get("job_id", "")
+    step = body.get("step", "train")
+    gpu_profile_id = body.get("gpu_profile_id")
+    if not job_id:
+        raise HTTPException(400, "job_id required")
+
+    jm = get_manager()
+    # Clear any stale lock so we can create a fresh job entry
+    with jm._lock:
+        jm._uc_locks.pop(uc_id, None)
+
+    new_job_id = jm.create(uc_id, step)
+
+    async def _reattach_tail():
+        """Tail the existing remote log without re-launching the nohup process."""
+        from studio.pipeline_runner import _log_path, _SSE_HEARTBEAT_INTERVAL
+        from studio.remote_gpu import _load_profiles, _load_pkey, _decrypt
+        import paramiko, time as _time
+
+        profiles = _load_profiles()
+        profile = next((p for p in profiles if p.get("id") == gpu_profile_id), None)
+        if not profile:
+            jm.fail(new_job_id, f"GPU profile '{gpu_profile_id}' not found")
+            return
+
+        pem_content = _decrypt(profile["pem_enc"])
+        pkey = _load_pkey(pem_content)
+        host, user, port = profile["host"], profile["user"], profile["port"]
+        remote_log = f"/tmp/kvforge_{job_id}.log"
+        remote_pid = f"/tmp/kvforge_{job_id}.pid"
+
+        def _ssh_connect():
+            c = paramiko.SSHClient()
+            c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            c.connect(hostname=host, username=user, port=port, pkey=pkey, timeout=30)
+            return c
+
+        loop = asyncio.get_event_loop()
+
+        def _append(line: str):
+            jm.append_log(new_job_id, line)
+            for _lp in (_log_path(uc_id), _log_path(uc_id, step)):
+                try:
+                    _lp.parent.mkdir(parents=True, exist_ok=True)
+                    with open(_lp, "a") as _f:
+                        _f.write(line + "\n")
+                except Exception:
+                    pass
+
+        _append(f"[studio] reattached to job {job_id}; log → {remote_log}")
+
+        poll_client = await loop.run_in_executor(None, _ssh_connect)
+
+        def _open_tail():
+            tc = _ssh_connect()
+            # Tail from beginning so we replay history, then follow
+            _, so, _ = tc.exec_command(f"tail -n +1 -F {remote_log} 2>/dev/null",
+                                        timeout=None, get_pty=False)
+            so.channel.setblocking(False)
+            return tc, so
+
+        tail_client, sout = await loop.run_in_executor(None, _open_tail)
+        consecutive_poll_errors = 0
+
+        while True:
+            try:
+                raw = await loop.run_in_executor(None, sout.channel.recv, 4096)
+                if raw:
+                    for ln in raw.decode("utf-8", errors="replace").splitlines():
+                        _append(ln)
+                elif sout.channel.closed:
+                    raise EOFError("tail channel closed")
+            except Exception:
+                try:
+                    sout.channel.close(); tail_client.close()
+                except Exception:
+                    pass
+                try:
+                    tail_client, sout = await loop.run_in_executor(None, _open_tail)
+                except Exception:
+                    pass
+
+            try:
+                _, chk, _ = poll_client.exec_command(
+                    f"test -f {remote_pid}.exit && cat {remote_pid}.exit || echo running"
+                )
+                status_txt = (await loop.run_in_executor(None, chk.read)).decode().strip()
+                consecutive_poll_errors = 0
+            except Exception:
+                consecutive_poll_errors += 1
+                status_txt = "running"
+                if consecutive_poll_errors >= 10:
+                    try:
+                        poll_client.close()
+                    except Exception:
+                        pass
+                    try:
+                        poll_client = await loop.run_in_executor(None, _ssh_connect)
+                        consecutive_poll_errors = 0
+                    except Exception:
+                        pass
+
+            if status_txt != "running":
+                try:
+                    exit_code = int(status_txt)
+                except ValueError:
+                    exit_code = 0
+                await asyncio.sleep(1)
+                try:
+                    raw = await loop.run_in_executor(None, sout.channel.recv, 65536)
+                    if raw:
+                        for ln in raw.decode("utf-8", errors="replace").splitlines():
+                            _append(ln)
+                except Exception:
+                    pass
+                if exit_code == 0:
+                    jm.complete(new_job_id, 0)
+                    _append("[studio] done (exit 0)")
+                else:
+                    jm.fail(new_job_id, f"Remote process exited with code {exit_code}")
+                    _append(f"[studio] failed (exit {exit_code})")
+                break
+
+            await asyncio.sleep(3)
+
+        try:
+            sout.channel.close(); tail_client.close()
+        except Exception:
+            pass
+        try:
+            poll_client.close()
+        except Exception:
+            pass
+
+    background_tasks.add_task(_reattach_tail)
+    return {"job_id": new_job_id, "reattached_from": job_id, "step": step}
+
+
 @api_router.delete("/job/{job_id}")
 def stop_job(job_id: str):
     import signal, os
@@ -442,11 +594,64 @@ async def remote_gpu_stats(profile_id: str):
         return JSONResponse({"error": str(e)[:120], "gpus": []})
 
 
+# ── Compute worker health ──────────────────────────────────────────────────────
+
+@api_router.get("/uc/{uc_id}/compute-worker/health")
+async def compute_worker_health(uc_id: str):
+    """Probe the remote compute worker configured for this UC."""
+    cfg_path = _uc_path(uc_id) / "config.json"
+    if not cfg_path.exists():
+        return JSONResponse({"status": "no_config", "reachable": False})
+    try:
+        cfg = json.loads(cfg_path.read_text())
+    except Exception:
+        return JSONResponse({"status": "error", "reachable": False, "error": "invalid config"})
+
+    compute_cfg = cfg.get("addon_config", {}).get("compute", {})
+    if compute_cfg.get("backend", "local") != "remote":
+        return JSONResponse({"status": "local", "reachable": None, "backend": "local"})
+
+    worker_url = compute_cfg.get("worker_url", "").rstrip("/")
+    if not worker_url:
+        return JSONResponse({"status": "no_url", "reachable": False})
+
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(f"{worker_url}/health")
+        if resp.status_code == 200:
+            return JSONResponse({"reachable": True, "worker_url": worker_url, **resp.json()})
+        return JSONResponse({"reachable": False, "worker_url": worker_url, "http_status": resp.status_code})
+    except Exception as e:
+        return JSONResponse({"reachable": False, "worker_url": worker_url, "error": str(e)[:120]})
+
+
 # ── Job logs ───────────────────────────────────────────────────────────────────
 
 @api_router.get("/uc/{uc_id}/logs")
-def uc_logs_endpoint(uc_id: str):
+def uc_logs_endpoint(uc_id: str, step: str | None = None):
+    """Return logs for a UC run.
+
+    If *step* is given (e.g. ``?step=train``), reads from the per-step
+    persistent log (``logs/{step}.log``).  Without *step*, returns the most
+    recent run log from the in-memory job manager or ``last_run.log``.
+    """
     _uc_path(uc_id)  # path traversal guard
+    from studio.pipeline_runner import _log_path
+
+    # Per-step historical log requested
+    if step:
+        log_file = _log_path(uc_id, step)
+        if log_file.exists():
+            try:
+                lines = log_file.read_text().splitlines()
+                status = "failed" if lines and "[studio] failed" in lines[-1] else "done"
+                return JSONResponse({"lines": lines, "status": status, "step": step, "job_id": None})
+            except OSError:
+                pass
+        return JSONResponse({"lines": [], "status": None, "step": step, "job_id": None})
+
+    # Most-recent run: check in-memory job manager first
     jm = get_manager()
     job = jm.last_for_uc(uc_id)
     if job:
@@ -457,25 +662,179 @@ def uc_logs_endpoint(uc_id: str):
             "job_id": job.get("job_id"),
         })
     # Fallback: read from disk log (survives studio restarts)
-    from studio.pipeline_runner import _log_path
     log_file = _log_path(uc_id)
     if log_file.exists():
         try:
             lines = log_file.read_text().splitlines()
-            # Parse step/status from header line written by run_step_background
-            step = None
-            status = "done"  # if file exists from a previous run, it completed
+            step_parsed = None
+            status = "done"
             if lines and lines[0].startswith("[studio] step="):
-                parts = lines[0].split()
-                for p in parts:
+                for p in lines[0].split():
                     if p.startswith("step="):
-                        step = p[5:]
+                        step_parsed = p[5:]
             if lines and "[studio] failed" in lines[-1]:
                 status = "failed"
-            return JSONResponse({"lines": lines, "status": status, "step": step, "job_id": None})
+            return JSONResponse({"lines": lines, "status": status, "step": step_parsed, "job_id": None})
         except OSError:
             pass
     return JSONResponse({"lines": [], "status": None, "step": None, "job_id": None})
+
+
+# ── Step summaries ────────────────────────────────────────────────────────────
+
+@api_router.get("/uc/{uc_id}/step-summaries")
+def step_summaries_endpoint(uc_id: str):
+    """Return a compact summary dict for each completed pipeline step."""
+    import re as _re
+    uc_dir = _uc_path(uc_id)
+
+    cfg, ver, uc_cfg = {}, {}, {}
+    for path, dest in [(uc_dir / "config.json", "cfg"),
+                       (uc_dir / "version.json", "ver"),
+                       (uc_dir / "uc_config.json", "uc_cfg")]:
+        if path.exists():
+            try:
+                locals()[dest]  # noqa — reassign below
+            except Exception:
+                pass
+    if (uc_dir / "config.json").exists():
+        try: cfg = json.loads((uc_dir / "config.json").read_text())
+        except Exception: pass
+    if (uc_dir / "version.json").exists():
+        try: ver = json.loads((uc_dir / "version.json").read_text())
+        except Exception: pass
+    if (uc_dir / "uc_config.json").exists():
+        try: uc_cfg = json.loads((uc_dir / "uc_config.json").read_text())
+        except Exception: pass
+
+    indexing = cfg.get("addon_config", {}).get("indexing", cfg)
+    inference = cfg.get("addon_config", {}).get("inference", cfg)
+    training  = cfg.get("addon_config", {}).get("training", cfg)
+
+    # ── Chunk count from VectorDB (fast native count) ─────────────────────────
+    chunk_count = None
+    collection = cfg.get("collection")
+    if collection:
+        try:
+            from vectorstore.registry import get_store
+            store = get_store(cfg)
+            chunk_count = store.count(collection)
+        except Exception:
+            pass
+
+    # ── Training loss from log ─────────────────────────────────────────────────
+    training_loss = None
+    train_log = uc_dir / "logs" / "train.log"
+    if train_log.exists():
+        try:
+            matches = _re.findall(r"'train_loss':\s*'([0-9.]+)'", train_log.read_text())
+            if matches:
+                training_loss = float(matches[-1])
+        except Exception:
+            pass
+
+    # ── FAQ count ─────────────────────────────────────────────────────────────
+    faq_count = 0
+    faqs_path = uc_dir / "faqs.json"
+    if faqs_path.exists():
+        try: faq_count = len(json.loads(faqs_path.read_text()))
+        except Exception: pass
+
+    llm = uc_cfg.get("llm", {})
+    faq_provider = llm.get("sleep_faq_provider") or "claude"
+    faq_model    = llm.get("sleep_faq_model") or "claude-haiku-4-5-20251001"
+    # Shorten model name for display (strip org prefix)
+    faq_model_short = faq_model.split("/")[-1] if "/" in faq_model else faq_model
+
+    prs_history = ver.get("prs_history", [])
+    last_prs = prs_history[-1] if prs_history else None
+
+    # Shorten LLM model name for display
+    llm_model = inference.get("llm_model", "")
+    llm_model_short = llm_model.split("/")[-1] if "/" in llm_model else llm_model
+
+    embed_model = indexing.get("embed_model", "")
+    embed_model_short = embed_model.split("/")[-1] if "/" in embed_model else embed_model
+
+    return JSONResponse({
+        "index": {
+            "chunk_count": chunk_count,
+            "embed_model": embed_model_short,
+            "vector_store": indexing.get("vector_store", "qdrant"),
+            "chunk_size": indexing.get("chunk_size"),
+        },
+        "recompute": {
+            "model": llm_model_short,
+            "kv_version": ver.get("kv_computed_for_lora_version", 0),
+            "chunk_count": chunk_count,
+        },
+        "faq-gen-cloud": {
+            "count": faq_count,
+            "provider": faq_provider,
+            "model": faq_model_short,
+            "per_chunk": round(faq_count / chunk_count, 2) if chunk_count else None,
+        },
+        "train": {
+            "lora_version": ver.get("current_lora_version", 0),
+            "lora_rank": training.get("lora_rank", 16),
+            "lora_alpha": training.get("lora_alpha", 32),
+            "lora_epochs": training.get("lora_epochs", 3),
+            "training_loss": training_loss,
+        },
+        "prs-eval": {
+            "prs": last_prs["prs"] if last_prs else None,
+            "round": last_prs["round"] if last_prs else None,
+            "samples": uc_cfg.get("prs_eval_sample", 20),
+        },
+    })
+
+
+# ── LoRA training recommendations ─────────────────────────────────────────────
+
+@api_router.get("/uc/{uc_id}/training-recommendations")
+def training_recommendations_endpoint(uc_id: str):
+    """Return auto-derived LoRA hyperparameter recommendations with reasoning."""
+    uc_dir = _uc_path(uc_id)
+    cfg, ver = {}, {}
+    if (uc_dir / "config.json").exists():
+        try: cfg = json.loads((uc_dir / "config.json").read_text())
+        except Exception: pass
+    if (uc_dir / "version.json").exists():
+        try: ver = json.loads((uc_dir / "version.json").read_text())
+        except Exception: pass
+
+    n_faqs = 0
+    faqs_path = uc_dir / "faqs.json"
+    if faqs_path.exists():
+        try: n_faqs = len(json.loads(faqs_path.read_text()))
+        except Exception: pass
+
+    from core.auto_config import recommend
+    recs = recommend(
+        cfg=cfg,
+        n_faqs=n_faqs,
+        prs_history=ver.get("prs_history", []),
+        lora_version=ver.get("current_lora_version", 0),
+    )
+    return JSONResponse(recs)
+
+
+@api_router.post("/uc/{uc_id}/training-config")
+async def save_training_config(uc_id: str, request: Request):
+    """Persist LoRA hyperparameters to config.json addon_config.training."""
+    cfg_path = _uc_path(uc_id) / "config.json"
+    if not cfg_path.exists():
+        raise HTTPException(404, f"config.json not found for {uc_id}")
+    cfg = json.loads(cfg_path.read_text())
+    updates = await request.json()
+    allowed = {"lora_epochs", "lora_rank", "lora_alpha", "lora_lr",
+               "lora_dropout", "lora_target_modules", "train_batch_size"}
+    training = cfg.setdefault("addon_config", {}).setdefault("training", {})
+    for k, v in updates.items():
+        if k in allowed:
+            training[k] = v
+    cfg_path.write_text(json.dumps(cfg, indent=2))
+    return {"status": "saved"}
 
 
 # ── PRS history ────────────────────────────────────────────────────────────────
@@ -876,3 +1235,62 @@ def get_logs(
 def get_logs_stats():
     from studio.activity_log import get_stats
     return get_stats()
+
+
+@api_router.get("/uc/{uc_id}/active-remote-job")
+async def detect_active_remote_job(uc_id: str):
+    """SSH into the remote GPU and find any live nohup kvforge jobs for this UC.
+
+    Returns {"job_id": "<hex>", "step": "<step>", "gpu_profile_id": "<id>"}
+    or {"job_id": null} if nothing is running.
+    """
+    from studio.remote_gpu import _load_profiles, _load_pkey, _decrypt
+    import paramiko
+
+    uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
+    if not uc_cfg_path.exists():
+        return JSONResponse({"job_id": None, "reason": "no uc_config"})
+
+    uc_cfg = json.loads(uc_cfg_path.read_text())
+    profile_id = uc_cfg.get("gpu_profile_id") or uc_cfg.get("remote_gpu_profile_id")
+    if not profile_id:
+        return JSONResponse({"job_id": None, "reason": "no gpu_profile configured"})
+
+    profiles = _load_profiles()
+    profile = next((p for p in profiles if p.get("id") == profile_id), None)
+    if not profile:
+        return JSONResponse({"job_id": None, "reason": "profile not found"})
+
+    try:
+        pem_content = _decrypt(profile["pem_enc"])
+        pkey = _load_pkey(pem_content)
+        c = paramiko.SSHClient()
+        c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        c.connect(hostname=profile["host"], username=profile["user"],
+                  port=profile["port"], pkey=pkey, timeout=15)
+
+        # Find pid files for this uc_id whose process is still alive
+        _, out, _ = c.exec_command(
+            "for f in /tmp/kvforge_*.pid; do "
+            "  [ -f \"$f\" ] || continue; "
+            "  pid=$(cat \"$f\" 2>/dev/null); "
+            "  kill -0 \"$pid\" 2>/dev/null && echo \"$f\"; "
+            "done"
+        )
+        alive = out.read().decode().strip()
+        c.close()
+
+        if not alive:
+            return JSONResponse({"job_id": None, "reason": "no running nohup jobs found"})
+
+        # Pick the most recent pid file
+        pid_file = alive.splitlines()[-1].strip()
+        import re
+        m = re.search(r"kvforge_([0-9a-f]+)\.pid", pid_file)
+        if not m:
+            return JSONResponse({"job_id": None, "reason": "could not parse job_id from pid file"})
+
+        job_id = m.group(1)
+        return JSONResponse({"job_id": job_id, "step": "train", "gpu_profile_id": profile_id})
+    except Exception as e:
+        return JSONResponse({"job_id": None, "reason": str(e)})

@@ -12,6 +12,12 @@ first PRS eval run.
 
 Usage::
 
+    # Cover all chunks (default — no --count flag):
+    python -m pipeline.sleep_faq_generator \\
+        --config examples/usecase1_customer_support/config.json \\
+        --output examples/usecase1_customer_support/faqs.json
+
+    # Quick test — cap at 50 pairs:
     python -m pipeline.sleep_faq_generator \\
         --config examples/usecase1_customer_support/config.json \\
         --output examples/usecase1_customer_support/faqs.json \\
@@ -27,6 +33,7 @@ import json
 import os
 import re
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -155,9 +162,9 @@ def _resolve_provider_config(uc_config: dict) -> tuple[str, str, str]:
     """Return (provider, model, api_key) from uc_config + env vars + Studio settings."""
     llm = uc_config.get("llm", {})
     provider = (llm.get("sleep_faq_provider")
-                or os.environ.get("SLEEP_FAQ_PROVIDER", "gemini"))
+                or os.environ.get("SLEEP_FAQ_PROVIDER", "claude"))
     model = (llm.get("sleep_faq_model")
-             or os.environ.get("SLEEP_FAQ_MODEL", "gemini-2.5-flash"))
+             or os.environ.get("SLEEP_FAQ_MODEL", "claude-haiku-4-5-20251001"))
     key_env = {
         "gemini": "GEMINI_API_KEY",
         "claude": "ANTHROPIC_API_KEY",
@@ -180,8 +187,13 @@ def _resolve_provider_config(uc_config: dict) -> tuple[str, str, str]:
 
 
 def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
-             n_per_chunk: int = 3) -> None:
-    """Run sleep-time FAQ generation and save to output_path."""
+             n_per_chunk: int = 3, delay: float = 2.0) -> None:
+    """Run sleep-time FAQ generation and save to output_path.
+
+    Iterates over every chunk in the collection, generating *n_per_chunk*
+    Q&A pairs per chunk.  If *count* > 0 it acts as a hard cap (useful for
+    quick tests); 0 means "no limit — cover all chunks".
+    """
     uc_config = _load_uc_config(config_path)
     provider, model, api_key = _resolve_provider_config(uc_config)
 
@@ -200,9 +212,20 @@ def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
 
     from vectorstore.registry import get_store
     store = get_store(cfg)
-    results, _ = store.scroll(cfg["collection"], limit=500,
-                              with_payload=True, with_vectors=False)
-    chunks = [r.payload.get("text", "") for r in results if r.payload.get("text")]
+
+    # Paginate through all chunks — a single scroll call is capped at the
+    # store's page limit (500 for Qdrant), so we loop until next_offset is None.
+    all_results = []
+    offset = None
+    while True:
+        page, offset = store.scroll(cfg["collection"], limit=500,
+                                    with_payload=True, with_vectors=False,
+                                    offset=offset)
+        all_results.extend(page)
+        if offset is None:
+            break
+
+    chunks = [r.payload.get("text", "") for r in all_results if r.payload.get("text")]
     if not chunks:
         print("[sleep-faq] ERROR: No chunks found. Run indexing first.")
         sys.exit(1)
@@ -220,21 +243,40 @@ def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
             pass
 
     new_faqs: list[dict] = []
-    chunk_idx = 0
+    cap = count if count > 0 else None  # None = no limit
+    total_chunks = len(chunks)
 
-    while len(new_faqs) < count and chunk_idx < len(chunks):
-        chunk = chunks[chunk_idx]
-        chunk_idx += 1
+    for chunk_idx, chunk in enumerate(chunks, start=1):
+        if cap and len(new_faqs) >= cap:
+            break
         if not chunk.strip():
             continue
         try:
             prompt = _build_sleep_prompt(chunk, n_per_chunk=n_per_chunk)
-            raw = _call_provider(provider, model, api_key, prompt)
+            # Retry up to 3 times on 429 with exponential backoff
+            raw = None
+            for attempt in range(3):
+                try:
+                    raw = _call_provider(provider, model, api_key, prompt)
+                    break
+                except Exception as exc:
+                    if "429" in str(exc) and attempt < 2:
+                        wait = 10 * (2 ** attempt)
+                        print(f"  [chunk {chunk_idx}] rate limited — waiting {wait}s before retry")
+                        time.sleep(wait)
+                    else:
+                        raise
+            if raw is None:
+                continue
+            added = 0
             for b in _parse_sleep_blocks(raw):
-                if len(new_faqs) >= count:
+                if cap and len(new_faqs) >= cap:
                     break
                 new_faqs.append({q_key: b["question"], a_key: b["answer"]})
-                print(f"  [{len(new_faqs)}/{count}] Q: {b['question'][:80]}")
+                added += 1
+            print(f"  [chunk {chunk_idx}/{total_chunks}] +{added} pairs (total {len(new_faqs)}) Q: {chunks[chunk_idx-1][:60]!r}")
+            if delay > 0:
+                time.sleep(delay)
         except Exception as e:
             print(f"  [chunk {chunk_idx}] error: {e}")
 
@@ -303,18 +345,20 @@ def main() -> None:
         description="Sleep-time FAQ generation using a cloud LLM."
     )
     p.add_argument("--config", required=True, help="Path to config.json")
-    p.add_argument("--count", type=int, default=50,
-                   help="Target FAQ pairs to generate (default: 50)")
+    p.add_argument("--count", type=int, default=0,
+                   help="Hard cap on total FAQ pairs (default: 0 = no limit, cover all chunks)")
     p.add_argument("--output", default=None,
                    help="Output faqs.json path (default: same dir as config)")
     p.add_argument("--n-per-chunk", type=int, default=3,
                    help="Q&A pairs to request per chunk (default: 3)")
+    p.add_argument("--delay", type=float, default=2.0,
+                   help="Seconds to sleep between chunk API calls (default: 2)")
     args = p.parse_args()
 
     config_path = Path(args.config)
     cfg = json.loads(config_path.read_text())
     output_path = Path(args.output) if args.output else config_path.parent / "faqs.json"
-    generate(cfg, config_path, args.count, output_path, args.n_per_chunk)
+    generate(cfg, config_path, args.count, output_path, args.n_per_chunk, args.delay)
 
 
 if __name__ == "__main__":

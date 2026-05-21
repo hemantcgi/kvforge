@@ -256,7 +256,10 @@ def main() -> None:
     args = p.parse_args()
 
     with open(args.config) as f:
-        cfg = json.load(f)
+        raw = json.load(f)
+    cfg = {**raw}
+    for _sec in ("indexing", "inference", "training", "compute"):
+        cfg.update(raw.get("addon_config", {}).get(_sec, {}))
     with open(args.faqs) as f:
         all_faqs = json.load(f)
 

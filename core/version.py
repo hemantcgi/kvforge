@@ -30,6 +30,7 @@ DEFAULTS: dict[str, Any] = {
     "prs_history": [],
     "known_good_queries": [],
     "clusters": {},
+    "kv_computed_for_lora_version": 0,
 }
 
 
@@ -111,6 +112,17 @@ def increment_lora_version(checkpoint_path: str) -> int:
     data["checkpoint_path"] = checkpoint_path
     save(data)
     return data["current_lora_version"]
+
+
+def record_kv_recompute() -> None:
+    """Record that KV tensors have been recomputed for the current LoRA version.
+
+    Called by kv_indexer after a successful recompute pass so the dashboard
+    can determine whether Step 4b (KV Recompute) is complete.
+    """
+    data = load()
+    data["kv_computed_for_lora_version"] = data["current_lora_version"]
+    save(data)
 
 
 def activate_phase_2() -> None:

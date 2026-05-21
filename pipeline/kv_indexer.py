@@ -259,6 +259,9 @@ def cmd_compute_kv(cfg: dict, filter_type: str, filter_value) -> None:
     if hasattr(store, "flush"):
         store.flush()
     print(f"Recomputed KV for {updated} chunks -> kv_version={current_ver}")
+    if updated > 0:
+        ver.activate_phase_2()
+        ver.record_kv_recompute()
 
 
 def main() -> None:
@@ -285,6 +288,7 @@ def main() -> None:
         cfg = dc.get_merged_config("indexing", "inference", "training")
         cfg.setdefault("version_file", raw.get("version_file", "version.json"))
         cfg.setdefault("collection", raw.get("collection", ""))
+        cfg["addon_config"] = raw.get("addon_config", {})  # preserve for addons (e.g. compute backend)
     else:
         cfg = raw
     ver.init(cfg)
