@@ -45,10 +45,13 @@ def mean_pool_kv(past_key_values) -> np.ndarray:
             (mean-pooled over seq_len dimension — one representative vector per chunk)
     """
     pooled = []
+    device = None
     for k, v in _iter_kv_layers(past_key_values):
         # k, v: [1, num_kv_heads, seq_len, head_dim]
-        k = k.squeeze(0)          # [num_kv_heads, seq_len, head_dim]
-        v = v.squeeze(0)          # [num_kv_heads, seq_len, head_dim]
+        if device is None:
+            device = k.device  # anchor all tensors to the first layer's device
+        k = k.squeeze(0).to(device)   # [num_kv_heads, seq_len, head_dim]
+        v = v.squeeze(0).to(device)   # [num_kv_heads, seq_len, head_dim]
         k_pooled = k.mean(dim=1)  # mean over seq_len → [num_kv_heads, head_dim]
         v_pooled = v.mean(dim=1)  # mean over seq_len → [num_kv_heads, head_dim]
         pooled.append(torch.stack([k_pooled, v_pooled]))  # [2, num_kv_heads, head_dim]

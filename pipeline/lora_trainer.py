@@ -166,11 +166,15 @@ def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
     dataset = Dataset.from_dict({"text": all_texts})
     tokenized = dataset.map(tokenize, remove_columns=["text"])
 
+    # Use configured batch size; fall back to micro-batch=1 + accum=16 (eff. batch 16)
+    batch_size = int(cfg.get("train_batch_size", 1))
+    grad_accum = max(1, 16 // batch_size)
+
     training_args = TrainingArguments(
         output_dir=output_dir,
         num_train_epochs=cfg.get("lora_epochs", 3),
-        per_device_train_batch_size=1,
-        gradient_accumulation_steps=16,
+        per_device_train_batch_size=batch_size,
+        gradient_accumulation_steps=grad_accum,
         learning_rate=cfg.get("lora_lr", 2e-4),
         fp16=True,
         gradient_checkpointing=True,
@@ -205,7 +209,12 @@ def main() -> None:
         p.error("provide --source-file (chunk mode) or --faqs (Q&A mode)")
 
     with open(args.config) as f:
-        cfg = json.load(f)
+        raw = json.load(f)
+    # Flatten addon_config sections so lora_trainer works with both flat and
+    # nested config structures (new UCs use addon_config, legacy ones are flat)
+    cfg = {**raw}
+    for _sec in ("indexing", "inference", "training", "compute"):
+        cfg.update(raw.get("addon_config", {}).get(_sec, {}))
     ver.init(cfg)
     model_loader.init(cfg)
 
