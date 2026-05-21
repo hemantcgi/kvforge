@@ -581,8 +581,10 @@ async def run_step_background(
                 _append(f"[studio] error: {msg}")
                 return
 
-    # Route GPU steps to remote EC2 when a profile is selected
-    if gpu_profile_id and step in GPU_REQUIRED_STEPS:
+    # Route GPU steps to remote EC2 when a profile is selected.
+    # Recompute is excluded: it needs local Qdrant access and offloads model
+    # inference via the compute addon HTTP worker, not SSH.
+    if gpu_profile_id and step in GPU_REQUIRED_STEPS and step != "recompute":
         try:
             await _run_step_remote_ssh(uc_id, step, job_id, job_manager,
                                        gpu_profile_id, _append)
