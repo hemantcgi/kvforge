@@ -284,7 +284,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
 <div class="modal-overlay" id="add-connector-modal">
   <div class="modal-box">
     <div class="modal-hd">
-      <h3>Add Connector</h3>
+      <h3 id="add-connector-title">Add Connector</h3>
       <button class="modal-close" onclick="closeModal()">&#x2715;</button>
     </div>
     <div class="modal-body">
@@ -488,6 +488,8 @@ fetch('/auth/me', {credentials:'include'}).then(r => r.ok ? r.json() : null).the
 });
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+const _CRON_LABELS = {'':'Manual only','0 * * * *':'Hourly','0 */6 * * *':'Every 6 hours','0 0 * * *':'Daily at midnight','0 0 * * 0':'Weekly (Sundays)'};
+function _cronLabel(cron){return cron ? (_CRON_LABELS[cron] || ('⏱ '+cron)) : 'Manual only';}
 
 // ICONS.bg values are hardcoded CSS color literals — never sourced from API data — safe for inline style
 const ICONS = {
@@ -520,7 +522,7 @@ async function load() {
       <div class="conn-icon" style="background:${ic.bg}">${ic.abbr}</div>
       <div class="conn-info">
         <div class="conn-name">${esc(c.name)}</div>
-        <div class="conn-meta">${esc(c.type)} · ${esc(c.schedule_cron || 'manual only')}</div>
+        <div class="conn-meta">${esc(c.type)} · ${_cronLabel(c.schedule_cron)}</div>
         <div class="scope-chips" id="scopes-${esc(c.id)}"><span class="scope-empty">loading…</span></div>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
@@ -529,6 +531,7 @@ async function load() {
       </div>
       <div class="conn-actions">
         <button class="btn-sm" onclick="showScopeModal('${esc(c.id)}','${esc(c.name)}')">&#128279; Scopes</button>
+        <button class="btn-sm" onclick="showEditForm(${JSON.stringify(c)})">&#9998; Edit</button>
         <button class="btn-sm" onclick="syncNow('${esc(c.id)}')">&#8635; Sync Now</button>
         <button class="btn-sm" onclick="deleteConn('${esc(c.id)}')">Delete</button>
       </div>
@@ -584,8 +587,10 @@ async function deleteConn(cid) {
 }
 
 let _selectedType = null;
+let _editConnectorId = null;
 
 function showAddForm() {
+  _editConnectorId = null;
   _selectedType = null;
   document.querySelectorAll('.type-pill').forEach(p=>p.classList.remove('sel'));
   document.querySelectorAll('.cred-section').forEach(s=>s.classList.remove('visible'));
@@ -602,6 +607,70 @@ function showAddForm() {
 
 function closeModal() {
   document.getElementById('add-connector-modal').classList.remove('open');
+  _editConnectorId = null;
+  document.getElementById('add-connector-title').textContent = 'Add Connector';
+  document.querySelector('.btn-save').textContent = 'Save Connector';
+  document.querySelectorAll('.type-pill').forEach(p => p.style.pointerEvents = '');
+}
+
+async function showEditForm(c) {
+  // Fetch full connector with decrypted credentials before opening modal
+  try {
+    const r = await fetch(`/studio/api/connectors/${c.id}`, {credentials:'include'});
+    if (r.ok) c = await r.json();
+  } catch(e) { /* fall through with masked data */ }
+  _editConnectorId = c.id;
+  _selectedType = c.type;
+  // Reset modal state first
+  document.querySelectorAll('.type-pill').forEach(p => p.classList.remove('sel'));
+  document.querySelectorAll('.cred-section').forEach(s => s.classList.remove('visible'));
+  document.getElementById('m-test-status').textContent = '';
+  // Select the right type pill (disable changing type in edit mode)
+  const pill = document.querySelector(`.type-pill[data-type="${c.type}"]`);
+  if (pill) { pill.classList.add('sel'); document.querySelectorAll('.type-pill').forEach(p => p.style.pointerEvents = p === pill ? '' : 'none'); }
+  const sec = document.getElementById('creds-' + c.type);
+  if (sec) sec.classList.add('visible');
+  // Pre-fill name
+  document.getElementById('m-name').value = c.name || '';
+  // Pre-fill credentials (only non-sensitive readable fields)
+  const creds = c.credentials || {};
+  if (c.type === 'wikipedia') {
+    document.getElementById('m-wiki-topics').value = creds.topics || '';
+    document.getElementById('m-wiki-lang').value = creds.language || 'en';
+    document.getElementById('m-wiki-max').value = creds.max_articles || 0;
+  } else if (c.type === 'fda') {
+    document.getElementById('m-fda-drug').value = creds.drug_name || '';
+  } else if (c.type === 'edgar') {
+    document.getElementById('m-edgar-ticker').value = creds.ticker || '';
+    document.getElementById('m-edgar-form').value = creds.form_type || '10-K';
+  } else if (c.type === 'espn') {
+    document.getElementById('m-espn-sport').value = creds.sport || 'football';
+    document.getElementById('m-espn-league').value = creds.league || 'nfl';
+    document.getElementById('m-espn-team').value = creds.team_filter || '';
+  } else if (c.type === 's3') {
+    document.getElementById('m-s3-key').value = creds.access_key_id || '';
+    document.getElementById('m-s3-bucket').value = creds.bucket || '';
+    document.getElementById('m-s3-region').value = creds.region || 'us-east-1';
+    // password fields left blank intentionally — user re-enters sensitive fields only if changing
+  }
+  // Pre-fill schedule
+  document.getElementById('schedule-section').style.display = '';
+  const cron = c.schedule_cron || '';
+  const presets = ['', '0 * * * *', '0 */6 * * *', '0 0 * * *', '0 0 * * 0'];
+  if (presets.includes(cron)) {
+    document.getElementById('m-schedule-preset').value = cron;
+    document.getElementById('m-cron-custom-wrap').style.display = 'none';
+  } else if (cron) {
+    document.getElementById('m-schedule-preset').value = 'custom';
+    document.getElementById('m-cron-custom').value = cron;
+    document.getElementById('m-cron-custom-wrap').style.display = '';
+  } else {
+    document.getElementById('m-schedule-preset').value = '';
+    document.getElementById('m-cron-custom-wrap').style.display = 'none';
+  }
+  document.getElementById('add-connector-title').textContent = 'Edit Connector';
+  document.querySelector('.btn-save').textContent = 'Update Connector';
+  document.getElementById('add-connector-modal').classList.add('open');
 }
 
 function selectType(pill) {
@@ -711,12 +780,27 @@ async function saveConn() {
   saveBtn.disabled = true;
   try {
     const schedule_cron = _getScheduleCron();
-    const r = await fetch('/studio/api/connectors', {
-      method:'POST', credentials:'include',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({type: _selectedType, name, credentials: creds, schedule_cron}),
-    });
-    if (!r.ok) { showToast('Failed to save connector: ' + r.status); return; }
+    let r;
+    if (_editConnectorId) {
+      // Build update payload — only include credentials if non-empty (user may leave sensitive fields blank)
+      const body = {name, schedule_cron};
+      const hasCredContent = Object.values(creds).some(v => v !== '' && v !== null && v !== 0);
+      if (hasCredContent) body.credentials = creds;
+      r = await fetch(`/studio/api/connectors/${_editConnectorId}`, {
+        method:'PUT', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) { showToast('Failed to update connector: ' + r.status); return; }
+      showToast('Connector updated');
+    } else {
+      r = await fetch('/studio/api/connectors', {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({type: _selectedType, name, credentials: creds, schedule_cron}),
+      });
+      if (!r.ok) { showToast('Failed to save connector: ' + r.status); return; }
+    }
     closeModal();
     load();
   } catch(e) {

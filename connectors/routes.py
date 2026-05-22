@@ -31,6 +31,20 @@ async def list_connectors(request: Request):
     return _registry.list_all()
 
 
+@connector_router.get("/{cid}")
+async def get_connector(cid: str, request: Request):
+    if err := _require_role(request, _ANY_AUTH):
+        return err
+    cfg = _registry.get(cid)
+    if cfg is None:
+        return JSONResponse({"detail": "not found"}, status_code=404)
+    try:
+        cfg["credentials"] = _registry.get_credentials(cid)
+    except Exception:
+        pass
+    return cfg
+
+
 @connector_router.post("")
 async def create_connector(request: Request):
     if err := _require_role(request, _ADMIN_ONLY):
