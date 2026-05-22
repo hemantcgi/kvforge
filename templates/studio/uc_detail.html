@@ -1341,18 +1341,6 @@ async function loadUCState() {
         reindexBtn.style.display = 'none';
       }
 
-      // ── PRS card value (Phase 3 card) ──────────────────────────────────
-      if (hasPRS && !pc3.classList.contains('locked')) {
-        document.getElementById('pc3-val').textContent = uc.prs.toFixed(3);
-        document.getElementById('pc3-sub').textContent = uc.prs >= 0.75 ? 'Phase 3 active' : 'Phase 3 not yet unlocked';
-        if (uc.prs >= 0.75) {
-          const badge = document.createElement('div');
-          badge.className = 'pc-active-badge';
-          badge.textContent = '● ACTIVE';
-          pc3.appendChild(badge);
-        }
-      }
-
       // ── Show advanced panels (PRS chart + latency + LoRA history) ────────
       // Show only once LoRA has been trained at least once
       if (loraVer > 0 || hasPRS) {
@@ -1411,6 +1399,7 @@ async function loadUCState() {
       document.getElementById('ps-meta-data').textContent = hasIndex ? 'indexed' : 'not indexed';
     }
   } catch(e) {
+    console.error('[loadUCState]', e);
     document.getElementById('topbar-uc-name').textContent = UC_ID;
     document.getElementById('uc-page-title').textContent = UC_ID;
   }
