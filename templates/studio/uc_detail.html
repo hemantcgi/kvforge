@@ -361,6 +361,26 @@ svg.prs-chart{width:100%;height:140px;display:block;overflow:visible;}
 .ab-settings-field input:focus,.ab-settings-field select:focus,.ab-settings-field textarea:focus{border-color:var(--border-focus);}
 .ab-settings-field textarea{resize:vertical;min-height:48px;font-family:inherit;}
 .ab-error{color:var(--danger);font-size:11px;margin-top:4px;}
+.ab-text{max-height:320px;overflow-y:auto;}
+.ab-answer-row{position:relative;}
+.ab-copy-btn{position:absolute;top:6px;right:6px;font-size:10px;padding:2px 7px;border-radius:3px;border:1px solid var(--border);background:var(--bg-sunken);color:var(--text-subtle);cursor:pointer;opacity:0;transition:opacity .15s;}
+.ab-answer-row:hover .ab-copy-btn{opacity:1;}
+.ab-run.loading{opacity:.7;cursor:not-allowed;}
+.ab-history{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;margin-bottom:20px;box-shadow:var(--shadow-sm);overflow:hidden;}
+.ab-history-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg-sunken);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;}
+.ab-history-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-subtle);}
+.ab-history-body{overflow:hidden;max-height:0;transition:max-height .25s ease;}
+.ab-history-body.open{max-height:800px;}
+.ab-hist-item{padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;}
+.ab-hist-item:last-child{border-bottom:none;}
+.ab-hist-item:hover{background:var(--bg-hover);}
+.ab-hist-q{font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ab-hist-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.ab-hist-ans{font-size:11px;color:var(--text-secondary);line-height:1.5;max-height:60px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;padding:6px 8px;border-radius:4px;}
+.ab-hist-ans-a{background:var(--uc-p1-bg);border:1px solid var(--uc-p1-border);}
+.ab-hist-ans-b{background:var(--uc-p2-bg);border:1px solid var(--uc-p2-border);}
+.ab-hist-meta{font-size:10px;color:var(--text-disabled);margin-top:3px;}
+.ab-sys-hint{font-size:10px;color:var(--text-subtle);font-style:italic;margin-bottom:6px;}
 
 /* ── Pipeline logs panel ───────────────────────────────────────────────────── */
 .logs-panel{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:20px;}
@@ -781,7 +801,11 @@ svg.prs-chart{width:100%;height:140px;display:block;overflow:visible;}
                 </div>
               </div>
             </div>
-            <div class="ab-text" id="ab-text-a" style="color:var(--text-subtle)">Run a query to see results</div>
+            <div id="ab-sysprompt-hint-a" class="ab-sys-hint" style="display:none"></div>
+            <div class="ab-answer-row">
+              <div class="ab-text" id="ab-text-a" style="color:var(--text-subtle)">Run a query to see results</div>
+              <button class="ab-copy-btn" onclick="copyAnswer('a')" title="Copy answer">⎘ Copy</button>
+            </div>
             <div class="ab-meta">
               <div class="ab-meta-item"><b>Chunks</b> <span id="ab-chunks-a" class="ab-chunks-link" onclick="showChunksPopup('a')" title="Click to view retrieved chunks" style="cursor:pointer;text-decoration:underline dotted;">—</span></div>
               <div class="ab-meta-item"><b>Retrieval</b> <span id="ab-retrieval-a">—</span></div>
@@ -837,7 +861,10 @@ svg.prs-chart{width:100%;height:140px;display:block;overflow:visible;}
                 </div>
               </div>
             </div>
-            <div class="ab-text" id="ab-text-b" style="color:var(--text-subtle)">Run a query to see results</div>
+            <div class="ab-answer-row">
+              <div class="ab-text" id="ab-text-b" style="color:var(--text-subtle)">Run a query to see results</div>
+              <button class="ab-copy-btn" onclick="copyAnswer('b')" title="Copy answer">⎘ Copy</button>
+            </div>
             <div class="ab-meta">
               <div class="ab-meta-item"><b>Chunks</b> <span id="ab-chunks-b" class="ab-chunks-link" onclick="showChunksPopup('b')" title="Click to view retrieved chunks" style="cursor:pointer;text-decoration:underline dotted;">—</span></div>
               <div class="ab-meta-item"><b>Retrieval</b> <span id="ab-retrieval-b">—</span></div>
@@ -854,6 +881,15 @@ svg.prs-chart{width:100%;height:140px;display:block;overflow:visible;}
           Curation: <span id="curate-count">—</span> / <span id="curate-threshold">—</span> pairs curated
           <span id="curate-at-threshold" style="display:none;color:var(--success);margin-left:8px;font-weight:600">✓ threshold reached</span>
         </div>
+      </div>
+
+      <!-- Query History -->
+      <div class="ab-history" id="ab-history" style="display:none">
+        <div class="ab-history-hdr" onclick="toggleHistory()">
+          <span class="ab-history-title">Query History <span id="ab-history-count" style="font-weight:400;text-transform:none;letter-spacing:0"></span></span>
+          <span id="ab-history-chevron" style="font-size:11px;color:var(--text-subtle)">▼</span>
+        </div>
+        <div class="ab-history-body" id="ab-history-body"></div>
       </div>
 
       <!-- Pipeline Logs -->
@@ -1620,17 +1656,130 @@ function _getModelBSettings() {
   };
 }
 
+// ── Query history ──────────────────────────────────────────────────────────
+const _queryHistory = [];
+let _historyOpen = false;
+
+function toggleHistory() {
+  _historyOpen = !_historyOpen;
+  document.getElementById('ab-history-body').classList.toggle('open', _historyOpen);
+  document.getElementById('ab-history-chevron').textContent = _historyOpen ? '▲' : '▼';
+}
+
+function _addToHistory(query, ra, rb) {
+  const ms2s = ms => ms != null ? (ms/1000).toFixed(2)+'s' : '—';
+  _queryHistory.unshift({query, ra, rb, ts: Date.now()});
+  if (_queryHistory.length > 20) _queryHistory.pop();
+
+  const hist = document.getElementById('ab-history');
+  const body = document.getElementById('ab-history-body');
+  const countEl = document.getElementById('ab-history-count');
+  hist.style.display = '';
+  countEl.textContent = `(${_queryHistory.length})`;
+
+  body.innerHTML = _queryHistory.map((h, i) => `
+    <div class="ab-hist-item" onclick="_restoreQuery(${i})">
+      <div class="ab-hist-q">${_esc(h.query)}</div>
+      <div class="ab-hist-cols">
+        <div>
+          <div class="ab-hist-ans ab-hist-ans-a">${h.ra.error ? '⚠ '+_esc(h.ra.error) : _esc(h.ra.text||'—')}</div>
+          <div class="ab-hist-meta">Model A · ${ms2s(h.ra.latency_ms)}</div>
+        </div>
+        <div>
+          <div class="ab-hist-ans ab-hist-ans-b">${h.rb.error ? '⚠ '+_esc(h.rb.error) : _esc(h.rb.text||'—')}</div>
+          <div class="ab-hist-meta">Model B · ${ms2s(h.rb.latency_ms)}</div>
+        </div>
+      </div>
+    </div>`).join('');
+
+  if (!_historyOpen) toggleHistory();
+}
+
+function _restoreQuery(idx) {
+  const h = _queryHistory[idx];
+  if (!h) return;
+  document.getElementById('ab-query-input').value = h.query;
+}
+
+// ── Copy answer ────────────────────────────────────────────────────────────
+function copyAnswer(side) {
+  const text = document.getElementById(`ab-text-${side}`).textContent;
+  if (!text || text === 'Run a query to see results') return;
+  navigator.clipboard.writeText(text).then(() => showToast('Copied')).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('Copied');
+  });
+}
+
+// ── Settings persistence ───────────────────────────────────────────────────
+const _LS_KEY = `ab_settings_${UC_ID}`;
+
+function _saveABSettings() {
+  try {
+    localStorage.setItem(_LS_KEY, JSON.stringify({
+      a: _getModelASettings(),
+      b: _getModelBSettings(),
+    }));
+  } catch(_) {}
+}
+
+function _loadABSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem(_LS_KEY) || 'null');
+    if (!s) return;
+    const set = (id, v) => { const el=document.getElementById(id); if(el && v!=null) el.value=v; };
+    if (s.a) {
+      set('a-endpoint', s.a.endpoint_url);
+      set('a-top-k', s.a.top_k);
+      set('a-temperature', s.a.temperature);
+      set('a-max-tokens', s.a.max_tokens);
+      if (s.a.system_prompt) set('a-system-prompt', s.a.system_prompt);
+    }
+    if (s.b) {
+      set('b-provider', s.b.provider);
+      set('b-top-k', s.b.top_k);
+      set('b-temperature', s.b.temperature);
+      set('b-max-tokens', s.b.max_tokens);
+      if (s.b.system_prompt) set('b-system-prompt', s.b.system_prompt);
+      if (s.b.provider) onProviderChange();
+    }
+  } catch(_) {}
+}
+
+// ── System prompt hint ─────────────────────────────────────────────────────
+function _updateSysPromptHint(inferenceSystemPrompt) {
+  const hint = document.getElementById('ab-sysprompt-hint-a');
+  if (!hint) return;
+  const active = document.getElementById('a-system-prompt')?.value?.trim();
+  if (inferenceSystemPrompt && !active) {
+    hint.textContent = 'Using configured inference system prompt';
+    hint.style.display = '';
+  } else if (inferenceSystemPrompt && active) {
+    hint.textContent = 'Session override active (configured prompt ignored)';
+    hint.style.display = '';
+  } else {
+    hint.style.display = 'none';
+  }
+}
+
 async function runQuery() {
   const query = (document.getElementById('ab-query-input').value || '').trim();
   if (!query) return;
 
   const g = id => document.getElementById(id);
-  const tA=g('ab-text-a'), tB=g('ab-text-b'), btn=g('ab-run-btn');
+  const tA=g('ab-text-a'), tB=g('ab-text-b'), btn=g('ab-run-btn'), inp=g('ab-query-input');
   const bA=g('ab-badge-a'), bB=g('ab-badge-b');
   const vA=g('verdict-btn-a'), vB=g('verdict-btn-b');
 
   [tA,tB].forEach(el => { el.textContent='Querying…'; el.style.color='var(--text-subtle)'; });
-  btn.disabled = true;
+  btn.disabled = true; btn.classList.add('loading'); btn.textContent = '⏳ Running…';
+  inp.disabled = true;
+  [vA,vB].forEach(b => { b.style.opacity='0.3'; b.style.pointerEvents='none'; });
+
+  _saveABSettings();
+
   try {
     const r = await fetch(`/studio/api/uc/${UC_ID}/ab-query`, {
       method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include',
@@ -1648,8 +1797,6 @@ async function runQuery() {
     const ms2s = ms => (ms/1000).toFixed(2)+' s';
     const set = (id, val) => { const el=g(id); if(el && val!=null) el.textContent=val; };
 
-    // Model A
-    // Model A
     if (ra.error) {
       tA.textContent = ra.error; tA.style.color = 'var(--danger)';
     } else {
@@ -1659,14 +1806,11 @@ async function runQuery() {
     if (ra.retrieval_ms != null) set('ab-retrieval-a', ms2s(ra.retrieval_ms));
     if (ra.inference_ms != null) set('ab-inference-a', ms2s(ra.inference_ms));
     if (ra.source)               set('ab-source-a', ra.source);
-    // Phase badge — use actual phase_used from response, fall back to UC phase
     _setPhaseA(ra.phase_used || (ra.source && ra.source.includes('kv') ? 'phase2-kv' : 'phase1-rag'));
-    // Store chunks for popup
     _lastChunks.a = ra.chunks || [];
     const nA = ra.chunks_retrieved ?? (ra.chunks ? ra.chunks.length : null);
     if (nA != null) set('ab-chunks-a', nA + ' chunks');
 
-    // Model B
     if (rb.error) {
       tB.textContent = rb.error; tB.style.color = 'var(--danger)';
     } else {
@@ -1681,11 +1825,16 @@ async function runQuery() {
     if (nB != null) set('ab-chunks-b', nB + ' chunks');
     if (rb.cost_est_usd != null) set('ab-cost-b', '$'+rb.cost_est_usd.toFixed(6));
 
+    _addToHistory(query, ra, rb);
+
     if (!ra.error && !rb.error)
       [vA,vB].forEach(b => { b.style.opacity='1'; b.style.pointerEvents='auto'; });
   } catch(err) {
     [tA,tB].forEach(el => { el.textContent='Error: '+err.message; el.style.color='var(--danger)'; });
-  } finally { btn.disabled = false; }
+  } finally {
+    btn.disabled = false; btn.classList.remove('loading'); btn.textContent = '▶ Run both';
+    inp.disabled = false;
+  }
 }
 
 async function verdict(choice) {
@@ -1836,7 +1985,7 @@ function _applyABDefaults(uc) {
   const endpointEl = document.getElementById('a-endpoint');
   const modelAEl   = document.getElementById('a-model');
   if (endpointEl && uc.vllm_url)  endpointEl.value = uc.vllm_url;
-  if (modelAEl)                    modelAEl.value   = uc.vllm_served_model || uc.vllm_model || 'kvforge-local';
+  if (modelAEl)                    modelAEl.value   = uc.vllm_model || uc.vllm_served_model || 'kvforge-local';
 
   // Model B — Cloud LLM
   const providerEl = document.getElementById('b-provider');
@@ -1852,6 +2001,12 @@ function _applyABDefaults(uc) {
   if (uc.gpu_profile_name && endpointEl && uc.vllm_url) {
     endpointEl.title = `Auto-set from GPU profile: ${uc.gpu_profile_name}`;
   }
+
+  // Restore persisted settings (overrides defaults where user had explicit values)
+  _loadABSettings();
+
+  // Show system prompt hint if UC has one configured
+  if (uc.inference_system_prompt) _updateSysPromptHint(uc.inference_system_prompt);
 }
 
 // ── Update Model A endpoint when GPU profile selection changes ──────────────
