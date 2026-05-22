@@ -41,6 +41,7 @@ def _load_uc_cfg(uc_id: str) -> dict:
     if not config_path.exists():
         from studio.pipeline_runner import _ensure_config_json
         _ensure_config_json(uc_id)
+    cfg: dict = {}
     if config_path.exists():
         raw = json.loads(config_path.read_text())
         if "addon_config" in raw:
@@ -49,9 +50,19 @@ def _load_uc_cfg(uc_id: str) -> dict:
             cfg = dc.get_merged_config("indexing", "inference", "training")
             cfg.setdefault("version_file", raw.get("version_file", f"examples/{uc_id}/version.json"))
             cfg.setdefault("collection", raw.get("collection", uc_id))
-            return cfg
-        return raw
-    return {}
+        else:
+            cfg = raw
+    # Overlay UC-level settings (uc_config.json) — these take precedence
+    uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
+    if uc_cfg_path.exists():
+        try:
+            uc_cfg = json.loads(uc_cfg_path.read_text())
+            llm = uc_cfg.get("llm", {})
+            if llm.get("inference_system_prompt"):
+                cfg["inference_system_prompt"] = llm["inference_system_prompt"]
+        except Exception:
+            pass
+    return cfg
 
 
 def _do_rag_search(query: str, cfg: dict) -> list:
@@ -158,7 +169,7 @@ async def _model_a_generate(
     model_name = settings.get("model_name") or cfg.get("vllm_model") or cfg.get("llm_model") or "kvforge-local"
     temperature = float(settings.get("temperature", 0.2))
     max_tokens = int(settings.get("max_tokens", 256))
-    system_prompt = settings.get("system_prompt") or _RAG_SYSTEM_PROMPT
+    system_prompt = settings.get("system_prompt") or cfg.get("inference_system_prompt") or _RAG_SYSTEM_PROMPT
 
     if not endpoint:
         return {
