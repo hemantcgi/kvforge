@@ -225,12 +225,33 @@ def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
         if offset is None:
             break
 
-    chunks = [r.payload.get("text", "") for r in all_results if r.payload.get("text")]
-    if not chunks:
-        print("[sleep-faq] ERROR: No chunks found. Run indexing first.")
-        sys.exit(1)
+    # Keep (id, text) pairs; skip blank chunks and those already processed
+    chunk_records = [
+        (r.id, r.payload.get("text", ""))
+        for r in all_results
+        if r.payload.get("text") and not r.payload.get("faq_generated_at")
+    ]
+    total_in_store = len([r for r in all_results if r.payload.get("text")])
+    skipped = total_in_store - len(chunk_records)
+    if skipped:
+        print(f"[sleep-faq] Skipping {skipped} already-processed chunks (incremental)")
+    if not chunk_records:
+        print(f"[sleep-faq] All {total_in_store} chunks already processed — nothing to do.")
+        # Still save/merge existing FAQs so pre-seeding runs
+        existing: list[dict] = []
+        q_key = cfg.get("faq_question_key", "question")
+        a_key = cfg.get("faq_answer_key", "answer")
+        if output_path.exists():
+            try:
+                existing = json.loads(output_path.read_text())
+            except Exception:
+                pass
+        merged = existing
+        output_path.write_text(json.dumps(merged, indent=2, ensure_ascii=False))
+        print(f"[sleep-faq] {len(merged)} FAQs on disk (no new pairs added)")
+        return
 
-    print(f"[sleep-faq] {len(chunks)} chunks in '{cfg['collection']}'")
+    print(f"[sleep-faq] {len(chunk_records)} new chunks to process (of {total_in_store} total)")
 
     existing: list[dict] = []
     q_key = cfg.get("faq_question_key", "question")
@@ -244,9 +265,9 @@ def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
 
     new_faqs: list[dict] = []
     cap = count if count > 0 else None  # None = no limit
-    total_chunks = len(chunks)
+    total_chunks = len(chunk_records)
 
-    for chunk_idx, chunk in enumerate(chunks, start=1):
+    for chunk_idx, (chunk_id, chunk) in enumerate(chunk_records, start=1):
         if cap and len(new_faqs) >= cap:
             break
         if not chunk.strip():
@@ -274,7 +295,12 @@ def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
                     break
                 new_faqs.append({q_key: b["question"], a_key: b["answer"]})
                 added += 1
-            print(f"  [chunk {chunk_idx}/{total_chunks}] +{added} pairs (total {len(new_faqs)}) Q: {chunks[chunk_idx-1][:60]!r}")
+            # Mark chunk as processed so incremental re-runs skip it
+            try:
+                store.set_payload(cfg["collection"], chunk_id, {"faq_generated_at": int(time.time())})
+            except Exception:
+                pass
+            print(f"  [chunk {chunk_idx}/{total_chunks}] +{added} pairs (total {len(new_faqs)}) Q: {chunk[:60]!r}")
             if delay > 0:
                 time.sleep(delay)
         except Exception as e:

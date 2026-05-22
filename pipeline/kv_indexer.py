@@ -23,6 +23,7 @@ import json
 import sys
 import time
 import traceback
+import hashlib
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -163,7 +164,15 @@ def cmd_index(cfg: dict) -> None:
             kv_array=kv_arr,
             source_version=meta.get("modified", ""),
         )
-        point_id = chunk.get("chunk_id") or str(uuid.uuid4())
+        # Prefer explicit chunk_id from metadata, then top-level; fall back to
+        # a deterministic UUID derived from the text so re-indexing the same
+        # content overwrites rather than duplicates existing Qdrant points.
+        meta_id = meta.get("chunk_id")
+        explicit_id = chunk.get("chunk_id") or (str(meta_id) if meta_id is not None else None)
+        if explicit_id:
+            point_id = explicit_id
+        else:
+            point_id = str(uuid.UUID(hashlib.md5(chunk["text"].encode()).hexdigest()))
         points.append(Point(id=point_id, vector=vec, payload=payload))
         if (i + 1) % 50 == 0:
             print(f"  {i+1}/{len(chunks)}", end="\r", flush=True)
