@@ -60,7 +60,7 @@ async def create_connector(request: Request):
         connector_type=body["type"],
         name=body["name"],
         credentials=body.get("credentials", {}),
-        created_by=getattr(request.state.user, "id", "local") if getattr(request.state, "user", None) else "local",
+        created_by=getattr(request.state, "user", None) and request.state.user.id,
         schedule_cron=body.get("schedule_cron"),
         webhook_secret=body.get("webhook_secret"),
     )
