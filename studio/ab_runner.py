@@ -16,7 +16,7 @@ import httpx
 
 ROOT = Path(__file__).resolve().parent.parent
 _AB_TIMEOUT = 90.0
-_AB_TOP_K = 10
+_AB_MIN_FETCH_K = 5   # minimum chunks to retrieve regardless of per-model top_k
 _AB_SCORE_THRESHOLD = 0.55
 
 _NO_CORPUS_MSG = (
@@ -65,13 +65,13 @@ def _load_uc_cfg(uc_id: str) -> dict:
     return cfg
 
 
-def _do_rag_search(query: str, cfg: dict) -> list:
+def _do_rag_search(query: str, cfg: dict, top_k: int) -> list:
     from fastembed import TextEmbedding
     from vectorstore.registry import get_store
     from pipeline.bedrock_rag import _run_search, Config
 
     search_cfg = dict(cfg)
-    search_cfg["top_k"] = _AB_TOP_K
+    search_cfg["top_k"] = top_k
     search_cfg["score_threshold"] = _AB_SCORE_THRESHOLD
 
     embedder = TextEmbedding(
@@ -110,10 +110,15 @@ async def run_ab_query(
         err = {"text": "", "latency_ms": 0, "error": f"Config not found for UC '{uc_id}'"}
         return {"response_a": err, "response_b": err}
 
-    # ── Shared retrieval ──────────────────────────────────────────────────────
+    # ── Per-model top_k (defaults to 5 each) ─────────────────────────────────
+    top_k_a = max(1, int(model_a_settings.get("top_k", 5)))
+    top_k_b = max(1, int(model_b_settings.get("top_k", 5)))
+    fetch_k  = max(top_k_a, top_k_b, _AB_MIN_FETCH_K)
+
+    # ── Shared retrieval — fetch enough for the greedier model ────────────────
     t_search = time.monotonic()
     try:
-        hits = await asyncio.to_thread(_do_rag_search, query, cfg)
+        hits = await asyncio.to_thread(_do_rag_search, query, cfg, fetch_k)
     except Exception as e:
         err = {"text": "", "latency_ms": 0,
                "error": f"Retrieval failed: {_sanitize_error(str(e))}"}
@@ -127,23 +132,30 @@ async def run_ab_query(
         return {"response_a": {**no_hits, "source": "kvforge-rag"},
                 "response_b": {**no_hits, "source": "cloud-llm"}}
 
-    context = _format_context(hits)
-    chunks_data = [
-        {
-            "text": (h.payload.get("text", "") if hasattr(h, "payload") else ""),
-            "score": round(h.score, 3) if hasattr(h, "score") else None,
-            "source": (h.payload.get("source", h.payload.get("file_path", h.payload.get("filename", "")))
-                       if hasattr(h, "payload") else ""),
-        }
-        for h in hits
-    ]
+    def _hits_to_chunks(h_list):
+        return [
+            {
+                "text": (h.payload.get("text", "") if hasattr(h, "payload") else ""),
+                "score": round(h.score, 3) if hasattr(h, "score") else None,
+                "source": (h.payload.get("source", h.payload.get("file_path", h.payload.get("filename", "")))
+                           if hasattr(h, "payload") else ""),
+            }
+            for h in h_list
+        ]
+
+    hits_a = hits[:top_k_a]
+    hits_b = hits[:top_k_b]
+    context_a = _format_context(hits_a)
+    context_b = _format_context(hits_b)
 
     # ── Generate answers in parallel ──────────────────────────────────────────
     try:
         result_a, result_b = await asyncio.wait_for(
             asyncio.gather(
-                _model_a_generate(query, context, model_a_settings, cfg, search_ms, len(hits), chunks_data),
-                _model_b_generate(query, context, model_b_settings, search_ms, len(hits), chunks_data),
+                _model_a_generate(query, context_a, model_a_settings, cfg, search_ms,
+                                  len(hits_a), _hits_to_chunks(hits_a)),
+                _model_b_generate(query, context_b, model_b_settings, search_ms,
+                                  len(hits_b), _hits_to_chunks(hits_b)),
             ),
             timeout=_AB_TIMEOUT,
         )
@@ -168,7 +180,7 @@ async def _model_a_generate(
     endpoint = (settings.get("endpoint_url") or cfg.get("vllm_url") or "").rstrip("/")
     model_name = settings.get("model_name") or cfg.get("vllm_model") or cfg.get("llm_model") or "kvforge-local"
     temperature = float(settings.get("temperature", 0.2))
-    max_tokens = int(settings.get("max_tokens", 256))
+    max_tokens = int(settings.get("max_tokens", 512))
     system_prompt = settings.get("system_prompt") or cfg.get("inference_system_prompt") or _RAG_SYSTEM_PROMPT
 
     if not endpoint:
