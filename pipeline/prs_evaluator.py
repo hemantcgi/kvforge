@@ -96,6 +96,58 @@ def _self_consistency(query: str, pipe_sample, embedder, n: int = 3) -> float:
     return float(np.mean(sims)) if sims else 1.0
 
 
+# ── vLLM-backed variants (used when cfg["vllm_url"] is set) ──────────────────
+
+def _vllm_chat(messages: list[dict], vllm_url: str, model: str,
+               temperature: float = 0.0, max_tokens: int = 256) -> str:
+    import httpx
+    url = vllm_url.rstrip("/")
+    if url.endswith("/v1"):
+        url = url[:-3]
+    resp = httpx.post(
+        f"{url}/v1/chat/completions",
+        json={"model": model, "messages": messages,
+              "temperature": temperature, "max_tokens": max_tokens},
+        headers={"Authorization": "Bearer EMPTY"},
+        timeout=120,
+    )
+    resp.raise_for_status()
+    return resp.json()["choices"][0]["message"]["content"].strip()
+
+
+def _generate_parametric_vllm(query: str, vllm_url: str, model: str) -> str:
+    return _vllm_chat(
+        [{"role": "user", "content": query}],
+        vllm_url, model, temperature=0.0, max_tokens=256,
+    )
+
+
+def _extract_confidence_vllm(answer: str, vllm_url: str, model: str) -> float:
+    prompt = answer + CONFIDENCE_PROMPT_SUFFIX
+    raw = _vllm_chat(
+        [{"role": "user", "content": prompt}],
+        vllm_url, model, temperature=0.0, max_tokens=5,
+    )
+    try:
+        val = int("".join(c for c in raw if c.isdigit())[:3])
+        return min(val, 100) / 100.0
+    except ValueError:
+        return 0.5
+
+
+def _self_consistency_vllm(query: str, embedder, vllm_url: str, model: str,
+                            n: int = 3) -> float:
+    answers = [
+        _vllm_chat([{"role": "user", "content": query}],
+                   vllm_url, model, temperature=0.7, max_tokens=128)
+        for _ in range(n)
+    ]
+    embs = np.array(list(embedder.embed(answers)))
+    sims = [_cosine_sim(embs[i], embs[j])
+            for i in range(n) for j in range(i + 1, n)]
+    return float(np.mean(sims)) if sims else 1.0
+
+
 _DEFAULT_PRS_WEIGHTS = {"accuracy": 0.5, "calibration": 0.3, "consistency": 0.2}
 
 
@@ -150,8 +202,24 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
     Returns:
         PRS score in ``[0.0, 1.0]``.
     """
-    model, tokenizer = model_loader.load(lora_checkpoint)
     embed_model = cfg.get("embed_model", "BAAI/bge-small-en-v1.5")
+    embedder = TextEmbedding(model_name=embed_model, show_download_progress=False)
+
+    vllm_url = cfg.get("vllm_url", "").strip()
+    vllm_model = cfg.get("vllm_model") or cfg.get("llm_model", "kvforge-local")
+    use_vllm = bool(vllm_url)
+
+    if use_vllm:
+        print(f"🚀 Using vLLM for PRS inference ({vllm_url}, model={vllm_model})", flush=True)
+    else:
+        model, tokenizer = model_loader.load(lora_checkpoint)
+        from transformers import pipeline as hf_pipeline
+        pipe_gen = hf_pipeline("text-generation", model=model, tokenizer=tokenizer,
+                                max_new_tokens=256, do_sample=False)
+        pipe_conf = hf_pipeline("text-generation", model=model, tokenizer=tokenizer,
+                                 max_new_tokens=5, do_sample=False)
+        pipe_sample = hf_pipeline("text-generation", model=model, tokenizer=tokenizer,
+                                   max_new_tokens=128, do_sample=True, temperature=0.7)
 
     # Lazy import — SP3 may not be built yet; graceful degradation
     try:
@@ -159,16 +227,6 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
         has_sp3 = True
     except ImportError:
         has_sp3 = False
-
-    # Create shared resources once — avoid reconstructing per FAQ
-    from transformers import pipeline as hf_pipeline
-    pipe_gen = hf_pipeline("text-generation", model=model, tokenizer=tokenizer,
-                            max_new_tokens=256, do_sample=False)
-    pipe_conf = hf_pipeline("text-generation", model=model, tokenizer=tokenizer,
-                             max_new_tokens=5, do_sample=False)
-    pipe_sample = hf_pipeline("text-generation", model=model, tokenizer=tokenizer,
-                               max_new_tokens=128, do_sample=True, temperature=0.7)
-    embedder = TextEmbedding(model_name=embed_model, show_download_progress=False)
 
     accuracy_ratios, calibrations, consistencies = [], [], []
 
@@ -179,7 +237,10 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
     for idx, faq in enumerate(faqs, 1):
         q, gt = _extract_qa(faq, q_key=q_key, a_key=a_key)
         print(f"⏳ Evaluating FAQ {idx}/{total}: {q[:60]}…", flush=True)
-        param_ans = _generate_parametric(q, pipe_gen)
+        if use_vllm:
+            param_ans = _generate_parametric_vllm(q, vllm_url, vllm_model)
+        else:
+            param_ans = _generate_parametric(q, pipe_gen)
         if has_sp3:
             rag_ans = answer_with_retrieval(q, cfg)
         else:
@@ -189,9 +250,13 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
         rag_sim   = _cosine_sim(embs[1], embs[2])
         accuracy_ratio = min(param_sim / (rag_sim + 1e-9), 1.0)
         accuracy_ratios.append(accuracy_ratio)
-        self_conf = _extract_confidence(param_ans, pipe_conf)
+        if use_vllm:
+            self_conf = _extract_confidence_vllm(param_ans, vllm_url, vllm_model)
+            consistencies.append(_self_consistency_vllm(q, embedder, vllm_url, vllm_model))
+        else:
+            self_conf = _extract_confidence(param_ans, pipe_conf)
+            consistencies.append(_self_consistency(q, pipe_sample, embedder))
         calibrations.append(1.0 - abs(self_conf - param_sim))
-        consistencies.append(_self_consistency(q, pipe_sample, embedder))
         print(f"   acc={accuracy_ratio:.3f} conf={calibrations[-1]:.3f} cons={consistencies[-1]:.3f}", flush=True)
 
     weights = cfg.get("prs_weights", None)
