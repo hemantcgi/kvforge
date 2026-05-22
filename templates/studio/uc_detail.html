@@ -1156,6 +1156,10 @@ function togglePhaseDetail(phase) {
 async function loadUCState() {
   try {
     const r = await fetch(`/studio/api/registry`, {credentials:'include'});
+    if (r.status === 401 || r.status === 403) {
+      window.location.href = `/auth/login?next=${encodeURIComponent(window.location.pathname)}`;
+      return;
+    }
     const reg = await r.json();
     const uc = (reg.use_cases || []).find(u => u.id === UC_ID);
     if (uc) {
