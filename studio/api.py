@@ -92,6 +92,7 @@ def get_registry():
                 uc_data["vllm_served_model"] = llm.get("vllm_served_model", "kvforge-local")
                 uc_data["comparison_provider"] = llm.get("comparison_provider", "anthropic")
                 uc_data["comparison_model"]    = llm.get("comparison_model", "claude-haiku-4-5-20251001")
+                uc_data["inference_system_prompt"] = llm.get("inference_system_prompt", "")
                 # Resolve GPU profile host → derive vllm_url if not explicitly set
                 profile_id = uc_cfg.get("gpu_profile_id")
                 if profile_id and not uc_data.get("vllm_url"):
