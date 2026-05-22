@@ -531,7 +531,7 @@ async function load() {
       </div>
       <div class="conn-actions">
         <button class="btn-sm" onclick="showScopeModal('${esc(c.id)}','${esc(c.name)}')">&#128279; Scopes</button>
-        <button class="btn-sm" onclick="showEditForm(${JSON.stringify(c)})">&#9998; Edit</button>
+        <button class="btn-sm" onclick="showEditForm('${esc(c.id)}')">&#9998; Edit</button>
         <button class="btn-sm" onclick="syncNow('${esc(c.id)}')">&#8635; Sync Now</button>
         <button class="btn-sm" onclick="deleteConn('${esc(c.id)}')">Delete</button>
       </div>
@@ -613,12 +613,13 @@ function closeModal() {
   document.querySelectorAll('.type-pill').forEach(p => p.style.pointerEvents = '');
 }
 
-async function showEditForm(c) {
-  // Fetch full connector with decrypted credentials before opening modal
+async function showEditForm(cid) {
+  let c;
   try {
-    const r = await fetch(`/studio/api/connectors/${c.id}`, {credentials:'include'});
-    if (r.ok) c = await r.json();
-  } catch(e) { /* fall through with masked data */ }
+    const r = await fetch(`/studio/api/connectors/${cid}`, {credentials:'include'});
+    if (!r.ok) { showToast('Failed to load connector'); return; }
+    c = await r.json();
+  } catch(e) { showToast('Network error: ' + e.message); return; }
   _editConnectorId = c.id;
   _selectedType = c.type;
   // Reset modal state first
