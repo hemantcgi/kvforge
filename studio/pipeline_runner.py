@@ -193,19 +193,19 @@ def _build_cmd(uc_id: str, step: str) -> list[str]:
         else:
             source_path = ROOT / "examples" / uc_id / "data" / "train.jsonl"
             cmd += ["--faqs", str(source_path)]
-        # Read prs_eval_sample from uc_config; default 20 (5 inference calls × 20 FAQs ≈ 30 min)
+        # Pass explicit --sample only if prs_eval_sample is set in uc_config;
+        # otherwise let prs_evaluator auto-compute max(10% of FAQs, 100)
         uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
-        sample = 20
         if uc_cfg_path.exists():
             try:
                 uc_cfg = json.loads(uc_cfg_path.read_text())
-                raw = uc_cfg.get("prs_eval_sample", 20)
-                parsed = int(raw)
-                if parsed > 0:
-                    sample = parsed
+                raw = uc_cfg.get("prs_eval_sample")
+                if raw is not None:
+                    parsed = int(raw)
+                    if parsed > 0:
+                        cmd += ["--sample", str(parsed)]
             except Exception:
                 pass
-        cmd += ["--sample", str(sample)]
     if step in ("sleep-faq", "faq-gen-cloud"):
         output = str(ROOT / "examples" / uc_id / "faqs.json")
         cmd += ["--output", output]
@@ -361,7 +361,14 @@ async def _run_step_remote_ssh(
             faqs_remote = f"{uc_remote}/faqs.json"
             remote_cmd += f" --faqs {faqs_remote}"
         if step == "prs-eval":
-            remote_cmd += " --sample 20"
+            # Let prs_evaluator auto-compute max(10% of FAQs, 100) unless overridden
+            try:
+                uc_cfg = json.loads((ROOT / "examples" / uc_id / "uc_config.json").read_text())
+                override = uc_cfg.get("prs_eval_sample")
+                if override is not None:
+                    remote_cmd += f" --sample {int(override)}"
+            except Exception:
+                pass
 
         _append(f"[remote] running on {host}: {remote_cmd}")
 

@@ -317,7 +317,8 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--config", default="my_config.json")
     p.add_argument("--faqs", default="examples/bedrock_50_faqs.json")
-    p.add_argument("--sample", type=int, default=50)
+    p.add_argument("--sample", type=int, default=None,
+                   help="QA pairs to evaluate (default: max(10%% of total, 100))")
     args = p.parse_args()
 
     with open(args.config) as f:
@@ -332,7 +333,13 @@ def main() -> None:
     model_loader.init(cfg)
 
     import random
-    faqs = random.sample(all_faqs, min(args.sample, len(all_faqs)))
+    total_faqs = len(all_faqs)
+    # 10% of total or 100, whichever is higher — capped at total available
+    auto_sample = max(int(total_faqs * 0.1), 100)
+    n = min(args.sample if args.sample is not None else auto_sample, total_faqs)
+    label = f"explicit --sample {args.sample}" if args.sample is not None else "auto: max(10%, 100)"
+    print(f"📊 PRS sample: {n}/{total_faqs} QA pairs ({label})", flush=True)
+    faqs = random.sample(all_faqs, n)
 
     v = ver.load()
     prs = evaluate(faqs, cfg, v.get("checkpoint_path"))
