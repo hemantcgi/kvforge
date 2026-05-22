@@ -1621,7 +1621,7 @@ function onProviderChange() {
   const modelDefaults = {
     anthropic: 'claude-haiku-4-5-20251001',
     openai: 'gpt-4o-mini',
-    gemini: 'gemini-1.5-flash',
+    gemini: 'gemini-2.0-flash',
   };
   document.getElementById('b-model').value = modelDefaults[provider] || '';
 }
@@ -1718,6 +1718,8 @@ function _saveABSettings() {
   } catch(_) {}
 }
 
+const _DEPRECATED_MODELS = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'];
+
 function _loadABSettings() {
   try {
     const s = JSON.parse(localStorage.getItem(_LS_KEY) || 'null');
@@ -1736,7 +1738,13 @@ function _loadABSettings() {
       set('b-temperature', s.b.temperature);
       set('b-max-tokens', s.b.max_tokens);
       if (s.b.system_prompt) set('b-system-prompt', s.b.system_prompt);
-      if (s.b.provider) onProviderChange();
+      // Restore model only if it's not a deprecated model
+      if (s.b.model && !_DEPRECATED_MODELS.includes(s.b.model)) {
+        set('b-model', s.b.model);
+      } else if (s.b.provider) {
+        onProviderChange();  // let onProviderChange set the current default
+      }
+      if (!s.b.model || _DEPRECATED_MODELS.includes(s.b.model)) onProviderChange();
     }
   } catch(_) {}
 }
