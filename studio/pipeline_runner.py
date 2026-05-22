@@ -582,9 +582,10 @@ async def run_step_background(
                 return
 
     # Route GPU steps to remote EC2 when a profile is selected.
-    # Recompute is excluded: it needs local Qdrant access and offloads model
-    # inference via the compute addon HTTP worker, not SSH.
-    if gpu_profile_id and step in GPU_REQUIRED_STEPS and step != "recompute":
+    # Recompute and prs-eval are excluded: they need local Qdrant access and
+    # call the remote GPU via HTTP (compute worker / vLLM), not SSH.
+    _LOCAL_STEPS = {"recompute", "prs-eval"}
+    if gpu_profile_id and step in GPU_REQUIRED_STEPS and step not in _LOCAL_STEPS:
         try:
             await _run_step_remote_ssh(uc_id, step, job_id, job_manager,
                                        gpu_profile_id, _append)
