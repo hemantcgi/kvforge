@@ -39,6 +39,7 @@ def migrate() -> None:
     _conn().executescript(schema)
     _conn().commit()
     _migrate_connector_types()
+    _migrate_fix_scope_fk()
 
 
 def _migrate_connector_types() -> None:
@@ -70,6 +71,40 @@ def _migrate_connector_types() -> None:
         );
         INSERT INTO connector_configs SELECT * FROM _connector_configs_old;
         DROP TABLE _connector_configs_old;
+        PRAGMA foreign_keys=ON;
+    """)
+    _conn().commit()
+
+
+def _migrate_fix_scope_fk() -> None:
+    """Rebuild connector_uc_scopes if its FK still points to the dropped _connector_configs_old table.
+
+    The _migrate_connector_types migration renamed connector_configs to
+    _connector_configs_old, created a new connector_configs, then dropped the
+    old table.  SQLite silently updated the FK reference in connector_uc_scopes
+    to track the rename, so the FK now points to the non-existent
+    _connector_configs_old — causing every INSERT to fail with OperationalError.
+    """
+    row = _conn().execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='connector_uc_scopes'"
+    ).fetchone()
+    if not row:
+        return
+    if "_connector_configs_old" not in row[0]:
+        return  # already correct
+    _conn().executescript("""
+        PRAGMA foreign_keys=OFF;
+        ALTER TABLE connector_uc_scopes RENAME TO _connector_uc_scopes_old;
+        CREATE TABLE connector_uc_scopes (
+            connector_id TEXT NOT NULL REFERENCES connector_configs(id) ON DELETE CASCADE,
+            uc_id TEXT NOT NULL,
+            scope_config_json TEXT NOT NULL DEFAULT '{}',
+            last_sync_at DATETIME,
+            last_delta_token TEXT,
+            PRIMARY KEY (connector_id, uc_id)
+        );
+        INSERT INTO connector_uc_scopes SELECT * FROM _connector_uc_scopes_old;
+        DROP TABLE _connector_uc_scopes_old;
         PRAGMA foreign_keys=ON;
     """)
     _conn().commit()
