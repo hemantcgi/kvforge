@@ -268,6 +268,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
 
       <div id="conn-list" class="conn-list"></div>
 
+      <!-- Live sync log panel -->
+      <div id="sync-log-panel" style="display:none;margin-bottom:24px;background:var(--bg-sunken);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg-surface);">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span id="sync-log-spinner" style="font-size:13px;">⏳</span>
+            <span style="font-size:12px;font-weight:700;color:var(--text-primary)" id="sync-log-title">Syncing…</span>
+          </div>
+          <button onclick="document.getElementById('sync-log-panel').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--text-subtle);font-size:16px;">&#x2715;</button>
+        </div>
+        <div id="sync-log-body" style="padding:10px 14px;max-height:320px;overflow-y:auto;font-family:monospace;font-size:11px;line-height:1.7;"></div>
+      </div>
+
       <div style="margin-top:24px">
         <div class="section-title">Sync Run History</div>
         <table class="history-table">
@@ -562,19 +574,93 @@ async function loadHistory() {
   }).join('');
 }
 
+const _STAGE_ICONS = {
+  discover: '🔍', index: '📥', 'faq-gen': '🤖', 'recompute-kv': '⚙️',
+  complete: '✅', error: '❌', pipeline: '🔄',
+};
+
+function _logLine(html) {
+  const body = document.getElementById('sync-log-body');
+  body.insertAdjacentHTML('beforeend', `<div>${html}</div>`);
+  body.scrollTop = body.scrollHeight;
+}
+
+function _formatEvent(ev) {
+  const icon = _STAGE_ICONS[ev.stage || ev.event] || '▸';
+  const ts = new Date().toLocaleTimeString();
+  const color = ev.event === 'error' || ev.ok === false ? 'var(--danger)'
+              : ev.event === 'complete' || ev.ok === true ? 'var(--success)'
+              : 'var(--text-secondary)';
+  let text = ev.message || ev.error || ev.event;
+  if (ev.event === 'complete' && ev.new_chunks !== undefined)
+    text = `Sync complete — ${ev.new_chunks} new chunks indexed`;
+  return `<span style="color:var(--text-subtle)">${ts}</span> ${icon} <span style="color:${color}">${esc(text)}</span>`;
+}
+
 async function syncNow(cid) {
+  // Trigger sync
+  let triggerResp;
   try {
-    const r = await fetch(`/studio/api/connectors/${cid}/sync`, {method:'POST', credentials:'include'});
-    if (!r.ok) {
-      const d = await r.json().catch(() => ({}));
-      const msg = d.detail || ('Sync failed: ' + r.status);
-      showToast(msg.includes('scopes') ? 'No use cases linked — click Scopes to link one first' : msg);
-      return;
-    }
-    const d = await r.json();
-    showToast(d.run_id ? 'Sync started' : 'Sync triggered');
-    setTimeout(load, 2000);
-  } catch(e) { showToast('Sync error: ' + e.message); }
+    triggerResp = await fetch(`/studio/api/connectors/${cid}/sync`, {method:'POST', credentials:'include'});
+  } catch(e) { showToast('Sync error: ' + e.message); return; }
+  if (!triggerResp.ok) {
+    const d = await triggerResp.json().catch(() => ({}));
+    const msg = d.detail || ('Sync failed: ' + triggerResp.status);
+    showToast(msg.includes('scopes') ? 'No use cases linked — click Scopes to link one first' : msg);
+    return;
+  }
+
+  // Open log panel
+  const panel = document.getElementById('sync-log-panel');
+  const logBody = document.getElementById('sync-log-body');
+  const spinner = document.getElementById('sync-log-spinner');
+  const title = document.getElementById('sync-log-title');
+  logBody.innerHTML = '';
+  panel.style.display = '';
+  spinner.textContent = '⏳';
+  title.textContent = 'Sync in progress…';
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+
+  // Subscribe to SSE stream
+  try {
+    const es = new EventSource(`/sync/stream/${cid}`);
+    es.onmessage = (e) => {
+      try {
+        const ev = JSON.parse(e.data);
+        _logLine(_formatEvent(ev));
+
+        if (ev.event === 'complete') {
+          spinner.textContent = '✅';
+          title.textContent = `Sync complete — ${ev.new_chunks ?? 0} new chunks`;
+          es.close();
+          // Reload history table
+          setTimeout(() => { loadHistory(); load(); }, 800);
+          // Notify UC detail pages open in other tabs
+          try {
+            const bc = new BroadcastChannel('kvforge-sync');
+            bc.postMessage({type:'sync-complete', uc_id: ev.uc_id, new_chunks: ev.new_chunks});
+            bc.close();
+          } catch(_) {}
+        } else if (ev.event === 'error') {
+          spinner.textContent = '❌';
+          title.textContent = 'Sync failed';
+          es.close();
+          setTimeout(() => { loadHistory(); load(); }, 800);
+        } else if (ev.stage === 'faq-gen' && ev.ok === true) {
+          _logLine(_formatEvent({message:'FAQ generation complete — new Q&A pairs added', ok: true, stage:'faq-gen'}));
+        } else if (ev.stage === 'recompute-kv' && ev.ok === true) {
+          _logLine(_formatEvent({message:'KV tensors recomputed for new chunks', ok: true, stage:'recompute-kv'}));
+        }
+      } catch(_) {}
+    };
+    es.onerror = () => {
+      if (es.readyState === EventSource.CLOSED) return;
+      _logLine(`<span style="color:var(--text-subtle)">${new Date().toLocaleTimeString()}</span> ⚠️ <span style="color:var(--warning)">Stream disconnected</span>`);
+      es.close();
+    };
+  } catch(e) {
+    showToast('Could not open log stream: ' + e.message);
+  }
 }
 
 async function deleteConn(cid) {
