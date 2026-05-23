@@ -138,15 +138,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
 .pp-name.s-done{color:var(--success);}
 .pp-name.s-active{color:var(--accent);}
 .pp-name.s-locked{color:var(--text-disabled);}
-.pp-step.s-done{cursor:pointer;}
-.pp-step.s-done:hover .pp-dot{filter:brightness(1.2);transform:scale(1.08);transition:transform 0.1s;}
-.pp-step.s-done.ps-selected .pp-dot{outline:3px solid var(--accent);outline-offset:2px;}
-.pp-step.s-done.ps-selected .pp-name{color:var(--accent);}
-.pp-summary{font-size:10px;color:var(--text-disabled);text-align:center;line-height:1.4;margin-top:3px;max-width:80px;word-break:break-word;}
-.pp-summary.s-done{color:var(--text-subtle);}
-.logs-rerun-btn{margin-left:auto;padding:4px 10px;font-size:11px;font-weight:600;border:1px solid var(--accent);border-radius:4px;background:transparent;color:var(--accent);cursor:pointer;}
-.logs-rerun-btn:hover{background:var(--accent);color:#fff;}
-.logs-step-context{font-size:11px;color:var(--text-subtle);padding:6px 16px 2px;border-top:1px solid var(--border);}
 .pp-action-area{display:flex;align-items:center;gap:14px;border-top:1px solid var(--border);margin-top:14px;padding-top:14px;}
 .pp-action-copy{flex:1;}
 .pp-action-label{font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:3px;}
@@ -290,30 +281,6 @@ svg.prs-chart{width:100%;height:140px;display:block;overflow:visible;}
 .lora-prs{text-align:center;font-size:11px;font-weight:700;color:var(--text-secondary);margin-top:1px;}
 .lora-cur-label{text-align:center;font-size:9px;color:var(--success);margin-top:1px;font-weight:600;}
 
-/* ── LoRA settings modal ────────────────────────────────────────────────────── */
-.lora-modal-box{background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;width:520px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.4);}
-.lora-modal-hdr{display:flex;align-items:flex-start;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid var(--border);background:var(--bg-sunken);position:sticky;top:0;z-index:1;}
-.lora-modal-title{font-size:14px;font-weight:700;color:var(--text-primary);}
-.lora-modal-sub{font-size:11px;color:var(--text-disabled);margin-top:3px;}
-.lora-signals{display:flex;gap:12px;flex-wrap:wrap;padding:12px 20px 8px;background:var(--bg-sunken);border-bottom:1px solid var(--border);}
-.lora-sig{font-size:11px;color:var(--text-secondary);background:var(--bg-metric-b);border:1px solid var(--border);border-radius:20px;padding:2px 9px;}
-.lora-sig b{color:var(--accent);}
-.lora-field-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:18px 20px;}
-.lora-field{display:flex;flex-direction:column;gap:5px;}
-.lora-field label{font-size:12px;font-weight:600;color:var(--text-secondary);}
-.lora-field input{background:var(--bg-sunken);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text-primary);font-size:13px;transition:border-color .15s;}
-.lora-field input:focus{outline:none;border-color:var(--border-focus);}
-.lora-field input.rec-changed{border-color:var(--warning,#e8a04a);}
-.lora-rec-row{display:flex;align-items:center;gap:6px;margin-top:1px;}
-.rec-pill{font-size:10px;background:var(--bg-metric-g);color:var(--success);border:1px solid rgba(34,160,107,.3);border-radius:20px;padding:1px 7px;cursor:pointer;white-space:nowrap;}
-.rec-pill:hover{opacity:.8;}
-.field-reason{font-size:10px;color:var(--text-disabled);line-height:1.4;}
-.lora-modal-footer{display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border);background:var(--bg-sunken);position:sticky;bottom:0;}
-.lora-modal-footer button{padding:7px 16px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;}
-.lm-btn-cancel{border:1px solid var(--border);background:transparent;color:var(--text-secondary);}
-.lm-btn-reset{border:1px solid var(--border-focus);background:transparent;color:var(--accent);}
-.lm-btn-run{border:none;background:var(--accent);color:#fff;}
-
 /* ── A/B panel ─────────────────────────────────────────────────────────────── */
 .ab-panel{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:20px;box-shadow:var(--shadow-sm);}
 .ab-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
@@ -361,26 +328,6 @@ svg.prs-chart{width:100%;height:140px;display:block;overflow:visible;}
 .ab-settings-field input:focus,.ab-settings-field select:focus,.ab-settings-field textarea:focus{border-color:var(--border-focus);}
 .ab-settings-field textarea{resize:vertical;min-height:48px;font-family:inherit;}
 .ab-error{color:var(--danger);font-size:11px;margin-top:4px;}
-.ab-text{max-height:320px;overflow-y:auto;}
-.ab-answer-row{position:relative;}
-.ab-copy-btn{position:absolute;top:6px;right:6px;font-size:10px;padding:2px 7px;border-radius:3px;border:1px solid var(--border);background:var(--bg-sunken);color:var(--text-subtle);cursor:pointer;opacity:0;transition:opacity .15s;}
-.ab-answer-row:hover .ab-copy-btn{opacity:1;}
-.ab-run.loading{opacity:.7;cursor:not-allowed;}
-.ab-history{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;margin-bottom:20px;box-shadow:var(--shadow-sm);overflow:hidden;}
-.ab-history-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg-sunken);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;}
-.ab-history-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-subtle);}
-.ab-history-body{overflow:hidden;max-height:0;transition:max-height .25s ease;}
-.ab-history-body.open{max-height:800px;}
-.ab-hist-item{padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;}
-.ab-hist-item:last-child{border-bottom:none;}
-.ab-hist-item:hover{background:var(--bg-hover);}
-.ab-hist-q{font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.ab-hist-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.ab-hist-ans{font-size:11px;color:var(--text-secondary);line-height:1.5;max-height:60px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;padding:6px 8px;border-radius:4px;}
-.ab-hist-ans-a{background:var(--uc-p1-bg);border:1px solid var(--uc-p1-border);}
-.ab-hist-ans-b{background:var(--uc-p2-bg);border:1px solid var(--uc-p2-border);}
-.ab-hist-meta{font-size:10px;color:var(--text-disabled);margin-top:3px;}
-.ab-sys-hint{font-size:10px;color:var(--text-subtle);font-style:italic;margin-bottom:6px;}
 
 /* ── Pipeline logs panel ───────────────────────────────────────────────────── */
 .logs-panel{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:20px;}
@@ -554,7 +501,7 @@ svg.prs-chart{width:100%;height:140px;display:block;overflow:visible;}
 
     <div class="sidebar-divider"></div>
     <div class="uc-nav-label">Actions</div>
-    <div class="action-item" onclick="openFaqSettings()">
+    <div class="action-item" onclick="runPipelineStep('faq-gen-cloud')">
       <div class="nav-icon">⟳</div>
       <span class="nav-label">Re-generate FAQs</span>
     </div>
@@ -569,11 +516,6 @@ svg.prs-chart{width:100%;height:140px;display:block;overflow:visible;}
     <div class="action-item" onclick="runPipelineStep('recompute')">
       <div class="nav-icon">🔄</div>
       <span class="nav-label">Recompute KV</span>
-      <span id="compute-worker-dot" title="" style="width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--text-disabled);display:none;"></span>
-    </div>
-    <div class="action-item" onclick="openInferenceSettings()">
-      <div class="nav-icon">💬</div>
-      <span class="nav-label">Inference Settings</span>
     </div>
 
     <div class="sidebar-footer">
@@ -597,35 +539,25 @@ svg.prs-chart{width:100%;height:140px;display:block;overflow:visible;}
       <div class="pipeline-progress-panel">
         <div class="pp-header">Pipeline Progress</div>
         <div class="pp-track">
-          <div class="pp-step s-pending" id="ps-index" onclick="selectStep(this,'index','Index')">
+          <div class="pp-step s-pending" id="ps-index">
             <div class="pp-dot s-pending" id="ps-index-dot">1</div>
             <div class="pp-name s-pending" id="ps-index-name">Index</div>
-            <div class="pp-summary" id="ps-index-summary"></div>
           </div>
-          <div class="pp-step s-locked" id="ps-kv" onclick="selectStep(this,'recompute','KV Tensors')">
+          <div class="pp-step s-locked" id="ps-kv">
             <div class="pp-dot s-locked" id="ps-kv-dot">2</div>
             <div class="pp-name s-locked" id="ps-kv-name">KV Tensors</div>
-            <div class="pp-summary" id="ps-kv-summary"></div>
           </div>
-          <div class="pp-step s-locked" id="ps-faqs" onclick="selectStep(this,'faq-gen-cloud','FAQs')">
+          <div class="pp-step s-locked" id="ps-faqs">
             <div class="pp-dot s-locked" id="ps-faqs-dot">3</div>
             <div class="pp-name s-locked" id="ps-faqs-name">FAQs</div>
-            <div class="pp-summary" id="ps-faqs-summary"></div>
           </div>
-          <div class="pp-step s-locked" id="ps-lora" onclick="selectStep(this,'train','Train LoRA')">
+          <div class="pp-step s-locked" id="ps-lora">
             <div class="pp-dot s-locked" id="ps-lora-dot">4</div>
             <div class="pp-name s-locked" id="ps-lora-name">Train LoRA</div>
-            <div class="pp-summary" id="ps-lora-summary"></div>
           </div>
-          <div class="pp-step s-locked" id="ps-recompute" onclick="selectStep(this,'recompute','KV Recompute')">
-            <div class="pp-dot s-locked" id="ps-recompute-dot">5</div>
-            <div class="pp-name s-locked" id="ps-recompute-name">KV Recompute</div>
-            <div class="pp-summary" id="ps-recompute-summary"></div>
-          </div>
-          <div class="pp-step s-locked" id="ps-prs" onclick="selectStep(this,'prs-eval','Evaluate')">
-            <div class="pp-dot s-locked" id="ps-prs-dot">6</div>
+          <div class="pp-step s-locked" id="ps-prs">
+            <div class="pp-dot s-locked" id="ps-prs-dot">5</div>
             <div class="pp-name s-locked" id="ps-prs-name">Evaluate</div>
-            <div class="pp-summary" id="ps-prs-summary"></div>
           </div>
         </div>
         <div class="pp-action-area" id="pp-action-area" style="display:none">
@@ -636,7 +568,7 @@ svg.prs-chart{width:100%;height:140px;display:block;overflow:visible;}
           </div>
           <div class="pp-action-btns">
             <button class="pp-cta" id="pp-cta-btn" style="display:none"></button>
-            <button class="pp-reindex" id="pp-reindex-btn" style="display:none">↺ Re-index</button>
+            <button class="pp-reindex" id="pp-reindex-btn" onclick="runPipelineStep('index')" style="display:none">↺ Re-index</button>
           </div>
         </div>
       </div>
@@ -801,11 +733,7 @@ svg.prs-chart{width:100%;height:140px;display:block;overflow:visible;}
                 </div>
               </div>
             </div>
-            <div id="ab-sysprompt-hint-a" class="ab-sys-hint" style="display:none"></div>
-            <div class="ab-answer-row">
-              <div class="ab-text" id="ab-text-a" style="color:var(--text-subtle)">Run a query to see results</div>
-              <button class="ab-copy-btn" onclick="copyAnswer('a')" title="Copy answer">⎘ Copy</button>
-            </div>
+            <div class="ab-text" id="ab-text-a" style="color:var(--text-subtle)">Run a query to see results</div>
             <div class="ab-meta">
               <div class="ab-meta-item"><b>Chunks</b> <span id="ab-chunks-a" class="ab-chunks-link" onclick="showChunksPopup('a')" title="Click to view retrieved chunks" style="cursor:pointer;text-decoration:underline dotted;">—</span></div>
               <div class="ab-meta-item"><b>Retrieval</b> <span id="ab-retrieval-a">—</span></div>
@@ -861,10 +789,7 @@ svg.prs-chart{width:100%;height:140px;display:block;overflow:visible;}
                 </div>
               </div>
             </div>
-            <div class="ab-answer-row">
-              <div class="ab-text" id="ab-text-b" style="color:var(--text-subtle)">Run a query to see results</div>
-              <button class="ab-copy-btn" onclick="copyAnswer('b')" title="Copy answer">⎘ Copy</button>
-            </div>
+            <div class="ab-text" id="ab-text-b" style="color:var(--text-subtle)">Run a query to see results</div>
             <div class="ab-meta">
               <div class="ab-meta-item"><b>Chunks</b> <span id="ab-chunks-b" class="ab-chunks-link" onclick="showChunksPopup('b')" title="Click to view retrieved chunks" style="cursor:pointer;text-decoration:underline dotted;">—</span></div>
               <div class="ab-meta-item"><b>Retrieval</b> <span id="ab-retrieval-b">—</span></div>
@@ -883,24 +808,14 @@ svg.prs-chart{width:100%;height:140px;display:block;overflow:visible;}
         </div>
       </div>
 
-      <!-- Query History -->
-      <div class="ab-history" id="ab-history" style="display:none">
-        <div class="ab-history-hdr" onclick="toggleHistory()">
-          <span class="ab-history-title">Query History <span id="ab-history-count" style="font-weight:400;text-transform:none;letter-spacing:0"></span></span>
-          <span id="ab-history-chevron" style="font-size:11px;color:var(--text-subtle)">▼</span>
-        </div>
-        <div class="ab-history-body" id="ab-history-body"></div>
-      </div>
-
       <!-- Pipeline Logs -->
       <div class="logs-panel" id="logs-panel">
         <div class="logs-header">
           <div class="logs-status-dot idle" id="logs-dot"></div>
-          <div class="logs-title" id="logs-title">Pipeline Logs</div>
+          <div class="logs-title">Pipeline Logs</div>
           <span class="logs-step-badge" id="logs-badge" style="display:none"></span>
-          <button class="logs-rerun-btn" id="logs-rerun-btn" style="display:none" onclick="_rerunSelectedStep()">↺ Re-run</button>
           <div class="logs-actions">
-            <button class="logs-btn" onclick="_logsCleared=false; _selectedStep=null; document.querySelectorAll('.pp-step').forEach(e=>e.classList.remove('ps-selected')); document.getElementById('logs-title').textContent='Pipeline Logs'; document.getElementById('logs-rerun-btn').style.display='none'; refreshLogs()">⟳ Latest</button>
+            <button class="logs-btn" onclick="_logsCleared=false; refreshLogs()">⟳ Refresh</button>
             <button class="logs-btn" id="copy-logs-btn" onclick="copyLogs()">⎘ Copy</button>
             <button class="logs-btn" onclick="clearLogsDisplay()">✕ Clear</button>
             <button class="logs-btn danger" id="stop-job-btn" style="display:none" onclick="stopJob()">■ Stop</button>
@@ -1156,10 +1071,6 @@ function togglePhaseDetail(phase) {
 async function loadUCState() {
   try {
     const r = await fetch(`/studio/api/registry`, {credentials:'include'});
-    if (r.status === 401 || r.status === 403) {
-      window.location.href = `/auth/login?next=${encodeURIComponent(window.location.pathname)}`;
-      return;
-    }
     const reg = await r.json();
     const uc = (reg.use_cases || []).find(u => u.id === UC_ID);
     if (uc) {
@@ -1240,7 +1151,7 @@ async function loadUCState() {
       }
 
       // ── Pipeline progress panel ───────────────────────────────────────────
-      // Steps: Index → KV Tensors → FAQs → Train LoRA → KV Recompute → Evaluate (PRS)
+      // Steps: Index → KV Tensors → FAQs → Train LoRA → Evaluate (PRS)
       function _setStep(id, status, label) {
         const el = document.getElementById(id);
         const dot = document.getElementById(id + '-dot');
@@ -1255,21 +1166,16 @@ async function loadUCState() {
         if (status === 's-locked') dot.textContent = '🔒';
       }
 
-      const kvDone          = phase >= 2;
-      const faqsDone        = hasFaqs && phase >= 2;
-      const loraDone        = loraVer > 0;
-      const kvLorVer        = uc.kv_lora_version || 0;
-      // KV recompute is needed (and done) only once LoRA has been trained.
-      // kvRecomputeDone = tensors have been recomputed for the current LoRA version.
-      const kvRecomputeDone = loraDone && kvLorVer >= loraVer;
-      const prsDone         = hasPRS && uc.prs >= 0.75;
+      const kvDone   = phase >= 2;
+      const faqsDone = hasFaqs && phase >= 2;
+      const loraDone = loraVer > 0;
+      const prsDone  = hasPRS && uc.prs >= 0.75;
 
-      _setStep('ps-index',     hasIndex     ? 's-done' : 's-active',                         'Index');
-      _setStep('ps-kv',        kvDone       ? 's-done' : hasIndex  ? 's-active' : 's-locked', 'KV Tensors');
-      _setStep('ps-faqs',      faqsDone     ? 's-done' : kvDone    ? 's-active' : 's-locked', 'FAQs');
-      _setStep('ps-lora',      loraDone     ? 's-done' : faqsDone  ? 's-active' : 's-locked', 'Train LoRA');
-      _setStep('ps-recompute', kvRecomputeDone ? 's-done' : loraDone ? 's-active' : 's-locked', 'KV Recompute');
-      _setStep('ps-prs',       prsDone      ? 's-done' : kvRecomputeDone ? 's-active' : 's-locked', 'Evaluate');
+      _setStep('ps-index', hasIndex ? 's-done' : 's-active', 'Index');
+      _setStep('ps-kv',    kvDone   ? 's-done' : hasIndex ? 's-active' : 's-locked', 'KV Tensors');
+      _setStep('ps-faqs',  faqsDone ? 's-done' : kvDone ? 's-active' : 's-locked', 'FAQs');
+      _setStep('ps-lora',  loraDone ? 's-done' : faqsDone ? 's-active' : 's-locked', 'Train LoRA');
+      _setStep('ps-prs',   prsDone  ? 's-done' : loraDone ? 's-active' : 's-locked', 'Evaluate');
 
       // Determine the current step's action content
       const actionArea  = document.getElementById('pp-action-area');
@@ -1296,49 +1202,51 @@ async function loadUCState() {
         ctaBtn.textContent       = '▶ Run KV Indexer';
         ctaBtn.style.display     = '';
         ctaBtn.onclick           = () => runPipelineStep('recompute');
-        reindexBtn.style.display = 'none';
+        reindexBtn.style.display = '';
       } else if (!faqsDone) {
         actionLabel.textContent  = 'Step 3 — Generate FAQs';
         actionDesc.textContent   = 'Use a cloud LLM to generate question-answer pairs from your corpus. FAQs are required for LoRA fine-tuning.';
         actionMeta.style.display = 'none';
         ctaBtn.textContent       = '▶ Generate FAQs';
         ctaBtn.style.display     = '';
-        ctaBtn.onclick           = () => openFaqSettings();
-        reindexBtn.style.display = 'none';
+        ctaBtn.onclick           = () => runPipelineStep('faq-gen-cloud');
+        reindexBtn.style.display = '';
       } else if (!loraDone) {
         actionLabel.textContent  = 'Step 4 — Train LoRA';
         actionDesc.textContent   = 'Fine-tune the model on your corpus using the generated FAQs and a tier-weighted replay buffer.';
-        actionMeta.textContent   = 'Requires a GPU resource provider (local or remote SSH).';
-        actionMeta.style.display = '';
+        actionMeta.style.display = 'none';
         ctaBtn.textContent       = '▶ Train LoRA';
         ctaBtn.style.display     = '';
-        ctaBtn.onclick           = () => openLoraSettings();
-        reindexBtn.style.display = 'none';
-      } else if (!kvRecomputeDone) {
-        actionLabel.textContent  = 'Step 5 — Recompute KV Tensors';
-        actionDesc.textContent   = 'LoRA fine-tuning changes the model weights, making all stored KV tensors stale. Recompute them with the new adapter so Phase 2 injection stays accurate.';
-        actionMeta.textContent   = 'Requires a GPU resource provider (local or remote SSH).';
-        actionMeta.style.display = '';
-        ctaBtn.textContent       = '▶ Recompute KV Tensors';
-        ctaBtn.style.display     = '';
-        ctaBtn.onclick           = () => runPipelineStep('recompute');
-        reindexBtn.style.display = 'none';
+        ctaBtn.onclick           = () => runPipelineStep('train');
+        reindexBtn.style.display = '';
       } else if (!prsDone) {
         const prsStr = hasPRS ? ` (current: ${uc.prs.toFixed(3)})` : '';
-        actionLabel.textContent  = 'Step 6 — Evaluate (PRS)';
+        actionLabel.textContent  = 'Step 5 — Evaluate (PRS)';
         actionDesc.textContent   = `Run Parametric Readiness Score evaluation. A score ≥ 0.75 unlocks Phase 3 — the model will answer directly from its weights when confident.${prsStr}`;
         actionMeta.style.display = 'none';
         ctaBtn.textContent       = hasPRS ? '▶ Re-run PRS Eval' : '▶ Run PRS Eval';
         ctaBtn.style.display     = '';
         ctaBtn.onclick           = () => runPipelineStep('prs-eval');
-        reindexBtn.style.display = 'none';
+        reindexBtn.style.display = '';
       } else {
         // Phase 3 active — all done
         actionLabel.textContent  = 'Phase 3 active — pipeline complete';
         actionDesc.textContent   = `PRS ${uc.prs != null ? uc.prs.toFixed(3) : '—'} — the model answers from weights when confident. You can re-train LoRA at any time to improve accuracy.`;
         actionMeta.style.display = 'none';
         ctaBtn.style.display     = 'none';
-        reindexBtn.style.display = 'none';
+        reindexBtn.style.display = '';
+      }
+
+      // ── PRS card value (Phase 3 card) ──────────────────────────────────
+      if (hasPRS && !pc3.classList.contains('locked')) {
+        document.getElementById('pc3-val').textContent = uc.prs.toFixed(3);
+        document.getElementById('pc3-sub').textContent = uc.prs >= 0.75 ? 'Phase 3 active' : 'Phase 3 not yet unlocked';
+        if (uc.prs >= 0.75) {
+          const badge = document.createElement('div');
+          badge.className = 'pc-active-badge';
+          badge.textContent = '● ACTIVE';
+          pc3.appendChild(badge);
+        }
       }
 
       // ── Show advanced panels (PRS chart + latency + LoRA history) ────────
@@ -1399,76 +1307,10 @@ async function loadUCState() {
       document.getElementById('ps-meta-data').textContent = hasIndex ? 'indexed' : 'not indexed';
     }
   } catch(e) {
-    console.error('[loadUCState]', e);
     document.getElementById('topbar-uc-name').textContent = UC_ID;
     document.getElementById('uc-page-title').textContent = UC_ID;
   }
   loadCurationStatus();
-  loadStepSummaries();
-}
-
-function _setSummary(id, lines) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = lines.filter(Boolean).join(' · ');
-  el.className = 'pp-summary s-done';
-}
-
-async function loadStepSummaries() {
-  try {
-    const r = await fetch(`/studio/api/uc/${UC_ID}/step-summaries`, {credentials:'include'});
-    if (!r.ok) return;
-    const s = await r.json();
-
-    const idx = s.index || {};
-    if (idx.chunk_count || idx.embed_model) {
-      _setSummary('ps-index-summary', [
-        idx.chunk_count ? `${idx.chunk_count.toLocaleString()} chunks` : null,
-        idx.embed_model || null,
-        idx.vector_store || null,
-      ]);
-    }
-
-    const kv = s.recompute || {};
-    if (kv.model || kv.chunk_count) {
-      _setSummary('ps-kv-summary', [
-        kv.chunk_count ? `${kv.chunk_count.toLocaleString()} tensors` : null,
-        kv.model || null,
-      ]);
-      _setSummary('ps-recompute-summary', [
-        kv.chunk_count ? `${kv.chunk_count.toLocaleString()} tensors` : null,
-        kv.model ? `v${kv.kv_version} weights` : null,
-      ]);
-    }
-
-    const faq = s['faq-gen-cloud'] || {};
-    if (faq.count) {
-      _setSummary('ps-faqs-summary', [
-        `${faq.count} pairs`,
-        faq.per_chunk ? `${faq.per_chunk}/chunk` : null,
-        faq.model || null,
-      ]);
-    }
-
-    const tr = s.train || {};
-    if (tr.lora_version) {
-      _setSummary('ps-lora-summary', [
-        `v${tr.lora_version}`,
-        `rank ${tr.lora_rank}`,
-        tr.training_loss != null ? `loss ${tr.training_loss.toFixed(3)}` : null,
-        `${tr.lora_epochs} epochs`,
-      ]);
-    }
-
-    const prs = s['prs-eval'] || {};
-    if (prs.prs != null) {
-      _setSummary('ps-prs-summary', [
-        `PRS ${prs.prs.toFixed(3)}`,
-        prs.round != null ? `round ${prs.round}` : null,
-        prs.samples ? `${prs.samples} samples` : null,
-      ]);
-    }
-  } catch(e) { /* summaries are best-effort */ }
 }
 
 function setPipelineStep(key, done, meta) {
@@ -1621,7 +1463,7 @@ function onProviderChange() {
   const modelDefaults = {
     anthropic: 'claude-haiku-4-5-20251001',
     openai: 'gpt-4o-mini',
-    gemini: 'gemini-2.0-flash',
+    gemini: 'gemini-1.5-flash',
   };
   document.getElementById('b-model').value = modelDefaults[provider] || '';
 }
@@ -1649,138 +1491,17 @@ function _getModelBSettings() {
   };
 }
 
-// ── Query history ──────────────────────────────────────────────────────────
-const _queryHistory = [];
-let _historyOpen = false;
-
-function toggleHistory() {
-  _historyOpen = !_historyOpen;
-  document.getElementById('ab-history-body').classList.toggle('open', _historyOpen);
-  document.getElementById('ab-history-chevron').textContent = _historyOpen ? '▲' : '▼';
-}
-
-function _addToHistory(query, ra, rb) {
-  const ms2s = ms => ms != null ? (ms/1000).toFixed(2)+'s' : '—';
-  _queryHistory.unshift({query, ra, rb, ts: Date.now()});
-  if (_queryHistory.length > 20) _queryHistory.pop();
-
-  const hist = document.getElementById('ab-history');
-  const body = document.getElementById('ab-history-body');
-  const countEl = document.getElementById('ab-history-count');
-  hist.style.display = '';
-  countEl.textContent = `(${_queryHistory.length})`;
-
-  body.innerHTML = _queryHistory.map((h, i) => `
-    <div class="ab-hist-item" onclick="_restoreQuery(${i})">
-      <div class="ab-hist-q">${_esc(h.query)}</div>
-      <div class="ab-hist-cols">
-        <div>
-          <div class="ab-hist-ans ab-hist-ans-a">${h.ra.error ? '⚠ '+_esc(h.ra.error) : _esc(h.ra.text||'—')}</div>
-          <div class="ab-hist-meta">Model A · ${ms2s(h.ra.latency_ms)}</div>
-        </div>
-        <div>
-          <div class="ab-hist-ans ab-hist-ans-b">${h.rb.error ? '⚠ '+_esc(h.rb.error) : _esc(h.rb.text||'—')}</div>
-          <div class="ab-hist-meta">Model B · ${ms2s(h.rb.latency_ms)}</div>
-        </div>
-      </div>
-    </div>`).join('');
-
-  if (!_historyOpen) toggleHistory();
-}
-
-function _restoreQuery(idx) {
-  const h = _queryHistory[idx];
-  if (!h) return;
-  document.getElementById('ab-query-input').value = h.query;
-}
-
-// ── Copy answer ────────────────────────────────────────────────────────────
-function copyAnswer(side) {
-  const text = document.getElementById(`ab-text-${side}`).textContent;
-  if (!text || text === 'Run a query to see results') return;
-  navigator.clipboard.writeText(text).then(() => showToast('Copied')).catch(() => {
-    const ta = document.createElement('textarea');
-    ta.value = text; document.body.appendChild(ta); ta.select();
-    document.execCommand('copy'); document.body.removeChild(ta);
-    showToast('Copied');
-  });
-}
-
-// ── Settings persistence ───────────────────────────────────────────────────
-const _LS_KEY = `ab_settings_${UC_ID}`;
-
-function _saveABSettings() {
-  try {
-    localStorage.setItem(_LS_KEY, JSON.stringify({
-      a: _getModelASettings(),
-      b: _getModelBSettings(),
-    }));
-  } catch(_) {}
-}
-
-const _DEPRECATED_MODELS = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'];
-
-function _loadABSettings() {
-  try {
-    const s = JSON.parse(localStorage.getItem(_LS_KEY) || 'null');
-    if (!s) return;
-    const set = (id, v) => { const el=document.getElementById(id); if(el && v!=null) el.value=v; };
-    if (s.a) {
-      set('a-endpoint', s.a.endpoint_url);
-      set('a-top-k', s.a.top_k);
-      set('a-temperature', s.a.temperature);
-      set('a-max-tokens', s.a.max_tokens);
-      if (s.a.system_prompt) set('a-system-prompt', s.a.system_prompt);
-    }
-    if (s.b) {
-      set('b-provider', s.b.provider);
-      set('b-top-k', s.b.top_k);
-      set('b-temperature', s.b.temperature);
-      set('b-max-tokens', s.b.max_tokens);
-      if (s.b.system_prompt) set('b-system-prompt', s.b.system_prompt);
-      // Restore model only if it's not a deprecated model
-      if (s.b.model && !_DEPRECATED_MODELS.includes(s.b.model)) {
-        set('b-model', s.b.model);
-      } else if (s.b.provider) {
-        onProviderChange();  // let onProviderChange set the current default
-      }
-      if (!s.b.model || _DEPRECATED_MODELS.includes(s.b.model)) onProviderChange();
-    }
-  } catch(_) {}
-}
-
-// ── System prompt hint ─────────────────────────────────────────────────────
-function _updateSysPromptHint(inferenceSystemPrompt) {
-  const hint = document.getElementById('ab-sysprompt-hint-a');
-  if (!hint) return;
-  const active = document.getElementById('a-system-prompt')?.value?.trim();
-  if (inferenceSystemPrompt && !active) {
-    hint.textContent = 'Using configured inference system prompt';
-    hint.style.display = '';
-  } else if (inferenceSystemPrompt && active) {
-    hint.textContent = 'Session override active (configured prompt ignored)';
-    hint.style.display = '';
-  } else {
-    hint.style.display = 'none';
-  }
-}
-
 async function runQuery() {
   const query = (document.getElementById('ab-query-input').value || '').trim();
   if (!query) return;
 
   const g = id => document.getElementById(id);
-  const tA=g('ab-text-a'), tB=g('ab-text-b'), btn=g('ab-run-btn'), inp=g('ab-query-input');
+  const tA=g('ab-text-a'), tB=g('ab-text-b'), btn=g('ab-run-btn');
   const bA=g('ab-badge-a'), bB=g('ab-badge-b');
   const vA=g('verdict-btn-a'), vB=g('verdict-btn-b');
 
   [tA,tB].forEach(el => { el.textContent='Querying…'; el.style.color='var(--text-subtle)'; });
-  btn.disabled = true; btn.classList.add('loading'); btn.textContent = '⏳ Running…';
-  inp.disabled = true;
-  [vA,vB].forEach(b => { b.style.opacity='0.3'; b.style.pointerEvents='none'; });
-
-  _saveABSettings();
-
+  btn.disabled = true;
   try {
     const r = await fetch(`/studio/api/uc/${UC_ID}/ab-query`, {
       method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include',
@@ -1798,6 +1519,8 @@ async function runQuery() {
     const ms2s = ms => (ms/1000).toFixed(2)+' s';
     const set = (id, val) => { const el=g(id); if(el && val!=null) el.textContent=val; };
 
+    // Model A
+    // Model A
     if (ra.error) {
       tA.textContent = ra.error; tA.style.color = 'var(--danger)';
     } else {
@@ -1807,11 +1530,14 @@ async function runQuery() {
     if (ra.retrieval_ms != null) set('ab-retrieval-a', ms2s(ra.retrieval_ms));
     if (ra.inference_ms != null) set('ab-inference-a', ms2s(ra.inference_ms));
     if (ra.source)               set('ab-source-a', ra.source);
+    // Phase badge — use actual phase_used from response, fall back to UC phase
     _setPhaseA(ra.phase_used || (ra.source && ra.source.includes('kv') ? 'phase2-kv' : 'phase1-rag'));
+    // Store chunks for popup
     _lastChunks.a = ra.chunks || [];
     const nA = ra.chunks_retrieved ?? (ra.chunks ? ra.chunks.length : null);
     if (nA != null) set('ab-chunks-a', nA + ' chunks');
 
+    // Model B
     if (rb.error) {
       tB.textContent = rb.error; tB.style.color = 'var(--danger)';
     } else {
@@ -1826,16 +1552,11 @@ async function runQuery() {
     if (nB != null) set('ab-chunks-b', nB + ' chunks');
     if (rb.cost_est_usd != null) set('ab-cost-b', '$'+rb.cost_est_usd.toFixed(6));
 
-    _addToHistory(query, ra, rb);
-
     if (!ra.error && !rb.error)
       [vA,vB].forEach(b => { b.style.opacity='1'; b.style.pointerEvents='auto'; });
   } catch(err) {
     [tA,tB].forEach(el => { el.textContent='Error: '+err.message; el.style.color='var(--danger)'; });
-  } finally {
-    btn.disabled = false; btn.classList.remove('loading'); btn.textContent = '▶ Run both';
-    inp.disabled = false;
-  }
+  } finally { btn.disabled = false; }
 }
 
 async function verdict(choice) {
@@ -1872,78 +1593,6 @@ async function loadCurationStatus() {
 function _scrollToLogs() {
   const panel = document.getElementById('logs-panel');
   if (panel) panel.scrollIntoView({behavior: 'smooth', block: 'start'});
-}
-
-// Track which step dot is currently selected for historical log viewing
-let _selectedStep = null;
-let _selectedStepEl = null;
-
-// Step descriptions shown when a completed step dot is clicked
-const _stepDescriptions = {
-  'index':        'Embeds your documents and upserts them into the vector database.',
-  'recompute':    'Runs an LLM forward pass per chunk to compute KV tensors on GPU.',
-  'faq-gen-cloud':'Calls a cloud LLM (Anthropic/Gemini/OpenAI) to generate Q&A pairs from each chunk.',
-  'train':        'Fine-tunes the model on FAQs + replay buffer using LoRA adapters.',
-  'prs-eval':     'Runs inference on sample FAQs and scores accuracy, calibration, and consistency.',
-};
-
-async function selectStep(el, pipelineStep, label) {
-  // Only respond to clicks on completed (s-done) steps
-  if (!el.classList.contains('s-done')) return;
-
-  // Deselect previous
-  document.querySelectorAll('.pp-step').forEach(e => e.classList.remove('ps-selected'));
-  if (_selectedStepEl === el && _selectedStep === pipelineStep) {
-    // Second click on same step → reset to latest logs view
-    _selectedStep = null;
-    _selectedStepEl = null;
-    document.getElementById('logs-title').textContent = 'Pipeline Logs';
-    document.getElementById('logs-rerun-btn').style.display = 'none';
-    _logsCleared = false;
-    refreshLogs();
-    return;
-  }
-
-  el.classList.add('ps-selected');
-  _selectedStep = pipelineStep;
-  _selectedStepEl = el;
-
-  // Update logs panel header
-  document.getElementById('logs-title').textContent = `Logs — ${label}`;
-  document.getElementById('logs-rerun-btn').style.display = '';
-  document.getElementById('logs-rerun-btn').dataset.step = pipelineStep;
-
-  // Fetch step-specific logs
-  _scrollToLogs();
-  const body = document.getElementById('logs-body');
-  body.innerHTML = `<div class="logs-empty"><span>Loading ${label} logs…</span></div>`;
-  try {
-    const r = await fetch(`/studio/api/uc/${UC_ID}/logs?step=${encodeURIComponent(pipelineStep)}`, {credentials:'include'});
-    const data = await r.json();
-    if (!data.lines || data.lines.length === 0) {
-      body.innerHTML = `<div class="logs-empty"><span>No logs found for ${label}</span><span style="font-size:11px;color:var(--text-disabled)">Run this step first to see its logs here.</span></div>`;
-    } else {
-      body.innerHTML = '';
-      _lineCount = 0;
-      data.lines.forEach(l => _appendLine(l));
-      const statusLabel = data.status === 'failed' ? '✗ failed' : '✓ done';
-      _setStatus(data.status, pipelineStep, null, data.lines.length);
-    }
-  } catch(e) {
-    body.innerHTML = `<div class="logs-empty"><span>Failed to load logs</span></div>`;
-  }
-}
-
-function _rerunSelectedStep() {
-  const step = document.getElementById('logs-rerun-btn').dataset.step;
-  if (!step) return;
-  // Deselect the step dot and return to live logs view
-  document.querySelectorAll('.pp-step').forEach(e => e.classList.remove('ps-selected'));
-  _selectedStep = null;
-  _selectedStepEl = null;
-  document.getElementById('logs-title').textContent = 'Pipeline Logs';
-  document.getElementById('logs-rerun-btn').style.display = 'none';
-  runPipelineStep(step);
 }
 
 async function runPipelineStep(step) {
@@ -1986,7 +1635,7 @@ function _applyABDefaults(uc) {
   const endpointEl = document.getElementById('a-endpoint');
   const modelAEl   = document.getElementById('a-model');
   if (endpointEl && uc.vllm_url)  endpointEl.value = uc.vllm_url;
-  if (modelAEl)                    modelAEl.value   = uc.vllm_model || uc.vllm_served_model || 'kvforge-local';
+  if (modelAEl)                    modelAEl.value   = uc.vllm_served_model || uc.vllm_model || 'kvforge-local';
 
   // Model B — Cloud LLM
   const providerEl = document.getElementById('b-provider');
@@ -2002,12 +1651,6 @@ function _applyABDefaults(uc) {
   if (uc.gpu_profile_name && endpointEl && uc.vllm_url) {
     endpointEl.title = `Auto-set from GPU profile: ${uc.gpu_profile_name}`;
   }
-
-  // Restore persisted settings (overrides defaults where user had explicit values)
-  _loadABSettings();
-
-  // Show system prompt hint if UC has one configured
-  if (uc.inference_system_prompt) _updateSysPromptHint(uc.inference_system_prompt);
 }
 
 // ── Update Model A endpoint when GPU profile selection changes ──────────────
@@ -2324,24 +1967,10 @@ function _classify(line) {
   return '';
 }
 
-function _cleanLogLine(text) {
-  // Strip ANSI escape codes (color, cursor, etc.)
-  text = text.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/\x1b\]/g, '');
-  // For tqdm-style progress lines, keep only the last \r-overwritten state
-  if (text.includes('\r')) {
-    const parts = text.split('\r');
-    text = parts[parts.length - 1] || parts[parts.length - 2] || text;
-  }
-  return text.trim();
-}
-
 function _appendLine(text) {
   const body = document.getElementById('logs-body');
   const empty = document.getElementById('logs-empty');
   if (empty) empty.remove();
-
-  text = _cleanLogLine(text);
-  if (!text) return;  // skip blank lines after cleaning
 
   const div = document.createElement('div');
   div.className = 'log-line ' + _classify(text);
@@ -2417,27 +2046,6 @@ function _startSSE(jobId) {
 let _wasRunning = false;
 
 async function refreshLogs() {
-  // Don't clobber historical step view unless a live job starts
-  if (_selectedStep) {
-    // Still check for a running job to auto-switch to live logs
-    try {
-      const r = await fetch(`/studio/api/uc/${UC_ID}/logs`, {credentials:'include'});
-      if (r.ok) {
-        const d = await r.json();
-        if (d.status === 'running') {
-          // New job started — break out of historical view
-          _selectedStep = null;
-          _selectedStepEl = null;
-          document.querySelectorAll('.pp-step').forEach(e => e.classList.remove('ps-selected'));
-          document.getElementById('logs-title').textContent = 'Pipeline Logs';
-          document.getElementById('logs-rerun-btn').style.display = 'none';
-          // fall through to normal refresh below
-        } else {
-          return; // stay in historical view
-        }
-      }
-    } catch(_) { return; }
-  }
   try {
     const r = await fetch(`/studio/api/uc/${UC_ID}/logs`, {credentials:'include'});
     if (!r.ok) return;
@@ -2475,39 +2083,10 @@ async function refreshLogs() {
           <span style="font-size:24px">📋</span>
           <span>No pipeline logs yet</span>
           <span>Start indexing or training from the Actions menu to see logs here</span>
-          <button onclick="reconnectRemoteJob()" style="margin-top:10px;padding:6px 14px;background:var(--bg-metric-b);border:1px solid var(--border-focus);color:var(--accent);border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">⟳ Reconnect to EC2 job</button>
         </div>`;
       }
     }
   } catch(e) { console.warn('refreshLogs:', e); }
-}
-
-async function reconnectRemoteJob() {
-  showToast('Detecting running EC2 job…');
-  try {
-    const det = await fetch(`/studio/api/uc/${UC_ID}/active-remote-job`, {credentials:'include'});
-    const d = await det.json();
-    if (!d.job_id) {
-      showToast('No active EC2 job found' + (d.reason ? ': ' + d.reason : ''));
-      return;
-    }
-    showToast(`Found job ${d.job_id} — reattaching…`);
-    const r = await fetch(`/studio/api/uc/${UC_ID}/reattach`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      credentials: 'include',
-      body: JSON.stringify({job_id: d.job_id, step: d.step || 'train', gpu_profile_id: d.gpu_profile_id})
-    });
-    if (!r.ok) { showToast('Reattach failed: ' + r.status); return; }
-    const rd = await r.json();
-    _logsCleared = false;
-    _currentJobId = rd.job_id;
-    _startSSE(rd.job_id);
-    _scrollToLogs();
-    showToast('Reconnected — streaming live logs');
-  } catch(e) {
-    showToast('Reconnect error: ' + e.message);
-  }
 }
 
 async function copyLogs() {
@@ -2549,24 +2128,23 @@ function _startLogPoll() {
   }, 4000);
 }
 
-// ── Compute worker health ──────────────────────────────────────────────────
-async function fetchWorkerHealth() {
-  const dot = document.getElementById('compute-worker-dot');
-  if (!dot) return;
-  try {
-    const r = await fetch(`/studio/api/uc/${UC_ID}/compute-worker/health`, {credentials:'include'});
-    const d = await r.json().catch(() => ({}));
-    if (d.backend === 'local' || d.status === 'no_config') { dot.style.display='none'; return; }
-    dot.style.display = 'inline-block';
-    if (d.reachable) {
-      dot.style.background = 'var(--success)';
-      dot.title = `Worker online · ${d.device || ''} · ${d.model_id || ''}`.replace(/ · $/,'').replace(/^ · /,'');
-    } else {
-      dot.style.background = 'var(--danger)';
-      dot.title = 'Worker unreachable: ' + (d.error || d.worker_url || 'unknown');
+// ── Sync-complete notification from connectors page ──────────────────────
+try {
+  const _syncBus = new BroadcastChannel('kvforge-sync');
+  _syncBus.onmessage = (e) => {
+    if (e.data?.type === 'sync-complete' && e.data?.uc_id === UC_ID) {
+      const chunks = e.data.new_chunks ?? 0;
+      // Show banner
+      const banner = document.createElement('div');
+      banner.style.cssText = 'position:fixed;top:56px;left:50%;transform:translateX(-50%);' +
+        'background:#22A06B;color:#fff;padding:8px 20px;border-radius:6px;font-size:13px;' +
+        'font-weight:600;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.2);';
+      banner.textContent = `✅ Connector sync complete — ${chunks} new chunks indexed. Refreshing…`;
+      document.body.appendChild(banner);
+      setTimeout(() => { banner.remove(); loadUCState(); loadPRSHistory(); }, 3000);
     }
-  } catch(_) {}
-}
+  };
+} catch(_) {}
 
 // ── Boot ───────────────────────────────────────────────────────────────────
 loadUCState();
@@ -2575,431 +2153,7 @@ refreshLogs();
 _startLogPoll();
 loadGpuProfiles();
 refreshGpuData();
-fetchWorkerHealth();
 </script>
 <script src="/helper.js"></script>
-
-<!-- ── FAQ Settings Modal ──────────────────────────────────────────────── -->
-<!-- ── LoRA Training Settings Modal ──────────────────────────────────────── -->
-<div id="lora-settings-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
-  <div class="lora-modal-box">
-    <div class="lora-modal-hdr">
-      <div>
-        <div class="lora-modal-title">LoRA Training Settings</div>
-        <div class="lora-modal-sub">Recommendations derived from your corpus, FAQs &amp; hardware · edit any value before training</div>
-      </div>
-      <button onclick="closeLoraSettings()" style="background:none;border:none;color:var(--text-subtle);cursor:pointer;font-size:18px;line-height:1;padding:0 0 0 12px;">×</button>
-    </div>
-
-    <!-- Signal summary bar -->
-    <div class="lora-signals" id="lora-sig-bar">
-      <span class="lora-sig">Loading signals…</span>
-    </div>
-
-    <!-- Editable fields (2-column) -->
-    <div class="lora-field-grid">
-
-      <div class="lora-field">
-        <label>Epochs</label>
-        <input id="ls-epochs" type="number" min="1" max="50" oninput="_loraMarkChanged('epochs')">
-        <div class="lora-rec-row">
-          <span class="rec-pill" id="lrp-epochs" onclick="_loraReset('epochs')">Recommended: —</span>
-        </div>
-        <span class="field-reason" id="lrr-epochs"></span>
-      </div>
-
-      <div class="lora-field">
-        <label>LoRA Rank</label>
-        <input id="ls-rank" type="number" min="1" max="128" oninput="_loraMarkChanged('rank')">
-        <div class="lora-rec-row">
-          <span class="rec-pill" id="lrp-rank" onclick="_loraReset('rank')">Recommended: —</span>
-        </div>
-        <span class="field-reason" id="lrr-rank"></span>
-      </div>
-
-      <div class="lora-field">
-        <label>LoRA Alpha</label>
-        <input id="ls-alpha" type="number" min="1" max="256" oninput="_loraMarkChanged('alpha')">
-        <div class="lora-rec-row">
-          <span class="rec-pill" id="lrp-alpha" onclick="_loraReset('alpha')">Recommended: —</span>
-        </div>
-        <span class="field-reason" id="lrr-alpha"></span>
-      </div>
-
-      <div class="lora-field">
-        <label>Learning Rate</label>
-        <input id="ls-lr" type="number" min="0.000001" max="0.01" step="0.000001" oninput="_loraMarkChanged('lr')">
-        <div class="lora-rec-row">
-          <span class="rec-pill" id="lrp-lr" onclick="_loraReset('lr')">Recommended: —</span>
-        </div>
-        <span class="field-reason" id="lrr-lr"></span>
-      </div>
-
-      <div class="lora-field">
-        <label>Batch Size</label>
-        <input id="ls-batch" type="number" min="1" max="64" oninput="_loraMarkChanged('batch')">
-        <div class="lora-rec-row">
-          <span class="rec-pill" id="lrp-batch" onclick="_loraReset('batch')">Recommended: —</span>
-        </div>
-        <span class="field-reason" id="lrr-batch"></span>
-      </div>
-
-      <div class="lora-field">
-        <label>Dropout</label>
-        <input id="ls-dropout" type="number" min="0" max="0.5" step="0.01">
-        <div style="font-size:10px;color:var(--text-disabled);margin-top:2px;">Standard value: 0.05 — rarely needs changing</div>
-      </div>
-
-    </div><!-- /lora-field-grid -->
-
-    <div class="lora-modal-footer">
-      <button class="lm-btn-reset" onclick="_loraResetAll()">↩ Reset all to recommended</button>
-      <button class="lm-btn-cancel" onclick="closeLoraSettings()">Cancel</button>
-      <button class="lm-btn-run" onclick="saveLoraSettingsAndRun()">▶ Apply &amp; Train</button>
-    </div>
-  </div>
-</div>
-
-<div id="faq-settings-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;">
-  <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;width:420px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.4);overflow:hidden;">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);background:var(--bg-sunken);">
-      <span style="font-size:14px;font-weight:700;color:var(--text-primary)">FAQ Generation Settings</span>
-      <button onclick="closeFaqSettings()" style="background:none;border:none;color:var(--text-subtle);cursor:pointer;font-size:18px;line-height:1;">×</button>
-    </div>
-    <div style="padding:20px;display:flex;flex-direction:column;gap:16px;">
-
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <label style="font-size:12px;font-weight:600;color:var(--text-secondary)">LLM Provider</label>
-        <select id="faq-provider" onchange="onFaqProviderChange()" style="background:var(--bg-sunken);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text-primary);font-size:13px;">
-          <option value="claude">Anthropic (Claude)</option>
-          <option value="gemini">Google (Gemini)</option>
-          <option value="openai">OpenAI</option>
-        </select>
-      </div>
-
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <label style="font-size:12px;font-weight:600;color:var(--text-secondary)">Model</label>
-        <input id="faq-model" type="text" style="background:var(--bg-sunken);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text-primary);font-size:13px;font-family:monospace;" placeholder="model name">
-        <span id="faq-model-hint" style="font-size:11px;color:var(--text-disabled)"></span>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <label style="font-size:12px;font-weight:600;color:var(--text-secondary)">Pairs per chunk</label>
-          <input id="faq-n-per-chunk" type="number" min="1" max="10" style="background:var(--bg-sunken);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text-primary);font-size:13px;">
-          <span style="font-size:11px;color:var(--text-disabled)">Q&A pairs generated per chunk</span>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <label style="font-size:12px;font-weight:600;color:var(--text-secondary)">Delay between calls (s)</label>
-          <input id="faq-delay" type="number" min="0" max="60" step="0.5" style="background:var(--bg-sunken);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text-primary);font-size:13px;">
-          <span style="font-size:11px;color:var(--text-disabled)">Rate-limit buffer between API calls</span>
-        </div>
-      </div>
-
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <label style="font-size:12px;font-weight:600;color:var(--text-secondary)">Max pairs cap <span style="font-weight:400;color:var(--text-disabled)">(0 = no limit, cover all chunks)</span></label>
-        <input id="faq-count" type="number" min="0" style="background:var(--bg-sunken);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text-primary);font-size:13px;">
-        <span id="faq-count-hint" style="font-size:11px;color:var(--text-disabled)"></span>
-      </div>
-
-    </div>
-    <div style="display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border);background:var(--bg-sunken);">
-      <button onclick="closeFaqSettings()" style="padding:7px 16px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:13px;">Cancel</button>
-      <button onclick="saveFaqSettingsAndRun()" style="padding:7px 18px;border:none;border-radius:6px;background:var(--accent);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">▶ Save & Generate</button>
-    </div>
-  </div>
-</div>
-
-<script>
-const _faqProviderModels = {
-  claude: 'claude-haiku-4-5-20251001',
-  gemini: 'gemini-2.5-flash',
-  openai: 'gpt-4o-mini',
-};
-const _faqProviderHints = {
-  claude: 'e.g. claude-haiku-4-5-20251001, claude-sonnet-4-5',
-  gemini: 'e.g. gemini-2.5-flash, gemini-2.0-flash',
-  openai: 'e.g. gpt-4o-mini, gpt-4o',
-};
-
-async function openFaqSettings() {
-  // Load current settings from uc_config
-  let llm = {};
-  try {
-    const r = await fetch(`/studio/api/uc/${UC_ID}/config`, {credentials:'include'});
-    if (r.ok) { const d = await r.json(); llm = d.llm || {}; }
-  } catch(_) {}
-
-  const provider = llm.sleep_faq_provider || 'claude';
-  document.getElementById('faq-provider').value = provider;
-  document.getElementById('faq-model').value = llm.sleep_faq_model || _faqProviderModels[provider] || '';
-  document.getElementById('faq-model-hint').textContent = _faqProviderHints[provider] || '';
-  document.getElementById('faq-n-per-chunk').value = llm.sleep_faq_n_per_chunk ?? 3;
-  document.getElementById('faq-delay').value = llm.sleep_faq_delay ?? 2;
-  document.getElementById('faq-count').value = llm.sleep_faq_count ?? 0;
-  _updateFaqCountHint();
-
-  const modal = document.getElementById('faq-settings-modal');
-  modal.style.display = 'flex';
-}
-
-function closeFaqSettings() {
-  document.getElementById('faq-settings-modal').style.display = 'none';
-}
-
-function onFaqProviderChange() {
-  const p = document.getElementById('faq-provider').value;
-  document.getElementById('faq-model-hint').textContent = _faqProviderHints[p] || '';
-  // Only overwrite model if it still matches the old default
-  const current = document.getElementById('faq-model').value;
-  const isDefault = Object.values(_faqProviderModels).includes(current) || !current;
-  if (isDefault) document.getElementById('faq-model').value = _faqProviderModels[p] || '';
-}
-
-function _updateFaqCountHint() {
-  const cap = parseInt(document.getElementById('faq-count').value) || 0;
-  const npc = parseInt(document.getElementById('faq-n-per-chunk').value) || 3;
-  const hint = document.getElementById('faq-count-hint');
-  if (cap > 0) {
-    hint.textContent = `Will process ~${Math.ceil(cap / npc)} chunks then stop.`;
-  } else {
-    hint.textContent = 'Will process all chunks in the collection.';
-  }
-}
-document.getElementById('faq-count').addEventListener('input', _updateFaqCountHint);
-document.getElementById('faq-n-per-chunk').addEventListener('input', _updateFaqCountHint);
-
-async function saveFaqSettingsAndRun() {
-  const settings = {
-    llm: {
-      sleep_faq_provider:    document.getElementById('faq-provider').value,
-      sleep_faq_model:       document.getElementById('faq-model').value.trim(),
-      sleep_faq_n_per_chunk: parseInt(document.getElementById('faq-n-per-chunk').value) || 3,
-      sleep_faq_delay:       parseFloat(document.getElementById('faq-delay').value) || 2.0,
-      sleep_faq_count:       parseInt(document.getElementById('faq-count').value) || 0,
-    }
-  };
-  try {
-    await fetch(`/studio/api/uc/${UC_ID}/config`, {
-      method: 'POST', credentials: 'include',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(settings),
-    });
-  } catch(e) { showToast('Failed to save settings'); return; }
-  closeFaqSettings();
-  runPipelineStep('faq-gen-cloud');
-}
-
-// Close modal on backdrop click
-document.getElementById('faq-settings-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeFaqSettings();
-});
-</script>
-
-<script>
-// ── LoRA Settings Modal ────────────────────────────────────────────────────────
-
-// Map field key → { inputId, pillId, reasonId, recValue }
-const _LORA_FIELDS = {
-  epochs: { input: 'ls-epochs', pill: 'lrp-epochs', reason: 'lrr-epochs', rec: null },
-  rank:   { input: 'ls-rank',   pill: 'lrp-rank',   reason: 'lrr-rank',   rec: null },
-  alpha:  { input: 'ls-alpha',  pill: 'lrp-alpha',  reason: 'lrr-alpha',  rec: null },
-  lr:     { input: 'ls-lr',     pill: 'lrp-lr',     reason: 'lrr-lr',     rec: null },
-  batch:  { input: 'ls-batch',  pill: 'lrp-batch',  reason: 'lrr-batch',  rec: null },
-};
-
-function _loraMarkChanged(key) {
-  const f = _LORA_FIELDS[key];
-  const el = document.getElementById(f.input);
-  const changed = f.rec !== null && String(el.value) !== String(f.rec);
-  el.classList.toggle('rec-changed', changed);
-}
-
-function _loraReset(key) {
-  const f = _LORA_FIELDS[key];
-  if (f.rec === null) return;
-  const el = document.getElementById(f.input);
-  el.value = f.rec;
-  el.classList.remove('rec-changed');
-}
-
-function _loraResetAll() {
-  Object.keys(_LORA_FIELDS).forEach(k => _loraReset(k));
-}
-
-function _loraApplyRec(recs) {
-  // Populate signal bar
-  const meta = recs._meta || {};
-  const sigBar = document.getElementById('lora-sig-bar');
-  sigBar.innerHTML = [
-    meta.n_faqs    != null ? `<span class="lora-sig"><b>${meta.n_faqs}</b> FAQs</span>` : '',
-    meta.cluster_count != null ? `<span class="lora-sig"><b>${meta.cluster_count}</b> topic clusters</span>` : '',
-    meta.vram_gb   != null ? `<span class="lora-sig"><b>${meta.vram_gb} GB</b> VRAM detected</span>` : '',
-    meta.seq_len   != null ? `<span class="lora-sig"><b>seq len ${meta.seq_len}</b></span>` : '',
-    meta.lora_version > 0  ? `<span class="lora-sig">round <b>v${meta.lora_version}</b></span>` : '',
-  ].filter(Boolean).join('') || '<span class="lora-sig" style="color:var(--text-disabled)">No signals available</span>';
-
-  // Map API keys to field keys
-  const keyMap = {
-    lora_epochs:      'epochs',
-    lora_rank:        'rank',
-    lora_alpha:       'alpha',
-    lora_lr:          'lr',
-    train_batch_size: 'batch',
-  };
-
-  for (const [apiKey, fieldKey] of Object.entries(keyMap)) {
-    const rec = recs[apiKey];
-    if (!rec) continue;
-    const f = _LORA_FIELDS[fieldKey];
-    f.rec = rec.value;
-    document.getElementById(f.input).value = rec.value;
-    document.getElementById(f.input).classList.remove('rec-changed');
-    document.getElementById(f.pill).textContent = `Recommended: ${rec.value} ↩`;
-    document.getElementById(f.reason).textContent = rec.reason || '';
-  }
-}
-
-async function openLoraSettings() {
-  // Load current saved values first
-  let training = {};
-  try {
-    const r = await fetch(`/studio/api/uc/${UC_ID}/config`, {credentials:'include'});
-    if (r.ok) {
-      const d = await r.json();
-      // config.json training section is in datasource_config — but actual training
-      // params live in config.json, fetched via training-recommendations _meta
-    }
-  } catch(_) {}
-
-  // Seed fields with currently-saved config.json values (shown before recs load)
-  const cfgTraining = window._lastUC && window._lastUC._training ? window._lastUC._training : {};
-
-  // Show modal immediately (fields may be empty until recs arrive)
-  document.getElementById('lora-settings-modal').style.display = 'flex';
-
-  // Set dropout from last known config
-  document.getElementById('ls-dropout').value = cfgTraining.lora_dropout ?? 0.05;
-
-  // Fetch recommendations
-  try {
-    const r = await fetch(`/studio/api/uc/${UC_ID}/training-recommendations`, {credentials:'include'});
-    if (r.ok) {
-      const recs = await r.json();
-      _loraApplyRec(recs);
-    } else {
-      document.getElementById('lora-sig-bar').innerHTML =
-        '<span class="lora-sig" style="color:var(--text-disabled)">Could not load recommendations</span>';
-    }
-  } catch(e) {
-    document.getElementById('lora-sig-bar').innerHTML =
-      '<span class="lora-sig" style="color:var(--text-disabled)">Could not load recommendations</span>';
-  }
-}
-
-function closeLoraSettings() {
-  document.getElementById('lora-settings-modal').style.display = 'none';
-}
-
-async function saveLoraSettingsAndRun() {
-  const epochs  = parseInt(document.getElementById('ls-epochs').value);
-  const rank    = parseInt(document.getElementById('ls-rank').value);
-  const alpha   = parseInt(document.getElementById('ls-alpha').value);
-  const lr      = parseFloat(document.getElementById('ls-lr').value);
-  const batch   = parseInt(document.getElementById('ls-batch').value);
-  const dropout = parseFloat(document.getElementById('ls-dropout').value);
-
-  if (!epochs || epochs < 1 || !rank || rank < 1 || !alpha || !lr || !batch) {
-    showToast('Please fill in all fields before training.');
-    return;
-  }
-
-  try {
-    const r = await fetch(`/studio/api/uc/${UC_ID}/training-config`, {
-      method: 'POST', credentials: 'include',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        lora_epochs: epochs,
-        lora_rank:   rank,
-        lora_alpha:  alpha,
-        lora_lr:     lr,
-        train_batch_size: batch,
-        lora_dropout: dropout,
-      }),
-    });
-    if (!r.ok) { showToast('Failed to save training settings'); return; }
-  } catch(e) { showToast('Failed to save training settings'); return; }
-
-  closeLoraSettings();
-  runPipelineStep('train');
-}
-
-// Close on backdrop click
-document.getElementById('lora-settings-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeLoraSettings();
-});
-</script>
-
-<!-- Inference Settings modal -->
-<div id="inference-settings-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
-  <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;width:480px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.4);overflow:hidden;">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);background:var(--bg-sunken);">
-      <div>
-        <div style="font-size:14px;font-weight:700;color:var(--text-primary)">Inference Settings</div>
-        <div style="font-size:11px;color:var(--text-disabled);margin-top:3px;">System prompt applied to every query sent to the fine-tuned model</div>
-      </div>
-      <button onclick="closeInferenceSettings()" style="background:none;border:none;color:var(--text-subtle);cursor:pointer;font-size:18px;line-height:1;">×</button>
-    </div>
-    <div style="padding:20px;display:flex;flex-direction:column;gap:16px;">
-
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <label style="font-size:12px;font-weight:600;color:var(--text-secondary)">System Prompt</label>
-        <textarea id="inf-system-prompt" rows="6" style="background:var(--bg-sunken);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text-primary);font-size:13px;font-family:monospace;resize:vertical;width:100%;box-sizing:border-box;" placeholder="Leave blank to use the default RAG system prompt"></textarea>
-        <span style="font-size:11px;color:var(--text-disabled)">Used for Model A (fine-tuned) queries in A/B comparison and direct inference. Leave blank to use the built-in default.</span>
-      </div>
-
-    </div>
-    <div style="display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border);background:var(--bg-sunken);">
-      <button onclick="closeInferenceSettings()" style="padding:7px 16px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:13px;">Cancel</button>
-      <button onclick="saveInferenceSettings()" style="padding:7px 18px;border:none;border-radius:6px;background:var(--accent);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">Save</button>
-    </div>
-  </div>
-</div>
-
-<script>
-async function openInferenceSettings() {
-  let llm = {};
-  try {
-    const r = await fetch(`/studio/api/uc/${UC_ID}/config`, {credentials:'include'});
-    if (r.ok) { const d = await r.json(); llm = d.llm || {}; }
-  } catch(_) {}
-  document.getElementById('inf-system-prompt').value = llm.inference_system_prompt || '';
-  const modal = document.getElementById('inference-settings-modal');
-  modal.style.display = 'flex';
-}
-
-function closeInferenceSettings() {
-  document.getElementById('inference-settings-modal').style.display = 'none';
-}
-
-async function saveInferenceSettings() {
-  const prompt = document.getElementById('inf-system-prompt').value.trim();
-  try {
-    const r = await fetch(`/studio/api/uc/${UC_ID}/config`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({llm: {inference_system_prompt: prompt}}),
-    });
-    if (!r.ok) { showToast('Failed to save inference settings'); return; }
-  } catch(e) { showToast('Failed to save inference settings'); return; }
-  closeInferenceSettings();
-  showToast('Inference settings saved');
-}
-
-document.getElementById('inference-settings-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeInferenceSettings();
-});
-</script>
 </body>
 </html>
