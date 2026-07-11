@@ -9,11 +9,11 @@ CURATED_FILENAME = "faqs_curated.json"
 
 
 def _path(uc_id: str) -> Path:
-    p = (ROOT / "examples" / uc_id / CURATED_FILENAME).resolve()
-    allowed = (ROOT / "examples").resolve()
-    if not p.is_relative_to(allowed):
+    # Validate uc_id directly — don't use resolve() which follows symlinks
+    # and would fail for worktree-symlinked example directories.
+    if not uc_id or "/" in uc_id or "\\" in uc_id or ".." in uc_id:
         raise ValueError(f"Invalid uc_id escapes examples directory: {uc_id!r}")
-    return p
+    return ROOT / "examples" / uc_id / CURATED_FILENAME
 
 
 def _load(uc_id: str) -> list:

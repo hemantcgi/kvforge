@@ -144,6 +144,18 @@ def _ensure_config_json(uc_id: str) -> None:
     config_path.write_text(json.dumps(cfg, indent=2))
 
 
+def _has_remote_compute_backend(uc_id: str) -> bool:
+    """Return True if this UC's config.json uses the remote compute backend."""
+    cfg_path = ROOT / "examples" / uc_id / "config.json"
+    if not cfg_path.exists():
+        return False
+    try:
+        cfg = json.loads(cfg_path.read_text())
+        return cfg.get("addon_config", {}).get("compute", {}).get("backend") == "remote"
+    except Exception:
+        return False
+
+
 def _build_cmd(uc_id: str, step: str) -> list[str]:
     if step == "setup":
         setup_script = str(ROOT / "examples" / uc_id / "setup.py")
@@ -181,57 +193,48 @@ def _build_cmd(uc_id: str, step: str) -> list[str]:
         else:
             source_path = ROOT / "examples" / uc_id / "data" / "train.jsonl"
             cmd += ["--faqs", str(source_path)]
-        # Read prs_eval_sample from uc_config; default 20 (5 inference calls × 20 FAQs ≈ 30 min)
-        uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
-        sample = 20
-        if uc_cfg_path.exists():
-            try:
-                uc_cfg = json.loads(uc_cfg_path.read_text())
-                raw = uc_cfg.get("prs_eval_sample", 20)
-                parsed = int(raw)
-                if parsed > 0:
-                    sample = parsed
-            except Exception:
-                pass
-        cmd += ["--sample", str(sample)]
-    if step == "sleep-faq":
-        # --output is dynamic (depends on uc_id)
-        output = str(ROOT / "examples" / uc_id / "faqs.json")
-        cmd += ["--output", output]
-        # --count is read from uc_config.json if present
+        # Pass explicit --sample only if prs_eval_sample is set in uc_config;
+        # otherwise let prs_evaluator auto-compute max(10% of FAQs, 100)
         uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
         if uc_cfg_path.exists():
             try:
                 uc_cfg = json.loads(uc_cfg_path.read_text())
-                try:
-                    count = int(uc_cfg.get("llm", {}).get("sleep_faq_count", 50))
-                    if count <= 0:
-                        count = 50
-                except (TypeError, ValueError):
-                    count = 50
-                cmd += ["--count", str(count)]
+                raw = uc_cfg.get("prs_eval_sample")
+                if raw is not None:
+                    parsed = int(raw)
+                    if parsed > 0:
+                        cmd += ["--sample", str(parsed)]
             except Exception:
-                cmd += ["--count", "50"]
-        else:
-            cmd += ["--count", "50"]
-    if step == "faq-gen-cloud":
-        import json as _json
+                pass
+    if step in ("sleep-faq", "faq-gen-cloud"):
         output = str(ROOT / "examples" / uc_id / "faqs.json")
         cmd += ["--output", output]
         uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
-        count = 50
+        faq_llm = {}
         if uc_cfg_path.exists():
             try:
-                uc_cfg = _json.loads(uc_cfg_path.read_text())
-                raw_count = uc_cfg.get("llm", {}).get("sleep_faq_count", 50)
-                parsed = int(raw_count)
-                if parsed > 0:
-                    count = parsed
-            except (TypeError, ValueError, KeyError):
-                pass
+                faq_llm = json.loads(uc_cfg_path.read_text()).get("llm", {})
             except Exception:
                 pass
-        cmd += ["--count", str(count)]
+        # --count: only pass if > 0 (0 = no limit, cover all chunks)
+        try:
+            cap = int(faq_llm.get("sleep_faq_count", 0))
+            if cap > 0:
+                cmd += ["--count", str(cap)]
+        except (TypeError, ValueError):
+            pass
+        # --n-per-chunk
+        try:
+            npc = int(faq_llm.get("sleep_faq_n_per_chunk", 3))
+            cmd += ["--n-per-chunk", str(max(1, npc))]
+        except (TypeError, ValueError):
+            cmd += ["--n-per-chunk", "3"]
+        # --delay
+        try:
+            delay = float(faq_llm.get("sleep_faq_delay", 2.0))
+            cmd += ["--delay", str(max(0.0, delay))]
+        except (TypeError, ValueError):
+            cmd += ["--delay", "2.0"]
     if step == "ab-eval":
         # ab_evaluator requires --dashboard-url pointing to the per-UC monitoring dashboard
         cfg_path = ROOT / "examples" / uc_id / "config.json"
@@ -264,9 +267,281 @@ def _redact_cmd(cmd: list[str]) -> str:
     return " ".join(parts)
 
 
-def _log_path(uc_id: str) -> Path:
-    """Disk log file for the most recent run of a UC — survives studio restarts."""
+def _log_path(uc_id: str, step: str | None = None) -> Path:
+    """Disk log path for a UC run.
+
+    If *step* is given, returns the per-step log (``logs/{step}.log``) which
+    is preserved across runs.  Without *step*, returns ``last_run.log`` which
+    is always the most-recent run regardless of step.
+    """
+    if step:
+        logs_dir = ROOT / "examples" / uc_id / "logs"
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        return logs_dir / f"{step}.log"
     return ROOT / "examples" / uc_id / "last_run.log"
+
+
+# Files to sync TO EC2 per step (relative to UC dir)
+_REMOTE_SYNC_TO: dict[str, list[str]] = {
+    "train":    ["config.json", "faqs.json", "replay.db"],
+    "prs-eval": ["config.json", "faqs.json"],
+    "recompute":["config.json"],
+    "index":    ["config.json"],
+}
+# Files/dirs to sync BACK from EC2 per step (relative to UC dir)
+_REMOTE_SYNC_FROM: dict[str, list[str]] = {
+    "train":    ["lora_checkpoints/", "version.json", "replay.db"],
+    "prs-eval": ["version.json"],
+}
+_EC2_REPO   = "/home/ubuntu/kvforge"
+_EC2_PYTHON = "/home/ubuntu/kvforge-env/bin/python"
+
+
+async def _run_step_remote_ssh(
+    uc_id: str, step: str, job_id: str, job_manager,
+    profile_id: str, _append
+) -> None:
+    """Run a GPU pipeline step on a remote EC2 node via SSH."""
+    import subprocess as _sp
+    from studio.remote_gpu import _load_profiles, _load_pkey, _get_pem, _decrypt
+
+    # Load profile (use _load_profiles to get pem_enc, then decrypt)
+    profiles = _load_profiles()
+    profile = next((p for p in profiles if p["id"] == profile_id), None)
+    if not profile:
+        raise RuntimeError(f"Remote GPU profile '{profile_id}' not found")
+
+    pem_content = _decrypt(profile["pem_enc"])
+
+    host = profile["host"]
+    user = profile["user"]
+    port = profile["port"]
+    uc_local  = ROOT / "examples" / uc_id
+    uc_remote = f"{_EC2_REPO}/examples/{uc_id}"
+
+    # Write PEM to a temp file for rsync/ssh
+    import tempfile, stat
+    pem_file = tempfile.NamedTemporaryFile(suffix=".pem", delete=False)
+    pem_file.write(pem_content.encode())
+    pem_file.close()
+    os.chmod(pem_file.name, stat.S_IRUSR | stat.S_IWUSR)
+
+    ssh_opts = ["-i", pem_file.name, "-o", "StrictHostKeyChecking=no",
+                "-o", "BatchMode=yes", "-p", str(port)]
+
+    try:
+        # ── 1. Ensure remote UC dir exists ────────────────────────────────────
+        _append(f"[remote] syncing files to {host}:{uc_remote}")
+        _sp.run(["ssh"] + ssh_opts + [f"{user}@{host}", f"mkdir -p {uc_remote}"],
+                capture_output=True)
+
+        # ── 2. Rsync input files to EC2 ───────────────────────────────────────
+        for rel in _REMOTE_SYNC_TO.get(step, ["config.json"]):
+            local_path = uc_local / rel
+            if local_path.exists():
+                _sp.run(["rsync", "-az", "-e", "ssh " + " ".join(ssh_opts),
+                         str(local_path), f"{user}@{host}:{uc_remote}/{rel}"],
+                        capture_output=True)
+
+        # ── 3. Build remote command ────────────────────────────────────────────
+        remote_config = f"{uc_remote}/config.json"
+        remote_cmd = f"{_EC2_PYTHON} -m {STEP_MODULES[step]} --config {remote_config}"
+        for arg in STEP_EXTRA_ARGS.get(step, []):
+            remote_cmd += f" {arg}"
+        if step == "recompute":
+            version_path = uc_local / "version.json"
+            lora_ver = 1
+            if version_path.exists():
+                try:
+                    lora_ver = int(json.loads(version_path.read_text()).get("current_lora_version", 1))
+                except Exception:
+                    pass
+            remote_cmd += f" --stale-version {lora_ver + 1}"
+        if step in ("train", "prs-eval"):
+            faqs_remote = f"{uc_remote}/faqs.json"
+            remote_cmd += f" --faqs {faqs_remote}"
+        if step == "prs-eval":
+            # Let prs_evaluator auto-compute max(10% of FAQs, 100) unless overridden
+            try:
+                uc_cfg = json.loads((ROOT / "examples" / uc_id / "uc_config.json").read_text())
+                override = uc_cfg.get("prs_eval_sample")
+                if override is not None:
+                    remote_cmd += f" --sample {int(override)}"
+            except Exception:
+                pass
+
+        _append(f"[remote] running on {host}: {remote_cmd}")
+
+        # ── 4. Launch via nohup so the job survives SSH disconnection ─────────
+        #
+        # Strategy: one nohup launch that writes exit code to a sentinel file.
+        # A separate persistent SSH connection tails the log; a second persistent
+        # connection polls the sentinel every 3 s.  If the tail channel dies we
+        # reconnect it rather than failing the job — the nohup process on EC2
+        # keeps running regardless of Studio/SSH state.
+        import paramiko
+        pkey = _load_pkey(pem_content)
+
+        def _ssh_connect():
+            c = paramiko.SSHClient()
+            c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            c.connect(hostname=host, username=user, port=port, pkey=pkey, timeout=30)
+            return c
+
+        loop = asyncio.get_event_loop()
+        remote_log = f"/tmp/kvforge_{job_id}.log"
+        remote_pid = f"/tmp/kvforge_{job_id}.pid"
+
+        # Single launch with exit-code sentinel tracking.
+        wrap_cmd = (
+            f"cd {_EC2_REPO} && "
+            f"nohup bash -c '{remote_cmd} > {remote_log} 2>&1; echo $? > {remote_pid}.exit' & "
+            f"echo $! > {remote_pid} && echo started"
+        )
+        launch_client = await loop.run_in_executor(None, _ssh_connect)
+        # Remove stale pid/log from any previous attempt for this job_id
+        launch_client.exec_command(f"rm -f {remote_log} {remote_pid} {remote_pid}.exit")
+        await asyncio.sleep(0.3)
+        _, lout, _ = launch_client.exec_command(wrap_cmd)
+        launch_out = await loop.run_in_executor(None, lout.read)
+        launch_client.close()
+        if b"started" not in launch_out:
+            raise RuntimeError(f"Failed to launch remote job: {launch_out!r}")
+        _append(f"[remote] job running (nohup); log → {remote_log}")
+
+        # Persistent connection for exit-status polling (reused every 3 s).
+        poll_client = await loop.run_in_executor(None, _ssh_connect)
+
+        def _open_tail():
+            """Open a fresh tail -F channel; return (client, channel_stdout)."""
+            tc = _ssh_connect()
+            _, so, _ = tc.exec_command(f"tail -F {remote_log} 2>/dev/null",
+                                        timeout=None, get_pty=False)
+            so.channel.setblocking(False)
+            return tc, so
+
+        tail_client, sout = await loop.run_in_executor(None, _open_tail)
+
+        exit_code = None
+        consecutive_poll_errors = 0
+        while True:
+            # Read available log bytes without blocking; reconnect tail on EOF/error.
+            try:
+                raw = await loop.run_in_executor(None, sout.channel.recv, 4096)
+                if raw:
+                    for ln in raw.decode("utf-8", errors="replace").splitlines():
+                        _append(ln)
+                elif sout.channel.closed:
+                    raise EOFError("tail channel closed")
+            except Exception:
+                # Tail channel died — reconnect silently; job continues on EC2.
+                try:
+                    sout.channel.close()
+                    tail_client.close()
+                except Exception:
+                    pass
+                try:
+                    tail_client, sout = await loop.run_in_executor(None, _open_tail)
+                except Exception:
+                    pass
+
+            # Poll exit sentinel using the persistent poll_client.
+            try:
+                _, chk, _ = poll_client.exec_command(
+                    f"test -f {remote_pid}.exit && cat {remote_pid}.exit || echo running"
+                )
+                status_raw = await loop.run_in_executor(None, chk.read)
+                status_txt = status_raw.decode().strip()
+                consecutive_poll_errors = 0
+            except Exception:
+                consecutive_poll_errors += 1
+                status_txt = "running"
+                if consecutive_poll_errors >= 10:
+                    # Re-establish poll connection after repeated failures.
+                    try:
+                        poll_client.close()
+                    except Exception:
+                        pass
+                    try:
+                        poll_client = await loop.run_in_executor(None, _ssh_connect)
+                        consecutive_poll_errors = 0
+                    except Exception:
+                        pass
+
+            if status_txt != "running":
+                try:
+                    exit_code = int(status_txt)
+                except ValueError:
+                    exit_code = 0
+                # Drain remaining log output
+                await asyncio.sleep(1)
+                try:
+                    raw = await loop.run_in_executor(None, sout.channel.recv, 65536)
+                    if raw:
+                        for ln in raw.decode("utf-8", errors="replace").splitlines():
+                            _append(ln)
+                except Exception:
+                    pass
+                break
+
+            await asyncio.sleep(3)
+
+        sout.channel.close()
+        tail_client.close()
+        try:
+            poll_client.close()
+        except Exception:
+            pass
+
+        # Cleanup remote temp files
+        try:
+            cl = await loop.run_in_executor(None, _ssh_connect)
+            cl.exec_command(f"rm -f {remote_log} {remote_pid} {remote_pid}.exit")
+            cl.close()
+        except Exception:
+            pass
+
+        # ── 5. Rsync results back ─────────────────────────────────────────────
+        sync_back = _REMOTE_SYNC_FROM.get(step, [])
+        if sync_back:
+            _append(f"[remote] syncing results back from {host}")
+
+        # Capture local version.json BEFORE sync so we can preserve phase
+        ver_path = uc_local / "version.json"
+        local_phase_before = 1
+        if "version.json" in sync_back and ver_path.exists():
+            try:
+                local_phase_before = json.loads(ver_path.read_text()).get("phase", 1)
+            except Exception:
+                pass
+
+        for rel in sync_back:
+            remote_path = f"{user}@{host}:{uc_remote}/{rel}"
+            local_dest  = str(uc_local / rel)
+            _sp.run(["rsync", "-az", "-e", "ssh " + " ".join(ssh_opts),
+                     remote_path, local_dest],
+                    capture_output=True)
+
+        # After sync, restore local phase — EC2 starts fresh and doesn't track
+        # KV indexing phase advances that happened locally.
+        if "version.json" in sync_back and ver_path.exists():
+            try:
+                synced = json.loads(ver_path.read_text())
+                if synced.get("phase", 1) < local_phase_before:
+                    synced["phase"] = local_phase_before
+                    ver_path.write_text(json.dumps(synced, indent=2))
+            except Exception:
+                pass
+
+        if exit_code == 0:
+            job_manager.complete(job_id, 0)
+            _append("[studio] done (exit 0)")
+        else:
+            job_manager.fail(job_id, f"Remote process exited with code {exit_code}")
+            _append(f"[studio] failed (exit {exit_code})")
+
+    finally:
+        os.unlink(pem_file.name)
 
 
 async def run_step_background(
@@ -280,31 +555,51 @@ async def run_step_background(
     # Ensure config.json exists (wizard UCs only have uc_config.json)
     _ensure_config_json(uc_id)
 
+    _step_log = _log_path(uc_id, step)  # per-step persistent log
+
     def _append(line: str):
         job_manager.append_log(job_id, line)
+        for _lp in (_log_path(uc_id), _step_log):
+            try:
+                with open(_lp, "a") as f:
+                    f.write(line + "\n")
+            except OSError:
+                pass
+
+    # Truncate both logs at the start of every run
+    _header = f"[studio] step={step} job={job_id}\n"
+    for _lp in (_log_path(uc_id), _step_log):
         try:
-            with open(_log_path(uc_id), "a") as f:
-                f.write(line + "\n")
+            _lp.write_text(_header)
         except OSError:
             pass
-
-    # Truncate log file at the start of every run so the logs panel always
-    # reflects the current job (even if the job fails early below)
-    try:
-        _log_path(uc_id).write_text(f"[studio] step={step} job={job_id}\n")
-    except OSError:
-        pass
 
     from studio.gpu_monitor import get_gpu_status
 
     if step in GPU_REQUIRED_STEPS and gpu_profile_id is None:
-        # Only check local GPU when no remote profile was selected
-        gpu_status = get_gpu_status()
-        if not gpu_status.get("has_free_gpu"):
-            msg = "No free GPU available — select a Remote GPU profile before running GPU steps"
-            job_manager.fail(job_id, msg)
-            _append(f"[studio] error: {msg}")
-            return
+        # Recompute can bypass the local GPU check when config uses a remote compute worker
+        if step == "recompute" and _has_remote_compute_backend(uc_id):
+            pass  # remote worker handles GPU — no local GPU needed
+        else:
+            gpu_status = get_gpu_status()
+            if not gpu_status.get("has_free_gpu"):
+                msg = "No free GPU available — select a Remote GPU profile before running GPU steps"
+                job_manager.fail(job_id, msg)
+                _append(f"[studio] error: {msg}")
+                return
+
+    # Route GPU steps to remote EC2 when a profile is selected.
+    # Recompute and prs-eval are excluded: they need local Qdrant access and
+    # call the remote GPU via HTTP (compute worker / vLLM), not SSH.
+    _LOCAL_STEPS = {"recompute", "prs-eval"}
+    if gpu_profile_id and step in GPU_REQUIRED_STEPS and step not in _LOCAL_STEPS:
+        try:
+            await _run_step_remote_ssh(uc_id, step, job_id, job_manager,
+                                       gpu_profile_id, _append)
+        except Exception as e:
+            job_manager.fail(job_id, str(e))
+            _append(f"[studio] error: {e}")
+        return
 
     cmd = _build_cmd(uc_id, step)
     env = _build_env(uc_id, step)

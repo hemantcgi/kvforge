@@ -2128,6 +2128,24 @@ function _startLogPoll() {
   }, 4000);
 }
 
+// ── Sync-complete notification from connectors page ──────────────────────
+try {
+  const _syncBus = new BroadcastChannel('kvforge-sync');
+  _syncBus.onmessage = (e) => {
+    if (e.data?.type === 'sync-complete' && e.data?.uc_id === UC_ID) {
+      const chunks = e.data.new_chunks ?? 0;
+      // Show banner
+      const banner = document.createElement('div');
+      banner.style.cssText = 'position:fixed;top:56px;left:50%;transform:translateX(-50%);' +
+        'background:#22A06B;color:#fff;padding:8px 20px;border-radius:6px;font-size:13px;' +
+        'font-weight:600;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.2);';
+      banner.textContent = `✅ Connector sync complete — ${chunks} new chunks indexed. Refreshing…`;
+      document.body.appendChild(banner);
+      setTimeout(() => { banner.remove(); loadUCState(); loadPRSHistory(); }, 3000);
+    }
+  };
+} catch(_) {}
+
 // ── Boot ───────────────────────────────────────────────────────────────────
 loadUCState();
 loadPRSHistory();
