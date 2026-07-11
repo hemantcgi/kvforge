@@ -53,6 +53,22 @@ def test_prs_uses_default_weights_when_none():
     assert abs(prs - expected) < 0.001
 
 
+def test_factual_accuracy_formula():
+    from pipeline.prs_evaluator import _factual_accuracy
+    assert abs(_factual_accuracy(f1=0.8, judge_correct=True) - 0.9) < 0.001
+    assert abs(_factual_accuracy(f1=0.4, judge_correct=False) - 0.2) < 0.001
+    assert abs(_factual_accuracy(f1=0.0, judge_correct=False) - 0.0) < 0.001
+    assert abs(_factual_accuracy(f1=1.0, judge_correct=True) - 1.0) < 0.001
+
+
+def test_fixed_calibration_formula():
+    from pipeline.prs_evaluator import _fixed_calibration
+    # Perfect calibration: confidence exactly matches factual accuracy.
+    assert abs(_fixed_calibration(self_conf=0.5, factual_acc=0.5) - 1.0) < 0.001
+    # Overconfident: confidence 0.9, factual accuracy 0.1 -> calibration 0.2.
+    assert abs(_fixed_calibration(self_conf=0.9, factual_acc=0.1) - 0.2) < 0.001
+
+
 def test_get_cluster_stats_receives_string_not_dict():
     """Regression: prs_evaluator must pass db_path str, not cfg dict."""
     from pipeline import query_logger
