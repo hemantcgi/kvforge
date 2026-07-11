@@ -543,9 +543,9 @@ Individual test files:
 
 ## EC2 Deployment
 
-Tested on AWS g5.xlarge (4× NVIDIA A10G, 24 GB VRAM each).
+Tested on AWS g5.12xlarge (4× NVIDIA A10G, 24 GB VRAM each).
 
-**4-UC layout on a single g5.xlarge:**
+**4-UC layout on a single g5.12xlarge:**
 
 | Use-case | GPU | vLLM port | Monitoring port |
 |----------|-----|-----------|-----------------|
