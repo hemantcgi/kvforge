@@ -69,6 +69,8 @@ def serialize_kv(arr: np.ndarray) -> str:
     Returns:
         Base64-encoded ASCII string representing the raw bytes of the array.
     """
+    if arr is None:
+        return None
     return base64.b64encode(arr.astype(np.float16).tobytes()).decode("ascii")
 
 
@@ -85,6 +87,100 @@ def deserialize_kv(b64: str, shape: tuple) -> np.ndarray:
     """
     raw = base64.b64decode(b64)
     return np.frombuffer(raw, dtype=np.float16).copy().reshape(shape)
+
+
+def compute_per_token_kv(past_key_values) -> np.ndarray:
+    """Preserve full token sequence from HuggingFace past_key_values.
+
+    Input:  past_key_values — DynamicCache or legacy tuple.
+            Each K/V tensor: [1, num_kv_heads, seq_len, head_dim]
+    Output: np.ndarray [num_layers, 2, num_kv_heads, seq_len, head_dim] float16
+    """
+    layers = []
+    for k, v in _iter_kv_layers(past_key_values):
+        k = k.squeeze(0)
+        v = v.squeeze(0)
+        layers.append(torch.stack([k, v]))
+    result = torch.stack(layers)
+    return result.cpu().to(torch.float16).numpy()
+
+
+def save_token_kv(arr: np.ndarray, path, tq_config=None) -> None:
+    """Save per-token KV array to disk.
+
+    Args:
+        arr:       [num_layers, 2, num_kv_heads, seq_len, head_dim] float16
+        path:      file path (str or Path)
+        tq_config: TurboQuantConfig or None; if provided applies TurboQuant compression
+    """
+    import pathlib
+    path = pathlib.Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    if tq_config is None:
+        np.savez_compressed(str(path), arr=arr, compressed=np.array(False))
+        return
+
+    from addons.turboquant.quantizer import TurboQuantKeyCodec, GroupValueCodec
+    num_layers, _, num_heads, seq_len, head_dim = arr.shape
+    kc = TurboQuantKeyCodec(head_dim, tq_config.key_bits, tq_config.seed)
+    vc = GroupValueCodec(tq_config.value_bits, tq_config.group_size)
+
+    payload = {
+        "compressed":  np.array(True),
+        "num_layers":  np.array(num_layers),
+        "num_heads":   np.array(num_heads),
+        "seq_len":     np.array(seq_len),
+        "head_dim":    np.array(head_dim),
+        "key_bits":    np.array(tq_config.key_bits),
+        "value_bits":  np.array(tq_config.value_bits),
+    }
+
+    t = torch.from_numpy(arr.astype(np.float32))
+    for layer_idx in range(num_layers):
+        keys   = t[layer_idx, 0]
+        values = t[layer_idx, 1]
+        ck = kc.compress(keys.unsqueeze(0))
+        cv = vc.compress(values.unsqueeze(0))
+        for k_name, v_arr in ck.items():
+            payload[f"L{layer_idx}_k_{k_name}"] = v_arr.numpy()
+        for k_name, v_arr in cv.items():
+            payload[f"L{layer_idx}_v_{k_name}"] = v_arr.numpy()
+
+    np.savez_compressed(str(path), **payload)
+
+
+def load_token_kv(path, tq_config=None) -> np.ndarray:
+    """Load per-token KV array from disk. Returns float16 array."""
+    data = np.load(str(path), allow_pickle=False)
+
+    if not data["compressed"].item():
+        return data["arr"]
+
+    num_layers = int(data["num_layers"])
+    num_heads  = int(data["num_heads"])
+    seq_len    = int(data["seq_len"])
+    head_dim   = int(data["head_dim"])
+    key_bits   = int(data["key_bits"])
+    value_bits = int(data["value_bits"])
+
+    from addons.turboquant.quantizer import TurboQuantKeyCodec, GroupValueCodec
+    seed = tq_config.seed if tq_config else 42
+    kc = TurboQuantKeyCodec(head_dim, key_bits, seed)
+    vc = GroupValueCodec(value_bits)
+
+    result = np.zeros((num_layers, 2, num_heads, seq_len, head_dim), dtype=np.float32)
+    for layer_idx in range(num_layers):
+        ck = {k.replace(f"L{layer_idx}_k_", ""): torch.from_numpy(data[k])
+              for k in data.files if k.startswith(f"L{layer_idx}_k_")}
+        cv = {k.replace(f"L{layer_idx}_v_", ""): torch.from_numpy(data[k])
+              for k in data.files if k.startswith(f"L{layer_idx}_v_")}
+        keys_rec   = kc.decompress(ck).squeeze(0)
+        values_rec = vc.decompress(cv).squeeze(0)
+        result[layer_idx, 0] = keys_rec.numpy()
+        result[layer_idx, 1] = values_rec.numpy()
+
+    return result.astype(np.float16)
 
 
 def stack_past_key_values(

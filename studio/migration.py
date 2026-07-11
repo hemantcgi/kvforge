@@ -70,14 +70,7 @@ def migrate_existing_use_cases(root: Path = ROOT):
         uc_config_path = config_path.parent / "uc_config.json"
         uc_config_path.write_text(json.dumps(uc_config, indent=2))
 
-        # Add to registry if not already present
-        if uc_id not in existing_ids:
-            registry["use_cases"].append({
-                "id":           uc_id,
-                "display_name": uc_config["display_name"],
-                "type":         "example",
-            })
-            existing_ids.add(uc_id)
+        # Do NOT auto-register example UCs — users add them via the wizard
 
     registry_path.write_text(json.dumps(registry, indent=2))
 
@@ -94,4 +87,23 @@ def add_to_registry(uc_id: str, display_name: str, root: Path = ROOT):
     registry = json.loads(registry_path.read_text()) if registry_path.exists() else {"use_cases": []}
     if not any(uc["id"] == uc_id for uc in registry["use_cases"]):
         registry["use_cases"].append({"id": uc_id, "display_name": display_name, "type": "custom"})
+    registry_path.write_text(json.dumps(registry, indent=2))
+
+
+def set_archived_in_registry(uc_id: str, archived: bool, root: Path = ROOT):
+    registry_path = root / "kvforge_registry.json"
+    registry = json.loads(registry_path.read_text()) if registry_path.exists() else {"use_cases": []}
+    for uc in registry["use_cases"]:
+        if uc["id"] == uc_id:
+            if archived:
+                uc["archived"] = True
+            else:
+                uc.pop("archived", None)
+    registry_path.write_text(json.dumps(registry, indent=2))
+
+
+def remove_from_registry(uc_id: str, root: Path = ROOT):
+    registry_path = root / "kvforge_registry.json"
+    registry = json.loads(registry_path.read_text()) if registry_path.exists() else {"use_cases": []}
+    registry["use_cases"] = [uc for uc in registry["use_cases"] if uc["id"] != uc_id]
     registry_path.write_text(json.dumps(registry, indent=2))

@@ -175,8 +175,10 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
     q_key = cfg.get("faq_question_key", "question")
     a_key = cfg.get("faq_answer_key", "answer")
 
-    for faq in faqs:
+    total = len(faqs)
+    for idx, faq in enumerate(faqs, 1):
         q, gt = _extract_qa(faq, q_key=q_key, a_key=a_key)
+        print(f"⏳ Evaluating FAQ {idx}/{total}: {q[:60]}…", flush=True)
         param_ans = _generate_parametric(q, pipe_gen)
         if has_sp3:
             rag_ans = answer_with_retrieval(q, cfg)
@@ -190,6 +192,7 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
         self_conf = _extract_confidence(param_ans, pipe_conf)
         calibrations.append(1.0 - abs(self_conf - param_sim))
         consistencies.append(_self_consistency(q, pipe_sample, embedder))
+        print(f"   acc={accuracy_ratio:.3f} conf={calibrations[-1]:.3f} cons={consistencies[-1]:.3f}", flush=True)
 
     weights = cfg.get("prs_weights", None)
     prs = _compute_prs(accuracy_ratios, calibrations, consistencies, weights)

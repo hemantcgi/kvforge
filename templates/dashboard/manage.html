@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KVForge — {{ use_case_name }}</title>
+  <style>
+    :root { --bg:#0f172a; --surface:#1e293b; --border:#334155;
+            --primary:#38bdf8; --text:#f1f5f9; --muted:#94a3b8;
+            --active:#22c55e; --inactive:#64748b; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { background:var(--bg); color:var(--text); font-family:system-ui,sans-serif; }
+    header { background:var(--surface); border-bottom:1px solid var(--border);
+             padding:1rem 2rem; display:flex; align-items:center; justify-content:space-between; }
+    header h1 { font-size:1.2rem; font-weight:700; }
+    header h1 span { color:var(--primary); }
+    .col-tag { font-size:0.78rem; color:var(--muted); }
+    .container { max-width:960px; margin:2rem auto; padding:0 2rem; }
+    h2 { font-size:1rem; font-weight:600; color:var(--muted);
+         text-transform:uppercase; letter-spacing:1px; margin-bottom:1rem; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr));
+             gap:1rem; margin-bottom:2rem; }
+    .addon-card { background:var(--surface); border:1px solid var(--border);
+                  border-radius:8px; padding:1.25rem; }
+    .addon-card.active { border-color:var(--active); }
+    .addon-header { display:flex; align-items:center; justify-content:space-between;
+                    margin-bottom:0.5rem; }
+    .addon-name { font-weight:700; font-size:0.95rem; }
+    .pill { font-size:0.7rem; font-weight:700; padding:0.2rem 0.6rem;
+            border-radius:9999px; text-transform:uppercase; }
+    .pill.on { background:rgba(34,197,94,0.15); color:var(--active); border:1px solid var(--active); }
+    .pill.off { background:rgba(100,116,139,0.15); color:var(--inactive); border:1px solid var(--inactive); }
+    .addon-desc { font-size:0.82rem; color:var(--muted); line-height:1.5; margin-bottom:0.5rem; }
+    .requires { font-size:0.75rem; color:var(--muted); }
+    .requires span { color:var(--primary); }
+    .config-path { background:var(--surface); border:1px solid var(--border);
+                   border-radius:6px; padding:0.75rem 1rem; font-size:0.8rem; color:var(--muted); }
+    .config-path code { color:var(--primary); }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>KVForge — <span>{{ use_case_name }}</span></h1>
+    <div class="col-tag">Collection: {{ collection }}</div>
+  </div>
+</header>
+
+<div class="container">
+  <h2>Addons</h2>
+  <div class="grid">
+    {% for addon in addons %}
+    <div class="addon-card {% if addon.active %}active{% endif %}">
+      <div class="addon-header">
+        <span class="addon-name">{{ addon.display_name }}</span>
+        <span class="pill {% if addon.active %}on{% else %}off{% endif %}">
+          {% if addon.active %}active{% else %}off{% endif %}
+        </span>
+      </div>
+      <p class="addon-desc">{{ addon.description }}</p>
+      {% if addon.requires %}
+      <div class="requires">
+        Requires: {% for r in addon.requires %}<span>{{ r }}</span>{% if not loop.last %}, {% endif %}{% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <h2>Configuration</h2>
+  <div class="config-path">
+    Config file: <code>{{ config_path }}</code>
+    — edit this file and restart the dashboard to change addons or settings.
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connect Remote GPU — KVForge Studio</title>
+<style>
+:root {
+  --bg-page:#F7F8F9;--bg-surface:#FFFFFF;--bg-sunken:#F1F2F4;--bg-input:#FFFFFF;
+  --bg-sidebar:#FFFFFF;--bg-active:#E9F2FF;--bg-hover:#F7F8F9;--bg-topbar:#0052CC;
+  --bg-metric-b:#E9F2FF;
+  --border:#DFE1E6;--border-focus:#4C9AFF;
+  --text-primary:#172B4D;--text-secondary:#626F86;--text-subtle:#8590A2;--text-disabled:#C7D1DB;
+  --accent:#0052CC;--accent-hover:#0065FF;
+  --success:#22A06B;--danger:#DE350B;--warning:#FF991F;
+  --shadow-sm:0 1px 3px rgba(9,30,66,0.12),0 0 1px rgba(9,30,66,0.08);
+  --shadow-md:0 3px 8px rgba(9,30,66,0.1),0 0 1px rgba(9,30,66,0.1);
+  --shadow-lg:0 8px 24px rgba(9,30,66,0.12),0 0 1px rgba(9,30,66,0.1);
+  --topbar-text:#FFFFFF;--topbar-muted:rgba(255,255,255,0.7);
+  --topbar-badge:rgba(255,255,255,0.15);--topbar-badge-border:rgba(255,255,255,0.3);
+  --tag-bg:#EBECF0;--tag-clr:#626F86;
+}
+[data-theme="dark"] {
+  --bg-page:#1D2125;--bg-surface:#22272B;--bg-sunken:#161A1D;--bg-input:#22272B;
+  --bg-sidebar:#22272B;--bg-active:#1C3353;--bg-hover:#2C333A;--bg-topbar:#161A1D;
+  --bg-metric-b:#1C3353;
+  --border:#3B4651;--border-focus:#579DFF;
+  --text-primary:#C7D1DB;--text-secondary:#8C9BAB;--text-subtle:#596773;--text-disabled:#3B4651;
+  --accent:#579DFF;--accent-hover:#85B8FF;
+  --success:#4BCE97;--danger:#F87462;--warning:#F5CD47;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.4);--shadow-md:0 3px 8px rgba(0,0,0,0.4);
+  --shadow-lg:0 8px 24px rgba(0,0,0,0.5);
+  --topbar-text:#C7D1DB;--topbar-muted:#596773;
+  --topbar-badge:rgba(255,255,255,0.06);--topbar-badge-border:#3B4651;
+  --tag-bg:#2C333A;--tag-clr:#8C9BAB;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;
+  line-height:1.5;background:var(--bg-page);color:var(--text-primary);
+  display:flex;flex-direction:column;transition:background .2s,color .2s;}
+
+/* TOPBAR */
+.topbar{height:48px;flex-shrink:0;z-index:200;background:var(--bg-topbar);display:flex;
+  align-items:center;padding:0 16px;gap:12px;border-bottom:1px solid rgba(0,0,0,0.15);}
+.topbar-brand{font-size:15px;font-weight:800;color:var(--topbar-text);letter-spacing:-.3px;
+  display:flex;align-items:center;gap:7px;cursor:pointer;}
+.logo-sq{width:24px;height:24px;border-radius:5px;background:rgba(255,255,255,0.25);
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;}
+.topbar-tag{font-size:10px;color:var(--topbar-muted);background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.2);border-radius:3px;padding:1px 6px;
+  font-weight:600;letter-spacing:.04em;}
+.topbar-sp{flex:1;}
+.topbar-btn{font-size:13px;color:var(--topbar-text);background:transparent;border:none;
+  cursor:pointer;padding:5px 9px;border-radius:4px;transition:background .15s;}
+.topbar-btn:hover{background:rgba(255,255,255,0.12);}
+.profile-wrap{position:relative;}
+.profile-menu{position:absolute;top:calc(100% + 8px);right:0;background:#fff;
+  border:1px solid #DFE1E6;border-radius:8px;
+  box-shadow:0 8px 24px rgba(9,30,66,0.15),0 0 1px rgba(9,30,66,0.1);
+  min-width:220px;z-index:1000;overflow:hidden;}
+.profile-menu-header{padding:12px 16px 10px;border-bottom:1px solid #DFE1E6;}
+.pm-name{font-size:13px;font-weight:700;color:#172B4D;}
+.pm-email{font-size:12px;color:#626F86;margin-top:1px;}
+.profile-menu-item{display:block;padding:9px 16px;font-size:13px;color:#172B4D;
+  cursor:pointer;transition:background .1s;text-decoration:none;}
+.profile-menu-item:hover{background:#F7F8F9;}
+.pm-signout{color:#DE350B;}
+.pm-signout:hover{background:#FFEBE6 !important;}
+.profile-menu-sep{height:1px;background:#DFE1E6;margin:4px 0;}
+
+/* SHELL */
+.shell{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:220px;flex-shrink:0;background:var(--bg-sidebar);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;transition:width .22s cubic-bezier(0.4,0,0.2,1);
+  overflow:hidden;position:relative;z-index:100;}
+.sidebar.collapsed{width:48px;}
+.sidebar-toggle{position:absolute;right:-12px;top:20px;width:24px;height:24px;border-radius:50%;
+  background:var(--bg-surface);border:1px solid var(--border);color:var(--text-secondary);
+  cursor:pointer;z-index:101;display:flex;align-items:center;justify-content:center;
+  font-size:10px;box-shadow:var(--shadow-sm);transition:all .15s;}
+.sidebar-toggle:hover{background:var(--bg-active);color:var(--accent);}
+.sidebar-section-title{font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--text-subtle);padding:16px 14px 6px;
+  white-space:nowrap;overflow:hidden;transition:opacity .15s;}
+.sidebar.collapsed .sidebar-section-title{opacity:0;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:7px 12px;cursor:pointer;
+  border-radius:4px;margin:1px 6px;font-size:13px;color:var(--text-secondary);
+  transition:background .12s,color .12s;white-space:nowrap;overflow:hidden;}
+.nav-item:hover{background:var(--bg-hover);color:var(--text-primary);}
+.nav-item.active{background:var(--bg-active);color:var(--accent);font-weight:600;
+  border-left:2px solid var(--accent);margin-left:4px;padding-left:10px;}
+.nav-icon{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;
+  justify-content:center;font-size:14px;}
+.nav-label{flex:1;overflow:hidden;text-overflow:ellipsis;transition:opacity .15s;}
+.sidebar.collapsed .nav-label{opacity:0;width:0;}
+.sidebar.collapsed .nav-item{justify-content:center;padding:7px 0;margin:1px 4px;}
+.sidebar.collapsed .nav-item.active{border-left:2px solid var(--accent);margin-left:4px;padding-left:0;}
+.sidebar-divider{height:1px;background:var(--border);margin:8px 0;}
+.sidebar-footer{margin-top:auto;padding:12px 10px;border-top:1px solid var(--border);}
+.sidebar-version{font-size:10px;color:var(--text-subtle);padding:4px 8px;
+  white-space:nowrap;overflow:hidden;transition:opacity .15s;}
+.sidebar.collapsed .sidebar-version{opacity:0;}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;}
+
+/* PAGE HEADER */
+.page-header{padding:24px 32px 0;display:flex;align-items:flex-end;justify-content:space-between;}
+.page-title{font-size:20px;font-weight:700;color:var(--text-primary);}
+.page-sub{font-size:13px;color:var(--text-secondary);margin-top:2px;}
+
+/* CONTENT AREA */
+.content{max-width:800px;padding:24px 32px 60px;}
+
+/* STEPPER */
+.stepper{display:flex;gap:0;margin-bottom:32px;position:relative;}
+.stepper::before{content:'';position:absolute;top:16px;left:0;right:0;
+  height:2px;background:var(--border);z-index:0;}
+.step-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;
+  position:relative;z-index:1;}
+.step-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-weight:700;font-size:13px;
+  background:var(--bg-surface);border:2px solid var(--border);
+  color:var(--text-subtle);transition:.2s;}
+.step-item.active .step-circle{background:var(--accent);border-color:var(--accent);color:#fff;}
+.step-item.done .step-circle{background:var(--success);border-color:var(--success);color:#fff;}
+.step-label{font-size:11px;color:var(--text-subtle);text-align:center;max-width:90px;line-height:1.3;}
+.step-item.active .step-label{color:var(--accent);font-weight:600;}
+.step-item.done .step-label{color:var(--success);}
+
+/* CARDS */
+.card{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;
+  padding:24px;margin-bottom:16px;box-shadow:var(--shadow-sm);}
+.card-title{font-size:15px;font-weight:700;margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;color:var(--text-primary);}
+
+/* FORM */
+.form-row{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.form-group label{font-size:11px;font-weight:700;color:var(--text-secondary);
+  text-transform:uppercase;letter-spacing:.4px;}
+.form-group input{padding:8px 10px;border:2px solid var(--border);border-radius:4px;
+  background:var(--bg-input);color:var(--text-primary);font-size:14px;
+  transition:.15s;width:100%;}
+.form-group input:focus{outline:none;border-color:var(--border-focus);
+  box-shadow:0 0 0 2px rgba(76,154,255,.2);}
+.pem-drop{border:2px dashed var(--border);border-radius:6px;padding:22px;
+  text-align:center;cursor:pointer;transition:.2s;background:var(--bg-sunken);position:relative;}
+.pem-drop:hover,.pem-drop.drag-over{border-color:var(--accent);background:var(--bg-active);}
+.pem-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.pem-drop-icon{font-size:26px;margin-bottom:6px;}
+.pem-drop-label{font-size:13px;color:var(--text-secondary);}
+.pem-drop-label strong{color:var(--accent);}
+.pem-loaded{display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:#E3FCEF;border:1px solid #ABF5D1;border-radius:6px;color:#206A4E;font-size:13px;}
+[data-theme="dark"] .pem-loaded{background:#164B35;border-color:#206A4E;color:#4BCE97;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;
+  border:none;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent-hover);}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed;}
+.btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--border);}
+.btn-ghost:hover{background:var(--bg-sunken);}
+.btn-row{display:flex;align-items:center;gap:10px;margin-top:20px;flex-wrap:wrap;}
+
+/* TERMINAL */
+.terminal{background:#1E1E2E;border-radius:6px;padding:14px;
+  font-family:'SF Mono','Fira Code',monospace;font-size:12px;line-height:1.65;
+  min-height:100px;max-height:340px;overflow-y:auto;color:#CDD6F4;}
+.term-step{color:#A6E3A1;font-weight:600;}
+.term-cmd{color:#89DCEB;}
+.term-output{color:#CDD6F4;white-space:pre-wrap;}
+.term-info{color:#FAB387;}
+.term-error{color:#F38BA8;font-weight:600;}
+.term-ok{color:#A6E3A1;}
+.term-done{color:#A6E3A1;font-weight:600;}
+
+/* STATUS BADGE */
+.status-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;
+  border-radius:10px;font-size:11px;font-weight:700;}
+.badge-idle{background:var(--tag-bg);color:var(--tag-clr);}
+.badge-running{background:#FFF7D6;color:#946300;}
+[data-theme="dark"] .badge-running{background:#2E2000;color:#F8A84B;}
+.badge-success{background:#E3FCEF;color:#206A4E;}
+[data-theme="dark"] .badge-success{background:#164B35;color:#4BCE97;}
+.badge-error{background:#FFEBE6;color:#BF2600;}
+[data-theme="dark"] .badge-error{background:#42130E;color:#F87462;}
+
+/* PROFILES */
+.profiles-list{display:flex;flex-direction:column;gap:8px;}
+.profile-card{background:var(--bg-sunken);border:1px solid var(--border);
+  border-radius:6px;padding:12px 14px;display:flex;align-items:center;gap:10px;}
+.profile-icon{width:32px;height:32px;border-radius:6px;background:var(--bg-metric-b);
+  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.profile-info{flex:1;min-width:0;}
+.profile-name{font-weight:600;font-size:13px;}
+.profile-meta{font-size:11px;color:var(--text-subtle);}
+.profile-fp{font-family:monospace;font-size:10px;color:var(--text-subtle);
+  margin-top:2px;word-break:break-all;}
+
+/* CALLOUTS */
+.callout{padding:10px 14px;border-radius:6px;font-size:12px;margin-bottom:14px;line-height:1.6;}
+.callout-info{background:var(--bg-metric-b);border-left:3px solid var(--accent);color:var(--accent);}
+.callout-warn{background:#FFF7D6;border-left:3px solid var(--warning);color:#7A5200;}
+[data-theme="dark"] .callout-warn{background:#2E2000;color:#F8A84B;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg-surface);
+  border:1px solid var(--border);color:var(--text-primary);padding:10px 16px;
+  border-radius:6px;font-size:13px;z-index:600;box-shadow:var(--shadow-md);
+  transform:translateY(20px);opacity:0;transition:all .25s;pointer-events:none;}
+.toast.show{transform:translateY(0);opacity:1;}
+
+.hidden{display:none;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand" onclick="location.href='/'">
+    <div class="logo-sq">K</div>
+    KVForge
+    <span class="topbar-tag">STUDIO</span>
+  </div>
+  <div class="topbar-sp"></div>
+  <button class="topbar-btn" onclick="toggleTheme()"><span id="theme-icon">🌙</span></button>
+  <div class="profile-wrap">
+    <button class="topbar-btn" id="profile-btn" onclick="toggleProfile(event)">👤 <span id="topbar-user">user</span> ▾</button>
+    <div class="profile-menu" id="profileMenu" style="display:none">
+      <div class="profile-menu-header">
+        <div class="pm-name" id="pm-name">User</div>
+        <div class="pm-email" id="pm-email"></div>
+      </div>
+      <a class="profile-menu-item" href="/studio/settings">⚙ Profile &amp; Settings</a>
+      <div class="profile-menu-sep"></div>
+      <a class="profile-menu-item pm-signout" href="/auth/logout">↩ Sign Out</a>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()">‹</button>
+
+    <div class="sidebar-section-title">Navigation</div>
+    <div class="nav-item" onclick="location.href='/studio'">
+      <div class="nav-icon">🗂</div>
+      <span class="nav-label">Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="goToActiveUC('')">
+      <div class="nav-icon">📊</div>
+      <span class="nav-label">Pipeline</span>
+    </div>
+    <div class="nav-item" onclick="goToActiveUC('#logs')">
+      <div class="nav-icon">📋</div>
+      <span class="nav-label">Logs</span>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding-right:10px" onclick="location.href='/studio/resources'" title="Resource Providers">Resources <span style="font-size:9px;opacity:.6">›</span></div>
+    <div class="nav-item" onclick="location.href='/studio/resources'" style="padding-left:20px;margin-left:8px;">
+      <div class="nav-icon">🖥</div>
+      <span class="nav-label">Resource Providers</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/studio/connectors'" style="padding-left:20px;margin-left:8px;">
+      <div class="nav-icon">🔗</div>
+      <span class="nav-label">Data Connectors</span>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding-right:10px" onclick="location.href='/studio/settings'" title="Settings">Config <span style="font-size:9px;opacity:.6">›</span></div>
+    <div class="nav-item" onclick="location.href='/studio/settings'">
+      <div class="nav-icon">⚙</div>
+      <span class="nav-label">Settings</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/studio/logs'">
+      <div class="nav-icon">📋</div>
+      <span class="nav-label">Activity Logs</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/docs/demo-guides/'">
+      <div class="nav-icon">📖</div>
+      <span class="nav-label">Documentation</span>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-version">KVForge v2.1.0</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Connect Remote GPU</div>
+        <div class="page-sub">SSH into an EC2 or bare-metal GPU host, verify CUDA, install KVForge dependencies, and save a reusable connection profile.</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- STEPPER -->
+      <div class="stepper" id="stepper">
+        <div class="step-item active" id="step-1">
+          <div class="step-circle">1</div>
+          <div class="step-label">Host Details</div>
+        </div>
+        <div class="step-item" id="step-2">
+          <div class="step-circle">2</div>
+          <div class="step-label">Verify Connection</div>
+        </div>
+        <div class="step-item" id="step-3">
+          <div class="step-circle">3</div>
+          <div class="step-label">Install Dependencies</div>
+        </div>
+        <div class="step-item" id="step-4">
+          <div class="step-circle">4</div>
+          <div class="step-label">Save Profile</div>
+        </div>
+      </div>
+
+      <!-- ── Step 1: Host Details ── -->
+      <div id="panel-1">
+        <div class="card">
+          <div class="card-title">🔐 SSH Connection Details</div>
+
+          <div class="callout callout-info">
+            KVForge Studio runs on your local machine. Your GPU can be a remote EC2 instance,
+            bare-metal server, or any SSH-accessible NVIDIA GPU machine.
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0">
+              <label>Hostname / IP *</label>
+              <input type="text" id="inp-host" placeholder="100.48.17.48 or ec2-….amazonaws.com">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>SSH User *</label>
+              <input type="text" id="inp-user" value="ubuntu" placeholder="ubuntu">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Port</label>
+              <input type="number" id="inp-port" value="22" min="1" max="65535">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Display Name</label>
+            <input type="text" id="inp-name" placeholder="e.g. A10G Production">
+          </div>
+
+          <div class="form-group">
+            <label>PEM / Private Key *</label>
+            <div class="pem-drop" id="pem-drop">
+              <input type="file" id="pem-file" accept=".pem,.key,text/plain"
+                     onchange="handlePemFile(this)">
+              <div class="pem-drop-icon">🔑</div>
+              <div class="pem-drop-label">
+                <strong>Click to upload</strong> or drag &amp; drop your .pem file<br>
+                <span style="font-size:11px;color:var(--text-subtle)">Supports RSA, Ed25519, ECDSA · stored encrypted at rest</span>
+              </div>
+            </div>
+            <div id="pem-loaded-badge" class="pem-loaded hidden">
+              <span>✓</span>
+              <span id="pem-filename">key.pem loaded</span>
+              <button class="btn btn-ghost" style="margin-left:auto;padding:3px 10px;font-size:12px"
+                      onclick="clearPem()">Change</button>
+            </div>
+          </div>
+
+          <div class="callout callout-warn">
+            <strong>Security:</strong> Your PEM key is only transmitted to localhost and stored
+            encrypted (AES-256). Never share your Studio session with untrusted users.
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="submitStep1()">Test Connection →</button>
+            <a href="/studio" class="btn btn-ghost">Cancel</a>
+          </div>
+        </div>
+
+        <!-- Existing profiles -->
+        <div id="existing-profiles-banner" style="display:none;margin-bottom:12px;padding:14px 18px;background:#E3FCEF;border:1px solid #4BCE97;border-radius:8px;display:none;align-items:flex-start;gap:14px">
+          <div style="font-size:22px;flex-shrink:0">✅</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#172B4D;margin-bottom:3px">GPU already connected</div>
+            <div style="font-size:12px;color:#626F86;line-height:1.5">You have saved GPU profiles. You can create a use case now or add another GPU connection below.</div>
+            <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="location.href='/studio/wizard'" style="font-size:12px;font-weight:700;padding:7px 16px;border-radius:5px;border:none;cursor:pointer;background:#0052CC;color:#fff">→ Create Use Case</button>
+              <button onclick="location.href='/studio'" style="font-size:12px;font-weight:600;padding:7px 14px;border-radius:5px;border:1px solid #DFE1E6;background:transparent;color:#626F86;cursor:pointer">← Back to Studio</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🖥️ Saved GPU Profiles</div>
+          <div id="profiles-list" class="profiles-list">
+            <div style="color:var(--text-subtle);font-size:13px;padding:8px 0">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Step 2: Verify Connection ── -->
+      <div id="panel-2" class="hidden">
+        <div class="card">
+          <div class="card-title">
+            ⚡ Verifying SSH + CUDA
+            <span class="status-badge badge-running" id="test-badge" style="margin-left:auto">Running…</span>
+          </div>
+          <div class="terminal" id="term-test"><span class="term-step">Connecting…</span></div>
+          <div class="btn-row" id="test-actions" style="display:none">
+            <button class="btn btn-primary" id="btn-to-setup" onclick="goToSetup()">Install Dependencies →</button>
+            <button class="btn btn-ghost" onclick="skipToSave()">Skip — already installed</button>
+            <button class="btn btn-ghost" onclick="goBack(1)">← Back</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Step 3: Install Dependencies ── -->
+      <div id="panel-3" class="hidden">
+        <div class="card">
+          <div class="card-title">
+            🛠 Installing KVForge Dependencies
+            <span class="status-badge badge-running" id="setup-badge" style="margin-left:auto">Running…</span>
+          </div>
+          <div class="callout callout-info">
+            Installs PyTorch (CUDA 12.1), transformers, peft, bitsandbytes, vector store clients,
+            and KVForge extras on the remote host. Takes 3–8 minutes.
+          </div>
+          <div class="terminal" id="term-setup"><span class="term-step">Starting…</span></div>
+          <div class="btn-row" id="setup-actions" style="display:none">
+            <button class="btn btn-primary" onclick="goToSave()">Save Profile →</button>
+            <button class="btn btn-ghost" onclick="goBack(2)">← Back</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Step 4: Save Profile ── -->
+      <div id="panel-4" class="hidden">
+        <div class="card">
+          <div class="card-title">💾 Save GPU Profile</div>
+          <div class="callout callout-info">
+            Connection verified. Save this profile to reuse it when onboarding use cases.
+          </div>
+          <div class="form-group">
+            <label>Profile Name</label>
+            <input type="text" id="save-name" placeholder="e.g. A10G Production — us-east-1">
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="saveProfile()">Save Profile</button>
+            <button class="btn btn-ghost" onclick="goBack(3)">← Back</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+let _sessionId = null;
+let _pemContent = null;
+let _testOk = false;
+let _setupOk = false;
+let sidebarCollapsed = false;
+
+// ── PEM upload ─────────────────────────────────────────────────────────────────
+function handlePemFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    _pemContent = e.target.result;
+    document.getElementById('pem-drop').classList.add('hidden');
+    document.getElementById('pem-loaded-badge').classList.remove('hidden');
+    document.getElementById('pem-filename').textContent = file.name + ' loaded';
+    if (!document.getElementById('inp-name').value)
+      document.getElementById('inp-name').value = file.name.replace(/\.pem$/, '');
+  };
+  reader.readAsText(file);
+}
+function clearPem() {
+  _pemContent = null;
+  document.getElementById('pem-file').value = '';
+  document.getElementById('pem-drop').classList.remove('hidden');
+  document.getElementById('pem-loaded-badge').classList.add('hidden');
+}
+
+const dropEl = document.getElementById('pem-drop');
+dropEl.addEventListener('dragover', e => { e.preventDefault(); dropEl.classList.add('drag-over'); });
+dropEl.addEventListener('dragleave', () => dropEl.classList.remove('drag-over'));
+dropEl.addEventListener('drop', e => {
+  e.preventDefault(); dropEl.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    _pemContent = ev.target.result;
+    document.getElementById('pem-drop').classList.add('hidden');
+    document.getElementById('pem-loaded-badge').classList.remove('hidden');
+    document.getElementById('pem-filename').textContent = file.name + ' loaded';
+    if (!document.getElementById('inp-name').value)
+      document.getElementById('inp-name').value = file.name.replace(/\.pem$/, '');
+  };
+  reader.readAsText(file);
+});
+
+// ── Stepper navigation ─────────────────────────────────────────────────────────
+function goToStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById('panel-' + i).classList.toggle('hidden', i !== n);
+    const si = document.getElementById('step-' + i);
+    si.classList.remove('active', 'done');
+    if (i < n) si.classList.add('done');
+    else if (i === n) si.classList.add('active');
+    si.querySelector('.step-circle').textContent = i < n ? '✓' : String(i);
+  }
+  document.querySelector('.main').scrollTop = 0;
+}
+function goBack(fromStep) { goToStep(fromStep); }
+
+// ── Step 1 ─────────────────────────────────────────────────────────────────────
+async function submitStep1() {
+  const host = document.getElementById('inp-host').value.trim();
+  const user = document.getElementById('inp-user').value.trim();
+  const port = parseInt(document.getElementById('inp-port').value) || 22;
+  const name = document.getElementById('inp-name').value.trim() || host;
+  if (!host) return showToast('Please enter a hostname or IP address');
+  if (!_pemContent) return showToast('Please upload a PEM / private key file');
+
+  goToStep(2);
+  setBadge('test-badge', 'running', 'Connecting…');
+  const termEl = document.getElementById('term-test');
+  termEl.innerHTML = '';
+
+  let res, data;
+  try {
+    res = await fetch('/studio/api/remote-gpu/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ host, user, port, pem_key: _pemContent, display_name: name }),
+    });
+    data = await res.json();
+  } catch (e) {
+    appendTerm(termEl, 'error', String(e)); setBadge('test-badge', 'error', 'Error'); return;
+  }
+  if (!res.ok) {
+    appendTerm(termEl, 'error', data.detail || 'Failed to create session');
+    setBadge('test-badge', 'error', 'Error'); return;
+  }
+  _sessionId = data.session_id;
+  document.getElementById('save-name').value = name;
+
+  const src = new EventSource(`/studio/api/remote-gpu/session/${_sessionId}/test-stream`);
+  src.onmessage = e => {
+    const ev = JSON.parse(e.data);
+    appendTerm(termEl, ev.type, ev.message);
+    if (ev.type === 'done') {
+      _testOk = true; src.close();
+      setBadge('test-badge', 'success', 'Verified ✓');
+      document.getElementById('test-actions').style.display = 'flex';
+    } else if (ev.type === 'error') {
+      src.close(); setBadge('test-badge', 'error', 'Failed');
+      document.getElementById('btn-to-setup').disabled = true;
+      document.getElementById('test-actions').style.display = 'flex';
+    }
+  };
+  src.onerror = () => {
+    src.close();
+    if (!_testOk) {
+      appendTerm(termEl, 'error', 'Stream disconnected');
+      setBadge('test-badge', 'error', 'Failed');
+      document.getElementById('test-actions').style.display = 'flex';
+    }
+  };
+}
+
+// ── Step 3 ─────────────────────────────────────────────────────────────────────
+async function goToSetup() {
+  goToStep(3);
+  setBadge('setup-badge', 'running', 'Installing…');
+  const termEl = document.getElementById('term-setup');
+  termEl.innerHTML = '';
+
+  const src = new EventSource(`/studio/api/remote-gpu/session/${_sessionId}/setup-stream`);
+  src.onmessage = e => {
+    const ev = JSON.parse(e.data);
+    appendTerm(termEl, ev.type, ev.message);
+    if (ev.type === 'done') {
+      _setupOk = true; src.close();
+      setBadge('setup-badge', 'success', 'Done ✓');
+      document.getElementById('setup-actions').style.display = 'flex';
+    } else if (ev.type === 'error') {
+      src.close(); setBadge('setup-badge', 'error', 'Failed');
+      document.getElementById('setup-actions').style.display = 'flex';
+    }
+  };
+  src.onerror = () => {
+    src.close();
+    if (!_setupOk) {
+      appendTerm(termEl, 'error', 'Stream disconnected');
+      setBadge('setup-badge', 'error', 'Failed');
+      document.getElementById('setup-actions').style.display = 'flex';
+    }
+  };
+}
+
+function skipToSave() { goToSave(); }
+function goToSave() { goToStep(4); }
+
+// ── Step 4 ─────────────────────────────────────────────────────────────────────
+async function saveProfile() {
+  const displayName = document.getElementById('save-name').value.trim() ||
+                      document.getElementById('inp-host').value.trim();
+  try {
+    const res = await fetch(`/studio/api/remote-gpu/session/${_sessionId}/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ display_name: displayName }),
+    });
+    if (!res.ok) { const d = await res.json(); showToast(d.detail || 'Save failed'); return; }
+    showToast('GPU profile saved!');
+    setTimeout(() => location.href = '/studio', 1200);
+  } catch (e) { showToast('Save failed: ' + e.message); }
+}
+
+// ── Profiles ───────────────────────────────────────────────────────────────────
+async function loadProfiles() {
+  const el = document.getElementById('profiles-list');
+  const banner = document.getElementById('existing-profiles-banner');
+  try {
+    const res = await fetch('/studio/api/remote-gpu/profiles');
+    const profiles = await res.json();
+    if (!profiles.length) {
+      el.innerHTML = '<div style="color:var(--text-subtle);font-size:13px;padding:8px 0">No saved GPU profiles yet.</div>';
+      if (banner) banner.style.display = 'none';
+      return;
+    }
+    if (banner) banner.style.display = 'flex';
+    el.innerHTML = profiles.map(p => `
+      <div class="profile-card">
+        <div class="profile-icon">🖥️</div>
+        <div class="profile-info">
+          <div class="profile-name">${esc(p.display_name)}</div>
+          <div class="profile-meta">${esc(p.user)}@${esc(p.host)}:${p.port}</div>
+          ${p.fingerprint ? `<div class="profile-fp">SHA256:${esc(p.fingerprint)}</div>` : ''}
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-primary" style="font-size:12px;padding:5px 14px"
+                  onclick="location.href='/studio/wizard'">→ Create Use Case</button>
+          <button class="btn btn-ghost" style="color:var(--danger);border-color:var(--danger);font-size:12px;padding:5px 12px"
+                  onclick="deleteProfile('${esc(p.id)}')">Delete</button>
+        </div>
+      </div>`).join('');
+  } catch { el.innerHTML = '<div style="color:var(--danger);font-size:13px">Failed to load profiles.</div>'; }
+}
+async function deleteProfile(id) {
+  if (!confirm('Delete this GPU profile?')) return;
+  await fetch(`/studio/api/remote-gpu/profiles/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  loadProfiles();
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function appendTerm(el, type, msg) {
+  const div = document.createElement('div');
+  div.className = 'term-' + ({ step:'step', cmd:'cmd', info:'info', error:'error', ok:'ok', done:'done' }[type] || 'output');
+  div.textContent = msg;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+function setBadge(id, state, text) {
+  const el = document.getElementById(id);
+  el.className = 'status-badge ' + ({ running:'badge-running', success:'badge-success', error:'badge-error' }[state] || 'badge-idle');
+  el.textContent = text;
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── Sidebar / theme / profile ──────────────────────────────────────────────────
+async function goToActiveUC(hash) {
+  try {
+    const r = await fetch('/studio/api/registry', {credentials:'include'});
+    const d = await r.json();
+    const ucs = d.use_cases || [];
+    if (ucs.length) { location.href = '/studio/uc/' + ucs[0].id + (hash || ''); return; }
+  } catch(e) {}
+  location.href = '/studio';
+}
+
+function toggleSidebar() {
+  sidebarCollapsed = !sidebarCollapsed;
+  document.getElementById('sidebar').classList.toggle('collapsed', sidebarCollapsed);
+  document.getElementById('sidebar-toggle-btn').textContent = sidebarCollapsed ? '›' : '‹';
+}
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.dataset.theme === 'dark';
+  html.dataset.theme = isDark ? 'light' : 'dark';
+  document.getElementById('theme-icon').textContent = isDark ? '🌙' : '☀️';
+}
+function toggleProfile(e) {
+  e.stopPropagation();
+  const m = document.getElementById('profileMenu');
+  m.style.display = m.style.display === 'none' ? '' : 'none';
+}
+document.addEventListener('click', () => {
+  const m = document.getElementById('profileMenu');
+  if (m) m.style.display = 'none';
+});
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Load user info ─────────────────────────────────────────────────────────────
+async function loadUser() {
+  try {
+    const res = await fetch('/studio/api/me');
+    if (!res.ok) return;
+    const u = await res.json();
+    document.getElementById('topbar-user').textContent = u.username || 'user';
+    document.getElementById('pm-name').textContent = u.display_name || u.username || 'User';
+    document.getElementById('pm-email').textContent = u.email || '';
+  } catch {}
+}
+
+loadProfiles();
+loadUser();
+</script>
+</body>
+</html>

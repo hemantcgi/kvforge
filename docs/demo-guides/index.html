@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Demo Setup Guides — KVForge Studio</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#F7F8F9;color:#172B4D;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh;display:flex;flex-direction:column;}
+
+/* Topbar */
+.topbar{height:48px;flex-shrink:0;background:#0052CC;display:flex;align-items:center;padding:0 24px;gap:12px;}
+.topbar-brand{font-size:15px;font-weight:800;color:#fff;letter-spacing:-.3px;display:flex;align-items:center;gap:7px;text-decoration:none;}
+.logo-sq{width:24px;height:24px;border-radius:5px;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;}
+.topbar-tag{font-size:10px;color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:3px;padding:1px 6px;font-weight:600;letter-spacing:.04em;}
+.topbar-sp{flex:1;}
+.topbar-back{font-size:13px;color:rgba(255,255,255,0.85);text-decoration:none;padding:5px 12px;border-radius:4px;border:1px solid rgba(255,255,255,0.25);transition:background .15s;}
+.topbar-back:hover{background:rgba(255,255,255,0.12);}
+
+/* Page */
+.page{flex:1;max-width:860px;width:100%;margin:0 auto;padding:40px 24px 60px;}
+.page-title{font-size:22px;font-weight:700;color:#172B4D;margin-bottom:4px;}
+.page-sub{font-size:13px;color:#626F86;margin-bottom:36px;}
+
+/* Sections */
+.section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#8590A2;margin-bottom:12px;}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:36px;}
+@media(max-width:600px){.cards{grid-template-columns:1fr}}
+
+.card{background:#fff;border:1px solid #DFE1E6;border-radius:10px;padding:20px;text-decoration:none;transition:border-color .15s,box-shadow .15s;display:block;box-shadow:0 1px 3px rgba(9,30,66,0.08);}
+.card:hover{border-color:#4C9AFF;box-shadow:0 3px 8px rgba(9,30,66,0.12);}
+.card-emoji{font-size:22px;margin-bottom:10px;display:block;}
+.card-title{font-size:14px;font-weight:700;color:#172B4D;margin-bottom:5px;}
+.card-sub{font-size:12px;color:#626F86;line-height:1.6;}
+.card-tech{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px;}
+.tech-pill{font-size:10px;background:#F1F2F4;border:1px solid #DFE1E6;border-radius:4px;padding:2px 7px;color:#626F86;font-weight:600;}
+
+footer{padding:24px;text-align:center;font-size:12px;color:#8590A2;border-top:1px solid #DFE1E6;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="topbar-brand" href="/studio">
+    <div class="logo-sq">K</div>
+    KVForge Studio
+    <span class="topbar-tag">v2.1</span>
+  </a>
+  <div class="topbar-sp"></div>
+  <a class="topbar-back" href="/studio">← Back to Studio</a>
+</div>
+
+<div class="page">
+  <div class="page-title">Demo Setup Guides</div>
+  <div class="page-sub">Step-by-step walkthroughs with screenshots for each use-case demo.</div>
+
+  <div class="section-label">Connector-Based Demos — live API data sources</div>
+  <div class="cards">
+    <a class="card" href="wikipedia-setup.html">
+      <span class="card-emoji">🌐</span>
+      <div class="card-title">Wikipedia RAG</div>
+      <div class="card-sub">Live encyclopedia with section-hash delta sync. Semantic search over Wikipedia articles via the REST API.</div>
+      <div class="card-tech">
+        <span class="tech-pill">Qdrant</span>
+        <span class="tech-pill">Llama-3.2-3B</span>
+        <span class="tech-pill">Wikipedia API</span>
+      </div>
+    </a>
+    <a class="card" href="fda-drug-labels-setup.html">
+      <span class="card-emoji">💊</span>
+      <div class="card-title">FDA Drug Labels</div>
+      <div class="card-sub">Clinical drug safety data from openFDA. Domain-accurate adverse-event retrieval with biomedical embeddings.</div>
+      <div class="card-tech">
+        <span class="tech-pill">Qdrant</span>
+        <span class="tech-pill">Llama-3.2-3B</span>
+        <span class="tech-pill">openFDA API</span>
+      </div>
+    </a>
+    <a class="card" href="sec-edgar-setup.html">
+      <span class="card-emoji">📈</span>
+      <div class="card-title">SEC EDGAR Filings</div>
+      <div class="card-sub">10-K/10-Q financial filings with filing-date delta sync. Hybrid keyword+vector search over regulatory documents.</div>
+      <div class="card-tech">
+        <span class="tech-pill">Qdrant</span>
+        <span class="tech-pill">Llama-3.2-3B</span>
+        <span class="tech-pill">EDGAR API</span>
+      </div>
+    </a>
+    <a class="card" href="sports-setup.html">
+      <span class="card-emoji">🏈</span>
+      <div class="card-title">Sports Roster &amp; Stats</div>
+      <div class="card-sub">Live team rosters and game stats with ESPN sync. Fast KV recompute cycles for rapidly-changing sports data.</div>
+      <div class="card-tech">
+        <span class="tech-pill">Qdrant</span>
+        <span class="tech-pill">Llama-3.2-3B</span>
+        <span class="tech-pill">ESPN API</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="section-label">HuggingFace Dataset Demos — public datasets, no API key required</div>
+  <div class="cards">
+    <a class="card" href="customer-support-setup.html">
+      <span class="card-emoji">💬</span>
+      <div class="card-title">Customer Support QA</div>
+      <div class="card-sub">Bitext customer support dataset — 26K intent-labeled support exchanges indexed for retrieval-augmented customer service.</div>
+      <div class="card-tech">
+        <span class="tech-pill">Qdrant</span>
+        <span class="tech-pill">Llama-3.2-3B</span>
+        <span class="tech-pill">HuggingFace</span>
+      </div>
+    </a>
+    <a class="card" href="pubmedqa-setup.html">
+      <span class="card-emoji">🧬</span>
+      <div class="card-title">PubMedQA</div>
+      <div class="card-sub">Expert-annotated biomedical Q&amp;A from PubMed abstracts. Yes/no/maybe clinical evidence retrieval.</div>
+      <div class="card-tech">
+        <span class="tech-pill">Qdrant</span>
+        <span class="tech-pill">Llama-3.2-3B</span>
+        <span class="tech-pill">HuggingFace</span>
+      </div>
+    </a>
+    <a class="card" href="squad-setup.html">
+      <span class="card-emoji">🎓</span>
+      <div class="card-title">SQuAD Reading Comprehension</div>
+      <div class="card-sub">Stanford QA benchmark — 87K Wikipedia passage Q&amp;A pairs. Compare KVForge phases against BERT baselines.</div>
+      <div class="card-tech">
+        <span class="tech-pill">Qdrant</span>
+        <span class="tech-pill">Llama-3.2-3B</span>
+        <span class="tech-pill">HuggingFace</span>
+      </div>
+    </a>
+    <a class="card" href="bedrock-userguide-setup.html">
+      <span class="card-emoji">☁</span>
+      <div class="card-title">AWS Bedrock User Guide</div>
+      <div class="card-sub">Technical documentation RAG over the official AWS Bedrock docs. Upload PDF or sync from S3.</div>
+      <div class="card-tech">
+        <span class="tech-pill">Qdrant</span>
+        <span class="tech-pill">Llama-3.2-3B</span>
+        <span class="tech-pill">PDF / S3</span>
+      </div>
+    </a>
+  </div>
+</div>
+
+<footer>KVForge Studio · v2.1.0 · <a href="/studio" style="color:#0052CC;text-decoration:none;">← Back to Studio</a></footer>
+</body>
+</html>

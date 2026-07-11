@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>KVForge V1 vs V2</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0a0f1e;
+  color: #e2e8f0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.page { max-width: 1300px; margin: 0 auto; padding: 32px 24px 64px; }
+
+/* ── Header ── */
+.page-header { text-align: center; margin-bottom: 40px; }
+.page-header h1 { font-size: 26px; font-weight: 700; color: #f8fafc; margin-bottom: 6px; }
+.page-header p  { color: #64748b; font-size: 14px; }
+
+/* ── Version panels ── */
+.version { border-radius: 14px; border: 1px solid; padding: 24px; margin-bottom: 32px; }
+.v1 { border-color: #1d4ed8; background: #020817; }
+.v2 { border-color: #065f46; background: #020817; }
+
+.ver-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #1e293b; }
+.ver-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: .06em; }
+.v1 .ver-badge { background: #1d4ed8; color: #bfdbfe; }
+.v2 .ver-badge { background: #065f46; color: #6ee7b7; }
+.ver-title { font-size: 17px; font-weight: 600; color: #f1f5f9; }
+.ver-sub   { font-size: 12px; color: #64748b; margin-left: auto; }
+
+/* ── Swimlane ── */
+.swimlane { margin-bottom: 18px; }
+.sl-label {
+  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em;
+  color: #475569; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+}
+.sl-body { background: #0f172a; border-radius: 10px; padding: 16px 18px; }
+
+/* ── Tag badges ── */
+.tag { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 3px; text-transform: uppercase; letter-spacing: .06em; }
+.tag-same { background: #172554; color: #93c5fd; }
+.tag-new  { background: #14532d; color: #86efac; }
+
+/* ── Flow rows ── */
+.flow { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
+.flow + .flow { margin-top: 8px; }
+.arr { color: #334155; font-size: 15px; flex-shrink: 0; }
+
+/* ── Nodes ── */
+.node {
+  padding: 6px 11px; border-radius: 7px; border: 1px solid;
+  font-size: 11px; font-weight: 500; white-space: nowrap; line-height: 1.35;
+}
+.node small { display: block; font-size: 9px; font-weight: 400; opacity: .75; margin-top: 1px; }
+
+.nd-neutral  { background: #0f172a; border-color: #334155; color: #cbd5e1; }
+.nd-model    { background: #1e1b4b; border-color: #6366f1; color: #a5b4fc; }
+.nd-vdb      { background: #042f2e; border-color: #0d9488; color: #5eead4; }
+.nd-sleep    { background: #052e16; border-color: #16a34a; color: #86efac; }
+.nd-enhanced { background: #1c1002; border-color: #d97706; color: #fcd34d; }
+.nd-archive  { background: #0f172a; border-color: #475569; color: #94a3b8; }
+.nd-query    { background: #2e1065; border-color: #9333ea; color: #d8b4fe; }
+.nd-dash     { background: #1c0a02; border-color: #ea580c; color: #fdba74; }
+
+/* ── Divider ── */
+.divider {
+  text-align: center; font-size: 11px; font-weight: 600;
+  color: #475569; letter-spacing: .05em; margin: 8px 0 24px;
+  display: flex; align-items: center; gap: 12px;
+}
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #1e293b; }
+
+/* ════════════════════════════════
+   V1 — background flows
+   ════════════════════════════════ */
+.bg-flows { display: flex; flex-direction: column; gap: 8px; }
+.bg-flow-row { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.note { font-size: 10px; color: #475569; margin-top: 8px; font-style: italic; }
+
+/* ════════════════════════════════
+   V2 — CIS box
+   ════════════════════════════════ */
+.cis-wrap {
+  background: #0a1628; border: 1px solid #1e3a5f; border-radius: 10px;
+  padding: 14px 16px; margin: 12px 0;
+}
+.cis-title { font-size: 11px; font-weight: 700; color: #60a5fa; margin-bottom: 6px; }
+.cis-formula {
+  font-family: 'Courier New', monospace; font-size: 12px; color: #34d399;
+  background: #020f1a; border-radius: 5px; padding: 6px 10px; margin-bottom: 10px;
+}
+.cis-signals { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.cis-sig {
+  background: #0f172a; border-radius: 6px; padding: 8px;
+  border: 1px solid #1e293b; text-align: center;
+}
+.cis-sig-name  { font-size: 10px; font-weight: 600; margin-bottom: 3px; }
+.cis-sig-desc  { font-size: 9px; color: #64748b; }
+
+/* ════════════════════════════════
+   V2 — three tier branches
+   ════════════════════════════════ */
+.branches-label { font-size: 10px; color: #475569; text-align: center; margin: 4px 0 10px; }
+
+.branches { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+
+.branch { border-radius: 9px; border: 1px solid; padding: 12px; }
+.br-enhanced { border-color: #d97706; background: #0e0900; }
+.br-active   { border-color: #0d9488; background: #020c0b; }
+.br-archive  { border-color: #475569; background: #0a0e17; }
+
+.branch-title { font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+.br-enhanced .branch-title { color: #fbbf24; }
+.br-active   .branch-title { color: #34d399; }
+.br-archive  .branch-title { color: #94a3b8; }
+
+.branch-step {
+  display: flex; align-items: flex-start; gap: 6px;
+  font-size: 10px; color: #94a3b8; margin-bottom: 5px;
+}
+.step-icon { flex-shrink: 0; margin-top: 1px; }
+.step-text { line-height: 1.35; }
+.step-text em { color: #64748b; font-style: normal; }
+
+.branch-arrow { text-align: center; color: #334155; font-size: 13px; margin: 3px 0; }
+
+/* ════════════════════════════════
+   V2 — storage tiers
+   ════════════════════════════════ */
+.tiers { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.tier { border-radius: 9px; border: 1px solid; padding: 12px; }
+.tier-enhanced { border-color: #d97706; background: #0e0900; }
+.tier-active   { border-color: #0d9488; background: #020c0b; }
+.tier-archive  { border-color: #475569; background: #0a0e17; }
+
+.tier-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+.tier-enhanced .tier-label { color: #fbbf24; }
+.tier-active   .tier-label { color: #34d399; }
+.tier-archive  .tier-label { color: #94a3b8; }
+
+.tier-body { font-size: 10px; color: #94a3b8; line-height: 1.5; }
+.tier-size { font-size: 10px; font-weight: 600; margin-top: 6px; padding-top: 6px; border-top: 1px solid #1e293b; }
+.tier-enhanced .tier-size { color: #fcd34d; }
+.tier-active   .tier-size { color: #5eead4; }
+.tier-archive  .tier-size { color: #64748b; }
+
+/* ════════════════════════════════
+   V2 — query three paths
+   ════════════════════════════════ */
+.query-flow { display: flex; align-items: flex-start; gap: 5px; flex-wrap: nowrap; }
+.query-left  { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+.query-right { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+.query-paths { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.qpath { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dot-enhanced { background: #d97706; }
+.dot-active   { background: #0d9488; }
+.dot-archive  { background: #475569; }
+
+/* reinstatement note */
+.reinstate {
+  background: #0a1628; border: 1px solid #1e3a5f; border-radius: 8px;
+  padding: 10px 14px; font-size: 10px; color: #93c5fd;
+  margin-top: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.reinstate-icon { font-size: 14px; flex-shrink: 0; }
+
+/* ── Legend ── */
+.legend {
+  display: flex; flex-wrap: wrap; gap: 14px; margin-top: 28px;
+  padding-top: 18px; border-top: 1px solid #1e293b;
+  justify-content: center;
+}
+.leg { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #64748b; }
+.leg-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-header">
+    <h1>KVForge: V1 → V2</h1>
+    <p>Current system vs. Corpus Intelligence System with per-token KV enhancement</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       V1
+       ═══════════════════════════════════════════ -->
+  <section class="version v1">
+    <div class="ver-header">
+      <span class="ver-badge">V1</span>
+      <span class="ver-title">Current KVForge — Mean-pooled KV Injection</span>
+      <span class="ver-sub">All chunks treated identically · Single storage tier · Fixed top-K retrieval</span>
+    </div>
+
+    <!-- Index Time -->
+    <div class="swimlane">
+      <div class="sl-label">Index Time</div>
+      <div class="sl-body">
+        <div class="flow">
+          <div class="node nd-neutral">Documents</div>
+          <span class="arr">→</span>
+          <div class="node nd-neutral">Chunker</div>
+          <span class="arr">→</span>
+          <div class="node nd-neutral">Embedder</div>
+          <span class="arr">→</span>
+          <div class="node nd-model">LLM forward pass<small>one pass per chunk</small></div>
+          <span class="arr">→</span>
+          <div class="node nd-neutral">mean_pool_kv<small>collapse seq_len → single vector</small></div>
+          <span class="arr">→</span>
+          <div class="node nd-vdb">Qdrant payload<small>embedding + base64 KV blob (float16)</small></div>
+        </div>
+        <p class="note">Output shape per chunk: [num_layers, 2, num_kv_heads, head_dim] — token dimension is gone</p>
+      </div>
+    </div>
+
+    <!-- Query Time -->
+    <div class="swimlane">
+      <div class="sl-label">Query Time</div>
+      <div class="sl-body">
+        <div class="flow">
+          <div class="node nd-query">Query</div>
+          <span class="arr">→</span>
+          <div class="node nd-neutral">Embedder</div>
+          <span class="arr">→</span>
+          <div class="node nd-vdb">Qdrant<small>top-K (fixed K)</small></div>
+          <span class="arr">→</span>
+          <div class="node nd-model">Inject mean-pooled KVs<small>all chunks treated equally</small></div>
+          <span class="arr">→</span>
+          <div class="node nd-model">LLM</div>
+          <span class="arr">→</span>
+          <div class="node nd-query">Answer</div>
+        </div>
+        <p class="note">Every retrieved chunk injects the same way regardless of how important or how frequently accessed it is</p>
+      </div>
+    </div>
+
+    <!-- Background -->
+    <div class="swimlane">
+      <div class="sl-label">Background / Sleep Time</div>
+      <div class="sl-body">
+        <div class="bg-flows">
+          <div class="bg-flow-row">
+            <div class="node nd-neutral">Access Tracker</div>
+            <span class="arr">→</span>
+            <div class="node nd-neutral">Tier labels<small>hot / warm / cold / frozen</small></div>
+            <span class="arr">→</span>
+            <div class="node nd-model">LoRA Training<small>tier-weighted replay buffer</small></div>
+            <span class="arr">→</span>
+            <div class="node nd-neutral">PRS Evaluation</div>
+            <span class="arr">→</span>
+            <div class="node nd-neutral">Phase 1 → 2 → 3</div>
+          </div>
+          <div class="bg-flow-row">
+            <div class="node nd-sleep">FAQ Generator<small>cloud LLM</small></div>
+            <span class="arr">→</span>
+            <div class="node nd-model">LoRA Training<small>(same pass as above)</small></div>
+          </div>
+          <div class="bg-flow-row">
+            <div class="node nd-neutral">KV Recomputation<small>after each LoRA round</small></div>
+            <span class="arr">→</span>
+            <div class="node nd-vdb">Update Qdrant<small>refresh stale KV blobs</small></div>
+          </div>
+        </div>
+        <p class="note">Tier labels exist only for LoRA training sample weighting — they do not affect storage or injection quality</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider">V2 adds Corpus Intelligence — three storage tiers, CIS scoring, sleep-time curation, TurboQuant compression</div>
+
+  <!-- ═══════════════════════════════════════════
+       V2
+       ═══════════════════════════════════════════ -->
+  <section class="version v2">
+    <div class="ver-header">
+      <span class="ver-badge">V2</span>
+      <span class="ver-title">KVForge + Corpus Intelligence System</span>
+      <span class="ver-sub">Three storage tiers · CIS-driven curation · TurboQuant on hot path · User-confirmed archival</span>
+    </div>
+
+    <!-- Index Time -->
+    <div class="swimlane">
+      <div class="sl-label">Index Time &nbsp;<span class="tag tag-same">unchanged from V1</span></div>
+      <div class="sl-body">
+        <div class="flow">
+          <div class="node nd-neutral">Documents</div>
+          <span class="arr">→</span>
+          <div class="node nd-neutral">Chunker</div>
+          <span class="arr">→</span>
+          <div class="node nd-neutral">Embedder</div>
+          <span class="arr">→</span>
+          <div class="node nd-model">LLM forward pass</div>
+          <span class="arr">→</span>
+          <div class="node nd-neutral">mean_pool_kv</div>
+          <span class="arr">→</span>
+          <div class="node nd-vdb">Active Tier (Qdrant)<small>embedding + mean-pooled KV blob · kv_token_path = null</small></div>
+        </div>
+        <p class="note">All new chunks land in Active Tier first. Promotion to Enhanced Tier happens asynchronously via the sleep-time curation pass.</p>
+      </div>
+    </div>
+
+    <!-- Sleep Time -->
+    <div class="swimlane">
+      <div class="sl-label">Sleep Time — Corpus Curation Pass &nbsp;<span class="tag tag-new">new in V2</span></div>
+      <div class="sl-body">
+
+        <!-- CIS inputs -->
+        <div class="flow" style="margin-bottom: 10px;">
+          <div class="node nd-sleep">FAQ Generator<small>cloud LLM · user's choice of provider</small></div>
+          <span class="arr">→</span>
+          <div class="node nd-sleep">Coverage Sweep<small>which chunks hit top-K for which FAQ topics</small></div>
+          <span class="arr">+</span>
+          <div class="node nd-neutral">Embedding distances<small>cosine sim to nearest neighbors</small></div>
+          <span class="arr">+</span>
+          <div class="node nd-neutral">Access Tracker<small>retrieval frequency per chunk</small></div>
+          <span class="arr">→</span>
+        </div>
+
+        <!-- CIS box -->
+        <div class="cis-wrap">
+          <div class="cis-title">Corpus Importance Score (CIS) — computed per chunk</div>
+          <div class="cis-formula">CIS = α × access_score + β × uniqueness_score + γ × coverage_score</div>
+          <div class="cis-signals">
+            <div class="cis-sig">
+              <div class="cis-sig-name" style="color:#fbbf24">access_score</div>
+              <div class="cis-sig-desc">Retrieval frequency<br>normalized by corpus max<br><em>hot tier signal</em></div>
+            </div>
+            <div class="cis-sig">
+              <div class="cis-sig-name" style="color:#34d399">uniqueness_score</div>
+              <div class="cis-sig-desc">1 − max cosine similarity<br>to any other chunk<br><em>irreplaceability signal</em></div>
+            </div>
+            <div class="cis-sig">
+              <div class="cis-sig-name" style="color:#a78bfa">coverage_score</div>
+              <div class="cis-sig-desc">Fraction of FAQ topics<br>this chunk is top-5 for<br><em>diversity signal</em></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="branches-label">CIS score determines which tier action to take ↓</div>
+
+        <!-- Three branches -->
+        <div class="branches">
+          <div class="branch br-enhanced">
+            <div class="branch-title">High CIS → Enhanced Tier</div>
+            <div class="branch-step"><span class="step-icon">⚙</span><div class="step-text">Background daemon triggers</div></div>
+            <div class="branch-arrow">↓</div>
+            <div class="branch-step"><span class="step-icon">🧠</span><div class="step-text">Full LLM forward pass — preserve token sequence</div></div>
+            <div class="branch-arrow">↓</div>
+            <div class="branch-step"><span class="step-icon">⚡</span><div class="step-text">TurboQuant compress<br><em>3-bit keys (rotate → Lloyd-Max → QJL)</em><br><em>2-bit values (group quantization)</em><br><em>4.4× compression</em></div></div>
+            <div class="branch-arrow">↓</div>
+            <div class="branch-step"><span class="step-icon">💾</span><div class="step-text">Write compressed bytes to disk</div></div>
+            <div class="branch-arrow">↓</div>
+            <div class="branch-step"><span class="step-icon">🗄</span><div class="step-text">Update kv_token_path in Qdrant payload</div></div>
+          </div>
+
+          <div class="branch br-active">
+            <div class="branch-title">Mid CIS → Stay Active</div>
+            <div class="branch-step"><span class="step-icon">✓</span><div class="step-text">No action taken</div></div>
+            <div class="branch-arrow">↓</div>
+            <div class="branch-step"><span class="step-icon">🗄</span><div class="step-text">Remains in Qdrant with mean-pooled KV blob (V1 behavior)</div></div>
+            <div class="branch-arrow">↓</div>
+            <div class="branch-step"><span class="step-icon">📊</span><div class="step-text">CIS re-evaluated each sleep cycle — can be promoted or demoted over time</div></div>
+          </div>
+
+          <div class="branch br-archive">
+            <div class="branch-title">Low CIS + Low Uniqueness → Archive Candidate</div>
+            <div class="branch-step"><span class="step-icon">📋</span><div class="step-text">Dashboard surfaces recommendation with explanation:<br><em>"0.97 similarity to chunk X · 0/200 FAQ top-5 appearances · 43 days since last retrieval"</em></div></div>
+            <div class="branch-arrow">↓</div>
+            <div class="branch-step"><span class="step-icon">👤</span><div class="step-text">User reviews and confirms</div></div>
+            <div class="branch-arrow">↓</div>
+            <div class="branch-step"><span class="step-icon">📦</span><div class="step-text">Move text to archival backend<br><em>(S3, local, or user's chosen backend)</em></div></div>
+            <div class="branch-arrow">↓</div>
+            <div class="branch-step"><span class="step-icon">🗑</span><div class="step-text">Clear kv_cache blob from Qdrant<br>Retain embedding + pointer only</div></div>
+          </div>
+        </div>
+
+        <!-- Reinstatement -->
+        <div class="reinstate">
+          <span class="reinstate-icon">🔄</span>
+          <span><strong>Reinstatement:</strong> Archive retrieval count exceeds user-defined threshold → Dashboard recommends reinstatement with reason → User confirms → Chunk moves back to Active Tier → Background daemon schedules KV recomputation</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Storage Tiers -->
+    <div class="swimlane">
+      <div class="sl-label">Storage Tiers — Three-Level Architecture &nbsp;<span class="tag tag-new">new in V2</span></div>
+      <div class="sl-body">
+        <div class="tiers">
+          <div class="tier tier-enhanced">
+            <div class="tier-label">Enhanced Tier</div>
+            <div class="tier-body">
+              Per-token KV sequences on disk<br>
+              TurboQuant compressed (3-bit keys / 2-bit values)<br>
+              Qdrant payload: embedding + mean-pool blob + <strong>kv_token_path</strong><br>
+              Mean-pool blob kept as instant fallback
+            </div>
+            <div class="tier-size">~15 MB/chunk · 4.4× smaller than float16 per-token</div>
+          </div>
+          <div class="tier tier-active">
+            <div class="tier-label">Active Tier</div>
+            <div class="tier-body">
+              Mean-pooled KV blob in Qdrant payload<br>
+              Identical to V1 storage<br>
+              Default path for all new chunks<br>
+              kv_token_path = null
+            </div>
+            <div class="tier-size">~131 KB/chunk · same as V1</div>
+          </div>
+          <div class="tier tier-archive">
+            <div class="tier-label">Archive Tier</div>
+            <div class="tier-body">
+              Embedding + pointer in Qdrant (still retrievable)<br>
+              kv_cache blob cleared — saves payload storage<br>
+              Text in user's chosen archival backend (S3 / local / etc.)<br>
+              Retrieved via text-in-context fallback only
+            </div>
+            <div class="tier-size">~8 KB in Qdrant + archived text</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Query Time -->
+    <div class="swimlane">
+      <div class="sl-label">Query Time — Dynamic Routing Across Three Tiers &nbsp;<span class="tag tag-new">new in V2</span></div>
+      <div class="sl-body">
+
+        <div class="query-flow">
+          <div class="query-left">
+            <div class="node nd-query">Query</div>
+            <span class="arr">→</span>
+            <div class="node nd-neutral">Embedder</div>
+            <span class="arr">→</span>
+            <div class="node nd-vdb">Qdrant<small>MMR + CIS weighted</small></div>
+            <span class="arr">→</span>
+          </div>
+
+          <div class="query-paths">
+            <div class="qpath">
+              <div class="dot dot-enhanced"></div>
+              <div class="node nd-enhanced">Enhanced chunk</div>
+              <span class="arr">→</span>
+              <div class="node nd-enhanced">Load per-token KV<small>disk read</small></div>
+              <span class="arr">→</span>
+              <div class="node nd-enhanced">TurboQuant attention<small>no key decompression needed</small></div>
+              <span class="arr">→</span>
+              <div class="node nd-enhanced">Full-fidelity inject<small>exact token-level KVs</small></div>
+            </div>
+            <div class="qpath">
+              <div class="dot dot-active"></div>
+              <div class="node nd-vdb">Active chunk</div>
+              <span class="arr">→</span>
+              <div class="node nd-vdb">Load mean-pooled KV<small>Qdrant payload</small></div>
+              <span class="arr">→</span>
+              <div class="node nd-vdb">Mean-pool inject<small>V1 behavior — unchanged</small></div>
+            </div>
+            <div class="qpath">
+              <div class="dot dot-archive"></div>
+              <div class="node nd-archive">Archive chunk</div>
+              <span class="arr">→</span>
+              <div class="node nd-archive">Fetch text<small>archival backend</small></div>
+              <span class="arr">→</span>
+              <div class="node nd-archive">Text-in-context<small>no KV injection</small></div>
+              <span class="arr">→</span>
+              <div class="node nd-dash">Track retrieval freq<small>→ reinstatement signal</small></div>
+            </div>
+          </div>
+
+          <div class="query-right">
+            <span class="arr">→</span>
+            <div class="node nd-model">LLM</div>
+            <span class="arr">→</span>
+            <div class="node nd-query">Answer</div>
+          </div>
+        </div>
+
+        <p class="note" style="margin-top: 10px;">
+          TurboQuant key insight: attention scores computed directly against compressed keys — unbiased estimator, no decompression required.
+          Values dequantized in-place (fast, group-quantized). Quality: cos_sim ≥ 0.997 at 4-bit values, 0.940 at 2-bit.
+        </p>
+
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:#6366f1"></div>Model / LLM</div>
+    <div class="leg"><div class="leg-dot" style="background:#0d9488"></div>Vector Store / Active Tier</div>
+    <div class="leg"><div class="leg-dot" style="background:#d97706"></div>Enhanced Tier (TurboQuant)</div>
+    <div class="leg"><div class="leg-dot" style="background:#16a34a"></div>Sleep-time compute</div>
+    <div class="leg"><div class="leg-dot" style="background:#475569"></div>Archive Tier</div>
+    <div class="leg"><div class="leg-dot" style="background:#9333ea"></div>User / Query</div>
+    <div class="leg"><div class="leg-dot" style="background:#ea580c"></div>Dashboard</div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -52,6 +52,7 @@ Start the server::
 import argparse
 import asyncio
 import json
+import subprocess as _sp
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -77,6 +78,10 @@ _model_loader = None
 _kv_background = None
 _kv_inference = None
 
+# Fastembed singleton — constructed once at startup so the ONNX session is
+# reused across queries instead of being rebuilt every call.
+_embedder = None
+
 _model_b_config: dict = {
     "provider": "gemini",
     "model": "gemini-2.5-flash",  # must match first item in JS MODELS_B["gemini"]
@@ -87,7 +92,7 @@ _model_b_config: dict = {
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     """Import GPU modules and pre-warm the model+LoRA in the main thread at startup."""
-    global _model_loader, _kv_background, _kv_inference
+    global _model_loader, _kv_background, _kv_inference, _embedder
     try:
         import core.model_loader as _ml
         import pipeline.kv_background as _kb
@@ -102,13 +107,32 @@ async def _lifespan(app: FastAPI):
         cfg = _load_cfg()
         _ml.init(cfg)
         ver.init(cfg)
+        _kb.start(cfg)
         lora_ckpt = ver.load().get("checkpoint_path")
         print(f"[dashboard] pre-warming model (lora_ckpt={lora_ckpt})…", flush=True)
         _ml.load(lora_ckpt)
         print("[dashboard] model ready", flush=True)
     except Exception as e:
         print(f"[dashboard] inference modules unavailable: {e}", flush=True)
+    # Pre-warm the fastembed embedder singleton so the first query doesn't pay
+    # the ONNX session construction cost.
+    try:
+        from fastembed import TextEmbedding
+        cfg = _load_cfg()
+        _embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
+        print("[dashboard] embedder ready", flush=True)
+    except Exception as e:
+        print(f"[dashboard] embedder unavailable: {e}", flush=True)
     yield
+
+
+def _get_embedder(cfg: dict):
+    """Return the module-level fastembed singleton, creating it on first call."""
+    global _embedder
+    if _embedder is None:
+        from fastembed import TextEmbedding
+        _embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
+    return _embedder
 
 
 app = FastAPI(title="KVForge Dashboard", lifespan=_lifespan)
@@ -243,6 +267,68 @@ def get_config():
     }
 
 
+def _check_qdrant(cfg: dict) -> dict:
+    url = cfg.get("qdrant_url", "http://localhost:6333")
+    try:
+        t0 = time.time()
+        r = httpx.get(f"{url}/healthz", timeout=2)
+        ms = int((time.time() - t0) * 1000)
+        return {"ok": r.status_code == 200, "latency_ms": ms}
+    except Exception as exc:
+        return {"ok": False, "latency_ms": -1, "error": str(exc)}
+
+
+def _check_gpu() -> dict:
+    try:
+        out = _sp.check_output(
+            ["nvidia-smi", "--query-gpu=name,utilization.gpu,memory.used,memory.total",
+             "--format=csv,noheader,nounits"],
+            stderr=_sp.DEVNULL, timeout=3, text=True,
+        ).strip().splitlines()[0]
+        name, util, used, total = [x.strip() for x in out.split(",")]
+        return {"ok": True, "name": name, "util_pct": int(util),
+                "mem_used_mib": int(used), "mem_total_mib": int(total)}
+    except Exception:
+        return {"ok": False}
+
+
+def _check_llm() -> dict:
+    loaded = _model_loader is not None
+    return {"ok": True, "loaded": loaded}
+
+
+_ERROR_HINTS: list[tuple[str, str]] = [
+    ("No module named pypdf",          "Install missing package: pip install pypdf"),
+    ("No module named pdfplumber",     "Install missing package: pip install pdfplumber pymupdf"),
+    ("No module named fastembed",      "Install missing package: pip install fastembed"),
+    ("No module named qdrant_client",  "Install missing package: pip install qdrant-client"),
+    ("CUDA out of memory",             "GPU out of memory — reduce batch size or chunk count, or restart to free VRAM"),
+    ("Connection refused",             "Service unreachable — check Qdrant is running (port 6333) and config URL is correct"),
+    ("401",                            "Authentication error — check your HF_TOKEN or API key is set correctly"),
+    ("BaseModelOutputWithPooling",     "CLIP embedder type mismatch — embeddings/clip_embedder.py needs the pooler_output fix"),
+    ("AutoModelForCausalLM",           "Wrong model class for LLaVA — use LlavaForConditionalGeneration in core/multimodal_loader.py"),
+    ("collection already exists",      "Collection 409 conflict — delete the existing empty collection: curl -X DELETE http://localhost:6333/collections/<name>"),
+]
+
+
+@app.get("/api/connectivity")
+def get_connectivity():
+    cfg = _load_cfg()
+    return {
+        "qdrant": _check_qdrant(cfg),
+        "gpu": _check_gpu(),
+        "llm": _check_llm(),
+    }
+
+
+@app.get("/api/error-hint")
+def get_error_hint(msg: str = ""):
+    for pattern, hint in _ERROR_HINTS:
+        if pattern.lower() in msg.lower():
+            return {"hint": hint, "severity": "error"}
+    return {"hint": None, "severity": None}
+
+
 @app.get("/api/access-report")
 def get_access_report():
     rp = Path("access_report.json")
@@ -274,11 +360,7 @@ def get_coverage(top_k: int = 5):
         return JSONResponse({"error": "faqs.json is empty"}, status_code=404)
 
     try:
-        from fastembed import TextEmbedding
-        embedder = TextEmbedding(
-            model_name=cfg.get("embed_model", "BAAI/bge-small-en-v1.5"),
-            show_download_progress=False,
-        )
+        embedder = _get_embedder(cfg)
         store = _get_store()
         collection = cfg["collection"]
         matches = {}
@@ -327,11 +409,15 @@ class ModelBConfigRequest(BaseModel):
     provider: Literal["gemini", "openai", "claude"]
     model: str
     api_key: str
+    base_url: str = ""   # optional override for OpenAI-compatible endpoints
 
 @app.post("/api/set_model_b_config")
 def set_model_b_config(req: ModelBConfigRequest):
     global _model_b_config
-    _model_b_config = {"provider": req.provider, "model": req.model, "api_key": req.api_key}
+    _model_b_config = {
+        "provider": req.provider, "model": req.model,
+        "api_key": req.api_key, "base_url": req.base_url,
+    }
     return {"ok": True}
 
 
@@ -353,17 +439,22 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
     gate_info = {}
     try:
         import torch
-        ver.init(cfg)
-        _kv_background.start(cfg)
-
-        phase = ver.get_phase()
+        # ver.init() and _kv_background.start() are already called at startup
+        # in _lifespan; calling them per-query acquires locks for no benefit.
+        version_data = ver.load()
+        phase = version_data.get("phase", 1)
         vllm_url = cfg.get("vllm_url")
 
         # ── vLLM path: fast generation via dedicated inference server ──────
-        # When vllm_url is set, all generation (Phase 3 parametric and
-        # Phase 1/2 text-in-context) is routed to the vLLM server.
-        # KV injection (Phase 2) falls back to the local model if vLLM is up;
-        # if the vLLM server is not reachable the local model is used instead.
+        # Probe vLLM before committing — if the server is down we fall through
+        # to the local HF transformers path below.
+        if vllm_url:
+            try:
+                httpx.get(f"{vllm_url}/health", timeout=2)
+            except Exception as _ve:
+                _log(tag, f"vLLM unreachable ({vllm_url}): {_ve} — falling back to local HF path")
+                vllm_url = None
+
         if vllm_url:
             import core.vllm_client as _vllm
             import numpy as _np
@@ -379,18 +470,14 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
             # For Phase 3 seed per_query_prs with the latest global PRS so the
             # AB eval report shows a meaningful score instead of 0.0.
             if use_parametric:
-                _v = ver.load()
-                _hist = _v.get("prs_history", [])
+                _hist = version_data.get("prs_history", [])
                 if _hist:
                     per_query_prs = float(_hist[-1].get("prs", 0.0))
 
             if not use_parametric and phase >= 2:
-                version_data = ver.load()
                 known_good = version_data.get("known_good_queries", [])
                 if known_good:
-                    from fastembed import TextEmbedding as _TEprs
-                    _q_emb = list(_TEprs(model_name=cfg["embed_model"],
-                                         show_download_progress=False).embed([query]))[0]
+                    _q_emb = list(_get_embedder(cfg).embed([query]))[0]
                     _nq = float(_np.linalg.norm(_q_emb))
                     if _nq > 1e-9:
                         sims = [
@@ -434,11 +521,9 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
                         "prs_score": round(per_query_prs, 4)}
 
             # Phase 1/2 with vLLM: retrieve then generate
-            from fastembed import TextEmbedding
-            from vectorstore.registry import get_store as _gs
             cfg_a = dict(cfg, top_k=params.a_top_k)
-            embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
-            store = _gs(cfg)
+            embedder = _get_embedder(cfg)
+            store = _get_store()
             _log(tag, "embedding query…")
             q_vec = list(embedder.embed([query]))[0].tolist()
             t_ret = time.time()
@@ -473,7 +558,7 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
         else:
             # ── Local HF transformers path (fallback when vLLM not configured) ─
             _model_loader.init(cfg)
-            lora_ckpt = ver.load().get("checkpoint_path")
+            lora_ckpt = version_data.get("checkpoint_path")
             model, tokenizer = _model_loader.load(lora_ckpt)
             # model is already in the correct dtype (fp16 or quantized)
 
@@ -508,13 +593,12 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
                         "chunks": [], "mode": mode, "gate": {}}
 
             # ── Phase 1/2: retrieval pipeline ────────────────────────────────
-            from fastembed import TextEmbedding
             from pipeline.bedrock_rag import _run_search, Config
             cfg_a = dict(cfg, top_k=params.a_top_k)
 
             _log(tag, "embedding query…")
-            embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
-            store_b = _gs(cfg_a)
+            embedder = _get_embedder(cfg)
+            store_b = _get_store()
             rag_cfg = Config(**{k: cfg_a[k] for k in Config.__dataclass_fields__ if k in cfg_a})
 
             _log(tag, "searching Qdrant…")
@@ -579,10 +663,8 @@ def _answer_gemini(query: str, cfg: dict, params: QueryRequest) -> dict:
     generation_ms = 0
     thinking = ""
     try:
-        from fastembed import TextEmbedding
-
         _log(tag, "embedding query…")
-        embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
+        embedder = _get_embedder(cfg)
         q_vec = list(embedder.embed([query]))[0].tolist()
 
         _log(tag, "searching vector store…")
@@ -684,10 +766,8 @@ def _answer_claude(query: str, cfg: dict, params: QueryRequest) -> dict:
     generation_ms = 0
     answer = ""
     try:
-        from fastembed import TextEmbedding
-
         _log(tag, "embedding query…")
-        embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
+        embedder = _get_embedder(cfg)
         q_vec = list(embedder.embed([query]))[0].tolist()
 
         _log(tag, "searching vector store…")
@@ -775,10 +855,8 @@ def _answer_openai(query: str, cfg: dict, params: QueryRequest) -> dict:
     generation_ms = 0
     answer = ""
     try:
-        from fastembed import TextEmbedding
-
         _log(tag, "embedding query…")
-        embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
+        embedder = _get_embedder(cfg)
         q_vec = list(embedder.embed([query]))[0].tolist()
 
         _log(tag, "searching vector store…")
@@ -810,11 +888,13 @@ def _answer_openai(query: str, cfg: dict, params: QueryRequest) -> dict:
             f"Cite sources as [page N].\n\nContext:\n{context}\n\nQuestion: {query}"
         )
 
-        # call OpenAI REST API
+        # call OpenAI-compatible REST API (base_url can be a full chat/completions URL
+        # or a base like https://api.openai.com/v1 — we append /chat/completions if needed)
         api_key = _model_b_config.get("api_key") or ""
         model = _model_b_config.get("model", "gpt-4o")
-        url = "https://api.openai.com/v1/chat/completions"
-        _log(tag, f"calling OpenAI API ({model}, timeout=90s)…")
+        _base = (_model_b_config.get("base_url") or "https://api.openai.com/v1").rstrip("/")
+        url = _base if _base.endswith("/chat/completions") else f"{_base}/chat/completions"
+        _log(tag, f"calling OpenAI-compat API ({model} @ {url}, timeout=90s)…")
         t_gen = time.time()
         resp = httpx.post(
             url,
@@ -927,6 +1007,7 @@ async def update_cost_rate(body: dict):
 DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><title>KVForge Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <style>
   body { font-family: monospace; background:#111; color:#eee; padding:20px; }
   h1 { color:#7af; }
@@ -1011,6 +1092,39 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .chunk-text-body { background:#111; padding:12px; border-radius:4px; font-size:0.88em; white-space:pre-wrap; word-break:break-word; color:#dde; line-height:1.5; }
   .heatmap-legend { display:flex; gap:14px; margin:8px 0 12px; font-size:0.82em; align-items:center; }
   .legend-dot { display:inline-block; width:14px; height:14px; border-radius:2px; vertical-align:middle; margin-right:4px; }
+  /* Phase stepper */
+  .phase-stepper { display:flex; align-items:center; margin:12px 0 18px; }
+  .ps-node { display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .ps-circle {
+    width:40px; height:40px; border-radius:50%; border:2px solid #333;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:13px; color:#555; background:#1a1a1a;
+    transition:all 0.5s ease;
+  }
+  .ps-circle.done { border-color:#27a; color:#27a; background:#0d1f2d; }
+  .ps-circle.active {
+    border-color:#7af; color:#7af; background:#0d1a2a;
+    box-shadow:0 0 14px #27a888; animation:ps-pulse 2s infinite;
+  }
+  @keyframes ps-pulse { 0%,100%{box-shadow:0 0 8px #27a8} 50%{box-shadow:0 0 20px #27af} }
+  .ps-label { font-size:9px; color:#555; text-transform:uppercase; letter-spacing:.08em; }
+  .ps-label.done { color:#27a; }
+  .ps-label.active { color:#7af; }
+  .ps-line { flex:1; height:2px; background:#222; margin:0 6px; margin-bottom:14px;
+             position:relative; overflow:hidden; min-width:30px; }
+  .ps-line-fill { height:100%; background:#27a; width:0%; transition:width 1s ease; }
+  /* PRS chart container */
+  .prs-chart-wrap { position:relative; height:160px; margin:10px 0; }
+  /* Flywheel */
+  .fw-summary { display:flex; gap:20px; flex-wrap:wrap; margin:8px 0 12px; }
+  .fw-kv { display:flex; flex-direction:column; gap:2px; }
+  .fw-kv-label { font-size:9px; color:#666; text-transform:uppercase; letter-spacing:.07em; }
+  .fw-kv-val { font-size:1.3em; font-weight:700; color:#7af; }
+  .fw-chart-wrap { position:relative; height:140px; margin:8px 0; }
+  .fw-table { width:100%; border-collapse:collapse; font-size:0.82em; margin-top:10px; }
+  .fw-table th { color:#7af; border-bottom:1px solid #333; padding:4px 8px; text-align:left; }
+  .fw-table td { border-bottom:1px solid #1a1a1a; padding:4px 8px; color:#ccc; }
+  .fw-table tr:hover td { background:#1a1a1a; }
 </style>
 </head>
 <body>
@@ -1070,6 +1184,47 @@ PRS = 0.5 × Accuracy
 </div>
 
 <h1>KVForge Dashboard</h1>
+
+<!-- Phase Progression -->
+<div class="card" id="phase-stepper-card">
+  <b>Phase Progression</b>
+  <span class="help-btn" onclick="openPrsModal()">?</span>
+  <div class="phase-stepper" id="phase-stepper">
+    <div class="ps-node">
+      <div class="ps-circle" id="ps1">1</div>
+      <div class="ps-label" id="ps1-lbl">Text RAG</div>
+    </div>
+    <div class="ps-line"><div class="ps-line-fill" id="ps-line1"></div></div>
+    <div class="ps-node">
+      <div class="ps-circle" id="ps2">2</div>
+      <div class="ps-label" id="ps2-lbl">KV Inject</div>
+    </div>
+    <div class="ps-line"><div class="ps-line-fill" id="ps-line2"></div></div>
+    <div class="ps-node">
+      <div class="ps-circle" id="ps3">3</div>
+      <div class="ps-label" id="ps3-lbl">Parametric</div>
+    </div>
+  </div>
+  <div style="font-size:0.82em;color:#888;margin-bottom:8px;">PRS History</div>
+  <div class="prs-chart-wrap"><canvas id="prs-chart"></canvas></div>
+</div>
+
+<!-- Flywheel Analytics -->
+<div class="card" id="flywheel-card">
+  <b>Flywheel Analytics</b>
+  <div class="fw-summary">
+    <div class="fw-kv"><div class="fw-kv-label">Rounds</div><div class="fw-kv-val" id="fw-rounds">—</div></div>
+    <div class="fw-kv"><div class="fw-kv-label">Last PRS</div><div class="fw-kv-val" id="fw-last-prs">—</div></div>
+    <div class="fw-kv"><div class="fw-kv-label">Est. Cost</div><div class="fw-kv-val" id="fw-cost">—</div></div>
+    <div class="fw-kv"><div class="fw-kv-label">ETA Phase 3</div><div class="fw-kv-val" id="fw-eta">—</div></div>
+  </div>
+  <div class="fw-chart-wrap"><canvas id="flywheel-chart"></canvas></div>
+  <table class="fw-table" id="fw-table">
+    <thead><tr><th>Round</th><th>PRS</th><th>Phase</th><th>Cost ($)</th></tr></thead>
+    <tbody id="fw-tbody"></tbody>
+  </table>
+</div>
+
 <div id="root">Loading…</div>
 
 <!-- FAQ Coverage Heatmap -->
@@ -1162,6 +1317,10 @@ PRS = 0.5 × Accuracy
         <label>API Key <span id="api-key-warning" style="color:#f87171;font-size:0.8em;display:none">⚠ required</span></label>
         <input id="b_api_key" type="password" placeholder="Paste API key…" oninput="onApiKeyInput()"/>
       </div>
+      <div class="param-group" id="base-url-group" style="display:none">
+        <label>Base URL <span style="color:#888;font-size:0.8em">(OpenAI-compatible)</span></label>
+        <input id="b_base_url" type="text" placeholder="http://localhost:8090/v1" oninput="saveAndSyncModelB()"/>
+      </div>
       <div class="param-group">
         <label>Max output tokens</label>
         <input id="b_max_output_tokens" type="number" min="128" max="65536" value="4096"/>
@@ -1233,13 +1392,17 @@ function saveAndSyncModelB() {
   const provider = document.getElementById('b_provider').value;
   const model = document.getElementById('b_model').value;
   const apiKey = document.getElementById('b_api_key').value;
+  const baseUrl = (document.getElementById('b_base_url') || {}).value || '';
   localStorage.setItem('modelb_provider', provider);
   localStorage.setItem(`modelb_${provider}_model`, model);
   localStorage.setItem(`modelb_${provider}_key`, apiKey);
+  localStorage.setItem(`modelb_${provider}_base_url`, baseUrl);
+  const baseUrlGroup = document.getElementById('base-url-group');
+  if (baseUrlGroup) baseUrlGroup.style.display = provider === 'openai' ? '' : 'none';
   fetch('/api/set_model_b_config', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({provider, model, api_key: apiKey}),
+    body: JSON.stringify({provider, model, api_key: apiKey, base_url: baseUrl}),
   }).catch(e => console.error('[ModelB config sync failed]', e));
   const label = PROVIDER_LABELS[provider] || provider;
   document.getElementById('label-b').textContent = `Answer B — ${label} RAG`;
@@ -1280,6 +1443,11 @@ async function loadConfig() {
     document.getElementById('api-key-warning').style.display = 'inline';
     document.getElementById('b_api_key').style.borderColor = '#f87171';
   }
+  const savedBaseUrl = localStorage.getItem(`modelb_${savedProvider}_base_url`) || '';
+  const baseUrlInput = document.getElementById('b_base_url');
+  if (baseUrlInput) baseUrlInput.value = savedBaseUrl;
+  const baseUrlGroup = document.getElementById('base-url-group');
+  if (baseUrlGroup) baseUrlGroup.style.display = savedProvider === 'openai' ? '' : 'none';
   saveAndSyncModelB();
   try {
     const cfg = await fetch('/api/config').then(r => r.json());
@@ -1300,6 +1468,53 @@ async function loadConfig() {
 
 let _prsHistory = [];
 let _topChunks = [];
+let _prsChart = null;
+
+function renderPhaseStepper(phase) {
+  [1,2,3].forEach(function(n) {
+    var circle = document.getElementById('ps'+n);
+    var label = document.getElementById('ps'+n+'-lbl');
+    if (!circle) return;
+    circle.className = 'ps-circle' + (n < phase ? ' done' : n === phase ? ' active' : '');
+    label.className = 'ps-label' + (n < phase ? ' done' : n === phase ? ' active' : '');
+  });
+  var l1 = document.getElementById('ps-line1');
+  var l2 = document.getElementById('ps-line2');
+  if (l1) l1.style.width = phase >= 2 ? '100%' : '0%';
+  if (l2) l2.style.width = phase >= 3 ? '100%' : '0%';
+}
+
+function renderPrsChart(history) {
+  var canvas = document.getElementById('prs-chart');
+  if (!canvas || typeof Chart === 'undefined') return;
+  var labels = history.map(function(h) { return 'Rnd ' + h.round; });
+  var vals   = history.map(function(h) { return h.prs; });
+  if (_prsChart) { _prsChart.destroy(); _prsChart = null; }
+  _prsChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'PRS', data: vals,
+        borderColor: '#27a', backgroundColor: 'rgba(34,119,170,0.12)',
+        pointBackgroundColor: '#7af', tension: 0.35, fill: true,
+      }]
+    },
+    options: {
+      animation: { duration: 600 },
+      scales: {
+        y: { min: 0, max: 1, ticks: { color: '#888', stepSize: 0.25 },
+             grid: { color: '#222' } },
+        x: { ticks: { color: '#888' }, grid: { color: '#222' } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: function(ctx) { return 'PRS: ' + ctx.parsed.y.toFixed(3); } } }
+      },
+      responsive: true, maintainAspectRatio: false,
+    }
+  });
+}
 
 function openTopChunkModal(idx) {
   const c = _topChunks[idx];
@@ -1321,6 +1536,8 @@ async function load(){
     [fetch('/api/stats').then(r=>r.json()), fetch('/api/version').then(r=>r.json())]
   );
   _prsHistory = ver.prs_history || [];
+  renderPhaseStepper(ver.phase || 1);
+  renderPrsChart(ver.prs_history || []);
   _topChunks = stats.top_chunks || [];
   const tc = stats.tier_counts;
   document.getElementById('root').innerHTML = `
@@ -1343,26 +1560,6 @@ async function load(){
             title="Click to view full chunk text"
             onclick="openTopChunkModal(${i})">${c.text_preview}</td></tr>`).join('')}
       </table>
-    </div>
-    <div class="card">
-      <b>PRS history</b>
-      <span class="help-btn" onclick="openPrsModal()">?</span>
-      <div style="margin-top:8px">
-      ${(ver.prs_history||[]).length === 0 ? '<span style="color:#666">No data yet — run prs_evaluator.py to generate scores</span>' :
-        (ver.prs_history||[]).map(r => {
-          const pct = Math.round((r.prs||0)*100);
-          const col = pct >= 80 ? '#4d4' : pct >= 75 ? '#fa7' : '#f77';
-          return `<div style="margin:4px 0">
-            <span style="color:#888;font-size:0.85em">Round ${r.round}</span>
-            <span style="color:${col};font-weight:bold;margin:0 8px">${(r.prs||0).toFixed(4)}</span>
-            <div class="prs-bar-wrap" style="display:inline-block;width:160px;vertical-align:middle">
-              <div class="prs-bar" style="width:${pct}%;background:${col}"></div>
-            </div>
-            <span style="color:#666;font-size:0.8em;margin-left:6px">${pct}%</span>
-          </div>`;
-        }).join('')
-      }
-      </div>
     </div>`;
 }
 
@@ -1554,9 +1751,56 @@ function closeChunkModal() {
   document.getElementById('chunk-modal').classList.remove('open');
 }
 
+let _fwChart = null;
+
+function loadFlywheel() {
+  fetch('/api/flywheel').then(function(r) { return r.json(); }).then(function(data) {
+    if (data.error) return;
+    document.getElementById('fw-rounds').textContent = data.rounds_completed != null ? data.rounds_completed : '—';
+    document.getElementById('fw-last-prs').textContent = data.last_prs != null ? data.last_prs.toFixed(3) : '—';
+    document.getElementById('fw-cost').textContent = data.estimated_cost_usd != null ? '$' + data.estimated_cost_usd.toFixed(4) : '—';
+    document.getElementById('fw-eta').textContent = data.eta_to_phase3 || '—';
+
+    var snapshots = data.round_snapshots || [];
+    var labels = snapshots.map(function(s) { return 'R' + s.round; });
+    var vals   = snapshots.map(function(s) { return s.prs; });
+    var colors = vals.map(function(v) { return v >= 0.75 ? '#2ecc71' : v >= 0.60 ? '#f39c12' : '#e74c3c'; });
+
+    if (_fwChart) { _fwChart.destroy(); _fwChart = null; }
+    var canvas = document.getElementById('flywheel-chart');
+    if (!canvas || typeof Chart === 'undefined') return;
+    _fwChart = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'PRS per Round', data: vals,
+          backgroundColor: colors, borderRadius: 3,
+        }]
+      },
+      options: {
+        animation: { duration: 500 },
+        scales: {
+          y: { min: 0, max: 1, ticks: { color: '#888', stepSize: 0.25 }, grid: { color: '#222' } },
+          x: { ticks: { color: '#888' }, grid: { display: false } }
+        },
+        plugins: { legend: { display: false } },
+        responsive: true, maintainAspectRatio: false,
+      }
+    });
+
+    var tbody = document.getElementById('fw-tbody');
+    tbody.innerHTML = snapshots.map(function(s) {
+      return '<tr><td>' + s.round + '</td><td>' + (s.prs != null ? s.prs.toFixed(3) : '—') + '</td><td>' + (s.phase || '—') + '</td><td>' + (s.cost_usd != null ? '$' + s.cost_usd.toFixed(4) : '—') + '</td></tr>';
+    }).join('');
+  }).catch(function() {});
+}
+
 loadConfig();
 load();
+loadFlywheel();
 setInterval(load, 30000);
+setInterval(loadFlywheel, 60000);
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('qinput').addEventListener('keydown', e => {

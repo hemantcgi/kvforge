@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Activity Logs — KVForge Studio</title>
+<style>
+:root {
+  --bg-page:#F7F8F9;--bg-surface:#FFFFFF;--bg-sunken:#F1F2F4;--bg-input:#FFFFFF;
+  --bg-sidebar:#FFFFFF;--bg-active:#E9F2FF;--bg-hover:#F7F8F9;--bg-topbar:#0052CC;
+  --border:#DFE1E6;--border-focus:#4C9AFF;
+  --text-primary:#172B4D;--text-secondary:#626F86;--text-subtle:#8590A2;--text-disabled:#C7D1DB;
+  --accent:#0052CC;--accent-hover:#0065FF;
+  --success:#22A06B;--danger:#DE350B;--warning:#FF991F;
+  --shadow-sm:0 1px 3px rgba(9,30,66,0.12),0 0 1px rgba(9,30,66,0.08);
+  --shadow-md:0 3px 8px rgba(9,30,66,0.1),0 0 1px rgba(9,30,66,0.1);
+  --topbar-text:#FFFFFF;--topbar-muted:rgba(255,255,255,0.7);
+}
+[data-theme="dark"] {
+  --bg-page:#1D2125;--bg-surface:#22272B;--bg-sunken:#161A1D;--bg-input:#22272B;
+  --bg-sidebar:#22272B;--bg-active:#1C3353;--bg-hover:#2C333A;--bg-topbar:#161A1D;
+  --border:#3B4651;--border-focus:#579DFF;
+  --text-primary:#C7D1DB;--text-secondary:#8C9BAB;--text-subtle:#596773;--text-disabled:#3B4651;
+  --accent:#579DFF;--accent-hover:#85B8FF;
+  --success:#4BCE97;--danger:#F87462;--warning:#F5CD47;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.4);--shadow-md:0 3px 8px rgba(0,0,0,0.4);
+  --topbar-text:#C7D1DB;--topbar-muted:#596773;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;
+  line-height:1.5;background:var(--bg-page);color:var(--text-primary);
+  display:flex;flex-direction:column;transition:background .2s,color .2s;}
+
+/* TOPBAR */
+.topbar{height:48px;flex-shrink:0;z-index:200;background:var(--bg-topbar);display:flex;
+  align-items:center;padding:0 16px;gap:12px;border-bottom:1px solid rgba(0,0,0,0.15);}
+.topbar-brand{font-size:15px;font-weight:800;color:var(--topbar-text);letter-spacing:-.3px;
+  display:flex;align-items:center;gap:7px;cursor:pointer;}
+.logo-sq{width:24px;height:24px;border-radius:5px;background:rgba(255,255,255,0.25);
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;}
+.topbar-tag{font-size:10px;color:var(--topbar-muted);background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.2);border-radius:3px;padding:1px 6px;font-weight:600;}
+.topbar-sp{flex:1;}
+.topbar-btn{font-size:13px;color:var(--topbar-text);background:transparent;border:none;
+  cursor:pointer;padding:5px 9px;border-radius:4px;transition:background .15s;}
+.topbar-btn:hover{background:rgba(255,255,255,0.12);}
+.profile-wrap{position:relative;}
+.profile-menu{position:absolute;top:calc(100% + 8px);right:0;background:#fff;
+  border:1px solid #DFE1E6;border-radius:8px;box-shadow:0 8px 24px rgba(9,30,66,0.15);
+  min-width:220px;z-index:1000;overflow:hidden;display:none;}
+.profile-menu.open{display:block;}
+.profile-menu-header{padding:12px 16px 10px;border-bottom:1px solid #DFE1E6;}
+.pm-name{font-size:13px;font-weight:700;color:#172B4D;}
+.pm-email{font-size:12px;color:#626F86;margin-top:1px;}
+.profile-menu-item{display:block;padding:9px 16px;font-size:13px;color:#172B4D;
+  cursor:pointer;transition:background .1s;text-decoration:none;}
+.profile-menu-item:hover{background:#F7F8F9;}
+.pm-signout{color:#DE350B;}
+.pm-signout:hover{background:#FFEBE6 !important;}
+.profile-menu-sep{height:1px;background:#DFE1E6;margin:4px 0;}
+
+/* SHELL */
+.shell{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:220px;flex-shrink:0;background:var(--bg-sidebar);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;transition:width .22s cubic-bezier(0.4,0,0.2,1);
+  overflow:hidden;position:relative;z-index:100;}
+.sidebar.collapsed{width:48px;}
+.sidebar-toggle{position:absolute;right:-12px;top:20px;width:24px;height:24px;border-radius:50%;
+  background:var(--bg-surface);border:1px solid var(--border);color:var(--text-secondary);
+  cursor:pointer;z-index:101;display:flex;align-items:center;justify-content:center;
+  font-size:10px;box-shadow:var(--shadow-sm);transition:all .15s;}
+.sidebar-toggle:hover{background:var(--bg-active);color:var(--accent);}
+.sidebar-section-title{font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--text-subtle);padding:16px 14px 6px;
+  white-space:nowrap;overflow:hidden;transition:opacity .15s;}
+.sidebar.collapsed .sidebar-section-title{opacity:0;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:7px 12px;cursor:pointer;
+  border-radius:4px;margin:1px 6px;font-size:13px;color:var(--text-secondary);
+  transition:background .12s,color .12s;white-space:nowrap;overflow:hidden;}
+.nav-item:hover{background:var(--bg-hover);color:var(--text-primary);}
+.nav-item.active{background:var(--bg-active);color:var(--accent);font-weight:600;
+  border-left:2px solid var(--accent);margin-left:4px;padding-left:10px;}
+.nav-icon{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.nav-label{flex:1;overflow:hidden;text-overflow:ellipsis;transition:opacity .15s;}
+.sidebar.collapsed .nav-label{opacity:0;width:0;}
+.sidebar.collapsed .nav-item{justify-content:center;padding:7px 0;margin:1px 4px;}
+.sidebar.collapsed .nav-item.active{border-left:2px solid var(--accent);margin-left:4px;padding-left:0;}
+.sidebar-divider{height:1px;background:var(--border);margin:8px 0;}
+.sidebar-footer{margin-top:auto;padding:12px 10px;border-top:1px solid var(--border);}
+.sidebar-version{font-size:10px;color:var(--text-subtle);padding:4px 8px;white-space:nowrap;
+  overflow:hidden;transition:opacity .15s;}
+.sidebar.collapsed .sidebar-version{opacity:0;}
+.nav-sub{padding-left:28px;}
+.sidebar.collapsed .nav-sub{padding-left:0;}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;}
+.main-inner{padding:24px 32px 60px;max-width:1280px;}
+.page-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;}
+.page-title{font-size:20px;font-weight:700;color:var(--text-primary);}
+.page-sub{font-size:13px;color:var(--text-secondary);margin-top:2px;}
+
+/* METRIC TILES */
+.metrics-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.metric-tile{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;
+  padding:14px 18px;box-shadow:var(--shadow-sm);}
+.mt-val{font-size:26px;font-weight:700;color:var(--text-primary);line-height:1;}
+.mt-label{font-size:11px;color:var(--text-secondary);margin-top:4px;}
+.mt-sub{font-size:10px;color:var(--text-subtle);margin-top:2px;}
+.mt-blue .mt-val{color:var(--accent);}
+.mt-green .mt-val{color:var(--success);}
+.mt-orange .mt-val{color:var(--warning);}
+.mt-red .mt-val{color:var(--danger);}
+
+/* CHARTS ROW */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:20px;}
+.chart-panel{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;
+  padding:14px 18px;box-shadow:var(--shadow-sm);}
+.chart-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--text-subtle);margin-bottom:12px;}
+svg.timeline-chart{width:100%;height:120px;display:block;overflow:visible;}
+svg.cat-chart{width:100%;height:120px;display:block;overflow:visible;}
+
+/* FILTER BAR */
+.filter-bar{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;
+  padding:12px 16px;margin-bottom:16px;box-shadow:var(--shadow-sm);
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.filter-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--text-subtle);white-space:nowrap;}
+.cat-pills{display:flex;gap:5px;flex-wrap:wrap;}
+.cat-pill{padding:4px 10px;border-radius:12px;border:1px solid var(--border);
+  background:var(--bg-sunken);color:var(--text-secondary);font-size:11px;font-weight:600;
+  cursor:pointer;transition:all .15s;user-select:none;}
+.cat-pill:hover{border-color:var(--accent);color:var(--accent);}
+.cat-pill.active{border-color:var(--accent);background:var(--bg-active);color:var(--accent);}
+.cat-pill.cp-pipeline.active{border-color:#0052CC;background:#EAF2FF;color:#0052CC;}
+.cat-pill.cp-resource.active{border-color:#00875A;background:#E3FCEF;color:#00875A;}
+.cat-pill.cp-auth.active{border-color:#6554C0;background:#EAE6FF;color:#6554C0;}
+.cat-pill.cp-system.active{border-color:#505F79;background:#F1F2F4;color:#505F79;}
+.cat-pill.cp-connector.active{border-color:#BF2600;background:#FFEBE6;color:#BF2600;}
+.filter-sep{width:1px;height:24px;background:var(--border);flex-shrink:0;}
+.filter-select{background:var(--bg-input);border:1px solid var(--border);border-radius:5px;
+  padding:5px 8px;font-size:12px;color:var(--text-primary);cursor:pointer;}
+.filter-select:focus{outline:none;border-color:var(--border-focus);}
+.filter-search{flex:1;min-width:160px;background:var(--bg-input);border:1px solid var(--border);
+  border-radius:5px;padding:5px 10px;font-size:12px;color:var(--text-primary);}
+.filter-search:focus{outline:none;border-color:var(--border-focus);}
+.btn-refresh{background:var(--bg-sunken);border:1px solid var(--border);border-radius:5px;
+  padding:5px 12px;font-size:11px;font-weight:600;color:var(--text-secondary);cursor:pointer;}
+.btn-refresh:hover{border-color:var(--accent);color:var(--accent);}
+.btn-export{background:transparent;border:1px solid var(--border);border-radius:5px;
+  padding:5px 12px;font-size:11px;font-weight:600;color:var(--text-secondary);cursor:pointer;}
+.btn-export:hover{border-color:var(--accent);color:var(--accent);}
+
+/* LOG TABLE */
+.log-panel{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;
+  overflow:hidden;box-shadow:var(--shadow-sm);}
+.log-table-hd{display:grid;grid-template-columns:160px 64px 100px 140px 1fr 80px;
+  gap:0;padding:8px 16px;border-bottom:2px solid var(--border);
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-subtle);}
+.log-row{display:grid;grid-template-columns:160px 64px 100px 140px 1fr 80px;
+  gap:0;padding:9px 16px;border-bottom:1px solid var(--border);
+  font-size:12px;align-items:center;cursor:pointer;transition:background .1s;}
+.log-row:hover{background:var(--bg-hover);}
+.log-row.expanded{background:var(--bg-sunken);}
+.log-row:last-child{border-bottom:none;}
+.log-ts{font-size:11px;color:var(--text-secondary);font-family:monospace;}
+.log-sev{display:inline-flex;align-items:center;justify-content:center;}
+.sev-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;letter-spacing:.04em;white-space:nowrap;}
+.sev-info{background:#EAF2FF;color:#0052CC;}
+.sev-success{background:#E3FCEF;color:#006644;}
+.sev-warning{background:#FFF7D6;color:#974F0C;}
+.sev-error{background:#FFEBE6;color:#BF2600;}
+.log-cat{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-subtle);}
+.cat-pipeline{color:#0052CC;}
+.cat-resource{color:#00875A;}
+.cat-auth{color:#6554C0;}
+.cat-system{color:#505F79;}
+.cat-connector{color:#BF2600;}
+.log-action{font-size:10px;font-family:monospace;color:var(--text-subtle);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.log-msg{color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.log-uc{font-size:10px;font-family:monospace;background:var(--bg-sunken);padding:2px 6px;
+  border-radius:3px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.log-detail-row{background:var(--bg-sunken);border-bottom:1px solid var(--border);
+  padding:12px 16px 12px 176px;display:none;}
+.log-detail-row.open{display:block;}
+.log-detail-pre{font-size:11px;font-family:monospace;color:var(--text-secondary);
+  white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto;}
+.log-empty{padding:40px;text-align:center;color:var(--text-subtle);font-size:13px;}
+.log-loading{padding:40px;text-align:center;color:var(--text-subtle);}
+.result-count{font-size:11px;color:var(--text-subtle);margin-bottom:8px;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand" onclick="location.href='/studio'">
+    <div class="logo-sq">K</div>
+    KVForge Studio
+    <span class="topbar-tag">v2.1</span>
+  </div>
+  <div class="topbar-sp"></div>
+  <button class="topbar-btn" onclick="toggleTheme()" title="Toggle theme">☀</button>
+  <div class="profile-wrap">
+    <button class="topbar-btn" id="profile-btn" onclick="toggleProfileMenu()">👤 ▾</button>
+    <div class="profile-menu" id="profile-menu">
+      <div class="profile-menu-header">
+        <div class="pm-name" id="pm-name">—</div>
+        <div class="pm-email" id="pm-email">—</div>
+      </div>
+      <a class="profile-menu-item" href="/studio/settings">⚙ Profile &amp; Settings</a>
+      <div class="profile-menu-sep"></div>
+      <a class="profile-menu-item pm-signout" href="/auth/logout">↩ Sign Out</a>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()">‹</button>
+
+    <div class="sidebar-section-title">Navigation</div>
+    <div class="nav-item" onclick="location.href='/studio'">
+      <div class="nav-icon">🗂</div>
+      <span class="nav-label">Dashboard</span>
+    </div>
+
+    <div class="sidebar-section-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding-right:10px" onclick="location.href='/studio/resources'" title="Resource Providers">Resources <span style="font-size:9px;opacity:.6">›</span></div>
+    <div class="nav-item nav-sub" onclick="location.href='/studio/resources'">
+      <div class="nav-icon">🔌</div>
+      <span class="nav-label">Resource Providers</span>
+    </div>
+    <div class="nav-item nav-sub" onclick="location.href='/studio/connectors'">
+      <div class="nav-icon">🔗</div>
+      <span class="nav-label">Data Connectors</span>
+    </div>
+
+    <div class="sidebar-section-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding-right:10px" onclick="location.href='/studio/settings'" title="Settings">Config <span style="font-size:9px;opacity:.6">›</span></div>
+    <div class="nav-item" onclick="location.href='/studio/settings'">
+      <div class="nav-icon">⚙</div>
+      <span class="nav-label">Settings</span>
+    </div>
+    <div class="nav-item active">
+      <div class="nav-icon">📋</div>
+      <span class="nav-label">Activity Logs</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/docs/demo-guides/'">
+      <div class="nav-icon">📖</div>
+      <span class="nav-label">Documentation</span>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-version">KVForge v2.1.0</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="main-inner">
+
+      <div class="page-header">
+        <div>
+          <div class="page-title">Activity Logs</div>
+          <div class="page-sub">All KVForge Studio events — pipeline runs, resource changes, auth, system</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span id="last-refresh-label" style="font-size:11px;color:var(--text-subtle)"></span>
+          <button class="btn-refresh" onclick="loadLogs()">↺ Refresh</button>
+          <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+        </div>
+      </div>
+
+      <!-- METRIC TILES -->
+      <div class="metrics-row">
+        <div class="metric-tile mt-blue">
+          <div class="mt-val" id="mt-total">—</div>
+          <div class="mt-label">Total Events</div>
+          <div class="mt-sub" id="mt-total-sub">all time</div>
+        </div>
+        <div class="metric-tile mt-green">
+          <div class="mt-val" id="mt-pipeline">—</div>
+          <div class="mt-label">Pipeline Runs</div>
+          <div class="mt-sub">index · KV · LoRA · PRS</div>
+        </div>
+        <div class="metric-tile mt-orange">
+          <div class="mt-val" id="mt-resource">—</div>
+          <div class="mt-label">Resource Events</div>
+          <div class="mt-sub">provider CRUD · tests</div>
+        </div>
+        <div class="metric-tile mt-red">
+          <div class="mt-val" id="mt-errors">—</div>
+          <div class="mt-label">Errors</div>
+          <div class="mt-sub" id="mt-errors-sub">warnings + errors</div>
+        </div>
+      </div>
+
+      <!-- CHARTS ROW -->
+      <div class="charts-row">
+        <div class="chart-panel">
+          <div class="chart-title">Event Timeline <span id="timeline-range-label" style="font-weight:400;text-transform:none;font-size:10px;color:var(--text-subtle)"></span></div>
+          <svg class="timeline-chart" id="timeline-svg" viewBox="0 0 600 120" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="chart-panel">
+          <div class="chart-title">By Category</div>
+          <svg class="cat-chart" id="cat-svg" viewBox="0 0 220 120" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+      </div>
+
+      <!-- FILTER BAR -->
+      <div class="filter-bar">
+        <span class="filter-label">Category</span>
+        <div class="cat-pills">
+          <div class="cat-pill cp-pipeline active" data-cat="pipeline" onclick="toggleCat(this)">Pipeline</div>
+          <div class="cat-pill cp-resource active" data-cat="resource" onclick="toggleCat(this)">Resource</div>
+          <div class="cat-pill cp-auth active" data-cat="auth" onclick="toggleCat(this)">Auth</div>
+          <div class="cat-pill cp-system active" data-cat="system" onclick="toggleCat(this)">System</div>
+          <div class="cat-pill cp-connector active" data-cat="connector" onclick="toggleCat(this)">Connector</div>
+        </div>
+        <div class="filter-sep"></div>
+        <select class="filter-select" id="sev-filter" onchange="loadLogs()">
+          <option value="">All severities</option>
+          <option value="error">Errors only</option>
+          <option value="error,warning">Errors + Warnings</option>
+          <option value="success">Success only</option>
+          <option value="info">Info only</option>
+        </select>
+        <select class="filter-select" id="range-filter" onchange="loadLogs()">
+          <option value="7">Last 7 days</option>
+          <option value="1">Today</option>
+          <option value="3">Last 3 days</option>
+          <option value="30">Last 30 days</option>
+          <option value="0">All time</option>
+        </select>
+        <input class="filter-search" id="search-input" placeholder="🔍  Search messages…"
+               oninput="clearTimeout(_searchTimer); _searchTimer=setTimeout(loadLogs, 350)">
+        <div class="filter-sep"></div>
+        <select class="filter-select" id="uc-filter" onchange="loadLogs()">
+          <option value="">All use cases</option>
+        </select>
+      </div>
+
+      <!-- LOG TABLE -->
+      <div class="result-count" id="result-count"></div>
+      <div class="log-panel" id="log-panel">
+        <div class="log-loading">Loading logs…</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ───────────────────────────────────────────────────────────────────
+let _allStats = {};
+let _logs = [];
+let _searchTimer;
+const _CAT_COLORS = {
+  pipeline:'#0052CC', resource:'#00875A', auth:'#6554C0',
+  system:'#505F79', connector:'#BF2600'
+};
+const _SEV_COLORS = {
+  info:'#0052CC', success:'#22A06B', warning:'#FF991F', error:'#DE350B'
+};
+
+// ── Sidebar / theme ──────────────────────────────────────────────────────────
+function toggleSidebar() {
+  const s = document.getElementById('sidebar');
+  const btn = document.getElementById('sidebar-toggle-btn');
+  s.classList.toggle('collapsed');
+  btn.textContent = s.classList.contains('collapsed') ? '›' : '‹';
+}
+function toggleTheme() {
+  const html = document.documentElement;
+  html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('kvforge-theme', html.dataset.theme);
+}
+function toggleProfileMenu() {
+  document.getElementById('profile-menu').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  const pw = e.target.closest('.profile-wrap');
+  if (!pw) document.getElementById('profile-menu')?.classList.remove('open');
+});
+(function() {
+  const t = localStorage.getItem('kvforge-theme');
+  if (t) document.documentElement.dataset.theme = t;
+})();
+
+// ── Filters ──────────────────────────────────────────────────────────────────
+function toggleCat(el) {
+  el.classList.toggle('active');
+  loadLogs();
+}
+function _activeCats() {
+  return [...document.querySelectorAll('.cat-pill.active')].map(e => e.dataset.cat);
+}
+function _sinceDate() {
+  const days = parseInt(document.getElementById('range-filter').value);
+  if (!days) return '';
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString().slice(0, 10);
+}
+
+// ── Load stats (for tiles + charts, always full dataset) ─────────────────────
+async function loadStats() {
+  try {
+    const r = await fetch('/studio/api/logs/stats', {credentials: 'include'});
+    _allStats = await r.json();
+    renderMetrics();
+    renderCharts();
+  } catch(e) { console.error('stats:', e); }
+}
+
+function renderMetrics() {
+  const s = _allStats;
+  document.getElementById('mt-total').textContent = (s.total || 0).toLocaleString();
+  document.getElementById('mt-pipeline').textContent = ((s.by_category || {}).pipeline || 0).toLocaleString();
+  document.getElementById('mt-resource').textContent = ((s.by_category || {}).resource || 0).toLocaleString();
+  const errs = ((s.by_severity || {}).error || 0) + ((s.by_severity || {}).warning || 0);
+  document.getElementById('mt-errors').textContent = errs.toLocaleString();
+}
+
+// ── Timeline chart (SVG bar chart, events per day) ────────────────────────
+function renderCharts() {
+  renderTimeline();
+  renderCatChart();
+}
+
+function renderTimeline() {
+  const svg = document.getElementById('timeline-svg');
+  const byDay = _allStats.by_day || {};
+  const days = Object.keys(byDay).sort().slice(-30);
+  const rangeLabel = document.getElementById('timeline-range-label');
+  if (!days.length) {
+    svg.innerHTML = '<text x="300" y="60" text-anchor="middle" fill="#8590A2" font-size="12">No events yet</text>';
+    rangeLabel.textContent = '';
+    return;
+  }
+  if (days.length >= 2) rangeLabel.textContent = `· ${days[0]} → ${days[days.length-1]}`;
+
+  const W = 600, H = 120, PAD = { l:30, r:10, t:10, b:30 };
+  const cw = (W - PAD.l - PAD.r) / days.length;
+  const maxV = Math.max(...days.map(d => byDay[d]), 1);
+  const ch = H - PAD.t - PAD.b;
+
+  let bars = '';
+  let labels = '';
+  days.forEach((day, i) => {
+    const v = byDay[day] || 0;
+    const bh = Math.max(2, (v / maxV) * ch);
+    const x = PAD.l + i * cw + cw * 0.1;
+    const bw = cw * 0.8;
+    const y = PAD.t + ch - bh;
+    bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="2" fill="#0052CC" opacity="0.7">
+      <title>${day}: ${v} events</title></rect>`;
+    // Show date label for first, last, and every ~7th
+    if (i === 0 || i === days.length - 1 || i % 7 === 0) {
+      const lx = (PAD.l + i * cw + cw / 2).toFixed(1);
+      const dy = day.slice(5); // MM-DD
+      labels += `<text x="${lx}" y="${H - 4}" text-anchor="middle" font-size="9" fill="#8590A2">${dy}</text>`;
+    }
+  });
+
+  // Y axis labels
+  const yLabels = `<text x="${PAD.l - 4}" y="${(PAD.t + ch).toFixed(0)}" text-anchor="end" font-size="9" fill="#8590A2">0</text>
+    <text x="${PAD.l - 4}" y="${PAD.t.toFixed(0)}" text-anchor="end" font-size="9" fill="#8590A2">${maxV}</text>
+    <line x1="${PAD.l}" y1="${PAD.t}" x2="${PAD.l}" y2="${PAD.t + ch}" stroke="#DFE1E6" stroke-width="1"/>
+    <line x1="${PAD.l}" y1="${PAD.t + ch}" x2="${W - PAD.r}" y2="${PAD.t + ch}" stroke="#DFE1E6" stroke-width="1"/>`;
+
+  svg.innerHTML = yLabels + bars + labels;
+}
+
+function renderCatChart() {
+  const svg = document.getElementById('cat-svg');
+  const byCat = _allStats.by_category || {};
+  const cats = Object.entries(byCat).filter(([,v]) => v > 0).sort((a,b) => b[1]-a[1]);
+  if (!cats.length) {
+    svg.innerHTML = '<text x="110" y="60" text-anchor="middle" fill="#8590A2" font-size="12">No data</text>';
+    return;
+  }
+  const maxV = Math.max(...cats.map(([,v]) => v), 1);
+  const rowH = Math.min(22, 110 / cats.length);
+  const LABEL_W = 70, BAR_X = LABEL_W + 8, BAR_W = 220 - BAR_X - 35;
+  let rows = '';
+  cats.forEach(([cat, v], i) => {
+    const bw = Math.max(2, (v / maxV) * BAR_W);
+    const y = 5 + i * rowH;
+    const mid = y + rowH / 2;
+    const color = _CAT_COLORS[cat] || '#8590A2';
+    rows += `<text x="${LABEL_W - 4}" y="${(mid + 4).toFixed(1)}" text-anchor="end" font-size="10"
+      fill="${color}" font-weight="700">${cat.toUpperCase().slice(0,8)}</text>
+      <rect x="${BAR_X}" y="${(mid - rowH * 0.3).toFixed(1)}" width="${bw.toFixed(1)}"
+        height="${(rowH * 0.6).toFixed(1)}" rx="2" fill="${color}" opacity="0.75">
+        <title>${cat}: ${v}</title></rect>
+      <text x="${(BAR_X + bw + 4).toFixed(1)}" y="${(mid + 4).toFixed(1)}" font-size="10" fill="#8590A2">${v}</text>`;
+  });
+  svg.innerHTML = rows;
+}
+
+// ── Load & render logs ────────────────────────────────────────────────────────
+async function loadLogs() {
+  const cats = _activeCats();
+  const sevVal = document.getElementById('sev-filter').value;
+  const since = _sinceDate();
+  const search = document.getElementById('search-input').value.trim();
+  const ucFilter = document.getElementById('uc-filter').value;
+
+  const params = new URLSearchParams({ limit: 1000 });
+  if (cats.length && cats.length < 5) params.set('categories', cats.join(','));
+  if (sevVal) params.set('severities', sevVal);
+  if (since) params.set('since', since);
+  if (search) params.set('search', search);
+  if (ucFilter) params.set('uc_id', ucFilter);
+
+  try {
+    const r = await fetch('/studio/api/logs?' + params, {credentials: 'include'});
+    _logs = await r.json();
+    renderLogs();
+    document.getElementById('last-refresh-label').textContent =
+      'Refreshed ' + new Date().toLocaleTimeString();
+  } catch(e) {
+    document.getElementById('log-panel').innerHTML =
+      '<div class="log-empty">Failed to load logs. Check server.</div>';
+  }
+}
+
+function _fmtTs(ts) {
+  if (!ts) return '—';
+  try {
+    const d = new Date(ts);
+    return d.toLocaleDateString('en-US', {month:'2-digit',day:'2-digit'}) + ' ' +
+      d.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  } catch { return ts; }
+}
+
+function _relTime(ts) {
+  if (!ts) return '';
+  try {
+    const diff = Date.now() - new Date(ts).getTime();
+    if (diff < 60000) return 'just now';
+    if (diff < 3600000) return Math.floor(diff/60000) + 'm ago';
+    if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
+    return Math.floor(diff/86400000) + 'd ago';
+  } catch { return ''; }
+}
+
+function renderLogs() {
+  const panel = document.getElementById('log-panel');
+  document.getElementById('result-count').textContent =
+    `${_logs.length.toLocaleString()} event${_logs.length !== 1 ? 's' : ''} matching current filters`;
+
+  if (!_logs.length) {
+    panel.innerHTML = '<div class="log-empty">No events match the selected filters.</div>';
+    return;
+  }
+
+  let html = `<div class="log-table-hd">
+    <div>Timestamp</div><div>Severity</div><div>Category</div><div>Event</div><div>Message</div><div>Use Case</div>
+  </div>`;
+
+  _logs.forEach((e, idx) => {
+    const sevClass = 'sev-' + (e.severity || 'info');
+    const catClass = 'cat-' + (e.category || 'system');
+    const detailId = 'detail-' + idx;
+    const hasDetails = e.details && Object.keys(e.details).length > 0;
+    html += `<div class="log-row" onclick="toggleDetail(${idx})" title="${_fmtTs(e.ts)}">
+      <div class="log-ts" title="${e.ts || ''}">${_fmtTs(e.ts)}<br><span style="font-size:9px;color:var(--text-subtle)">${_relTime(e.ts)}</span></div>
+      <div class="log-sev"><span class="sev-badge ${sevClass}">${(e.severity || 'info').toUpperCase()}</span></div>
+      <div class="log-cat ${catClass}">${(e.category || '').toUpperCase()}</div>
+      <div class="log-action" title="${e.action || ''}">${e.action || '—'}</div>
+      <div class="log-msg" title="${(e.message || '').replace(/"/g,'&quot;')}">${_esc(e.message || '—')}</div>
+      <div>${e.uc_id ? `<span class="log-uc">${_esc(e.uc_id)}</span>` : ''}</div>
+    </div>`;
+    if (hasDetails) {
+      html += `<div class="log-detail-row" id="${detailId}">
+        <div class="log-detail-pre">${_esc(JSON.stringify(e.details, null, 2))}</div>
+      </div>`;
+    }
+  });
+
+  panel.innerHTML = html;
+}
+
+function toggleDetail(idx) {
+  const el = document.getElementById('detail-' + idx);
+  if (!el) return;
+  el.classList.toggle('open');
+}
+
+function _esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// ── Export CSV ─────────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!_logs.length) return;
+  const header = ['timestamp','severity','category','action','message','uc_id','details'];
+  const rows = _logs.map(e => [
+    e.ts, e.severity, e.category, e.action,
+    (e.message || '').replace(/,/g,' '),
+    e.uc_id || '',
+    JSON.stringify(e.details || {}).replace(/,/g,' '),
+  ]);
+  const csv = [header, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `kvforge-logs-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Populate UC filter ──────────────────────────────────────────────────────
+async function loadUCList() {
+  try {
+    const r = await fetch('/studio/api/registry', {credentials:'include'});
+    const reg = await r.json();
+    const sel = document.getElementById('uc-filter');
+    (reg.use_cases || []).forEach(uc => {
+      const o = document.createElement('option');
+      o.value = uc.id;
+      o.textContent = uc.display_name || uc.id;
+      sel.appendChild(o);
+    });
+  } catch {}
+}
+
+// ── Load user info ──────────────────────────────────────────────────────────
+async function loadUser() {
+  try {
+    const r = await fetch('/auth/me', {credentials:'include'});
+    const u = await r.json();
+    document.getElementById('pm-name').textContent = u.display_name || u.username || '—';
+    document.getElementById('pm-email').textContent = u.email || '';
+  } catch {}
+}
+
+// ── Init ────────────────────────────────────────────────────────────────────
+(async function init() {
+  await Promise.all([loadUser(), loadUCList(), loadStats()]);
+  await loadLogs();
+  // Auto-refresh every 30 seconds
+  setInterval(() => { loadStats(); loadLogs(); }, 30000);
+})();
+</script>
+</body>
+</html>

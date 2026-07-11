@@ -118,19 +118,22 @@ def load(lora_checkpoint: Optional[str] = None) -> tuple:
         # 8-bit halves memory reads for a ~1.5× speedup with higher quality.
         quant_cfg = None
         if QUANTIZATION in ("4bit", "8bit"):
-            try:
-                from transformers import BitsAndBytesConfig
-                if QUANTIZATION == "4bit":
-                    quant_cfg = BitsAndBytesConfig(
-                        load_in_4bit=True,
-                        bnb_4bit_quant_type="nf4",
-                        bnb_4bit_compute_dtype=torch.float16,
-                        bnb_4bit_use_double_quant=True,
-                    )
-                else:  # 8bit
-                    quant_cfg = BitsAndBytesConfig(load_in_8bit=True)
-            except ImportError:
-                print("⚠️  bitsandbytes not installed — falling back to fp16")
+            if DEVICE == "cpu":
+                print("⚠️  Quantization requires CUDA — running on CPU in fp32 instead")
+            else:
+                try:
+                    from transformers import BitsAndBytesConfig
+                    if QUANTIZATION == "4bit":
+                        quant_cfg = BitsAndBytesConfig(
+                            load_in_4bit=True,
+                            bnb_4bit_quant_type="nf4",
+                            bnb_4bit_compute_dtype=torch.float16,
+                            bnb_4bit_use_double_quant=True,
+                        )
+                    else:  # 8bit
+                        quant_cfg = BitsAndBytesConfig(load_in_8bit=True)
+                except (ImportError, ValueError) as e:
+                    print(f"⚠️  bitsandbytes unavailable ({e}) — falling back to fp16")
 
         _model = AutoModelForCausalLM.from_pretrained(
             MODEL_ID,

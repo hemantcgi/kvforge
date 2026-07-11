@@ -1,26 +1,32 @@
 # studio/api.py
 """All /studio/api/* endpoint handlers — imported by routes.py."""
 
+import asyncio
 import json
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, UploadFile, Form
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional
+import re as _re
 
 from studio.migration import migrate_existing_use_cases, load_registry, add_to_registry
-from studio.gpu_monitor import get_gpu_status, stop_vllm_process
+from studio.gpu_monitor import get_gpu_status, stop_vllm_process, get_gpu_realtime
 from studio.job_manager import get_manager, DuplicateJobError
+from studio import settings_manager
+from studio import curation_manager
+from studio import ab_runner
+from studio import vdb_validator
 
 ROOT = Path(__file__).resolve().parent.parent
 
-api_router = APIRouter(prefix="/api")
+api_router = APIRouter()
 
 
 def _uc_path(uc_id: str) -> Path:
     """Return the UC directory path, raising 400 on path traversal attempts."""
     path = (ROOT / "examples" / uc_id).resolve()
-    if not str(path).startswith(str((ROOT / "examples").resolve())):
+    if not path.is_relative_to((ROOT / "examples").resolve()):
         raise HTTPException(400, "Invalid use case ID")
     return path
 
@@ -40,19 +46,63 @@ def get_registry():
                 uc_data["phase"] = v.get("phase", 1)
                 history = v.get("prs_history", [])
                 uc_data["prs"] = history[-1]["prs"] if history else None
+                uc_data["lora_version"] = v.get("current_lora_version", 0)
+                # Round number of the last PRS evaluation — used by UI to detect
+                # whether training has happened since the last eval
+                last_prs_entry = history[-1] if history else None
+                uc_data["prs_round"] = (
+                    last_prs_entry.get("round") if isinstance(last_prs_entry, dict) else len(history)
+                ) if history else 0
             except Exception:
                 uc_data["phase"] = 1
                 uc_data["prs"] = None
+                uc_data["prs_round"] = 0
         cfg_path = ROOT / "examples" / uc["id"] / "config.json"
         if cfg_path.exists():
             try:
                 cfg = json.loads(cfg_path.read_text())
                 if "dashboard_port" in cfg:
                     uc_data["dashboard_port"] = cfg["dashboard_port"]
+                inf = cfg.get("addon_config", {}).get("inference", cfg)
+                uc_data["vllm_url"]   = inf.get("vllm_url", "")
+                uc_data["vllm_model"] = inf.get("vllm_model", "")
+                uc_data["llm_model"]  = inf.get("llm_model", "")
             except Exception:
                 pass
+        uc_data["has_index"] = version_path.exists()
         faqs_path = ROOT / "examples" / uc["id"] / "faqs.json"
         uc_data["has_faqs"] = faqs_path.exists()
+        uc_cfg_path = ROOT / "examples" / uc["id"] / "uc_config.json"
+        if uc_cfg_path.exists():
+            try:
+                uc_cfg = json.loads(uc_cfg_path.read_text())
+                uc_data["gpu_profile_id"] = uc_cfg.get("gpu_profile_id")
+                # Surface llm section for A/B defaults
+                llm = uc_cfg.get("llm", {})
+                if llm.get("local_model"):
+                    uc_data["llm_model"] = llm["local_model"]
+                if llm.get("vllm_url"):
+                    uc_data["vllm_url"] = llm["vllm_url"]
+                # vllm_served_model is the --served-model-name used when launching vLLM
+                # (separate from the HuggingFace model path in local_model)
+                uc_data["vllm_served_model"] = llm.get("vllm_served_model", "kvforge-local")
+                uc_data["comparison_provider"] = llm.get("comparison_provider", "anthropic")
+                uc_data["comparison_model"]    = llm.get("comparison_model", "claude-haiku-4-5-20251001")
+                # Resolve GPU profile host → derive vllm_url if not explicitly set
+                profile_id = uc_cfg.get("gpu_profile_id")
+                if profile_id and not uc_data.get("vllm_url"):
+                    try:
+                        from studio.remote_gpu import list_profiles
+                        profile = next((p for p in list_profiles() if p["id"] == profile_id), None)
+                        if profile and profile.get("host"):
+                            vllm_port = profile.get("vllm_port", 8090)
+                            uc_data["vllm_url"] = f"http://{profile['host']}:{vllm_port}/v1"
+                            uc_data["gpu_profile_host"] = profile["host"]
+                            uc_data["gpu_profile_name"] = profile.get("display_name", profile["host"])
+                    except Exception:
+                        pass
+            except Exception:
+                pass
         jm = get_manager()
         active = next((j for j in jm.list_active() if j["uc_id"] == uc["id"]), None)
         uc_data["active_job"] = active
@@ -132,6 +182,35 @@ def create_new_uc(req: NewUCRequest):
     return {"status": "created", "id": req.id}
 
 
+# ── UC Archive / Delete ───────────────────────────────────────────────────────
+
+@api_router.post("/uc/{uc_id}/archive")
+def archive_uc(uc_id: str):
+    from studio.migration import set_archived_in_registry
+    _uc_path(uc_id)  # path-traversal guard (raises 400 if invalid)
+    set_archived_in_registry(uc_id, archived=True, root=ROOT)
+    return {"status": "archived", "id": uc_id}
+
+
+@api_router.post("/uc/{uc_id}/unarchive")
+def unarchive_uc(uc_id: str):
+    from studio.migration import set_archived_in_registry
+    _uc_path(uc_id)
+    set_archived_in_registry(uc_id, archived=False, root=ROOT)
+    return {"status": "active", "id": uc_id}
+
+
+@api_router.delete("/uc/{uc_id}")
+def delete_uc(uc_id: str):
+    import shutil
+    from studio.migration import remove_from_registry
+    uc_dir = _uc_path(uc_id)  # path-traversal guard; raises 400 if invalid
+    remove_from_registry(uc_id, root=ROOT)
+    if uc_dir.exists():
+        shutil.rmtree(uc_dir)
+    return {"status": "deleted", "id": uc_id}
+
+
 # ── GPU ───────────────────────────────────────────────────────────────────────
 
 @api_router.post("/gpu-check")
@@ -152,23 +231,95 @@ def stop_vllm(req: StopVllmRequest):
     return {"status": "stopped", "port": req.port}
 
 
+# ── Wizard Validate ───────────────────────────────────────────────────────────
+
+VALID_STEPS = {"index", "train", "recompute", "prs-eval", "ab-eval", "sleep-faq", "setup"}
+
+@api_router.get("/check-data/{uc_id}")
+def check_data(uc_id: str):
+    """Return whether the indexed data source exists for a use case."""
+    import json as _json
+
+    cfg_path = ROOT / "examples" / uc_id / "config.json"
+    loader = "pdf"
+    if cfg_path.exists():
+        try:
+            raw = _json.loads(cfg_path.read_text())
+            loader = (
+                raw.get("addon_config", {}).get("indexing", {}).get("loader", "pdf")
+                or raw.get("loader", "pdf")
+            )
+        except Exception:
+            pass
+
+    uc_dir = ROOT / "examples" / uc_id
+    corpus_path = uc_dir / "data" / "corpus.jsonl"
+    faq_path = uc_dir / "faqs.json"
+
+    if loader == "pdf":
+        data_dir = uc_dir / "data"
+        pdf_files = list(data_dir.glob("*.pdf")) if data_dir.exists() else []
+        return {
+            "loader": loader,
+            "corpus_exists": bool(pdf_files),
+            "corpus_path": str(pdf_files[0]) if pdf_files else None,
+            "faq_exists": faq_path.exists(),
+        }
+    return {
+        "loader": loader,
+        "corpus_exists": corpus_path.exists(),
+        "corpus_path": str(corpus_path) if corpus_path.exists() else None,
+        "faq_exists": faq_path.exists(),
+    }
+
+
+@api_router.post("/wizard-validate")
+async def wizard_validate(request: Request):
+    body = await request.json()
+    errors = []
+    step = body.get("step", "")
+    if step not in VALID_STEPS:
+        errors.append(f"Unknown step '{step}'. Valid steps: {sorted(VALID_STEPS)}")
+    epochs = body.get("epochs")
+    if epochs is not None and (not isinstance(epochs, int) or epochs < 1):
+        errors.append("epochs must be an integer >= 1")
+    top_k = body.get("top_k")
+    if top_k is not None and (not isinstance(top_k, int) or top_k < 1 or top_k > 100):
+        errors.append("top_k must be an integer between 1 and 100")
+    faq_count = body.get("faq_count")
+    if faq_count is not None and (not isinstance(faq_count, int) or faq_count < 5 or faq_count > 500):
+        errors.append("faq_count must be an integer between 5 and 500")
+    return {"ok": len(errors) == 0, "errors": errors}
+
+
 # ── Pipeline Jobs ─────────────────────────────────────────────────────────────
 
 class RunStepRequest(BaseModel):
     uc_id: str
-    step: str  # "index" | "train" | "recompute" | "prs-eval" | "ab-eval" | "sleep-faq"
+    step: str  # "setup" | "index" | "train" | "recompute" | "prs-eval" | "ab-eval" | "sleep-faq"
+    gpu_profile_id: str | None = None  # set when user chose a remote GPU profile
 
 
 @api_router.post("/run-step")
-def run_step(req: RunStepRequest):
-    from studio.pipeline_runner import STEP_MODULES
+async def run_step(req: RunStepRequest, background_tasks: BackgroundTasks):
+    from studio.pipeline_runner import STEP_MODULES, run_step_background
+    from studio.activity_log import log_event
     if req.step not in STEP_MODULES:
         raise HTTPException(400, f"Unknown step: {req.step}. Valid: {list(STEP_MODULES)}")
     jm = get_manager()
     try:
         job_id = jm.create(req.uc_id, req.step)
-    except DuplicateJobError as e:
-        raise HTTPException(409, str(e))
+    except DuplicateJobError:
+        existing_job_id = jm._uc_locks.get(req.uc_id)
+        return JSONResponse(
+            {"detail": "already_running", "job_id": existing_job_id},
+            status_code=409,
+        )
+    log_event("pipeline", f"{req.step}.started",
+              f"Pipeline step '{req.step}' started for use case '{req.uc_id}'",
+              details={"step": req.step, "job_id": job_id, "gpu_profile_id": req.gpu_profile_id},
+              uc_id=req.uc_id, severity="info")
+    background_tasks.add_task(run_step_background, req.uc_id, req.step, job_id, jm, req.gpu_profile_id)
     return {"job_id": job_id, "uc_id": req.uc_id, "step": req.step}
 
 
@@ -186,3 +337,542 @@ def stop_job(job_id: str):
             pass
     jm.stop(job_id)
     return {"status": "stopped"}
+
+
+# ── Settings ──────────────────────────────────────────────────────────────────
+
+@api_router.get("/settings")
+def get_settings_endpoint():
+    return JSONResponse(settings_manager.get_masked())
+
+
+@api_router.post("/settings")
+async def save_settings_endpoint(request: Request):
+    body = await request.json()
+    try:
+        settings_manager.save(body)
+    except ValueError as e:
+        raise HTTPException(400, detail=str(e))
+    return JSONResponse({"ok": True})
+
+
+# ── GPU realtime ───────────────────────────────────────────────────────────────
+
+@api_router.get("/gpu/realtime")
+def gpu_realtime_endpoint():
+    return JSONResponse(get_gpu_realtime())
+
+
+@api_router.get("/gpu/remote-stats/{profile_id}")
+async def remote_gpu_stats(profile_id: str):
+    """SSH to a registered GPU profile and return live nvidia-smi stats."""
+    import asyncio
+    from studio.remote_gpu import _load_profiles, _decrypt, _make_client, _run_command
+
+    profiles = _load_profiles()
+    profile = next((p for p in profiles if p["id"] == profile_id), None)
+    if not profile:
+        return JSONResponse({"error": "Profile not found", "gpus": []}, status_code=404)
+
+    def _fetch():
+        pem = _decrypt(profile["pem_enc"])
+        client = _make_client(profile["host"], profile["user"], profile["port"], pem)
+        try:
+            code, out, _ = _run_command(
+                client,
+                "nvidia-smi --query-gpu=index,name,memory.used,memory.total,"
+                "utilization.gpu,temperature.gpu,power.draw "
+                "--format=csv,noheader,nounits",
+            )
+            if code != 0:
+                return {"error": "nvidia-smi not available on this host", "gpus": []}
+
+            _, proc_out, _ = _run_command(
+                client,
+                "nvidia-smi --query-compute-apps=pid,used_memory,name "
+                "--format=csv,noheader,nounits 2>/dev/null || true",
+            )
+        finally:
+            client.close()
+
+        gpus = []
+        for line in out.strip().splitlines():
+            parts = [p.strip() for p in line.split(",")]
+            if len(parts) < 7:
+                continue
+            try:
+                gpus.append({
+                    "id":       int(parts[0]),
+                    "name":     parts[1],
+                    "used_gb":  round(int(parts[2]) / 1024, 2),
+                    "total_gb": round(int(parts[3]) / 1024, 2),
+                    "util_pct": int(parts[4]),
+                    "temp_c":   int(parts[5]),
+                    "power_w":  round(float(parts[6]), 1),
+                    "status":   "busy" if int(parts[4]) > 10 else "free",
+                    "processes": [],
+                })
+            except (ValueError, IndexError):
+                pass
+
+        procs: list[dict] = []
+        for line in proc_out.strip().splitlines():
+            parts = [p.strip() for p in line.split(",")]
+            if len(parts) >= 3:
+                try:
+                    procs.append({"pid": int(parts[0]), "used_mem_mb": int(parts[1]), "name": parts[2]})
+                except (ValueError, IndexError):
+                    pass
+        if gpus and procs:
+            gpus[0]["processes"] = procs
+
+        return {
+            "gpus": gpus,
+            "has_free_gpu": any(g["status"] == "free" for g in gpus),
+            "host": profile["host"],
+            "display_name": profile.get("display_name", profile["host"]),
+        }
+
+    try:
+        result = await asyncio.wait_for(asyncio.to_thread(_fetch), timeout=12)
+        return JSONResponse(result)
+    except asyncio.TimeoutError:
+        return JSONResponse({"error": "SSH timed out — check host reachability", "gpus": []})
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:120], "gpus": []})
+
+
+# ── Job logs ───────────────────────────────────────────────────────────────────
+
+@api_router.get("/uc/{uc_id}/logs")
+def uc_logs_endpoint(uc_id: str):
+    _uc_path(uc_id)  # path traversal guard
+    jm = get_manager()
+    job = jm.last_for_uc(uc_id)
+    if job:
+        return JSONResponse({
+            "lines": job.get("last_lines", []),
+            "status": job.get("status"),
+            "step": job.get("step"),
+            "job_id": job.get("job_id"),
+        })
+    # Fallback: read from disk log (survives studio restarts)
+    from studio.pipeline_runner import _log_path
+    log_file = _log_path(uc_id)
+    if log_file.exists():
+        try:
+            lines = log_file.read_text().splitlines()
+            # Parse step/status from header line written by run_step_background
+            step = None
+            status = "done"  # if file exists from a previous run, it completed
+            if lines and lines[0].startswith("[studio] step="):
+                parts = lines[0].split()
+                for p in parts:
+                    if p.startswith("step="):
+                        step = p[5:]
+            if lines and "[studio] failed" in lines[-1]:
+                status = "failed"
+            return JSONResponse({"lines": lines, "status": status, "step": step, "job_id": None})
+        except OSError:
+            pass
+    return JSONResponse({"lines": [], "status": None, "step": None, "job_id": None})
+
+
+# ── PRS history ────────────────────────────────────────────────────────────────
+
+@api_router.get("/uc/{uc_id}/prs-history")
+def prs_history_endpoint(uc_id: str):
+    version_path = _uc_path(uc_id) / "version.json"
+    if not version_path.exists():
+        return JSONResponse([])
+    try:
+        v = json.loads(version_path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return JSONResponse([])
+    raw = v.get("prs_history", [])
+    result = []
+    for entry in raw:
+        if isinstance(entry, dict):
+            result.append({
+                "label": f"LoRA v{entry.get('round', '?')}",
+                "round": entry.get("round"),
+                "prs": entry.get("prs"),
+            })
+        elif isinstance(entry, (int, float)):
+            result.append({"label": f"LoRA v{len(result)+1}", "round": len(result)+1, "prs": entry})
+    return JSONResponse(result)
+
+
+@api_router.get("/uc/{uc_id}/sync-history")
+def get_sync_history(uc_id: str):
+    from core.sync_engine import SyncStateDB
+    db_path = _uc_path(uc_id) / "sync.db"
+    if not db_path.exists():
+        return {"runs": []}
+    try:
+        runs = SyncStateDB(str(db_path)).get_sync_runs(uc_id)
+    except Exception:
+        runs = []
+    return {"runs": runs}
+
+
+@api_router.get("/uc/{uc_id}/eval-summary")
+def eval_summary(uc_id: str):
+    results_path = _uc_path(uc_id) / "ab_eval_results.json"
+    if not results_path.exists():
+        return JSONResponse({"has_results": False})
+    try:
+        results = json.loads(results_path.read_text())
+    except Exception:
+        return JSONResponse({"has_results": False})
+    if not results:
+        return JSONResponse({"has_results": False})
+
+    def avg(lst):
+        return round(sum(lst) / len(lst), 4) if lst else None
+
+    lat_a = [r["latency_a_ms"] for r in results if r.get("latency_a_ms", 0) > 0]
+    lat_b = [r["latency_b_ms"] for r in results if r.get("latency_b_ms", 0) > 0]
+    sem_a = [r["sem_sim_a"] for r in results if r.get("sem_sim_a") is not None]
+    sem_b = [r["sem_sim_b"] for r in results if r.get("sem_sim_b") is not None]
+    prs_scores = [r["prs_score"] for r in results if r.get("prs_score") is not None]
+    wins = sum(1 for r in results if r.get("prs_score", 0) >= 0.75)
+
+    avg_lat_a = avg(lat_a) or 0
+    avg_lat_b = avg(lat_b) or 0
+    avg_sem_a = avg(sem_a) or 0
+    avg_sem_b = avg(sem_b) or 0
+
+    # Speed gain: positive = KVForge faster, negative = KVForge slower
+    speed_gain = round((avg_lat_b - avg_lat_a) / avg_lat_b * 100, 1) if avg_lat_b > 0 else None
+
+    return JSONResponse({
+        "has_results": True,
+        "total": len(results),
+        "wins": wins,
+        "win_rate": round(wins / len(results) * 100, 1),
+        "avg_prs": avg(prs_scores),
+        "avg_sem_a": avg_sem_a,
+        "avg_sem_b": avg_sem_b,
+        "avg_lat_a_ms": round(avg_lat_a),
+        "avg_lat_b_ms": round(avg_lat_b),
+        "speed_gain_pct": speed_gain,  # negative means KVForge is slower
+    })
+
+
+# ── Remote GPU ─────────────────────────────────────────────────────────────────
+
+@api_router.post("/remote-gpu/session")
+async def create_remote_gpu_session(request: Request):
+    """Accept connection params + PEM content; return session_id for streaming."""
+    from studio.remote_gpu import create_session
+    body = await request.json()
+    host = str(body.get("host", "")).strip()
+    user = str(body.get("user", "ec2-user")).strip()
+    port = int(body.get("port", 22))
+    pem_key = str(body.get("pem_key", "")).strip()
+    display_name = str(body.get("display_name", host)).strip()
+    if not host or not pem_key:
+        raise HTTPException(400, "host and pem_key are required")
+    try:
+        session_id = create_session(host, user, port, pem_key, display_name)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    return JSONResponse({"session_id": session_id})
+
+
+@api_router.get("/remote-gpu/session/{session_id}/test-stream")
+async def remote_gpu_test_stream(session_id: str):
+    """SSE: SSH connect + nvidia-smi verification."""
+    import asyncio
+    from fastapi.responses import StreamingResponse
+    from studio.remote_gpu import stream_test_connection
+
+    async def gen():
+        loop = asyncio.get_event_loop()
+        events = await loop.run_in_executor(
+            None, lambda: list(stream_test_connection(session_id))
+        )
+        for ev in events:
+            yield f"data: {json.dumps(ev)}\n\n"
+
+    return StreamingResponse(gen(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@api_router.get("/remote-gpu/session/{session_id}/setup-stream")
+async def remote_gpu_setup_stream(session_id: str):
+    """SSE: install KVForge dependencies on remote host."""
+    import asyncio
+    from fastapi.responses import StreamingResponse
+    from studio.remote_gpu import stream_setup_gpu
+
+    async def gen():
+        loop = asyncio.get_event_loop()
+        events = await loop.run_in_executor(
+            None, lambda: list(stream_setup_gpu(session_id))
+        )
+        for ev in events:
+            yield f"data: {json.dumps(ev)}\n\n"
+
+    return StreamingResponse(gen(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@api_router.post("/remote-gpu/session/{session_id}/save")
+async def remote_gpu_save_profile(session_id: str, request: Request):
+    """Persist the verified connection as an encrypted profile."""
+    from studio.remote_gpu import get_session, save_profile
+    sess = get_session(session_id)
+    if not sess:
+        raise HTTPException(404, "Session not found")
+    body = await request.json()
+    display_name = str(body.get("display_name", sess["display_name"])).strip() or sess["host"]
+    profile = save_profile(
+        profile_id=session_id,
+        host=sess["host"],
+        user=sess["user"],
+        port=sess["port"],
+        display_name=display_name,
+        pem_key=sess["pem_key"],
+        fingerprint=sess.get("fingerprint") or "",
+    )
+    return JSONResponse(profile)
+
+
+@api_router.get("/remote-gpu/profiles")
+def list_remote_gpu_profiles():
+    from studio.remote_gpu import list_profiles
+    return JSONResponse(list_profiles())
+
+
+@api_router.delete("/remote-gpu/profiles/{profile_id}")
+def delete_remote_gpu_profile(profile_id: str):
+    from studio.remote_gpu import delete_profile
+    if not delete_profile(profile_id):
+        raise HTTPException(404, "Profile not found")
+    return JSONResponse({"ok": True})
+
+
+# ── Auto-curation ──────────────────────────────────────────────────────────────
+
+@api_router.post("/uc/{uc_id}/ab-curate")
+async def ab_curate_endpoint(uc_id: str, request: Request):
+    _uc_path(uc_id)  # path traversal guard
+    body = await request.json()
+    question = body.get("question", "")
+    answer = body.get("answer", "")
+    source_model = body.get("source_model", "model_b")
+    if not question or not answer:
+        raise HTTPException(400, "question and answer are required")
+    status = curation_manager.append(uc_id, question, answer, source_model)
+    return JSONResponse(status)
+
+
+@api_router.get("/uc/{uc_id}/curation-status")
+def curation_status_endpoint(uc_id: str):
+    _uc_path(uc_id)  # path traversal guard
+    return JSONResponse(curation_manager.get_status(uc_id))
+
+
+# ── A/B query ──────────────────────────────────────────────────────────────────
+
+@api_router.post("/uc/{uc_id}/ab-query")
+async def ab_query_endpoint(uc_id: str, request: Request):
+    _uc_path(uc_id)  # path traversal guard
+    body = await request.json()
+    query = body.get("query", "")
+    if not query:
+        raise HTTPException(400, "query is required")
+    result = await ab_runner.run_ab_query(
+        uc_id=uc_id,
+        query=query,
+        model_a_settings=body.get("model_a_settings", {}),
+        model_b_settings=body.get("model_b_settings", {}),
+    )
+    return JSONResponse(result)
+
+
+# ── Wizard ─────────────────────────────────────────────────────────────────────
+
+_KNOWN_PARAMS_B: dict[str, float] = {
+    "meta-llama/Llama-3.2-3B": 3.2,
+    "meta-llama/Llama-3.2-3B-Instruct": 3.2,
+    "meta-llama/Llama-3.1-8B": 8.0,
+    "meta-llama/Llama-3.1-8B-Instruct": 8.0,
+    "google/gemma-2-2b": 2.0,
+    "google/gemma-2-2b-it": 2.0,
+    "google/gemma-2-9b": 9.0,
+    "Qwen/Qwen3-1.7B": 1.7,
+    "Qwen/Qwen3-4B": 4.0,
+    "Qwen/Qwen3-8B": 8.0,
+}
+_GPU_VRAM_GB = 22.0  # A10G default
+
+
+@api_router.post("/wizard/validate-vdb")
+async def wizard_validate_vdb(request: Request):
+    body = await request.json()
+    return JSONResponse(vdb_validator.validate(body))
+
+
+_UC_ID_SAFE_RE = _re.compile(r'^[a-zA-Z0-9_-]{1,64}$')
+_MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
+
+@api_router.post("/wizard/upload-pdf")
+async def wizard_upload_pdf(file: UploadFile, uc_id: str = Form("")):
+    content = await file.read()
+    if len(content) > _MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="File exceeds 50 MB limit")
+    safe_uc_id = uc_id if _UC_ID_SAFE_RE.match(uc_id) else "default"
+    safe_name = Path(file.filename or "upload.pdf").name or "upload.pdf"
+    size_mb = len(content) / (1024 * 1024)
+    estimated_chunks = max(1, int(len(content) / 600))
+    upload_dir = ROOT / "tmp" / "uploads" / safe_uc_id
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    dest = upload_dir / safe_name
+    dest.write_bytes(content)
+    return JSONResponse({
+        "filename": file.filename,
+        "size_mb": round(size_mb, 2),
+        "estimated_chunks": estimated_chunks,
+        "path": str(dest),
+    })
+
+
+@api_router.post("/wizard/estimate-vram")
+async def wizard_estimate_vram(request: Request):
+    body = await request.json()
+    model_id: str = body.get("model_id", "")
+    lora_rank: int = int(body.get("lora_rank", 16))
+    params_b = _KNOWN_PARAMS_B.get(model_id)
+    if params_b is None:
+        m = _re.search(r"(\d+(?:\.\d+)?)[Bb]", model_id.split("/")[-1])
+        params_b = float(m.group(1)) if m else None
+    if params_b is None:
+        return JSONResponse({
+            "vram_required_gb": None, "fits": False,
+            "fits_with_reduced_batch": False,
+            "error": "Unknown model — specify parameter count manually",
+        })
+    vram = round((params_b * 0.7) + 4.0, 1)
+    vram_reduced = round((params_b * 0.7) + 2.5, 1)
+    return JSONResponse({
+        "vram_required_gb": vram,
+        "fits": vram <= _GPU_VRAM_GB,
+        "fits_with_reduced_batch": vram_reduced <= _GPU_VRAM_GB,
+        "params_billions": params_b,
+    })
+
+
+# ── Resource Providers ────────────────────────────────────────────────────────
+
+@api_router.get("/resources")
+def list_resources(provider_type: str | None = None):
+    from studio.resource_registry import list_providers
+    return list_providers(provider_type)
+
+
+@api_router.post("/resources")
+async def create_resource(request: Request):
+    from studio.resource_registry import create_provider, PROVIDER_TYPES, BACKENDS
+    from studio.activity_log import log_event
+    body = await request.json()
+    missing = [f for f in ("type", "backend", "display_name") if not body.get(f)]
+    if missing:
+        return JSONResponse({"detail": f"missing fields: {missing}"}, status_code=400)
+    if body["type"] not in PROVIDER_TYPES:
+        return JSONResponse({"detail": f"type must be one of {PROVIDER_TYPES}"}, status_code=400)
+    try:
+        rec = create_provider(
+            provider_type=body["type"],
+            backend=body["backend"],
+            display_name=body["display_name"],
+            config=body.get("config", {}),
+        )
+        log_event("resource", "resource.created",
+                  f"Resource provider '{rec['display_name']}' ({rec['backend']}) added",
+                  details={"id": rec["id"], "type": rec["type"], "backend": rec["backend"]},
+                  severity="success")
+        return rec
+    except ValueError as e:
+        return JSONResponse({"detail": str(e)}, status_code=400)
+
+
+@api_router.put("/resources/{provider_id}")
+async def update_resource(provider_id: str, request: Request):
+    from studio.resource_registry import update_provider, get_provider
+    from studio.activity_log import log_event
+    body = await request.json()
+    try:
+        rec = update_provider(provider_id, **{k: body[k] for k in ("display_name", "config", "backend") if k in body})
+        log_event("resource", "resource.updated",
+                  f"Resource provider '{rec.get('display_name', provider_id)}' updated",
+                  details={"id": provider_id, "fields": list(body.keys())},
+                  severity="info")
+        return rec
+    except KeyError:
+        return JSONResponse({"detail": "not found"}, status_code=404)
+
+
+@api_router.delete("/resources/{provider_id}")
+def delete_resource(provider_id: str):
+    from studio.resource_registry import delete_provider, get_provider
+    from studio.activity_log import log_event
+    p = get_provider(provider_id)
+    if p is None:
+        return JSONResponse({"detail": "not found"}, status_code=404)
+    log_event("resource", "resource.deleted",
+              f"Resource provider '{p.get('display_name', provider_id)}' ({p.get('backend', '')}) removed",
+              details={"id": provider_id, "type": p.get("type"), "backend": p.get("backend")},
+              severity="warning")
+    delete_provider(provider_id)
+    return {"ok": True}
+
+
+@api_router.post("/resources/{provider_id}/test")
+async def test_resource(provider_id: str):
+    from studio.resource_registry import test_provider, get_provider
+    from studio.activity_log import log_event
+    p = get_provider(provider_id)
+    result = await __import__("asyncio").to_thread(test_provider, provider_id)
+    if p:
+        sev = "success" if result.get("ok") else "error"
+        msg = f"Connectivity test for '{p.get('display_name', provider_id)}': " + \
+              (result.get("detail", "OK") if result.get("ok") else result.get("error", "failed"))
+        log_event("resource", "resource.tested", msg,
+                  details={"id": provider_id, "backend": p.get("backend"), "result": result},
+                  severity=sev)
+    return result
+
+
+# ── Activity Logs ──────────────────────────────────────────────────────────────
+
+@api_router.get("/logs")
+def get_logs(
+    categories: str | None = None,
+    severities: str | None = None,
+    since: str | None = None,
+    until: str | None = None,
+    search: str | None = None,
+    uc_id: str | None = None,
+    limit: int = 500,
+):
+    from studio.activity_log import query_logs
+    cat_list = [c.strip() for c in categories.split(",")] if categories else None
+    sev_list = [s.strip() for s in severities.split(",")] if severities else None
+    return query_logs(
+        categories=cat_list,
+        severities=sev_list,
+        since=since,
+        until=until,
+        search=search or None,
+        uc_id=uc_id or None,
+        limit=min(limit, 2000),
+    )
+
+
+@api_router.get("/logs/stats")
+def get_logs_stats():
+    from studio.activity_log import get_stats
+    return get_stats()

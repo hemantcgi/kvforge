@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 535" width="1200" height="535">
+<defs><marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#475569"/></marker><marker id="arr-enhanced" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#d97706"/></marker><marker id="arr-active" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0d9488"/></marker><marker id="arr-archive" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#64748b"/></marker></defs>
+<rect x="0" y="0" width="1200" height="535" fill="#0a0f1e" stroke="none" stroke-width="1.5" rx="0"/>
+<text x="600" y="28" font-size="20" font-weight="700" fill="#f8fafc" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">KVForge V1 — Mean-pooled KV Injection</text>
+<text x="600" y="48" font-size="12" font-weight="400" fill="#64748b" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">All chunks stored identically · Single storage tier · Fixed top-K retrieval</text>
+<rect x="30" y="72" width="1140" height="95" fill="#0c1628" stroke="none" stroke-width="1.5" rx="10"/>
+<text x="46" y="62" font-size="10" font-weight="700" fill="#475569" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="start" dominant-baseline="middle">INDEX TIME</text>
+<rect x="55" y="97" width="100" height="44" fill="#1e293b" stroke="#475569" stroke-width="1.5" rx="8"/>
+<text x="105" y="119" font-size="11" font-weight="500" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Documents</text>
+<rect x="195" y="97" width="100" height="44" fill="#1e293b" stroke="#475569" stroke-width="1.5" rx="8"/>
+<text x="245" y="119" font-size="11" font-weight="500" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Chunker</text>
+<rect x="335" y="97" width="100" height="44" fill="#1e293b" stroke="#475569" stroke-width="1.5" rx="8"/>
+<text x="385" y="119" font-size="11" font-weight="500" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Embedder</text>
+<rect x="488" y="97" width="135" height="44" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5" rx="8"/>
+<text x="555" y="112" font-size="11" font-weight="500" fill="#a5b4fc" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">LLM forward pass</text>
+<text x="555" y="127" font-size="9" font-weight="400" fill="#a5b4fc" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle" opacity="0.75">one pass/chunk</text>
+<rect x="665" y="97" width="120" height="44" fill="#1e293b" stroke="#475569" stroke-width="1.5" rx="8"/>
+<text x="725" y="112" font-size="11" font-weight="500" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">mean_pool_kv</text>
+<text x="725" y="127" font-size="9" font-weight="400" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle" opacity="0.75">collapse seq_len</text>
+<rect x="835" y="97" width="140" height="44" fill="#042f2e" stroke="#0d9488" stroke-width="1.5" rx="8"/>
+<text x="905" y="112" font-size="11" font-weight="500" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Qdrant payload</text>
+<text x="905" y="127" font-size="9" font-weight="400" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle" opacity="0.75">embed + KV blob</text>
+<line x1="155.0" y1="119.0" x2="185.0" y2="119.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="295.0" y1="119.0" x2="325.0" y2="119.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="435.0" y1="119.0" x2="478.0" y2="119.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="622.0" y1="119.0" x2="655.0" y2="119.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="785.0" y1="119.0" x2="825.0" y2="119.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="600" y="179" font-size="10" font-style="italic" fill="#475569" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle">Stored per chunk: [num_layers, 2, num_kv_heads, head_dim] float16 — token dimension collapsed by mean-pooling</text>
+<rect x="30" y="200" width="1140" height="85" fill="#0c1628" stroke="none" stroke-width="1.5" rx="10"/>
+<text x="46" y="190" font-size="10" font-weight="700" fill="#475569" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="start" dominant-baseline="middle">QUERY TIME</text>
+<rect x="50" y="220" width="90" height="44" fill="#2e1065" stroke="#9333ea" stroke-width="1.5" rx="8"/>
+<text x="95" y="242" font-size="11" font-weight="500" fill="#d8b4fe" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Query</text>
+<rect x="180" y="220" width="100" height="44" fill="#1e293b" stroke="#475569" stroke-width="1.5" rx="8"/>
+<text x="230" y="242" font-size="11" font-weight="500" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Embedder</text>
+<rect x="330" y="220" width="110" height="44" fill="#042f2e" stroke="#0d9488" stroke-width="1.5" rx="8"/>
+<text x="385" y="235" font-size="11" font-weight="500" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Qdrant top-K</text>
+<text x="385" y="250" font-size="9" font-weight="400" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle" opacity="0.75">fixed K</text>
+<rect x="498" y="220" width="155" height="44" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5" rx="8"/>
+<text x="575" y="235" font-size="11" font-weight="500" fill="#a5b4fc" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Inject mean-pool KVs</text>
+<text x="575" y="250" font-size="9" font-weight="400" fill="#a5b4fc" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle" opacity="0.75">all chunks equal</text>
+<rect x="720" y="220" width="80" height="44" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5" rx="8"/>
+<text x="760" y="242" font-size="11" font-weight="500" fill="#a5b4fc" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">LLM</text>
+<rect x="845" y="220" width="90" height="44" fill="#2e1065" stroke="#9333ea" stroke-width="1.5" rx="8"/>
+<text x="890" y="242" font-size="11" font-weight="500" fill="#d8b4fe" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Answer</text>
+<line x1="140.0" y1="242.0" x2="170.0" y2="242.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="280.0" y1="242.0" x2="320.0" y2="242.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="440.0" y1="242.0" x2="488.0" y2="242.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="652.0" y1="242.0" x2="710.0" y2="242.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="800.0" y1="242.0" x2="835.0" y2="242.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="30" y="315" width="1140" height="155" fill="#0c1628" stroke="none" stroke-width="1.5" rx="10"/>
+<text x="46" y="305" font-size="10" font-weight="700" fill="#475569" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="start" dominant-baseline="middle">BACKGROUND / SLEEP TIME</text>
+<rect x="60" y="338" width="120" height="44" fill="#1e293b" stroke="#475569" stroke-width="1.5" rx="8"/>
+<text x="120" y="360" font-size="11" font-weight="500" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Access Tracker</text>
+<rect x="235" y="338" width="120" height="44" fill="#1e293b" stroke="#475569" stroke-width="1.5" rx="8"/>
+<text x="295" y="353" font-size="11" font-weight="500" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Tier labels</text>
+<text x="295" y="368" font-size="9" font-weight="400" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle" opacity="0.75">hot/warm/cold</text>
+<rect x="415" y="338" width="120" height="44" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5" rx="8"/>
+<text x="475" y="353" font-size="11" font-weight="500" fill="#a5b4fc" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">LoRA Training</text>
+<text x="475" y="368" font-size="9" font-weight="400" fill="#a5b4fc" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle" opacity="0.75">tier-weighted</text>
+<rect x="590" y="338" width="110" height="44" fill="#1e293b" stroke="#475569" stroke-width="1.5" rx="8"/>
+<text x="645" y="360" font-size="11" font-weight="500" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">PRS Eval</text>
+<rect x="760" y="338" width="120" height="44" fill="#1e293b" stroke="#475569" stroke-width="1.5" rx="8"/>
+<text x="820" y="360" font-size="11" font-weight="500" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Phase 1→2→3</text>
+<line x1="180.0" y1="360.0" x2="225.0" y2="360.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="355.0" y1="360.0" x2="405.0" y2="360.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="535.0" y1="360.0" x2="580.0" y2="360.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="700.0" y1="360.0" x2="750.0" y2="360.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="60" y="403" width="120" height="44" fill="#052e16" stroke="#16a34a" stroke-width="1.5" rx="8"/>
+<text x="120" y="418" font-size="11" font-weight="500" fill="#86efac" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">FAQ Generator</text>
+<text x="120" y="433" font-size="9" font-weight="400" fill="#86efac" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle" opacity="0.75">cloud LLM</text>
+<rect x="245" y="403" width="130" height="44" fill="#1e293b" stroke="#475569" stroke-width="1.5" rx="8"/>
+<text x="310" y="418" font-size="11" font-weight="500" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">KV Recomputation</text>
+<text x="310" y="433" font-size="9" font-weight="400" fill="#cbd5e1" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle" opacity="0.75">post-LoRA</text>
+<rect x="430" y="403" width="120" height="44" fill="#042f2e" stroke="#0d9488" stroke-width="1.5" rx="8"/>
+<text x="490" y="418" font-size="11" font-weight="500" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle">Update Qdrant</text>
+<text x="490" y="433" font-size="9" font-weight="400" fill="#5eead4" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle" dominant-baseline="middle" opacity="0.75">refresh blobs</text>
+<line x1="180.0" y1="403.0" x2="405.0" y2="382.9" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="375.0" y1="425.0" x2="420.0" y2="425.0" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="600" y="484" font-size="10" font-style="italic" fill="#475569" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="middle">Tier labels are used only for LoRA training sample weighting — they do not affect storage format or injection quality</text>
+<rect x="60" y="506" width="12" height="12" fill="#6366f1" stroke="none" stroke-width="1.5" rx="2"/>
+<text x="78" y="513" font-size="10" font-weight="500" fill="#64748b" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="start" dominant-baseline="middle">Model / LLM</text>
+<rect x="167.5" y="506" width="12" height="12" fill="#0d9488" stroke="none" stroke-width="1.5" rx="2"/>
+<text x="185.5" y="513" font-size="10" font-weight="500" fill="#64748b" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="start" dominant-baseline="middle">Vector Store</text>
+<rect x="281.5" y="506" width="12" height="12" fill="#16a34a" stroke="none" stroke-width="1.5" rx="2"/>
+<text x="299.5" y="513" font-size="10" font-weight="500" fill="#64748b" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="start" dominant-baseline="middle">Sleep-time compute</text>
+<rect x="434.5" y="506" width="12" height="12" fill="#9333ea" stroke="none" stroke-width="1.5" rx="2"/>
+<text x="452.5" y="513" font-size="10" font-weight="500" fill="#64748b" font-family="Inter, system-ui, -apple-system, sans-serif" text-anchor="start" dominant-baseline="middle">User / Query</text>
+</svg>

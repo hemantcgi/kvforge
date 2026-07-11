@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, Response, StreamingResponse
 
 from studio.migration import migrate_existing_use_cases
 from studio.api import api_router
@@ -17,7 +17,7 @@ TEMPLATES = ROOT / "templates" / "studio"
 _UC_CONFIGS = ROOT / "uc_configs"
 
 router = APIRouter()
-router.include_router(api_router)
+router.include_router(api_router, prefix="/api")
 
 # Flywheel cross-UC analytics router
 try:
@@ -45,10 +45,72 @@ def studio_hub():
     return (TEMPLATES / "hub.html").read_text()
 
 
+@router.get("/wizard", response_class=HTMLResponse)
+def wizard_page():
+    return (TEMPLATES / "wizard.html").read_text()
+
+
 @router.get("/uc/{uc_id}", response_class=HTMLResponse)
 def uc_detail(uc_id: str):
     _ensure_migrated()
-    return (TEMPLATES / "hub.html").read_text()
+    return (TEMPLATES / "uc_detail.html").read_text()
+
+
+@router.get("/settings", response_class=HTMLResponse)
+def settings_page():
+    from studio import settings_manager
+    import json as _json
+    try:
+        masked = settings_manager.get_masked()
+    except AttributeError:
+        masked = {}
+    tmpl = (TEMPLATES / "settings.html").read_text()
+    tmpl = tmpl.replace("__SETTINGS_JSON__", _json.dumps(masked))
+    return HTMLResponse(tmpl)
+
+
+@router.get("/resources", response_class=HTMLResponse)
+def resources_page(request: Request):
+    u = getattr(request.state, "user", None)
+    if not u or u.role not in ("admin", "editor"):
+        return Response("<h1>403 Forbidden</h1>", status_code=403, media_type="text/html")
+    return (TEMPLATES / "resources.html").read_text()
+
+
+@router.get("/connectors", response_class=HTMLResponse)
+def connectors_page(request: Request):
+    u = getattr(request.state, "user", None)
+    if not u or u.role not in ("admin", "editor"):
+        return Response("<h1>403 Forbidden</h1>", status_code=403, media_type="text/html")
+    return (TEMPLATES / "connectors.html").read_text()
+
+
+@router.get("/logs", response_class=HTMLResponse)
+def logs_page(request: Request):
+    u = getattr(request.state, "user", None)
+    if not u or u.role not in ("admin", "editor"):
+        return Response("<h1>403 Forbidden</h1>", status_code=403, media_type="text/html")
+    return (TEMPLATES / "logs.html").read_text()
+
+
+@router.get("/gpu-connect", response_class=HTMLResponse)
+def gpu_connect_page(request: Request):
+    u = getattr(request.state, "user", None)
+    if not u or u.role not in ("admin", "editor"):
+        return Response(
+            "<h1 style='color:#ce9178;font-family:sans-serif;padding:40px'>403 Forbidden</h1>",
+            status_code=403, media_type="text/html")
+    return (TEMPLATES / "gpu_connect.html").read_text()
+
+
+@router.get("/admin/users", response_class=HTMLResponse)
+def admin_users_page(request: Request):
+    u = getattr(request.state, "user", None)
+    if not u or u.role != "admin":
+        return HTMLResponse(
+            "<h1 style='color:#ce9178;font-family:sans-serif;padding:40px'>403 Forbidden</h1>",
+            status_code=403)
+    return (TEMPLATES / "auth" / "admin_users.html").read_text()
 
 
 # ── SSE stream ────────────────────────────────────────────────────────────────

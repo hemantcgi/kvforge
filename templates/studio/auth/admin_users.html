@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>KVForge Studio — User Management</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#111;color:#e0e0e0;font-family:sans-serif;padding:32px}
+h1{color:#4ec9b0;font-size:18px;margin-bottom:24px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:#555;font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:8px;border-bottom:1px solid #2a2a2a}
+td{padding:8px;border-bottom:1px solid #1e1e1e;color:#ccc}
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px}
+.admin{background:rgba(206,145,120,.15);color:#ce9178}
+.editor{background:rgba(78,201,176,.12);color:#4ec9b0}
+.viewer{background:rgba(156,220,254,.1);color:#9cdcfe}
+.invite-btn{background:rgba(78,201,176,.12);border:1px solid rgba(78,201,176,.3);color:#4ec9b0;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:16px}
+</style></head><body>
+<h1>User Management</h1>
+<button class="invite-btn" onclick="inviteUser()">+ Invite User</button>
+<table>
+<thead><tr><th>Email</th><th>Role</th><th>Provider</th><th>Joined</th></tr></thead>
+<tbody id="users-tbody"></tbody>
+</table>
+<script>
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+async function load(){
+  const r=await fetch('/auth/studio-users', {credentials:'include'});
+  const users=await r.json();
+  document.getElementById('users-tbody').innerHTML=users.map(u=>`
+    <tr><td>${esc(u.email)}</td>
+    <td><span class="badge ${esc(u.role)}">${esc(u.role)}</span></td>
+    <td>${esc(u.provider)}</td><td>${esc(u.created_at||'')}</td></tr>`).join('');
+}
+async function inviteUser(){
+  const email=prompt('Email to invite:');if(!email)return;
+  const role=prompt('Role (admin/editor/viewer):','viewer');
+  const r=await fetch('/auth/invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,role})});
+  const d=await r.json();
+  if(d.signup_url)alert('Invite link: '+d.signup_url);
+}
+load();
+</script>
+</body></html>
