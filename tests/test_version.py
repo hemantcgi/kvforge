@@ -30,7 +30,7 @@ def test_phase3_downgrades_to_2_after_stability_window_bad_rounds(tmp_path):
 
 def test_phase2_downgrades_to_1_after_stability_window_bad_rounds(tmp_path):
     ver = _make_ver_file(tmp_path, phase=2, prs_history=[0.80, 0.55, 0.54])
-    ver.append_prs(4, 0.53, regression_threshold=0.60, stability_window=3)
+    ver.append_prs(4, 0.53, regression_threshold=0.60, stability_window=3, advance_threshold=0.75)
     data = ver.load()
     assert data["phase"] == 1
 
@@ -70,7 +70,7 @@ def test_advance_still_works_with_new_params(tmp_path):
 def test_existing_callers_unaffected_no_new_args(tmp_path):
     """append_prs called with just (round_num, prs) must not crash."""
     ver = _make_ver_file(tmp_path, phase=1, prs_history=[])
-    ver.append_prs(1, 0.50)  # no extra kwargs — must not raise
+    ver.append_prs(1, 0.30)  # no extra kwargs — must not raise; 0.30 stays below any threshold
     data = ver.load()
     assert data["phase"] == 1
 
@@ -81,6 +81,24 @@ def test_phase1_does_not_regress_below_1(tmp_path):
     ver.append_prs(3, 0.42, regression_threshold=0.60, stability_window=3)
     data = ver.load()
     assert data["phase"] == 1
+
+
+def test_advance_threshold_is_configurable(tmp_path):
+    """A custom advance_threshold must gate advancement, not the old hardcoded 0.75."""
+    ver = _make_ver_file(tmp_path, phase=1, prs_history=[])
+    # 0.55 would NOT advance under the old hardcoded 0.75, but must advance
+    # when advance_threshold is explicitly lowered to 0.50.
+    ver.append_prs(1, 0.55, advance_threshold=0.50)
+    data = ver.load()
+    assert data["phase"] == 2
+
+
+def test_advance_threshold_default_is_050(tmp_path):
+    """With no advance_threshold passed, the new default (0.50) applies."""
+    ver = _make_ver_file(tmp_path, phase=1, prs_history=[])
+    ver.append_prs(1, 0.55)
+    data = ver.load()
+    assert data["phase"] == 2
 
 
 def test_no_regress_when_advance_fires_same_call(tmp_path):

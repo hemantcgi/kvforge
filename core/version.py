@@ -131,12 +131,13 @@ def append_prs(
     prs: float,
     regression_threshold: float = 0.60,
     stability_window: int = 3,
+    advance_threshold: float = 0.50,
 ) -> None:
     """Record a PRS score and automatically advance or downgrade the phase.
 
     Phase advancement:
-    * Phase 2: triggered when ``prs >= 0.75`` for the first time.
-    * Phase 3: triggered when ``prs >= 0.75`` for two consecutive rounds.
+    * Phase 2: triggered when ``prs >= advance_threshold`` for the first time.
+    * Phase 3: triggered when ``prs >= advance_threshold`` for two consecutive rounds.
 
     Phase regression (downgrade):
     * Triggered when the last ``stability_window`` rounds are ALL below
@@ -149,6 +150,10 @@ def append_prs(
             trigger a phase downgrade. Default 0.60.
         stability_window: Number of consecutive rounds required to trigger
             a phase downgrade. Default 3.
+        advance_threshold: PRS ceiling required to advance a phase. Default
+            0.50 — backtested against real factual-accuracy data in
+            docs/superpowers/specs/2026-07-11-prs-factual-accuracy-design.md;
+            provisional, not statistically validated (see spec for caveats).
     """
     data = load()
     data["prs_history"].append({"round": round_num, "prs": round(prs, 4)})
@@ -156,11 +161,11 @@ def append_prs(
 
     # ── Advance ──────────────────────────────────────────────────────────────
     phase_before_advance = data["phase"]
-    if prs >= 0.75 and data["phase"] < 2:
+    if prs >= advance_threshold and data["phase"] < 2:
         data["phase"] = 2
         print("✅ Phase 2 activated — KV injection enabled")
     if (len(history) >= 2
-            and all(r["prs"] >= 0.75 for r in history[-2:])
+            and all(r["prs"] >= advance_threshold for r in history[-2:])
             and data["phase"] < 3):
         data["phase"] = 3
         print("✅ Phase 3 activated — confidence gate now live")

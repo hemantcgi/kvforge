@@ -78,7 +78,7 @@ def cmd_init(args) -> None:
                 "lora_lr": 0.0002,
                 "checkpoint_dir": f"{safe}/lora_checkpoints/",
                 "replay_db": f"{safe}/replay.db",
-                "prs_threshold": 0.75,
+                "prs_threshold": 0.50,
                 "faq_question_key": "question",
                 "faq_answer_key": "answer",
             },
