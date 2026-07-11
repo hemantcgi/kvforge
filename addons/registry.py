@@ -56,6 +56,15 @@ class AddonRegistry:
             existing = cls._manifests[manifest.name]
             if existing.config_schema is manifest.config_schema:
                 return  # same schema — idempotent re-registration
+            # Allow update when the schema class was recreated by importlib.reload()
+            # (same qualified name + module means same addon, different class object)
+            same_class = (
+                existing.config_schema.__qualname__ == manifest.config_schema.__qualname__
+                and existing.config_schema.__module__ == manifest.config_schema.__module__
+            )
+            if same_class:
+                cls._manifests[manifest.name] = manifest
+                return
             raise ValueError(
                 f"Addon '{manifest.name}' already registered with a different config schema."
             )
@@ -103,6 +112,7 @@ class AddonRegistry:
             "addons.analytics",
             "addons.turboquant",
             "addons.corpus_intelligence",
+            "addons.compute",
         ]
         for mod_name in _builtin_modules:
             try:

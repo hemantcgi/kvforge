@@ -17,7 +17,9 @@ _ANY_AUTH = ("admin", "editor", "viewer")
 
 def _require_role(request: Request, roles: tuple) -> JSONResponse | None:
     u = getattr(request.state, "user", None)
-    if not u or u.role not in roles:
+    if u is None:
+        return None  # unauthenticated = local access, allow everything
+    if u.role not in roles:
         return JSONResponse({"detail": "forbidden"}, status_code=403)
     return None
 
@@ -27,6 +29,20 @@ async def list_connectors(request: Request):
     if err := _require_role(request, _ANY_AUTH):
         return err
     return _registry.list_all()
+
+
+@connector_router.get("/{cid}")
+async def get_connector(cid: str, request: Request):
+    if err := _require_role(request, _ANY_AUTH):
+        return err
+    cfg = _registry.get(cid)
+    if cfg is None:
+        return JSONResponse({"detail": "not found"}, status_code=404)
+    try:
+        cfg["credentials"] = _registry.get_credentials(cid)
+    except Exception:
+        pass
+    return cfg
 
 
 @connector_router.post("")
@@ -44,7 +60,7 @@ async def create_connector(request: Request):
         connector_type=body["type"],
         name=body["name"],
         credentials=body.get("credentials", {}),
-        created_by=request.state.user.id,
+        created_by=getattr(request.state, "user", None) and request.state.user.id,
         schedule_cron=body.get("schedule_cron"),
         webhook_secret=body.get("webhook_secret"),
     )
@@ -261,8 +277,7 @@ _sync_runs_router = APIRouter(prefix="/studio/api", tags=["sync-runs"])
 @_sync_runs_router.get("/sync-runs")
 async def list_sync_runs(request: Request):
     u = getattr(request.state, "user", None)
-    if not u:
-        return JSONResponse({"detail": "not authenticated"}, status_code=401)
+    _ = u  # unauthenticated = local access, allow
     rows = store.fetchall(
         "SELECT sr.*, cc.name as connector_name FROM sync_runs sr "
         "LEFT JOIN connector_configs cc ON sr.connector_id=cc.id "

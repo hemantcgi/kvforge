@@ -222,23 +222,42 @@ def answer_with_retrieval(query: str, cfg: dict) -> str:
     ]
 
     current_ver = ver.get_lora_version()
-    lora_ckpt = ver.load().get("checkpoint_path")
-    model, tokenizer = model_loader.load(lora_ckpt)
 
-    # Record access
+    # Record access and enqueue stale KV for background healing
     for rank, chunk in enumerate(chunks, start=1):
         kv_background.record_access(chunk["chunk_id"], rank)
-
-    # Enqueue stale for background healing
     stale = get_stale_chunk_ids(chunks, current_ver)
     if stale:
         kv_background.enqueue_kv_recompute(stale)
 
-    mode = decide_inference_mode(chunks, current_ver)
-    if mode == "kv_injection":
-        answer = generate_with_kv(query, chunks, model, tokenizer, cfg)
+    vllm_url = cfg.get("vllm_url", "").strip()
+    if vllm_url:
+        # Use vLLM for generation — avoids loading model locally (no GPU/peft needed)
+        context = "\n\n".join(c["text"] for c in chunks)
+        import httpx as _httpx
+        _base = vllm_url.rstrip("/")
+        if _base.endswith("/v1"):
+            _base = _base[:-3]
+        vllm_model = cfg.get("vllm_model") or cfg.get("llm_model", "kvforge-local")
+        resp = _httpx.post(
+            f"{_base}/v1/chat/completions",
+            json={"model": vllm_model,
+                  "messages": [{"role": "user",
+                                "content": f"Context:\n{context}\n\nQuestion: {query}"}],
+                  "temperature": 0.0, "max_tokens": 256},
+            headers={"Authorization": "Bearer EMPTY"},
+            timeout=120,
+        )
+        resp.raise_for_status()
+        answer = resp.json()["choices"][0]["message"]["content"].strip()
     else:
-        answer = generate_text_in_context(query, chunks, model, tokenizer)
+        lora_ckpt = ver.load().get("checkpoint_path")
+        model, tokenizer = model_loader.load(lora_ckpt)
+        mode = decide_inference_mode(chunks, current_ver)
+        if mode == "kv_injection":
+            answer = generate_with_kv(query, chunks, model, tokenizer, cfg)
+        else:
+            answer = generate_text_in_context(query, chunks, model, tokenizer)
 
     try:
         from pipeline import query_logger as _ql

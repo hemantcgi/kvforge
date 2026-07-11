@@ -33,7 +33,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from fastembed import TextEmbedding
-from pypdf import PdfReader
 
 from vectorstore.base import Point
 from vectorstore.registry import get_store
@@ -118,6 +117,7 @@ def progress(done: int, total: int, label: str = "") -> None:
 
 def read_pdf(path: Path) -> list[dict]:
     """Extract text from each page, return list of {page, text} dicts."""
+    from pypdf import PdfReader  # lazy: only needed for PDF ingestion paths
     log(f"📄 Reading PDF: {path.name}")
     reader = PdfReader(str(path))
     total = len(reader.pages)
