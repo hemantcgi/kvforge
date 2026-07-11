@@ -65,7 +65,7 @@ def test_training_config_defaults():
     assert cfg.lora_dropout == 0.05
     assert cfg.lora_epochs == 3
     assert cfg.lora_lr == 0.0002
-    assert cfg.prs_threshold == 0.75
+    assert cfg.prs_threshold == 0.50
     assert cfg.prs_weights == {"accuracy": 0.5, "calibration": 0.3, "consistency": 0.2}
     assert cfg.prs_advancement_threshold == 0.72
     assert cfg.prs_regression_threshold == 0.60

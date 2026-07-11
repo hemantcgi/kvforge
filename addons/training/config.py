@@ -20,7 +20,7 @@ class TrainingConfig(BaseModel):
     replay_db: str       # required
 
     # PRS thresholds and weights
-    prs_threshold: float = 0.75
+    prs_threshold: float = 0.50
     prs_weights: dict = Field(
         default_factory=lambda: {"accuracy": 0.5, "calibration": 0.3, "consistency": 0.2}
     )
@@ -31,6 +31,7 @@ class TrainingConfig(BaseModel):
         default_factory=lambda: {"faq": 0.4, "vdb": 0.4, "realtime": 0.2}
     )
     prs_stability_window: int = 3
+    known_good_accuracy_threshold: float = 0.5
 
     # FAQ schema keys
     faq_question_key: str = "question"

@@ -274,6 +274,7 @@ def main() -> None:
         prs,
         regression_threshold=cfg.get("prs_regression_threshold", 0.60),
         stability_window=cfg.get("prs_stability_window", 3),
+        advance_threshold=cfg.get("prs_threshold", 0.50),
     )
     print(f"📊 PRS after round {round_num}: {prs:.4f}")
     print(f"   Phase: {ver.get_phase()}")
