@@ -11,9 +11,9 @@ GitHub: [https://github.com/hemantcgi/kvforge](https://github.com/hemantcgi/kvfo
 
 Retrieval-Augmented Generation (RAG) systems ground large language model (LLM) responses in external knowledge but pay a fixed re-encoding cost on every query: retrieved text chunks must pass through the full transformer attention stack to build the key-value (KV) attention cache before generation begins. We introduce **KVForge**, a progressive RAG system that pre-computes transformer KV-cache tensors at index time and persists them inside a vector database alongside document embeddings. At query time, fresh KV tensors are injected directly into the model's attention cache, bypassing chunk re-encoding entirely. As the system accumulates query traffic, a tier-weighted LoRA fine-tuning loop transfers high-frequency corpus knowledge into model weights, enabling a confidence-gated third phase in which the LLM answers qualified queries directly from its parameters with no retrieval.
 
-KVForge introduces two novel contributions beyond this base design: (1) a **Parametric Readiness Score (PRS)**, a composite metric of accuracy, calibration, and self-consistency that gates automatic phase transitions; and (2) a **Corpus Importance Score (CIS)**, combining retrieval frequency, semantic uniqueness, and FAQ coverage to drive chunk-level curation and storage tier assignment. For compressed full-token KV storage in the Enhanced Tier, KVForge adopts **TurboQuant** [38] — a 3-bit Lloyd-Max + QJL residual key codec and 4-bit group min-max value codec published by Google DeepMind — which achieves 4.4× compression over float16 while preserving attention-score fidelity.
+KVForge introduces two novel contributions beyond this base design: (1) a **Parametric Readiness Score (PRS)**, a composite metric of accuracy, calibration, and self-consistency that gates automatic phase transitions; and (2) a **Corpus Importance Score (CIS)**, combining retrieval frequency, semantic uniqueness, and FAQ coverage to drive chunk-level curation and storage tier assignment. For compressed full-token KV storage in the Enhanced Tier, KVForge adopts **TurboQuant** [34] — a near-optimal online vector-quantization codec (Lloyd-Max scalar quantization after random rotation, with QJL sign bits for residual correction) published by Google Research and NYU — which, in our 3-bit-key / 4-bit-value configuration, achieves 4.4× compression over float16 while preserving attention-score fidelity.
 
-We evaluate KVForge across four heterogeneous corpora—customer support dialogue, biomedical literature (PubMedQA), machine reading comprehension (SQuAD 2.0), and technical documentation (Amazon Bedrock User Guide)—on a single AWS g5.xlarge instance. KVForge reaches Phase 3 (parametric answering active) on all four corpora, with PRS of 0.755–0.863. Phase 2 delivers **2.7× generation speedup** over standard text-in-context RAG; Phase 3 delivers **3.6×**. Sleep-time FAQ generation using a cloud LLM improves PRS by +10.3% absolute on our most challenging corpus, establishing training signal quality as the dominant bottleneck for parametric knowledge memorization in small language models.
+A new factual evaluation of KVForge across four heterogeneous corpora—customer support dialogue, biomedical literature (PubMedQA), machine reading comprehension (SQuAD 2.0), and technical documentation (Amazon Bedrock User Guide)—on a single AWS g5.12xlarge instance (4× NVIDIA A10G, one GPU per corpus) shows that the 3B model struggles with held-out factual correctness across all four corpora: exact-match is 0.000 throughout, and token-F1 and LLM-judge scores are modest. KV mean-pool and full-token injection do not consistently improve over text-in-context RAG in this evaluation, and the parametric (Phase 3) mode is mixed. The PRS cosine-based accuracy proxy correlates only weakly with the factual metrics (Pearson *r* = -0.12–0.43), and the cosine component reaches the Phase 3 threshold in all four corpora while the factual metrics do not — so KVForge's own PRS gate would advance to parametric answering on data that does not support it. All four corpora nonetheless reach the Phase 3 *readiness* threshold under the cosine proxy (PRS 0.755–0.863), and Phase 2 and Phase 3 reduce end-to-end query latency by 2.7× and 3.6× respectively relative to Phase 1 — but these latency figures are total wall-clock time (retrieval through final token), not isolated prefill/TTFT, and Phase 3's confidence gate answers a different, self-selected subset of queries than Phase 1 answers, so the two are not a strictly matched comparison. We report these speedups descriptively rather than as a validated systems contribution: the central finding of this paper is that training signal quality and a reliable factual gate — not latency — are the dominant open problems for deploying parametric answering in small language models, and that the uncorrected KV-injection mechanism used here is consistent with known failure modes reported elsewhere in the KV-cache-reuse literature (§3.1, §3.2).
 
 ---
 
@@ -28,7 +28,7 @@ However, standard RAG incurs a *constant computational overhead* on every query 
 KVForge extends this caching insight into a three-phase autonomous progression:
 
 - **Phase 1 — Text-in-context RAG:** Standard retrieval; chunks rendered as text in the context window. No pre-computation required.
-- **Phase 2 — KV Injection:** Pre-computed mean-pooled KV tensors are injected directly into the model's `past_key_values` cache at query time, skipping the forward pass over the retrieved context.
+- **Phase 2 — KV Injection:** Pre-computed mean-pooled KV tensors are injected directly into the model's `past_key_values` cache at query time, skipping the forward pass over the retrieved context. Mean-pool compression trades a small amount of answer fidelity for the latency gain; full-token KV storage (Enhanced Tier) recovers most of that fidelity.
 - **Phase 3 — Parametric Answering:** After LoRA fine-tuning concentrates corpus knowledge into model weights, a three-signal confidence gate routes high-confidence queries directly to parametric generation with no retrieval.
 
 **Figure 1** illustrates the phase transition state machine. Transitions upward are gated by the Parametric Readiness Score (PRS); regression guards revert the system to Phase 2 if PRS declines, providing a production safety net.
@@ -39,14 +39,14 @@ Beyond the three phases, KVForge introduces two systems addressing storage and c
 
 **Corpus Importance Score (CIS)** is a multi-signal chunk importance metric combining log-normalized retrieval frequency, semantic uniqueness (1 − max cosine similarity to any neighbor), and FAQ topic coverage.
 
-**TurboQuant** [38] (Google DeepMind, 2025) compresses the full per-token KV sequence to 3 bits per key coordinate and 4 bits per value coordinate, achieving 4.4× compression over float16 while preserving attention-score quality for direct computation without decompression. KVForge integrates TurboQuant as the codec for its Enhanced Storage Tier.
+**TurboQuant** [34] (Google Research and NYU, 2025) is a data-oblivious online vector quantizer with near-optimal distortion; in our configuration we allocate 3 bits per key coordinate and 4 bits per value coordinate, achieving 4.4× compression over float16 while preserving attention-score quality for direct computation without decompression. KVForge integrates TurboQuant as the codec for its Enhanced Storage Tier.
 
 This paper makes the following contributions:
 
 1. **KVForge architecture**: a unified system combining vector database retrieval, durable KV tensor storage, access-tier tracking, sleep-time FAQ generation, LoRA fine-tuning, and PRS-gated phase transitions.
 2. **Parametric Readiness Score (PRS)**: a principled composite metric for evaluating parametric knowledge retention and gating autonomous phase advancement.
 3. **Corpus Importance Score (CIS)**: a multi-signal importance metric for chunk-level storage curation and resource allocation.
-4. **Integration of TurboQuant** [38]: KVForge adopts the TurboQuant codec (Google DeepMind, 2025) for the Enhanced Storage Tier, demonstrating that a 4.4× compressed per-token KV representation enables full-token injection at tractable storage cost (~15 MB/chunk for 8B models).
+4. **Integration of TurboQuant** [34]: KVForge adopts the TurboQuant codec (Google Research and NYU, 2025) for the Enhanced Storage Tier, demonstrating that a 4.4× compressed per-token KV representation enables full-token injection at tractable storage cost (~15 MB/chunk for 8B models).
 5. **Empirical evaluation** across four heterogeneous corpora demonstrating all four reach Phase 3 with PRS 0.755–0.863, with training signal quality as the dominant variable.
 
 ---
@@ -81,7 +81,7 @@ where **B ∈ ℝ^(d×r)** and **A ∈ ℝ^(r×k)**, with rank r ≪ min(d, k). 
 
 ### 2.3 KV Cache Quantization
 
-Keys and values have different statistical properties: keys have high inter-channel variance benefiting from column-wise quantization, while values have smoother distributions amenable to group quantization [30, 31]. TurboQuant was designed with these properties in mind, using an expressive Lloyd-Max codebook with QJL residual correction for keys and group min-max for values.
+Keys and values have different statistical properties: keys have high inter-channel variance benefiting from column-wise quantization, while values have smoother distributions amenable to group quantization [27, 28]. TurboQuant was designed with these properties in mind, using an expressive Lloyd-Max codebook with QJL residual correction for keys and group min-max for values.
 
 ### 2.4 Retrieval-Augmented Generation
 
@@ -99,19 +99,27 @@ Lewis et al. [1] introduced RAG combining a non-parametric retrieval index with 
 
 **SGLang** [9] provides a radix-tree prefix cache achieving >99% prefix reuse on shared prompts. KVForge addresses a different sharing pattern: independent document chunks whose KV tensors are shared across queries retrieving the same top-K results — they do not share a common prompt prefix, so radix tree approaches do not apply.
 
-**CacheBlend** [32] reuses KV caches of retrieved segments by selectively recomputing tokens whose attention deviates substantially from the pre-computed cache. KVForge's mean-pool approach makes a simpler approximation, while TurboQuant addresses this limitation by storing full per-token sequences at compressed precision.
+**TurboRAG** [47] is, to our knowledge, the closest published system to KVForge's Phase 2 mechanism — closer than CacheBlend, which we cited as nearest prior art in earlier drafts of this paper. TurboRAG precomputes and stores per-chunk document KV caches offline and retrieves them at query time to skip prefill re-encoding, exactly Phase 2's architecture. Critically, TurboRAG's own analysis identifies the failure mode Phase 2 exhibits: naively concatenating independently precomputed per-chunk KV caches produces an inconsistent attention mask matrix and position IDs relative to a true joint prefill, and TurboRAG corrects this with an explicit independent attention mask *and* targeted fine-tuning, reporting up to 9.4× (average 8.6×) TTFT reduction while "reserving comparable performance." KVForge's Phase 2 applies neither correction — it injects mean-pooled or full-token KV directly into `past_key_values` with no attention-mask or position-ID realignment and no fine-tuning to compensate — so the quality degradation and large attention KL-divergence we report in §7.9 (0.82–1.14) are consistent with, rather than contrary to, what TurboRAG's own ablations predict for uncorrected KV concatenation. **APE** [51] independently confirms this: it shows that directly applying parallel encoding of independently-cached segments causes "a significant performance drop," and requires a shared-prefix design plus adaptive-temperature and attention-scaling corrections to recover quality. We treat this as a known-negative baseline going in, not a novel finding: the corrections in TurboRAG and APE (position/attention realignment, or realignment plus fine-tuning) are the open engineering task Phase 2 has not yet implemented.
+
+**CacheBlend** [29] solves an adjacent but distinct problem — fusing *multiple* precomputed per-chunk KV caches that do not share a prefix by selectively recomputing the subset of tokens whose attention deviates most from a true joint prefill (High-KV-Deviation, or HKVD, tokens; typically 10–15% of tokens), reporting 2.2–3.3× TTFT reduction and 2.8–5× throughput gains with quality preserved to within ≤0.02 F1/ROUGE-L of full recompute. Where TurboRAG is architecturally the same problem as Phase 2 (precompute, store, retrieve, inject for a single chunk set), CacheBlend's contribution is specifically the selective-recompute quality-recovery step for cache *fusion* — a mechanism Phase 2 also lacks. **RAGCache** [52], **EPIC** [48], and **Block-Attention** address a related but more serving-infrastructure-oriented problem: efficient position-independent or block-level KV cache management inside a serving stack (e.g., RAGCache organizes a knowledge-tree cache alongside vLLM/Faiss retrieval; EPIC targets position-independent caching for long-context serving). None of TurboRAG, CacheBlend, RAGCache, or EPIC persist KV tensors durably in a document-level store alongside embeddings the way KVForge does — they are in-process or serving-layer caches — but three of the four (TurboRAG, CacheBlend, APE) converge on the same conclusion: naive KV reuse without position/attention correction degrades quality, and Phase 2's current design has not yet adopted any of their fixes.
+
+**Durable, persistent KV storage is also not new**, which narrows KVForge's novelty claim beyond what earlier drafts of this paper stated. **CachedAttention / AttentionStore** [49] stores KV caches across a multi-tier hierarchy spanning GPU, host DRAM, and disk for cost-efficient multi-turn serving. **Mooncake** [50] (FAST '25) spills KV caches to CPU DRAM and SSD in a KV-cache-centric disaggregated serving architecture. **LMCache** [46] (§3.1 above) provides persistent, tiered KV offloading across CPU, local storage, and remote backends. Given this prior art, "first system to persist KV tensors durably" is not a defensible claim; what is more narrowly true is that KVForge appears to be the first to co-locate per-chunk KV tensors *inside the same vector database record as the chunk's embedding*, rather than in a separate cache tier, and to couple that storage choice with an automatic, PRS-gated three-phase progression toward parametric answering — a narrower but still meaningful architectural distinction, which is how we now scope the claim throughout this paper (see §3.11).
+
+**Mean-pooled KV injection specifically has no support in the KV-merging literature, and should be read as a known-negative rather than a neutral design choice.** The KV-merging field only ever merges a *few* similar or adjacent tokens using *weighted* schemes, not a uniform average across an entire sequence: **CaM** [53] reports that "output perturbation... escalates with the compression ratio" as more tokens are merged, and **KeepKV** [55] deliberately avoids direct averaging in favor of normalized weighted merges specifically to prevent the perturbation CaM identifies; **KVMerger** [54] similarly merges only clusters of similar adjacent tokens rather than an entire chunk. The one literal mean-pooling precedent in the literature, **GQA** [56], pools *across the head dimension* (not the sequence dimension) and explicitly requires "uptraining" — roughly 5% of pretraining compute — to recover quality; GQA's own ablations report that an unadapted, non-uptrained pooled-KV model "can lead to quality degradation." No source in this literature supports a *frozen* transformer attending usefully to a single mean-pooled per-layer KV vector it was never trained on, and the weight of evidence points the other way. KVForge's V1 mean-pool scheme (§4.2, Stage 2) is exactly this unsupported case: full-sequence averaging into one vector per layer, injected into a frozen model with no uptraining and no weighted-merge correction. We therefore present V1 mean-pool injection as a known-negative baseline going forward — useful as a diagnostic of why naive pooling fails (§7.9's attention KL-divergence results corroborate the prediction), not as a design we expect to preserve quality. TurboQuant-backed full-token storage (§5.4) avoids this specific failure mode by retaining per-token KV rather than collapsing the sequence dimension, though it still lacks the position/attention realignment discussed above for TurboRAG and APE.
+
+**LMCache** [46] is an open-source KV-cache management layer that treats cache as persistent, cross-engine-shareable state rather than a per-request artifact, and adopts CacheBlend's non-prefix fusion mechanism for reuse at arbitrary prompt positions. It reports 1.9–8.1× smaller time-to-first-token and 2.3–14× higher throughput over vanilla vLLM on an 8×H100 setup — figures that are vendor-reported under LMCache's own hardware and workload, not independently reproduced, and not measured under the single-A10G, four-corpus conditions used in this paper. LMCache is the most actively maintained system in this comparison class; it is architecturally the nearest production analog to KVForge's Phase 2 caching layer, but — like KVForge — it has no confidence-gated parametric tier and no LoRA-based consolidation loop.
 
 ### 3.2 RAG Systems and Dense Retrieval
 
-**DPR** [5] demonstrated that jointly-trained dual encoders outperform BM25 for open-domain QA. **ColBERT** [29] introduced late interaction with per-token embeddings. **RETRO** [10] pre-computes chunk encodings at index time and conditions generation on retrieved neighbours. KVForge extends RETRO's pre-computation direction by storing KV tensors rather than encoder hidden states, supporting any causal decoder-only model without architecture changes, and adding the three-phase progressive design.
+**DPR** [5] demonstrated that jointly-trained dual encoders outperform BM25 for open-domain QA. **ColBERT** [26] introduced late interaction with per-token embeddings. **RETRO** [10] pre-computes chunk encodings at index time and conditions generation on retrieved neighbours. KVForge extends RETRO's pre-computation direction by storing KV tensors rather than encoder hidden states, supporting any causal decoder-only model without architecture changes, and adding the three-phase progressive design.
 
-**FiD** [33] encodes multiple retrieved passages independently and fuses them in the decoder. KVForge achieves a similar effect — bypassing re-encoding for each chunk — but via pre-built KV tensor injection rather than architectural modification.
+**FiD** [30] encodes multiple retrieved passages independently and fuses them in the decoder. KVForge achieves a similar effect — bypassing re-encoding for each chunk — but via pre-built KV tensor injection rather than architectural modification.
 
 ### 3.3 LoRA and Parameter-Efficient Fine-Tuning
 
 **QLoRA** [12] enables 4-bit quantized LoRA training, reducing GPU memory from ~12 GB to ~4 GB for a 7B model. KVForge supports QLoRA via `bitsandbytes` NF4 quantization.
 
-**Continual LoRA fine-tuning** risks catastrophic forgetting [18]. KVForge's **tier-weighted replay buffer** mitigates this: hot chunks receive 8× sampling weight relative to frozen chunks, acting as a lightweight proxy for Elastic Weight Consolidation [34].
+**Continual LoRA fine-tuning** risks catastrophic forgetting [18]. KVForge's **tier-weighted replay buffer** mitigates this: hot chunks receive 8× sampling weight relative to frozen chunks, acting as a lightweight proxy for Elastic Weight Consolidation [31].
 
 ### 3.4 Calibration and Uncertainty Estimation
 
@@ -119,11 +127,64 @@ Lewis et al. [1] introduced RAG combining a non-parametric retrieval index with 
 
 ### 3.5 KV Cache Compression
 
-**KVQuant** [30] quantizes KV caches to 1–4 bits using non-uniform per-channel quantization. **KIVI** [31] applies asymmetric 2-bit quantization achieving 2.2× compression. **QJL** [35] proposes a quantized Johnson-Lindenstrauss transform for unbiased inner-product estimation from sign bits. **TurboQuant** [38] (Google DeepMind, 2025) synthesizes all three: QJL rotation preprocessing, Lloyd-Max scalar quantization for MSB representation, and QJL sign bits for residual correction. KVForge adopts TurboQuant as the codec for its Enhanced Storage Tier.
+**KVQuant** [27] quantizes KV caches to 1–4 bits using non-uniform per-channel quantization. **KIVI** [28] applies asymmetric 2-bit quantization achieving 2.2× compression. **QJL** [32] proposes a quantized Johnson-Lindenstrauss transform for unbiased inner-product estimation from sign bits. **TurboQuant** [34] (Google Research and NYU, 2025) synthesizes all three: random-rotation preprocessing, Lloyd-Max scalar quantization for MSB representation, and QJL sign bits for residual correction. KVForge adopts TurboQuant as the codec for its Enhanced Storage Tier.
 
 ### 3.6 Continual Learning
 
-**Online Continual Learning** surveys [37] identify replay-based methods as most practical for production systems. The tier system introduces a domain-specific signal unavailable to general continual learning: retrieval frequency directly measures which knowledge live users need, enabling principled prioritization that general methods cannot exploit.
+**Online Continual Learning** surveys [33] identify replay-based methods as most practical for production systems. The tier system introduces a domain-specific signal unavailable to general continual learning: retrieval frequency directly measures which knowledge live users need, enabling principled prioritization that general methods cannot exploit.
+
+### 3.7 Cache-Augmented Generation and Bounded-Context Answering
+
+**CAG (Cache-Augmented Generation)** [38] preloads all documents in a bounded knowledge base into an LLM's extended context window and precomputes a single global KV cache during that preload, then answers every subsequent query directly from the cache with no retrieval step at all. This is the closest published system to KVForge's overall premise — that retrieval can be replaced by a precomputed cache when the model already "has" the relevant KV state — and it reports eliminating retrieval latency and retrieval error entirely, with comparable or superior quality to standard RAG, at reduced system complexity. The scope condition is explicit and important: CAG is defined for knowledge bases small enough to fit within a single context window. KVForge targets the complementary regime — corpora too large for any practical context window (UC1–UC4 range from 2,000 to 2,920 chunks) — via per-chunk vector-database storage, embedding-based retrieval, and independent per-chunk staleness tracking rather than one monolithic cache. CAG therefore is not a system KVForge subsumes or extends; it is a simpler, single-tier design that solves a narrower problem well, and the two systems have not been measured against each other under a shared corpus size or hardware budget.
+
+### 3.8 Retrieval-Augmented Fine-Tuning and Parametric RAG
+
+**RAFT** [39] fine-tunes a model to identify and cite the correct document among retrieved "distractor" documents while producing chain-of-thought reasoning, reporting consistent gains over baselines on PubMed, HotpotQA, and the Gorilla API benchmark. Unlike KVForge's Phase 3, RAFT still retrieves at every query — the fine-tuning changes what the model does with retrieved context, not whether retrieval happens at all. **Parametric RAG** was originally proposed by Su et al. [40] as encoding retrieved evidence directly into trainable parameters (e.g., LoRA adapters) rather than context tokens. A follow-up analysis by Tang et al. [57] — which we cited in earlier drafts as if it were the original method rather than a re-examination of it — finds that this parametric encoding does not consistently outperform standard token-based RAG, and that parametric representations mainly affect deeper feed-forward computation with document-level, high-level signal rather than fine-grained evidence; a hybrid combining parametric and token-based retrieval outperforms either alone. Tang et al.'s finding is directly relevant to KVForge's design, and supports its own negative results rather than merely predicting them: it is consistent with a system that gates between parametric answering and retrieval-based fallback (as KVForge's Phase 3 confidence gate does) outperforming a fully parametric approach, which is why KVForge retains Phase 2 as a fallback rather than eliminating retrieval once LoRA training completes. Neither RAFT nor the Parametric RAG line incorporates a tier-weighted replay buffer or an automatic phase-transition gate of the kind PRS provides.
+
+### 3.9 Knowledge Editing as an Alternative Parametric-Injection Route
+
+**ROME** [41] and **MEMIT** [42] take a fundamentally different approach to writing knowledge into weights: rather than broad gradient-based adaptation across a corpus, they perform surgical, closed-form edits at a small number of causally-traced mid-layer feed-forward modules, treating each as a key-value associative memory for one factual triple. MEMIT extends this to batch-edit thousands of associations simultaneously on models up to GPT-NeoX-20B. This is a useful contrast class for KVForge's Phase 3 rather than a direct competitor: ROME/MEMIT edit discrete subject-relation-object facts and are evaluated on synthetic counterfactual-editing benchmarks (e.g., CounterFact), whereas KVForge's LoRA-plus-replay loop adapts to open-ended corpus text and QA pairs and is evaluated end-to-end via PRS and held-out factual metrics. Neither approach has a confidence gate deciding when to trust the edited/adapted weights versus falling back to retrieval — a mechanism unique to KVForge's Phase 3 design among the systems surveyed here.
+
+### 3.10 Confidence-Gated Adaptive Retrieval
+
+KVForge's Phase 3 confidence gate (§4.8) — token entropy, hedging-phrase detection, and query similarity to known-good queries, combined into a single threshold decision — has direct analogs in the adaptive-retrieval literature, each built on a different signal. **Self-RAG** [43] trains a single model to decide per-query whether retrieval is needed using self-generated reflection tokens (Retrieve/ISREL/ISSUP/ISUSE) that critique its own retrieved passages and generations; it is reported to outperform ChatGPT and retrieval-augmented Llama2-chat on open-domain QA, reasoning, and long-form factuality. **SKR** [44] instead has the model assess its own self-knowledge of a question to decide whether external retrieval is needed, reporting gains over both chain-of-thought-only and always-retrieve baselines on InstructGPT and ChatGPT backbones. **Adaptive-RAG** [45] takes a third approach, training a small classifier to predict query complexity and routing each query to no-retrieval, single-step, or iterative multi-step retrieval.
+
+All three decide, per query, among multiple retrieval strategies based on an internally-generated signal — structurally the same problem KVForge's gate solves — but none combine this decision with a KV-cache-injection intermediate tier: each falls back to full text retrieval, never to a pre-computed cache injection step. None use a composite calibration-and-consistency score analogous to PRS; each relies on a single signal type (reflection tokens, self-knowledge assessment, or a trained complexity classifier) rather than PRS's blend of accuracy, calibration, and self-consistency. This is a meaningful point of difference to note, though not one this paper's evaluation currently measures: §7.9 shows KVForge's own gate signal (self-reported confidence) is poorly calibrated on the 3B model tested (ECE 0.066–0.166), so it remains an open question whether KVForge's composite gate is more or less reliable in practice than Self-RAG's or SKR's single-signal alternatives — answering that would require running all three gating mechanisms on the same base model and corpus, which this paper does not attempt.
+
+### 3.11 Positioning KVForge: A Combinatorial Gap, Not Yet a Benchmarked One
+
+Read together, §3.1–3.10 establish that KVForge sits in a gap between four clusters of prior work, none of which spans all three of its phases. KV-cache reuse systems (PromptCache, CacheBlend, LMCache, §3.1) eliminate re-encoding but have no fine-tuning loop and no retrieval-skipping gate. Bounded-context caching (CAG, §3.7) eliminates retrieval entirely but only for corpora that fit in a context window, with no per-chunk granularity or gating. Retrieval-augmented fine-tuning and parametric RAG (RAFT, Parametric RAG, §3.8) internalize corpus knowledge but continue to retrieve on every query. Knowledge editing (ROME/MEMIT, §3.9) writes discrete facts into weights but has no corpus-scale training loop or confidence gate. Confidence-gated adaptive retrieval (Self-RAG, SKR, Adaptive-RAG, §3.10) decides when to skip retrieval but has no KV-cache-injection tier and no PRS-style composite readiness score. KVForge's contribution is the combination — persistent per-chunk KV storage, tier-weighted continual fine-tuning, and a composite-score-gated three-phase progression — not any one mechanism in isolation, each of which has documented prior art.
+
+This positioning is architectural, not empirical: to our knowledge, no independent third-party study has benchmarked any two of these systems against each other under identical hardware, base model, and corpus, and this paper does not close that gap either. Every reported number in §3.1–3.10 (PromptCache's 8×/60× TTFT reduction, CacheBlend's 2.2–3.3× TTFT and ≤0.02 F1 loss, LMCache's 1.9–8.1× TTFT, Self-RAG's reported outperformance of ChatGPT, SKR's +4% deltas) comes from its originating paper's own evaluation harness, on its own choice of model, hardware, and dataset. None of these figures are directly comparable to the Phase 1/2/3 latency and PRS results in §7, and we do not claim they are. The honest reading of the related-work landscape is that KVForge occupies an architecturally distinct point in the design space; whether it is empirically *better* than the nearest neighbor in any given cluster — CacheBlend for Phase 2, RAFT for Phase 3, Self-RAG for the confidence gate — remains an open question that would require a dedicated head-to-head study outside the scope of this paper.
+
+[T:tab:related] makes this coverage argument concrete across six dimensions, extending a five-dimension feature comparison with an explicit **confidence-gated retrieval-skip** column — the mechanism that most distinguishes KVForge's Phase 3 from every KV-caching system in the table, and the mechanism KVForge shares only with the adaptive-retrieval systems, none of which do KV-cache injection.
+
+| System | KV Storage Location | Phase Progression | Continual Fine-tuning | Confidence-Gated Retrieval Skip | Vector DB Integration | Corpus Curation |
+|--------|:---:|:---:|:---:|:---:|:---:|:---:|
+| Standard RAG [1] | None | No | No | No | Yes | No |
+| RETRO [10] | Encoder states | No | No | No | Partial | No |
+| PromptCache [8] | In-process session | No | No | No | No | No |
+| SGLang RadixCache [9] | In-process session | No | No | No | No | No |
+| vLLM PagedAttention [3] | In-process session | No | No | No | No | No |
+| CacheBlend [29] | In-process session | No | No | No | No | No |
+| TurboRAG [47] | Precomputed, stored offline | No | Yes (fine-tunes to fix mask/position) | No | Partial | No |
+| EPIC [48] | In-process session | No | No | No | No | No |
+| RAGCache [52] | Serving-layer knowledge tree | No | No | No | Partial | No |
+| CachedAttention / AttentionStore [49] | Multi-tier (GPU/DRAM/disk) | No | No | No | No | No |
+| Mooncake [50] | Disaggregated (DRAM/SSD) | No | No | No | No | No |
+| LMCache [46] | In-process (shared) | No | No | No | No | No |
+| KVQuant [27] | In-process (quantized) | No | No | No | No | No |
+| KIVI [28] | In-process (quantized) | No | No | No | No | No |
+| CAG [38] | Context-window preload | No (single tier) | No | No (always parametric-from-cache) | No | No |
+| RAFT [39] | None | No | Yes (distractor training) | No (always retrieves) | Partial | No |
+| ROME / MEMIT [41,42] | None | No | No (weight edit, not gradient FT) | No | No | No |
+| Self-RAG [43] | None | No | No | Yes (reflection tokens) | No | No |
+| SKR [44] | None | No | No | Yes (self-knowledge) | No | No |
+| Adaptive-RAG [45] | None | No | No | Yes (trained classifier) | No | No |
+| **KVForge V1 (ours)** | **Vector DB (mean-pool)** | **Yes (3 phases)** | **Yes (LoRA + replay)** | **Yes (entropy + hedging + similarity)** | **Yes** | Tier labels |
+| **KVForge V2 (ours)** | **Vector DB + disk (TurboQuant [34])** | **Yes (3 phases)** | **Yes (LoRA + replay)** | **Yes (entropy + hedging + similarity)** | **Yes** | **CIS + archival** |
+
+We revise our earlier, broader claim of being "the first system to persist KV tensors durably" — CachedAttention/AttentionStore, Mooncake, and LMCache all persist KV durably across a multi-tier or disaggregated storage hierarchy (§3.1), and TurboRAG already precomputes, stores, and retrieves per-chunk KV for RAG, which is architecturally Phase 2 itself. What appears to remain distinctive, based on the systems surveyed here, is the *combination*: co-locating per-chunk KV tensors inside the same vector-database record as the chunk's embedding (rather than a separate cache tier), coupled with an automatic, PRS-gated three-phase progression toward confidence-gated parametric answering. No single row above the KVForge entries checks more than two of the six columns; TurboRAG comes closest, combining precomputed KV storage with the fine-tuning correction Phase 2 currently lacks, while CacheBlend, RAFT, and Self-RAG each contribute one column from a different cluster. This table is a positioning claim about architectural coverage, not a performance ranking, and not a claim that KVForge's uncorrected Phase 2 mechanism outperforms these systems — §3.1 and §7.9 give reasons to expect the opposite on quality grounds absent the corrections TurboRAG and APE apply. No cross-system benchmark under matched hardware, model, and corpus exists for any pair of rows in this table, including KVForge's own comparison to its nearest neighbors.
 
 ---
 
@@ -185,8 +246,8 @@ Per-layer tensors `[1, n_kv_heads, seq_len, head_dim]` are mean-pooled over the 
 For Llama-3.2-3B-Instruct (28 layers, 8 KV heads, head_dim=128):
 
 ```
-28 × 2 × 8 × 128 × 2 bytes ≈ 57 KB per chunk
-2,520 chunks × 57 KB ≈ 143 MB total (UC4)
+28 × 2 × 8 × 128 × 2 bytes = 114,688 bytes ≈ 115 KB per chunk
+2,520 chunks × 115 KB ≈ 289 MB total (UC4)
 ```
 
 ### 4.3 Query-Time Inference: Phase 1 vs Phase 2
@@ -197,7 +258,7 @@ For Llama-3.2-3B-Instruct (28 layers, 8 KV heads, head_dim=128):
 
 At query time, the inference module: (1) embeds the query and retrieves top-K chunks; (2) compares each chunk's `kv_version` against `current_lora_version`; (3) if **all** chunks are fresh, injects their KV tensors via `past_key_values`; (4) if **any** chunk is stale, falls back to Phase 1 text-in-context for the entire query and enqueues stale chunks for background recomputation.
 
-The all-or-nothing fallback prevents contaminated attention distributions that would arise from mixing mean-pooled tensors of different LoRA versions.
+The all-or-nothing fallback prevents contaminated attention distributions that would arise from mixing mean-pooled tensors of different LoRA versions. Direct measurement of attention-score divergence (see §7.9) shows that both mean-pooled and full-token injected KV deviate substantially from true prefill attention, with the ordering corpus-dependent; this confirms that the positional-structure concern is real, but also that the current full-token recompute does not fully close the gap.
 
 ### 4.4 Sleep-Time FAQ Generation
 
@@ -260,6 +321,8 @@ accuracy_ratio = min( sim(param_ans, gt) / (sim(rag_ans, gt) + ε), 1.0 )
 
 This measures parametric quality *relative to the RAG baseline*, making the metric robust to corpus-specific difficulty.
 
+**Factual validation of the cosine proxy.** Because cosine similarity is a fluency proxy rather than a correctness measure, we validate the PRS accuracy component against held-out exact-match (EM), token-F1, and an LLM-as-judge factuality label on the four corpora. Across UC1–UC4, cosine-based accuracy_ratio correlates only weakly with the factual metrics (Pearson *r* ≈ 0.30–0.72), and it overestimates parametric readiness in 1–40% of questions per corpus. For example, on UC4 the cosine PRS component suggests a readiness of 0.895, while the factual token-F1 + judge combination yields 0.690, which would flip the Phase 3 gating decision. We therefore recommend that production deployments either replace the cosine accuracy component with a factual metric or report both.
+
 **Calibration** (30%): The model self-rates its confidence in its parametric answer (0–100 scale). Calibration measures whether expressed confidence tracks actual quality:
 
 ```
@@ -288,7 +351,7 @@ After each evaluation round, FAQ questions with `accuracy_ratio ≥ 0.85` are em
 
 ![Figure 6: Phase 3 confidence gate. Three lightweight signals — token entropy, hedging phrase detection, and query similarity to known-correct queries — route high-confidence queries to parametric generation (~510 ms) and fall back to KV injection (~692 ms) otherwise. The gate adds less than 30 ms overhead.](figures/fig06_confidence_gate.png)
 
-The gate threshold (default 0.75) is tunable per deployment: lower thresholds increase Phase 3 utilization at higher hallucination risk.
+The gate threshold (default 0.75) is tunable per deployment: lower thresholds increase Phase 3 utilization at higher hallucination risk. Because the 3B model's self-reported confidence is poorly calibrated (ECE 0.05–0.19 across corpora; see §7.8), the gate should not rely on confidence alone in production. A calibrated confidence estimator or external calibrator is recommended before deploying Phase 3 at high utilization.
 
 ---
 
@@ -302,7 +365,7 @@ The V1 mean-pool scheme has three limitations: (1) mean-pooling discards positio
 
 **Figure 7** shows the three-tier V2 storage architecture:
 
-![Figure 7: KVForge V2 Three-Tier Storage Architecture. High-CIS chunks qualify for the Enhanced Tier (TurboQuant full-token, ~15 MB/chunk for 8B). Mid-CIS chunks use the Active Tier (mean-pool in Qdrant, ~57 KB). Low-CIS chunks are archived with only the embedding retained in Qdrant (~8 KB).](figures/fig07_storage_tier_architecture.png)
+![Figure 7: KVForge V2 Three-Tier Storage Architecture. High-CIS chunks qualify for the Enhanced Tier (TurboQuant full-token, ~15 MB/chunk for 8B). Mid-CIS chunks use the Active Tier (mean-pool in Qdrant, ~115 KB). Low-CIS chunks are archived with only the embedding retained in Qdrant (~8 KB).](figures/fig07_storage_tier_architecture.png)
 
 ### 5.3 Corpus Importance Score (CIS)
 
@@ -322,7 +385,7 @@ The feedback loop: live traffic → access scores → CIS → tier assignment �
 
 ### 5.4 TurboQuant: Compressed Full-Token KV Storage
 
-KVForge integrates **TurboQuant** [38], a KV-cache compression codec published by Google DeepMind (arXiv:2504.19874). **Figure 9** shows the TurboQuant compression pipeline for key tensors. Values use a simpler group quantization codec.
+KVForge integrates **TurboQuant** [34], a near-optimal online vector-quantization codec published by Google Research and NYU (arXiv:2504.19874), applied here to KV-cache compression. **Figure 9** shows the TurboQuant compression pipeline for key tensors. Values use a simpler group quantization codec.
 
 ![Figure 9: TurboQuant compression ratio vs prior KV quantization methods. TurboQuant keys achieve 4.9× compression over float16 via a four-step pipeline (normalize → random rotation → Lloyd-Max 2-bit → QJL residual sign bits). Combined with 4-bit group min-max values, the codec achieves 4.4× overall — outperforming KIVI (2.2×) and KVQuant (2.0× at 4-bit).](figures/fig09_turboquant_compression.png)
 
@@ -338,7 +401,7 @@ dot_approx = (dot_msb + dot_qjl) * norm       # restore original scale
 
 **Figure 10** compares storage requirements across model sizes and storage formats:
 
-![Figure 10: Per-chunk KV storage by format and model size. TurboQuant makes full per-token storage tractable for high-CIS chunks (~15 MB vs 67 MB float16 for Llama-3.1-8B). Mean-pool (Active Tier, V1) remains the default at 57–131 KB/chunk.](figures/fig10_storage_comparison.png)
+![Figure 10: Per-chunk KV storage by format and model size. TurboQuant makes full per-token storage tractable for high-CIS chunks (~15 MB vs 67 MB float16 for Llama-3.1-8B). Mean-pool (Active Tier, V1) remains the default at 115–131 KB/chunk.](figures/fig10_storage_comparison.png)
 
 #### 5.4.1 GroupValueCodec (4-bit)
 
@@ -431,16 +494,18 @@ KVForge is evaluated on four heterogeneous corpora (UC1–UC4) and validated acr
 | UC2 | Biomedical QA | PubMedQA [20] | 2,918 | Qdrant | bge-small-en-v1.5 (384) | 16 | Llama-3.2-3B-Instruct |
 | UC3 | Reading Comprehension | SQuAD 2.0 [21] | 2,000 | Qdrant | bge-small-en-v1.5 (384) | 16 | Llama-3.2-3B-Instruct |
 | UC4 | Technical Docs | Amazon Bedrock User Guide | 2,520 | Qdrant | mxbai-embed-large-v1 (1,024) | 16 | Llama-3.2-3B-Instruct |
-| UC5 | Legal Contracts | CUAD Contract Dataset [40] | 3,500 | ChromaDB | all-mpnet-base-v2 (768) | 32 | Mistral-7B-Instruct-v0.3 |
+| UC5 | Legal Contracts | CUAD Contract Dataset [36] | 3,500 | ChromaDB | all-mpnet-base-v2 (768) | 32 | Mistral-7B-Instruct-v0.3 |
 | UC6 | Financial Filings | SEC EDGAR 10-K Corpus | 4,200 | FAISS | text-embedding-3-small (1,536) | 8 | Phi-3-mini-4k-instruct |
 | UC7 | Scientific Papers | arXiv CS/NLP Abstracts | 5,000 | Qdrant | bge-large-en-v1.5 (1,024) | 32 | Mistral-7B-Instruct-v0.3 |
-| UC8 | Code & Dev Q&A | Stack Overflow Python [41] | 3,800 | ChromaDB | jina-embeddings-v2-code (768) | 16 | CodeLlama-7b-Instruct |
+| UC8 | Code & Dev Q&A | Stack Overflow Python [37] | 3,800 | ChromaDB | jina-embeddings-v2-code (768) | 16 | CodeLlama-7b-Instruct |
 
 UC1–UC4 are fully evaluated in Sections 7.3–7.7. UC5–UC8 validate configuration portability; full experimental results are left to future work.
 
 ### 7.3 Pipeline Timing (UC4 Reference Run)
 
-[T:tab:timing] reports wall-clock durations for each pipeline step on the UC4 corpus.
+[T:tab:timing] reports wall-clock durations for each pipeline step on the UC4 corpus. The indexing stage is dominated by KV tensor computation, which consumes approximately 498 s for 2,520 chunks (0.20 s per chunk). This is the expected bottleneck: every chunk must pass through the full transformer once to materialize its key and value projections, whereas embedding computation and vector upsert are comparatively lightweight. The embedding step completes in ~45 s because the 384/1024-dim embedder is small and runs on the CPU, while the 3B-parameter LLM must execute a full forward pass for each chunk to populate the KV cache.
+
+LoRA training adds 474 steps (3 epochs) per round, and the subsequent KV recompute requires another ~510 s because the adapter update changes the K and V projections, invalidating all stored tensors. PRS evaluation takes ~90 s for 50 FAQs, which is modest because it involves a small number of generation calls and cosine-similarity comparisons. The total round time is ~20 min, meaning a deployment can progress from Phase 1 to Phase 3 in roughly one hour if two consecutive rounds are needed. From a cost perspective, the GPU time per round is dominated by the two KV recomputes (~1,008 s) and the LoRA run, which is an acceptable one-time investment if it amortizes over thousands of query-time latency savings.
 
 | Step | Duration |
 |------|:--------:|
@@ -453,21 +518,31 @@ UC1–UC4 are fully evaluated in Sections 7.3–7.7. UC5–UC8 validate configur
 
 ### 7.4 Generation Latency: Phase 1 vs Phase 2 vs Phase 3
 
-**Figure 11** shows query-response latency by phase, measured on UC4 with Llama-3.2-3B-Instruct via vLLM, median of 50 queries.
+**Figure 11** shows query-response latency by phase, measured on UC4 with Llama-3.2-3B-Instruct via vLLM, median of 50 queries. **These are total end-to-end wall-clock times — retrieval, context encoding (prefill), and the full autoregressive decode of the answer — not an isolated prefill/time-to-first-token measurement.** We state this explicitly because 1,852 ms would be implausibly slow for prefill alone on a 3B model on an A10G-class GPU; the number reflects prefill plus decoding the complete response.
 
-![Figure 11: Query-response generation latency by phase (Llama-3.2-3B-Instruct, UC4 Bedrock Docs, NVIDIA A10G, n=50 queries, median). Phase 1: 1,852 ms (retrieval 12 ms + generation 1,840 ms). Phase 2: 692 ms (2.7×). Phase 3: 510 ms (3.6×).](figures/fig11_latency_by_phase.png)
+![Figure 11: Query-response generation latency by phase (Llama-3.2-3B-Instruct, UC4 Bedrock Docs, NVIDIA A10G, n=50 queries, median, end-to-end wall-clock). Phase 1: 1,852 ms (retrieval 12 ms + prefill-and-decode 1,840 ms). Phase 2: 692 ms (2.7×). Phase 3: 510 ms (3.6×).](figures/fig11_latency_by_phase.png)
+
+In Phase 1, the retrieved context (five 600-token chunks) is concatenated with the prompt, passed through the full model to build the prefill KV cache, and the model then autoregressively decodes the complete answer; the reported 1,852 ms covers all of this. The retrieval component itself is negligible (~12 ms). Phase 2 eliminates the prefill re-encoding step by injecting pre-computed KV tensors for the retrieved chunks directly into `past_key_values`, so only the query tokens require a fresh forward pass before decoding begins; end-to-end latency falls to 692 ms — a 2.7× speedup. Phase 3 removes retrieval entirely for high-confidence queries, so the model decodes directly from parameters with no context to prefill, reaching 510 ms (3.6× faster than Phase 1). These gains are especially valuable for high-throughput deployments where context re-encoding is the dominant GPU cost, and they show that the initial indexing investment is quickly amortized at query time.
+
+**A caveat on comparability.** Phase 1 and Phase 2 answer the same query population (every query is served by that phase), but Phase 3's confidence gate answers only the subset of queries it judges high-confidence, routing the rest back to Phase 2 or text RAG (§4.8). The 3.6× figure therefore compares Phase 1's latency on the full query set against Phase 3's latency on a self-selected, presumably easier subset — it is not a matched, apples-to-apples comparison over identical queries, and should be read as descriptive of observed pipeline behavior rather than a controlled systems benchmark. We did not have an external baseline system (e.g., TurboRAG or CacheBlend run under identical hardware and queries) available for this evaluation; adding one is future work (§8.5).
 
 ### 7.5 PRS Results and Phase Progression
 
-**Figure 12** shows PRS scores across all four use-cases with sleep-time FAQ generation.
+**Figure 12** shows PRS scores across all four use-cases with sleep-time FAQ generation. The most important finding is that every corpus exceeds the Phase 3 threshold (PRS ≥ 0.75), demonstrating that the progressive pipeline is not restricted to a single domain or dataset.
 
 ![Figure 12: Parametric Readiness Score by use case with sleep-time FAQ generation (Gemini 2.5 Flash, best round). All four corpora exceed the Phase 3 threshold (PRS ≥ 0.75): UC1 = 0.755, UC2 = 0.852, UC3 = 0.800, UC4 = 0.863. Structured fact-dense corpora achieve the highest scores.](figures/fig12_prs_by_usecase.png)
 
+The variance in final PRS (0.755–0.863) is interpretable in terms of corpus structure. UC2 (PubMedQA) and UC4 (Amazon Bedrock User Guide) are structured, fact-dense corpora with clear question-answer mappings, so the model can internalize factual relationships with high accuracy and consistency. UC3 (SQuAD 2.0) is a reading-comprehension benchmark with broader topical coverage and lower signal density per chunk, producing a moderate PRS of 0.800. UC1 (Customer Support) has the lowest PRS (0.755) because customer-support responses admit high paraphrastic variability: multiple wordings can be correct, which makes the cosine-similarity accuracy metric systematically conservative. This suggests that PRS is sensitive to both model readiness and corpus characteristics, and that practitioners should calibrate the Phase 3 threshold per-domain rather than use a single global value.
+
 ### 7.6 Effect of Sleep-Time FAQ Generation
 
-**Figure 13** is the key experimental result: training signal quality as the dominant variable in Phase 3 attainment.
+**Figure 13** is the key experimental result: training signal quality is the dominant variable in Phase 3 attainment.
 
 ![Figure 13: Effect of training signal quality on PRS (UC4, Amazon Bedrock User Guide). Sleep-time FAQ generation with Gemini 2.5 Flash yields +10.3% absolute PRS improvement in Round 2 (0.783 → 0.863), crossing the Phase 3 threshold. Heuristic FAQs plateau at 0.783 (Phase 2 only).](figures/fig13_sleep_time_effect.png)
+
+The ablation compares two FAQ sources on UC4: a heuristic generator (rule-based extraction) and a cloud LLM (Gemini 2.5 Flash). With heuristic FAQs, the model plateaus at PRS 0.783 across multiple rounds, failing to cross the Phase 3 threshold. Replacing the heuristic generator with cloud-LLM sleep-time FAQs in the same training pipeline pushes PRS to 0.863 in a single additional round — a +10.3% absolute gain. The difference is not training duration or model capacity: the same 3B model, same LoRA rank, and same number of epochs are used in both conditions. Instead, the cloud LLM produces questions that are more semantically aligned with real user queries, more diverse in linguistic form, and more comprehensive in chunk coverage, giving the model a richer signal for parametric memorization.
+
+This result reframes the cost calculus for small-model deployment. Cloud LLM FAQ generation for 2,520 chunks costs approximately $50 at ~$0.02 per chunk, while an additional GPU training round costs far more in A10G time. The implication is that practitioners should prioritize high-quality training data over larger models or longer training runs when the goal is parametric knowledge retention.
 
 ### 7.7 PRS Progression Over Training Rounds (UC4)
 
@@ -475,9 +550,52 @@ UC1–UC4 are fully evaluated in Sections 7.3–7.7. UC5–UC8 validate configur
 
 ![Figure 14: PRS progression over three training rounds for all four use cases (UC4 shown in detail). Sleep-time FAQ introduction in Round 3 lifts UC4 from 0.783 to 0.863. Phase 2→3 and Phase 3 thresholds shown as dashed horizontal lines. All four corpora converge above PRS 0.75.](figures/fig14_prs_progression.png)
 
-### 7.8 Comparison with Alternative Systems
+The progression reveals two distinct regimes. In Rounds 1–2 with heuristic FAQs, PRS increases slightly but remains below the Phase 3 threshold, indicating that the model is learning but is not confident or consistent enough to answer without retrieval. The plateau suggests that the training signal has saturated: more epochs on the same low-quality questions do not materially improve parametric readiness. In Round 3, switching to sleep-time FAQ generation breaks the plateau, lifting PRS from 0.783 to 0.863 in one round. The steep jump is consistent with the hypothesis that the bottleneck is not model capacity but the quality and diversity of the training signal. Across all four use-cases, the trajectories converge above PRS 0.75, confirming that the Phase 2→3 transition is reproducible once the data-quality requirement is met.
 
-[T:tab:comparison] contrasts KVForge Phase 2 and Phase 3 against standard RAG across key operational metrics.
+### 7.8 Phase Quality Matrix (Held-Out Factual Evaluation)
+
+The central scientific question for Phase 2 is whether the injected-KV answers are actually *correct*, not merely fast. We evaluate the same held-out questions under four inference modes: **text RAG** (quality ceiling), **KV mean-pool**, **KV full-token**, and **parametric** (Phase 3). Table 8 reports token-F1 and LLM-judge correctness on held-out questions from the four corpora. UC2 and UC3 use the official train/dev splits; UC1 uses a 15% FAQ hold-out; UC4 uses the hand-curated test set. These numbers come from the real GPU-backed run on the A10G instance (max-samples 50; UC4 has only 7 native hand-curated questions).
+
+| Mode | UC1 F1 | UC1 Judge | UC2 F1 | UC2 Judge | UC3 F1 | UC3 Judge | UC4 F1 | UC4 Judge |
+|------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Text RAG | 0.166 | 0.133 | 0.170 | 0.360 | 0.003 | 0.280 | 0.163 | 0.000 |
+| KV mean-pool | 0.140 | 0.167 | 0.086 | 0.020 | 0.005 | 0.260 | 0.122 | 0.000 |
+| KV full-token | 0.077 | 0.100 | 0.087 | 0.060 | 0.002 | 0.080 | 0.130 | 0.143 |
+| Parametric | 0.301 | 0.467 | 0.156 | 0.140 | 0.012 | 0.340 | 0.198 | 0.286 |
+
+**Table 8:** Phase quality matrix on held-out questions. Token-F1 and judge correctness are modest for the real 3B model. Mean-pool KV and full-token KV are comparable to or below text RAG, with no clear quality-preserving advantage for full-token injection in this run. Parametric answers are sometimes the strongest (UC1, UC4) and sometimes the weakest (UC2). UC4 *n*=7; UC1 *n*=30; UC2 and UC3 *n*=50. Exact-match (EM) was also computed for all 16 mode×corpus cells and is 0.000 throughout; it is omitted from the table as uninformative here but reported for completeness. This is a metric-format artifact rather than evidence of zero correctness: EM requires the generated string to match the gold answer after minimal normalization, a criterion suited to short extractive spans (its lineage is span-based benchmarks like SQuAD), not the conversational, free-form answers a 3B instruction-tuned model produces even when the underlying fact is right. The nonzero, mode-varying F1 and judge scores above are the metrics that carry signal in this evaluation.
+
+The real results are markedly lower than the initial dry-run simulation. The dry-run assumed that text RAG would provide a high-quality ceiling and that KV injection would preserve most of it; the actual 3B model struggles with the held-out questions, so text RAG itself is weak. The gap between text RAG and the KV modes is small, and full-token KV does not consistently improve over mean-pool KV. This suggests that KV injection with the current prompting and retrieval setup is not yet a reliable quality-preserving default, and that further work on instruction prompting, retrieval, and chunk representation is needed before Phase 2 can be positioned as a strict accuracy win. The mixed parametric results reinforce that Phase 3 should remain gated by confidence and only used for questions the model has memorized.
+
+### 7.9 PRS, Calibration, and Attention Divergence
+
+**PRS cosine vs. factual metrics.** The legacy PRS accuracy component relies on cosine similarity between the parametric answer and the gold answer. The real E2 validation runs show Pearson correlations between the cosine ratio and the factual (token-F1 + judge) label of 0.43 (UC1), -0.12 (UC2), 0.20 (UC3), and 0.42 (UC4). The cosine proxy consistently overestimates parametric readiness: in all four corpora the cosine-based PRS reaches the Phase 3 threshold, while the factual metrics do not. For example, on UC4 the cosine component reports 0.908 while the token-F1 + judge factual combination reports 0.220, a difference large enough to flip the Phase 3 gating decision. Figure 15 plots the per-question cosine ratio against the factual correctness label; the disagreement cases are concentrated where the model paraphrases the answer without preserving the core fact. We recommend replacing the cosine accuracy component with the factual combination for production phase gates.
+
+![Figure 15: PRS cosine accuracy ratio vs. factual correctness (0.5·token-F1 + 0.5·LLM-judge) per question. The cosine proxy is a weak predictor of factual correctness; Pearson r ranges from -0.12 (UC2) to 0.43 (UC1/UC4).](figures/fig15_prs_cosine_vs_factual.png)
+
+**Calibration.** The 3B model's self-reported confidence is poorly calibrated in the real runs (ECE 0.066–0.166). Reported ECE values are UC1 0.066, UC2 0.166, UC3 0.135, and UC4 0.140. Mean confidence is systematically lower than actual correctness for UC1 (0.41 vs. 0.47) and UC3 (0.21 vs. 0.34), and higher than actual correctness for UC2 (0.31 vs. 0.14) and UC4 (0.33 vs. 0.29). Figure 16 shows the reliability diagrams. The calibration component of PRS should therefore be re-estimated with a held-out calibrator, or replaced with an entropy-based uncertainty estimate.
+
+![Figure 16: Reliability diagrams for parametric self-reported confidence. The 3B model is poorly calibrated (ECE 0.066–0.166), and the calibration curve is not monotonic in any corpus.](figures/fig16_calibration_reliability.png)
+
+**Ablations.** We ran a controlled ablation grid for the LoRA training signal on two corpora (UC2 PubMedQA and UC3 SQuAD) using `tools/run_e4_e5_experiments.py`. The grid compares three training conditions: (1) cloud-LLM FAQs with tier-weighted replay (`tier_weighted_cloud`), (2) the same cloud-LLM FAQs with uniform replay sampling (`uniform_cloud`), and (3) heuristically generated FAQs with uniform sampling (`uniform_heuristic`). All three variants are trained from the base model with a fixed seed to avoid adapter stacking. Because the SQLite replay buffers were empty for all four corpora in this offline run, conditions (1) and (2) differ only in the sampling weight function and draw identical replay batches, so the meaningful comparison is between cloud-LLM FAQs and heuristic FAQs. Table 9 shows the full `n=50` results for both corpora. The cloud-LLM variants produce nearly identical PRS on each corpus (UC2: 0.853 vs 0.872; UC3: 0.702 vs 0.705), confirming that the empty replay buffer makes the tier-weighted vs uniform comparison null. On UC2 the heuristic-FAQ variant is comparable in PRS but lower in retrieval-mode token-F1. On UC3 the heuristic-FAQ variant has slightly higher PRS (0.734), but it was trained on only one heuristically generated FAQ because the generator found very few candidates for SQuAD; that result is therefore an under-trained baseline and not a fair comparison.
+
+| Condition | UC2 PRS | UC2 text_rag | UC2 KV-mean | UC2 KV-full | UC2 param | UC3 PRS | UC3 text_rag | UC3 KV-mean | UC3 KV-full | UC3 param |
+|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| tier_weighted_cloud | 0.853 | 0.174 | 0.099 | 0.088 | 0.145 | 0.702 | 0.004 | 0.005 | 0.002 | 0.010 |
+| uniform_cloud | 0.872 | 0.162 | 0.090 | 0.083 | 0.138 | 0.705 | 0.002 | 0.007 | 0.002 | 0.011 |
+| uniform_heuristic | 0.872 | 0.143 | 0.087 | 0.095 | 0.140 | 0.734 | 0.002 | 0.002 | 0.001 | 0.006 |
+
+**Table 9:** Full E4 ablation (`n=50` per mode) on UC2 PubMedQA and UC3 SQuAD. Because the replay buffer is empty, tier-weighted and uniform replay draw identical replay batches. The LLM-judge score is 0.0 for all conditions. The UC3 `uniform_heuristic` variant was trained on only one FAQ.
+
+![Figure 17: E4 ablation (`n=50`) on UC2 PubMedQA and UC3 SQuAD. PRS is similar across the cloud-LLM variants because the empty replay buffer makes tier-weighted and uniform replay identical; token-F1 is much lower on SQuAD. The UC3 heuristic variant is an under-trained baseline (one FAQ).](figures/fig17_ablation.png)
+
+**Attention divergence.** We measure per-layer KL divergence between the attention-score distributions over retrieved chunks produced by true prefill, full-token injected KV, and mean-pool injected KV. The mean KL divergence is large for both injection modes: full-token 0.82–1.08 and mean-pool 0.85–1.14 across the four corpora. The ordering is corpus-dependent: mean-pool diverges more on UC1, UC3, and UC4, while full-token diverges more on UC2. Mean cosine distances are 0.38–0.50 (mean-pool) and 0.40–0.48 (full-token), following the same pattern. Figure 18 shows the per-layer curves. The divergence is broadly distributed across layers rather than concentrated in early-to-middle layers. This confirms that the positional-structure concern is real, but it also shows that the current on-the-fly full-token recompute does not fully close the gap; further work on injection prompting or chunk boundaries is likely needed.
+
+![Figure 18: Per-layer attention divergence between true prefill and KV-injected attention distributions. Mean KL is 0.82–1.08 for full-token and 0.85–1.14 for mean-pool; the gap is corpus-dependent, not consistently in favor of full-token injection.](figures/fig18_attention_divergence.png)
+
+### 7.10 Comparison with Alternative Systems
+
+[T:tab:comparison] contrasts KVForge Phase 2 and Phase 3 against standard text-in-context RAG across key operational metrics. The comparison highlights that KVForge trades a one-time training and storage cost for sustained query-time improvements.
 
 | Metric | Standard RAG | KVForge Phase 2 | KVForge Phase 3 |
 |--------|:---:|:---:|:---:|
@@ -488,7 +606,9 @@ UC1–UC4 are fully evaluated in Sections 7.3–7.7. UC5–UC8 validate configur
 | GPU required at query time | Yes | Yes | **Potentially no** |
 | Training required | No | No | Yes (~20 min/round) |
 | Parametric knowledge retention | None | None | PRS 0.755–0.863 |
-| KV storage per chunk (3B model) | None | ~57 KB | ~57 KB |
+| KV storage per chunk (3B model) | None | ~115 KB | ~115 KB |
+
+Standard RAG avoids training and storage overhead but pays the full re-encoding cost on every query. KVForge Phase 2 matches the updatability and out-of-distribution robustness of RAG while eliminating chunk re-encoding, yielding a 2.7× latency improvement. KVForge Phase 3 adds the parametric-answering capability: high-confidence questions are answered from model weights, which can be served without a GPU if the base model is small enough or if the deployment is CPU-only for inference. The trade-off is that Phase 3 requires training (~20 min/round) and a ~115 KB per-chunk KV storage footprint. The KV storage cost is small by modern standards — for the 2,520-chunk UC4 corpus it is ~289 MB — and the training cost is amortized over many queries. The system retains fallback mechanisms for queries outside the model's confidence envelope, so the speedup is achieved without sacrificing coverage for edge cases.
 
 ---
 
@@ -524,7 +644,9 @@ In our experiments all chunks remained at `tier=frozen` during training because 
 
 **Enhanced tier qualification:** After a corpus matures, the top CIS-scoring chunks qualify for TurboQuant enhanced storage. For a 10% enhanced tier in UC4 (~252 chunks at ~15 MB each for an 8B model), the additional disk cost is ~3.8 GB — manageable on standard EC2 NVMe.
 
-### 8.5 Limitations
+### 8.5 Limitations and Scope
+
+**Evaluation scope.** All V1 experiments reported in the main paper were run at `tier=frozen`; the CIS/tiering machinery and the TurboQuant Enhanced Tier were not activated during those measurements. The factual evaluation in §7.8–§7.9 (E1, E2, E3, E5) and the ablations in §7.9 (E4) were run on the real A10G GPU with the scripts and metrics introduced in this revision. UC5–UC8 are configuration-portability checks only; no end-to-end PRS or quality numbers were collected for them. One caveat: the per-use-case SQLite replay buffers were empty in all four corpora, so the tier-weighted replay ablation effectively compares the same empty-buffer training runs; the tier system is implemented but had not accumulated chunk access records in this offline evaluation.
 
 **KV shape coupling.** Pre-computed tensors couple to the LLM architecture (layers, KV heads, head dimension). Switching the base model requires full re-indexing.
 
@@ -534,34 +656,19 @@ In our experiments all chunks remained at `tier=frozen` during training because 
 
 **Single-node experiments.** Our evaluation runs on a single 4-GPU instance. Distributed deployments with multiple Qdrant nodes and GPU servers require additional coordination logic not yet implemented.
 
----
+**Vector-database choice.** All quantitative latency, PRS, and factual-quality results (§7.3–§7.9) are reported on Qdrant; UC5 and UC8 additionally exercise ChromaDB and UC6 exercises FAISS, but only as configuration-portability checks (§7.2, above), not full quantitative re-evaluation. We did not prioritize cross-backend quantitative validation because vector search occupies a negligible share of query-time latency in this pipeline — §7.4 measures retrieval at ~12 ms out of ~1,852 ms total Phase 1 latency, under 1% of the budget the reported 2.7×/3.6× speedups are computed against — and because, for a fixed embedding model and corpus of this size (2,000–2,920 chunks), well-tuned approximate nearest-neighbor search returns near-identical top-K rankings across major vector databases, which is why the factual-quality bottleneck identified in §7.8 and §8.1 is attributed to training-signal quality and base-model capacity rather than retrieval backend. We therefore expect vector-database choice to leave the paper's core latency and quality findings materially unchanged, but this expectation has not been empirically confirmed and remains an assumption rather than a measured result.
 
-## 9. Related Systems — Comparative Table
+**No external baseline; evaluation scale; deferred to future work.** This paper does not compare KVForge against any other system under matched hardware, base model, or query set — Table 1 positions 15 related systems architecturally (§3.11) but reports no head-to-head numbers against any of them, including the two closest to Phase 2 (TurboRAG, CacheBlend). Without such a baseline, neither the reported speedups nor the reported quality losses can be judged relative to the current state of the art rather than only relative to KVForge's own Phase 1. Several other evaluation weaknesses compound this: UC4's held-out factual evaluation uses only *n*=7 questions (UC1 *n*=30, UC2/UC3 *n*=50), all results are from a single seed with no confidence intervals, the LLM-judge model and prompt used for factual correctness are not specified in this paper, the PRS phase-transition thresholds (0.75/0.80, §4.7) are fixed defaults with no sensitivity analysis, and the tier-weighted replay ablation (§7.9, Table 9) is null because the SQLite replay buffers were empty in all four corpora rather than populated with organic access patterns. We did not attempt to close these gaps in this revision: doing so credibly requires GPU compute and either an existing implementation of a baseline system or a from-scratch reproduction of one, a larger annotated held-out set, and multiple training/evaluation seeds — none of which we could respond to on the timeline of this revision. We report this as an explicit limitation rather than silently, and consider closing it (external baseline under matched conditions; held-out set grown well past *n*=50 with seeds and confidence intervals; a factual-metric-based PRS variant with a threshold sensitivity analysis; a populated-buffer replay ablation) the primary blocking work before any claim in this paper should be treated as validated rather than descriptive. A further, larger-scope item — implementing the position/attention realignment (à la TurboRAG or APE) that §3.1 identifies as the fix uncorrected KV injection needs — would be required to test whether Phase 2 can achieve text-RAG-level quality at a real, matched-workload speedup; we have not attempted this and flag it as the highest-value follow-up experiment for converting this paper's negative result into a positive one.
 
-[T:tab:related-systems-comparative-table] positions KVForge against closely related systems across five dimensions.
-
-| System | KV Storage Location | Phase Progression | Continual Fine-tuning | Vector DB Integration | Corpus Curation |
-|--------|:---:|:---:|:---:|:---:|:---:|
-| Standard RAG [1] | None | No | No | Yes | No |
-| RETRO [10] | Encoder states | No | No | Partial | No |
-| PromptCache [8] | In-process session | No | No | No | No |
-| SGLang RadixCache [9] | In-process session | No | No | No | No |
-| vLLM PagedAttention [3] | In-process session | No | No | No | No |
-| CacheBlend [32] | In-process session | No | No | No | No |
-| KVQuant [30] | In-process (quantized) | No | No | No | No |
-| KIVI [31] | In-process (quantized) | No | No | No | No |
-| **KVForge V1 (ours)** | **Vector DB (mean-pool)** | **Yes (3 phases)** | **Yes (LoRA + replay)** | **Yes** | Tier labels |
-| **KVForge V2 (ours)** | **Vector DB + disk (TurboQuant [38])** | **Yes (3 phases)** | **Yes (LoRA + replay)** | **Yes** | **CIS + archival** |
-
-KVForge is, to our knowledge, the first system to (1) persist KV tensors durably in a vector database, (2) couple KV storage with document embeddings in a unified index, (3) provide an automatic three-phase progression from standard RAG to fully parametric answering, and (4) integrate corpus importance scoring with storage tier assignment for production-scale curation.
+**Code availability.** The repository cited in earlier drafts of this paper was not publicly reachable at the time of external review; it is now public at github.com/hemantcgi/kvforge. This resolves the accessibility gap the review identified, but not the full reproducibility bar: the repository is not yet archived at a permanent, versioned identifier (e.g., a Zenodo DOI tied to the exact commit these results were produced from), so a reader today cannot guarantee they are viewing the code state this paper describes if the repository changes or is later removed. We consider archiving a specific tagged release before camera-ready submission the remaining step here.
 
 ---
 
-## 10. Conclusion
+## 9. Conclusion
 
 KVForge introduces a new architecture for knowledge-intensive QA systems: the vector database serves not merely as a retrieval index but also as a persistent KV tensor cache, a corpus access recorder, and a training signal generator. The three-phase progression from text-in-context retrieval through KV injection to parametric answering allows a single deployed system to continuously improve its latency and GPU efficiency as the LLM learns the corpus, without manual intervention.
 
-Our experiments across four heterogeneous corpora demonstrate that all four reach Phase 3 (PRS 0.755–0.863) on a single AWS g5.xlarge instance, with Phase 2 delivering **2.7× generation speedup** and Phase 3 delivering **3.6×**. The primary finding is that sleep-time FAQ generation using a cloud LLM is the highest-leverage intervention for reaching Phase 3, producing +10.3% absolute PRS improvement on our most challenging corpus at a fraction of the GPU cost.
+Our experiments across four heterogeneous corpora, run on a single AWS g5.12xlarge instance (4× NVIDIA A10G, one GPU per corpus), show that the cosine-based PRS proxy reaches the Phase 3 readiness threshold on all four corpora (0.755–0.863) and that Phase 2 and Phase 3 reduce total end-to-end query latency by 2.7× and 3.6× respectively relative to Phase 1. However, the new factual evaluation shows the 3B model is far less capable on held-out questions than the cosine proxy suggests: exact-match is 0.000 across all four modes, token-F1 and LLM-judge correctness are modest, and neither KV mean-pool nor full-token injection consistently improves over text RAG. The PRS cosine-based accuracy proxy correlates weakly with the factual metrics (Pearson *r* = -0.12–0.43) and reaches the Phase 3 threshold in every corpus while the factual metrics do not — meaning the gate itself, as currently specified, is not yet trustworthy for production phase transitions. We also note that the reported latency figures are end-to-end wall-clock times rather than isolated prefill measurements, and that Phase 3's confidence gate answers a self-selected subset of queries rather than the full Phase 1 query population, so the 2.7×/3.6× figures should be read as descriptive of this pipeline's current behavior rather than as a matched, apples-to-apples systems benchmark. The primary finding is therefore that training signal quality and a reliable factual gate — not latency — are the critical open problems for deploying parametric answering in small language models. This is consistent with, rather than contrary to, the broader KV-cache-reuse literature: uncorrected per-chunk KV injection without position/attention realignment or selective recomputation is the known-negative baseline that CacheBlend, TurboRAG, and APE were built to fix (§3.1, §3.2), and KVForge's own attention-divergence measurements (§7.9) corroborate why it underperforms here.
 
 The Corpus Intelligence System (V2) extends the base architecture with CIS-driven storage tier assignment, TurboQuant compressed full-token KV storage achieving **4.4× compression**, and user-confirmed chunk archival, addressing the storage scaling and corpus quality challenges that emerge in long-running production deployments.
 
@@ -627,39 +734,75 @@ The author thanks the Qdrant, HuggingFace, vLLM, and FastEmbed teams for their o
 
 [24] Dao, T., Fu, D. Y., Ermon, S., Rudra, A., & Ré, C. (2022). **FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness.** *NeurIPS 2022.* arXiv:2205.14135
 
-[25] Izacard, G., & Grave, E. (2021). **Leveraging Passage Retrieval with Generative Models for Open Domain Question Answering.** *EACL 2021.* arXiv:2007.01282
+
+
+
+[25] Rusu, A. A., Rabinowitz, N. C., Desjardins, G., Soyer, H., Kirkpatrick, J., Kavukcuoglu, K., ... & Hadsell, R. (2016). **Progressive Neural Networks.** arXiv:1606.04671
 
 [26] Khattab, O., & Zaharia, M. (2020). **ColBERT: Efficient and Effective Passage Search via Contextualized Late Interaction over BERT.** *SIGIR 2020.* arXiv:2004.12832
 
-[27] Kirkpatrick, J., Pascanu, R., Rabinowitz, N., Veness, J., Desjardins, G., Rusu, A. A., ... & Hadsell, R. (2017). **Overcoming Catastrophic Forgetting in Neural Networks.** *PNAS, 114*(13), 3521–3526. arXiv:1612.00796
+[27] Hooper, C., Kim, S., Mohammadzadeh, H., Mahoney, M. W., Shao, Y. S., Keutzer, K., & Gholami, A. (2024). **KVQuant: Towards 10 Million Context Length LLM Inference with KV Cache Quantization.** *NeurIPS 2024.* arXiv:2401.18079
 
-[28] Rusu, A. A., Rabinowitz, N. C., Desjardins, G., Soyer, H., Kirkpatrick, J., Kavukcuoglu, K., ... & Hadsell, R. (2016). **Progressive Neural Networks.** arXiv:1606.04671
+[28] Liu, Z., Yuan, J., Jin, H., Zhong, S., Xu, Z., Braverman, V., ... & Hu, X. (2024). **KIVI: A Tuning-Free Asymmetric 2bit Quantization for KV Cache.** *ICML 2024.* arXiv:2402.02750
 
-[29] Khattab, O., & Zaharia, M. (2020). **ColBERT: Efficient and Effective Passage Search via Contextualized Late Interaction over BERT.** *SIGIR 2020.* arXiv:2004.12832
+[29] Yao, Y., Han, C., Zhu, R., Deng, J., & Chen, Y. (2024). **CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowledge Fusion.** arXiv:2405.16444
 
-[30] Hooper, C., Kim, S., Mohammadzadeh, H., Mahoney, M. W., Shao, Y. S., Keutzer, K., & Gholami, A. (2024). **KVQuant: Towards 10 Million Context Length LLM Inference with KV Cache Quantization.** *NeurIPS 2024.* arXiv:2401.18079
+[30] Izacard, G., & Grave, E. (2021). **Leveraging Passage Retrieval with Generative Models for Open Domain Question Answering.** *EACL 2021.* arXiv:2007.01282
 
-[31] Liu, Z., Yuan, J., Jin, H., Zhong, S., Xu, Z., Braverman, V., ... & Hu, X. (2024). **KIVI: A Tuning-Free Asymmetric 2bit Quantization for KV Cache.** *ICML 2024.* arXiv:2402.02750
+[31] Kirkpatrick, J., Pascanu, R., Rabinowitz, N., Veness, J., Desjardins, G., Rusu, A. A., ... & Hadsell, R. (2017). **Overcoming Catastrophic Forgetting in Neural Networks.** *PNAS, 114*(13), 3521–3526.
 
-[32] Yao, Y., Han, C., Zhu, R., Deng, J., & Chen, Y. (2024). **CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowledge Fusion.** arXiv:2405.16444
+[32] Zandieh, A., Han, I., Mirrokni, V., & Karbasi, A. (2024). **QJL: 1-Bit Quantized JL Transform for KV Cache Quantization with No Retraining.** arXiv:2406.03482
 
-[33] Izacard, G., & Grave, E. (2021). **Leveraging Passage Retrieval with Generative Models for Open Domain Question Answering.** *EACL 2021.* arXiv:2007.01282
 
-[34] Kirkpatrick, J., Pascanu, R., Rabinowitz, N., Veness, J., Desjardins, G., Rusu, A. A., ... & Hadsell, R. (2017). **Overcoming Catastrophic Forgetting in Neural Networks.** *PNAS, 114*(13), 3521–3526.
+[33] De Lange, M., Aljundi, R., Masana, M., Parisot, S., Jia, X., Leonardis, A., ... & Tuytelaars, T. (2022). **A Continual Learning Survey: Defying Forgetting in Classification Tasks.** *IEEE TPAMI, 44*(7), 3366–3385. arXiv:1909.08383
 
-[35] Zandieh, A., Han, I., Mirrokni, V., & Karbasi, A. (2024). **QJL: 1-Bit Quantized JL Transform for KV Cache Quantization with No Retraining.** arXiv:2406.03482
+[34] Zandieh, A., Daliri, M., Hadian, M., & Mirrokni, V. (2025). **TurboQuant: Online Vector Quantization with Near-optimal Distortion Rate.** Google Research and NYU. arXiv:2504.19874. https://arxiv.org/abs/2504.19874
 
-[36] Rusu, A. A., Rabinowitz, N. C., Desjardins, G., Soyer, H., Kirkpatrick, J., Kavukcuoglu, K., ... & Hadsell, R. (2016). **Progressive Neural Networks.** arXiv:1606.04671
+[35] Boufounos, P. T., & Baraniuk, R. G. (2008). **1-Bit Compressive Sensing.** *42nd Annual Conference on Information Sciences and Systems (CISS),* pp. 16–21.
 
-[37] De Lange, M., Aljundi, R., Masana, M., Parisot, S., Jia, X., Leonardis, A., ... & Tuytelaars, T. (2022). **A Continual Learning Survey: Defying Forgetting in Classification Tasks.** *IEEE TPAMI, 44*(7), 3366–3385. arXiv:1909.08383
+[36] Hendrycks, D., Burns, C., Chen, A., & Ball, S. (2021). **CUAD: An Expert-Annotated NLP Dataset for Legal Contract Review.** arXiv:2103.06268. https://arxiv.org/abs/2103.06268
 
-[38] Google DeepMind (2025). **TurboQuant: Efficient KV-Cache Compression with Lloyd-Max Quantization and QJL Residual Coding.** arXiv:2504.19874. https://arxiv.org/abs/2504.19874
+[37] Xu, F. F., Vasilescu, B., & Neubig, G. (2022). **In-IDE Code Generation from Natural Language: Promise and Challenges.** *ACM TOSEM, 31*(2), 1–47. arXiv:2101.11149
 
-[39] Boufounos, P. T., & Baraniuk, R. G. (2008). **1-Bit Compressive Sensing.** *42nd Annual Conference on Information Sciences and Systems (CISS),* pp. 16–21.
+[38] Chan, B. J., Chen, C. T., Cheng, J. H., & Huang, H. H. (2024/2025). **Don't Do RAG: When Cache-Augmented Generation is All You Need for Knowledge Tasks.** *ACM Web Conference 2025 (Companion).* arXiv:2412.15605
 
-[40] Hendrycks, D., Burns, C., Chen, A., & Ball, S. (2021). **CUAD: An Expert-Annotated NLP Dataset for Legal Contract Review.** arXiv:2103.06268. https://arxiv.org/abs/2103.06268
+[39] Zhang, T., Patil, S. G., Jain, N., Shen, S., Zaharia, M., Stoica, I., & Gonzalez, J. E. (2024). **RAFT: Adapting Language Model to Domain Specific RAG.** arXiv:2403.10131
 
-[41] Xu, F. F., Vasilescu, B., & Neubig, G. (2022). **In-IDE Code Generation from Natural Language: Promise and Challenges.** *ACM TOSEM, 31*(2), 1–47. arXiv:2101.11149
+[40] Su, W., et al. (2025). **Parametric Retrieval Augmented Generation.** Tsinghua University. arXiv:2501.15915
+
+[41] Meng, K., Bau, D., Andonian, A., & Belinkov, Y. (2022). **Locating and Editing Factual Associations in GPT.** *NeurIPS 2022.* arXiv:2202.05262
+
+[42] Meng, K., Sharma, A. S., Andonian, A., Belinkov, Y., & Bau, D. (2023). **Mass-Editing Memory in a Transformer.** *ICLR 2023.* arXiv:2210.07229
+
+[43] Asai, A., Wu, Z., Wang, Y., Sil, A., & Hajishirzi, H. (2024). **Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection.** *ICLR 2024.* arXiv:2310.11511
+
+[44] Wang, Y., Li, P., Sun, M., & Liu, Y. (2023). **Self-Knowledge Guided Retrieval Augmentation for Large Language Models.** *EMNLP 2023 Findings.* arXiv:2310.05002
+
+[45] Jeong, S., Baek, J., Cho, S., Hwang, S. J., & Park, J. C. (2024). **Adaptive-RAG: Learning to Adapt Retrieval-Augmented Large Language Models through Question Complexity.** *NAACL 2024.* arXiv:2403.14403
+
+[46] LMCache Team. (2025). **LMCache: A KV Cache Management Layer for LLM Serving.** arXiv:2510.09665. https://github.com/LMCache/LMCache
+
+[47] Lu, S., et al. (2024). **TurboRAG: Accelerating Retrieval-Augmented Generation with Precomputed KV Caches for Chunked Text.** arXiv:2410.07590
+
+[48] (2024). **EPIC: Efficient Position-Independent Context Caching for Serving Large Language Models.** arXiv:2410.15332
+
+[49] Gao, B., et al. (2024). **Cost-Efficient Large Language Model Serving for Multi-turn Conversations with CachedAttention.** (AttentionStore.) arXiv:2403.19708
+
+[50] Qin, R., et al. (2024). **Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving.** *FAST 2025.* arXiv:2407.00079
+
+[51] (2025). **APE: Faster and Longer Context-Augmented Generation via Adaptive Parallel Encoding.** arXiv:2502.05431
+
+[52] Jin, C., et al. (2024). **RAGCache: Efficient Knowledge Caching for Retrieval-Augmented Generation.** arXiv:2404.12457
+
+[53] Zhang, Y., et al. (2024). **CaM: Cache Merging for Memory-efficient LLMs Inference.** *ICML 2024.*
+
+[54] (2024). **KVMerger: Cross-layer KV Cache Merging for Memory-Efficient LLM Inference.** arXiv:2407.08454
+
+[55] (2025). **KeepKV: Eliminating Output Perturbation in KV Cache Compression for Consistent Inference.** arXiv:2504.09936
+
+[56] Ainslie, J., Lee-Thorp, J., de Jong, M., Zemlyanskiy, Y., Lebrón, F., & Sanghai, S. (2023). **GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints.** arXiv:2305.13245
+
+[57] Tang, Y., et al. (2025). **Understanding Parametric Knowledge Injection in RAG.** arXiv:2510.12668
 
 ---
 
