@@ -1,110 +1,74 @@
-"""Tests for Pydantic DatasourceConfig."""
+"""Tests for KVForgeConfig (replaces old DatasourceConfig tests)."""
+import json
 import pytest
 
 
-def test_config_loads_with_required_fields_and_defaults():
-    from core.config import DatasourceConfig
-    cfg = DatasourceConfig(
+def test_config_loads_with_required_fields():
+    from core.config import KVForgeConfig
+    cfg = KVForgeConfig(
+        use_case_name="Test",
         collection="test-col",
-        embed_model="BAAI/bge-small-en-v1.5",
-        vector_dim=384,
-        llm_model="TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-        checkpoint_dir="checkpoints/",
         version_file="v.json",
-        replay_db="r.db"
     )
-    assert cfg.loader == "pdf"
-    assert cfg.vector_store == "qdrant"
-    assert cfg.gate_threshold == 0.75
-    assert cfg.prs_threshold == 0.75
-    assert cfg.faq_question_key == "question"
-    assert cfg.embedder_backend == "fastembed"
+    assert cfg.addons == []
+    assert cfg.addon_config == {}
 
 
-def test_config_rejects_unknown_loader():
-    from core.config import DatasourceConfig
-    import pydantic
-    with pytest.raises(pydantic.ValidationError):
-        DatasourceConfig(
-            collection="x", embed_model="x", vector_dim=1,
-            llm_model="x", checkpoint_dir="x", version_file="x",
-            replay_db="x", loader="excel"
-        )
+def test_config_missing_collection_raises():
+    from core.config import KVForgeConfig
+    from pydantic import ValidationError
+    with pytest.raises(ValidationError):
+        KVForgeConfig(use_case_name="Test", version_file="v.json")
 
 
-def test_load_config_from_json_file(tmp_path):
+def test_load_config_from_file(tmp_path):
     from core.config import load_config
-    import json
-    cfg_data = {
-        "collection": "my-docs",
-        "embed_model": "BAAI/bge-small-en-v1.5",
-        "vector_dim": 384,
-        "llm_model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-        "checkpoint_dir": "ckpt/",
+    data = {
+        "use_case_name": "UC",
+        "collection": "col",
         "version_file": "v.json",
-        "replay_db": "r.db"
+        "addons": ["indexing"],
+        "addon_config": {
+            "indexing": {"embed_model": "BAAI/bge-small-en-v1.5", "vector_dim": 384}
+        },
     }
     p = tmp_path / "cfg.json"
-    p.write_text(json.dumps(cfg_data))
+    p.write_text(json.dumps(data))
     cfg = load_config(str(p))
-    assert cfg.collection == "my-docs"
-    assert isinstance(cfg.lora_target_modules, list)
+    assert cfg.use_case_name == "UC"
+    assert cfg.has_addon("indexing")
 
 
-def test_all_new_fields_have_correct_defaults():
-    from core.config import DatasourceConfig
-    cfg = DatasourceConfig(
-        collection="t", embed_model="m", vector_dim=384,
-        llm_model="m", checkpoint_dir="/t", version_file="/t/v.json", replay_db="/t/r.db"
+def test_get_merged_config_pipeline_compat():
+    from core.config import KVForgeConfig
+    cfg = KVForgeConfig(
+        use_case_name="UC",
+        collection="col",
+        version_file="v.json",
+        addons=["indexing", "inference"],
+        addon_config={
+            "indexing": {"embed_model": "BAAI/bge-small-en-v1.5", "vector_dim": 384,
+                          "vector_store": "qdrant"},
+            "inference": {"llm_model": "meta-llama/Llama-3.2-3B-Instruct", "top_k": 5},
+        },
     )
-    # Dynamic PRS
-    assert cfg.deployment_mode == "auto"
-    assert cfg.prs_advancement_threshold == 0.72
-    assert cfg.prs_regression_threshold == 0.60
-    assert cfg.prs_signal_weights == {"faq": 0.4, "vdb": 0.4, "realtime": 0.2}
-    assert cfg.query_log_db == "query_log.db"
-    # Flywheel
-    assert cfg.analytics_db == ""
-    assert cfg.cost_per_1k_tokens == 5.0
-    # VDB Expansion
-    assert cfg.vector_store == "qdrant"
-    assert cfg.pinecone_api_key == ""
-    assert cfg.milvus_uri == "http://localhost:19530"
-    # ModelScout
-    assert cfg.scout_initial_lora_rank == 16
-    # Multimodal
-    assert cfg.image_collection_suffix == "_images"
-    assert cfg.image_kv_inference is False
+    merged = cfg.get_merged_config("indexing", "inference")
+    # These are the exact keys that kv_indexer.py and kv_inference.py use
+    assert merged["collection"] == "col"
+    assert merged["embed_model"] == "BAAI/bge-small-en-v1.5"
+    assert merged["llm_model"] == "meta-llama/Llama-3.2-3B-Instruct"
+    assert merged["top_k"] == 5
+    assert merged["vector_store"] == "qdrant"
 
 
-def test_model_scout_config_defaults():
-    from core.config import DatasourceConfig
-    cfg = DatasourceConfig(
-        collection="test", embed_model="BAAI/bge-small-en-v1.5",
-        vector_dim=384, llm_model="meta-llama/Llama-3.2-3B-Instruct",
-        checkpoint_dir="/tmp/ckpt", version_file="/tmp/v.json",
-        replay_db="/tmp/r.db",
-    )
-    assert cfg.model_registry_path == "core/model_registry.json"
-    assert cfg.model_scout_program == "model_scout_program.md"
-    assert cfg.model_scout_results == "model_scout_results.tsv"
-    assert cfg.scout_initial_corpus_chunks == 200
-    assert cfg.scout_initial_faq_count == 20
-    assert cfg.scout_initial_lora_steps == 500
-    assert cfg.scout_initial_lora_rank == 16
-    assert cfg.scout_max_lora_steps == 2000
-    assert cfg.scout_max_corpus_chunks == 2000
-    assert cfg.scout_max_faq_count == 100
-
-
-def test_config_model_dump_has_keys_used_by_existing_code():
-    from core.config import DatasourceConfig
-    cfg = DatasourceConfig(
-        collection="x", embed_model="x", vector_dim=1,
-        llm_model="x", checkpoint_dir="x", version_file="x",
-        replay_db="x"
-    )
-    d = cfg.model_dump()
-    for key in ["collection", "embed_model", "vector_dim", "llm_model",
-                 "lora_rank", "gate_threshold", "prs_weights"]:
-        assert key in d, f"Missing key in model_dump(): {key}"
+def test_load_config_strips_comment_keys(tmp_path):
+    from core.config import load_config
+    p = tmp_path / "cfg.json"
+    p.write_text(json.dumps({
+        "_comment": "ignored",
+        "use_case_name": "UC",
+        "collection": "col",
+        "version_file": "v.json",
+    }))
+    cfg = load_config(str(p))
+    assert cfg.collection == "col"

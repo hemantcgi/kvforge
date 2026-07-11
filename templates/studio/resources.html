@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resource Providers — KVForge Studio</title>
+<style>
+:root {
+  --bg-page:#F7F8F9;--bg-surface:#FFFFFF;--bg-sunken:#F1F2F4;--bg-input:#FFFFFF;
+  --bg-sidebar:#FFFFFF;--bg-active:#E9F2FF;--bg-hover:#F7F8F9;--bg-topbar:#0052CC;
+  --border:#DFE1E6;--border-focus:#4C9AFF;
+  --text-primary:#172B4D;--text-secondary:#626F86;--text-subtle:#8590A2;--text-disabled:#C7D1DB;
+  --accent:#0052CC;--accent-hover:#0065FF;
+  --success:#22A06B;--danger:#DE350B;--warning:#FF991F;
+  --shadow-sm:0 1px 3px rgba(9,30,66,0.12),0 0 1px rgba(9,30,66,0.08);
+  --shadow-md:0 3px 8px rgba(9,30,66,0.1),0 0 1px rgba(9,30,66,0.1);
+  --topbar-text:#FFFFFF;--topbar-muted:rgba(255,255,255,0.7);
+}
+[data-theme="dark"] {
+  --bg-page:#1D2125;--bg-surface:#22272B;--bg-sunken:#161A1D;--bg-input:#22272B;
+  --bg-sidebar:#22272B;--bg-active:#1C3353;--bg-hover:#2C333A;--bg-topbar:#161A1D;
+  --border:#3B4651;--border-focus:#579DFF;
+  --text-primary:#C7D1DB;--text-secondary:#8C9BAB;--text-subtle:#596773;--text-disabled:#3B4651;
+  --accent:#579DFF;--accent-hover:#85B8FF;
+  --success:#4BCE97;--danger:#F87462;--warning:#F5CD47;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.4);--shadow-md:0 3px 8px rgba(0,0,0,0.4);
+  --topbar-text:#C7D1DB;--topbar-muted:#596773;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;
+  line-height:1.5;background:var(--bg-page);color:var(--text-primary);
+  display:flex;flex-direction:column;transition:background .2s,color .2s;}
+
+/* TOPBAR */
+.topbar{height:48px;flex-shrink:0;z-index:200;background:var(--bg-topbar);display:flex;
+  align-items:center;padding:0 16px;gap:12px;border-bottom:1px solid rgba(0,0,0,0.15);}
+.topbar-brand{font-size:15px;font-weight:800;color:var(--topbar-text);letter-spacing:-.3px;
+  display:flex;align-items:center;gap:7px;cursor:pointer;}
+.logo-sq{width:24px;height:24px;border-radius:5px;background:rgba(255,255,255,0.25);
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;}
+.topbar-tag{font-size:10px;color:var(--topbar-muted);background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.2);border-radius:3px;padding:1px 6px;font-weight:600;letter-spacing:.04em;}
+.topbar-sp{flex:1;}
+.topbar-btn{font-size:13px;color:var(--topbar-text);background:transparent;border:none;
+  cursor:pointer;padding:5px 9px;border-radius:4px;transition:background .15s;}
+.topbar-btn:hover{background:rgba(255,255,255,0.12);}
+.profile-wrap{position:relative;}
+.profile-menu{position:absolute;top:calc(100% + 8px);right:0;background:#fff;
+  border:1px solid #DFE1E6;border-radius:8px;
+  box-shadow:0 8px 24px rgba(9,30,66,0.15),0 0 1px rgba(9,30,66,0.1);
+  min-width:220px;z-index:1000;overflow:hidden;display:none;}
+.profile-menu.open{display:block;}
+.profile-menu-header{padding:12px 16px 10px;border-bottom:1px solid #DFE1E6;}
+.pm-name{font-size:13px;font-weight:700;color:#172B4D;}
+.pm-email{font-size:12px;color:#626F86;margin-top:1px;}
+.profile-menu-item{display:block;padding:9px 16px;font-size:13px;color:#172B4D;
+  cursor:pointer;transition:background .1s;text-decoration:none;}
+.profile-menu-item:hover{background:#F7F8F9;}
+.pm-signout{color:#DE350B;}
+.pm-signout:hover{background:#FFEBE6 !important;}
+.profile-menu-sep{height:1px;background:#DFE1E6;margin:4px 0;}
+
+/* SHELL */
+.shell{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:220px;flex-shrink:0;background:var(--bg-sidebar);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;transition:width .22s cubic-bezier(0.4,0,0.2,1);
+  overflow:hidden;position:relative;z-index:100;}
+.sidebar.collapsed{width:48px;}
+.sidebar-toggle{position:absolute;right:-12px;top:20px;width:24px;height:24px;border-radius:50%;
+  background:var(--bg-surface);border:1px solid var(--border);color:var(--text-secondary);
+  cursor:pointer;z-index:101;display:flex;align-items:center;justify-content:center;
+  font-size:10px;box-shadow:var(--shadow-sm);transition:all .15s;}
+.sidebar-toggle:hover{background:var(--bg-active);color:var(--accent);}
+.sidebar-section-title{font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--text-subtle);padding:16px 14px 6px;
+  white-space:nowrap;overflow:hidden;transition:opacity .15s;}
+.sidebar.collapsed .sidebar-section-title{opacity:0;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:7px 12px;cursor:pointer;
+  border-radius:4px;margin:1px 6px;font-size:13px;color:var(--text-secondary);
+  transition:background .12s,color .12s;white-space:nowrap;overflow:hidden;}
+.nav-item:hover{background:var(--bg-hover);color:var(--text-primary);}
+.nav-item.active{background:var(--bg-active);color:var(--accent);font-weight:600;
+  border-left:2px solid var(--accent);margin-left:4px;padding-left:10px;}
+.nav-icon{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.nav-label{flex:1;overflow:hidden;text-overflow:ellipsis;transition:opacity .15s;}
+.sidebar.collapsed .nav-label{opacity:0;width:0;}
+.sidebar.collapsed .nav-item{justify-content:center;padding:7px 0;margin:1px 4px;}
+.sidebar.collapsed .nav-item.active{border-left:2px solid var(--accent);margin-left:4px;padding-left:0;}
+.sidebar-divider{height:1px;background:var(--border);margin:8px 0;}
+.sidebar-footer{margin-top:auto;padding:12px 10px;border-top:1px solid var(--border);}
+.sidebar-version{font-size:10px;color:var(--text-subtle);padding:4px 8px;white-space:nowrap;overflow:hidden;transition:opacity .15s;}
+.sidebar.collapsed .sidebar-version{opacity:0;}
+.nav-sub{padding-left:28px;}
+.sidebar.collapsed .nav-sub{padding-left:0;}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;}
+.page-header{padding:24px 32px 0;display:flex;align-items:flex-end;justify-content:space-between;}
+.page-title{font-size:20px;font-weight:700;color:var(--text-primary);}
+.page-sub{font-size:13px;color:var(--text-secondary);margin-top:2px;}
+.content{padding:24px 32px 60px;}
+
+/* PROVIDER CARDS */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.section-title{font-size:11px;font-weight:700;color:var(--text-subtle);letter-spacing:.07em;text-transform:uppercase;}
+.section-desc{font-size:11px;color:var(--text-subtle);margin-bottom:14px;}
+.provider-grid{display:grid;gap:8px;margin-bottom:28px;}
+.provider-row{display:flex;align-items:center;gap:12px;background:var(--bg-surface);
+  border:1px solid var(--border);border-radius:8px;padding:11px 14px;box-shadow:var(--shadow-sm);}
+.provider-badge{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;
+  justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;}
+.provider-info{flex:1;min-width:0;}
+.provider-name{font-size:13px;font-weight:700;color:var(--text-primary);}
+.provider-meta{font-size:11px;color:var(--text-subtle);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.status-wrap{display:flex;align-items:center;gap:5px;margin-right:6px;}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#ccc;}
+.status-ok{background:#22A06B;box-shadow:0 0 5px rgba(34,160,107,.4);}
+.status-err{background:#DE350B;}
+.status-unk{background:#ccc;}
+.status-text{font-size:11px;color:var(--text-secondary);}
+.provider-actions{display:flex;gap:5px;}
+.btn-sm{font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px;cursor:pointer;
+  border:1px solid var(--border);background:transparent;color:var(--text-secondary);}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent);}
+.btn-add{background:rgba(0,82,204,.05);border:1.5px dashed rgba(0,82,204,.3);
+  color:var(--accent);border-radius:8px;padding:10px;text-align:center;
+  font-size:12px;font-weight:600;cursor:pointer;width:100%;}
+.btn-add:hover{background:rgba(0,82,204,.08);}
+.btn-primary{background:var(--accent);border:none;color:#fff;border-radius:6px;
+  padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s;}
+.btn-primary:hover{background:var(--accent-hover);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;
+  display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;
+  width:460px;max-width:95vw;overflow:hidden;box-shadow:var(--shadow-md);}
+.modal-hd{display:flex;justify-content:space-between;align-items:center;
+  padding:14px 18px;border-bottom:1px solid var(--border);}
+.modal-hd h3{color:var(--text-primary);font-size:14px;font-weight:700;}
+.modal-close{background:none;border:none;color:var(--text-subtle);font-size:16px;cursor:pointer;}
+.modal-close:hover{color:var(--accent);}
+.modal-body{padding:16px 18px;max-height:70vh;overflow-y:auto;}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.m-field{margin-bottom:10px;}
+.m-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--text-subtle);margin-bottom:3px;}
+.m-input{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;
+  padding:6px 9px;color:var(--text-primary);font-size:12px;}
+.m-input:focus{outline:none;border-color:var(--border-focus);}
+.m-select{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;
+  padding:6px 9px;color:var(--text-primary);font-size:12px;cursor:pointer;}
+.m-select:focus{outline:none;border-color:var(--border-focus);}
+.config-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.type-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;}
+.type-tab{padding:4px 10px;border-radius:5px;border:1px solid var(--border);background:var(--bg-sunken);
+  color:var(--text-secondary);font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;}
+.type-tab:hover{border-color:rgba(0,82,204,.5);}
+.type-tab.sel{border-color:var(--accent);background:var(--bg-active);color:var(--accent);}
+.config-section{display:none;}
+.config-section.visible{display:block;}
+.config-sep{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--accent);margin:10px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+.test-bar{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.btn-test{background:rgba(0,82,204,.08);border:1px solid rgba(0,82,204,.3);
+  color:var(--accent);padding:5px 12px;border-radius:4px;font-size:11px;cursor:pointer;}
+.btn-test:hover{background:rgba(0,82,204,.15);}
+.test-status{font-size:11px;min-height:16px;}
+.test-ok{color:#22A06B;}.test-err{color:#DE350B;}.test-pending{color:var(--accent);}
+.btn-cancel{background:none;border:1px solid var(--border);color:var(--text-secondary);
+  padding:6px 14px;border-radius:5px;font-size:12px;cursor:pointer;}
+.btn-cancel:hover{border-color:var(--text-secondary);color:var(--text-primary);}
+.btn-save{background:var(--accent);border:none;color:#fff;padding:6px 16px;
+  border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;}
+.btn-save:hover{background:var(--accent-hover);}
+
+/* TYPE COLORS */
+.badge-vectordb{background:#0052CC;}
+.badge-llm_endpoint{background:#6554C0;}
+.badge-cloud_llm{background:#00875A;}
+.badge-compute{background:#BF2600;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#172B4D;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;
+  opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand" onclick="location.href='/studio'">
+    <div class="logo-sq">K</div>
+    KVForge Studio
+    <span class="topbar-tag">v2.1</span>
+  </div>
+  <div class="topbar-sp"></div>
+  <button class="topbar-btn" onclick="toggleTheme()" title="Toggle theme">☀</button>
+  <div class="profile-wrap">
+    <button class="topbar-btn" id="profile-btn" onclick="toggleProfileMenu()">👤 ▾</button>
+    <div class="profile-menu" id="profile-menu">
+      <div class="profile-menu-header">
+        <div class="pm-name" id="pm-name">—</div>
+        <div class="pm-email" id="pm-email">—</div>
+      </div>
+      <a class="profile-menu-item" href="/studio/settings">⚙ Profile &amp; Settings</a>
+      <div class="profile-menu-sep"></div>
+      <a class="profile-menu-item pm-signout" href="/auth/logout">↩ Sign Out</a>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()">‹</button>
+
+    <div class="sidebar-section-title">Navigation</div>
+    <div class="nav-item" onclick="location.href='/studio'">
+      <div class="nav-icon">🗂</div>
+      <span class="nav-label">Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="goToActiveUC('')">
+      <div class="nav-icon">📊</div>
+      <span class="nav-label">Pipeline</span>
+    </div>
+    <div class="nav-item" onclick="goToActiveUC('#logs')">
+      <div class="nav-icon">📋</div>
+      <span class="nav-label">Logs</span>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding-right:10px" onclick="location.href='/studio/resources'" title="Resource Providers">Resources <span style="font-size:9px;opacity:.6">›</span></div>
+    <div class="nav-item active nav-sub">
+      <div class="nav-icon">🖥</div>
+      <span class="nav-label">Resource Providers</span>
+    </div>
+    <div class="nav-item nav-sub" onclick="location.href='/studio/connectors'">
+      <div class="nav-icon">🔗</div>
+      <span class="nav-label">Data Connectors</span>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-title" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding-right:10px" onclick="location.href='/studio/settings'" title="Settings">Config <span style="font-size:9px;opacity:.6">›</span></div>
+    <div class="nav-item" onclick="location.href='/studio/settings'">
+      <div class="nav-icon">⚙</div>
+      <span class="nav-label">Settings</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/studio/logs'">
+      <div class="nav-icon">📋</div>
+      <span class="nav-label">Activity Logs</span>
+    </div>
+    <div class="nav-item" onclick="location.href='/docs/demo-guides/'">
+      <div class="nav-icon">📖</div>
+      <span class="nav-label">Documentation</span>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-version">KVForge v2.1.0</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Resource Providers</div>
+        <div class="page-sub">Register VectorDB instances, LLM endpoints, cloud LLM APIs, and compute resources used across KVForge Studio.</div>
+      </div>
+      <button class="btn-primary" onclick="showAddModal()">+ Add Provider</button>
+    </div>
+
+    <div class="content">
+      <div id="section-vectordb">
+        <div class="section-header">
+          <div class="section-title">Vector Databases</div>
+        </div>
+        <div class="section-desc">Where embeddings and KV tensors are stored. Used by the indexer and at query time.</div>
+        <div class="provider-grid" id="list-vectordb"></div>
+      </div>
+
+      <div id="section-llm_endpoint">
+        <div class="section-header">
+          <div class="section-title">LLM Endpoints</div>
+        </div>
+        <div class="section-desc">Local or remote vLLM / Ollama servers for inference and KV computation.</div>
+        <div class="provider-grid" id="list-llm_endpoint"></div>
+      </div>
+
+      <div id="section-cloud_llm">
+        <div class="section-header">
+          <div class="section-title">Cloud LLM APIs</div>
+        </div>
+        <div class="section-desc">Anthropic, OpenAI, and Gemini — used for A/B comparison and FAQ generation.</div>
+        <div class="provider-grid" id="list-cloud_llm"></div>
+      </div>
+
+      <div id="section-compute">
+        <div class="section-header">
+          <div class="section-title">Compute Resources</div>
+        </div>
+        <div class="section-desc">GPUs for KV indexing and LoRA fine-tuning (local or remote via SSH).</div>
+        <div class="provider-grid" id="list-compute"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Modal -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <h3 id="modal-title">Add Resource Provider</h3>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <!-- Type tabs -->
+      <div class="m-field">
+        <div class="m-label">Provider Type</div>
+        <div class="type-tabs">
+          <div class="type-tab" data-type="vectordb" onclick="selectType(this)">Vector DB</div>
+          <div class="type-tab" data-type="llm_endpoint" onclick="selectType(this)">LLM Endpoint</div>
+          <div class="type-tab" data-type="cloud_llm" onclick="selectType(this)">Cloud LLM</div>
+          <div class="type-tab" data-type="compute" onclick="selectType(this)">Compute</div>
+        </div>
+      </div>
+
+      <!-- Display name -->
+      <div class="m-field">
+        <div class="m-label">Display Name</div>
+        <input class="m-input" id="m-name" type="text" placeholder="e.g. EC2 Qdrant, Local vLLM" autocomplete="off"/>
+      </div>
+
+      <!-- Backend selector -->
+      <div class="m-field">
+        <div class="m-label">Backend</div>
+        <select class="m-select" id="m-backend" onchange="onBackendChange()">
+          <option value="">— select type first —</option>
+        </select>
+      </div>
+
+      <!-- Config sections per backend -->
+      <div id="cfg-qdrant" class="config-section">
+        <div class="config-sep">Qdrant Connection</div>
+        <div class="config-grid">
+          <div class="m-field"><div class="m-label">Host</div>
+            <input class="m-input" id="c-qdrant-host" type="text" placeholder="localhost"/></div>
+          <div class="m-field"><div class="m-label">Port</div>
+            <input class="m-input" id="c-qdrant-port" type="number" placeholder="6333" value="6333"/></div>
+        </div>
+        <div class="m-field"><div class="m-label">API Key (if secured)</div>
+          <input class="m-input" id="c-qdrant-key" type="password" placeholder="optional"/></div>
+      </div>
+
+      <div id="cfg-chroma" class="config-section">
+        <div class="config-sep">Chroma Connection</div>
+        <div class="config-grid">
+          <div class="m-field"><div class="m-label">Host</div>
+            <input class="m-input" id="c-chroma-host" type="text" placeholder="localhost"/></div>
+          <div class="m-field"><div class="m-label">Port</div>
+            <input class="m-input" id="c-chroma-port" type="number" placeholder="8000" value="8000"/></div>
+        </div>
+      </div>
+
+      <div id="cfg-faiss" class="config-section">
+        <div class="config-sep">FAISS (Local)</div>
+        <div class="m-field"><div class="m-label">Index Directory</div>
+          <input class="m-input" id="c-faiss-path" type="text" placeholder="/data/faiss-index"/></div>
+      </div>
+
+      <div id="cfg-vllm" class="config-section">
+        <div class="config-sep">vLLM Endpoint</div>
+        <div class="m-field"><div class="m-label">Base URL</div>
+          <input class="m-input" id="c-vllm-url" type="text" placeholder="http://localhost:8090"/></div>
+        <div class="m-field"><div class="m-label">Served Model Name</div>
+          <input class="m-input" id="c-vllm-model" type="text" placeholder="kvforge-local"/></div>
+      </div>
+
+      <div id="cfg-ollama" class="config-section">
+        <div class="config-sep">Ollama Endpoint</div>
+        <div class="m-field"><div class="m-label">Base URL</div>
+          <input class="m-input" id="c-ollama-url" type="text" placeholder="http://localhost:11434"/></div>
+      </div>
+
+      <div id="cfg-anthropic" class="config-section">
+        <div class="config-sep">Anthropic (Claude)</div>
+        <div class="m-field"><div class="m-label">API Key</div>
+          <input class="m-input" id="c-anthropic-key" type="password" placeholder="sk-ant-… (leave blank to use Settings)"/></div>
+        <div class="m-field"><div class="m-label">Default Model</div>
+          <input class="m-input" id="c-anthropic-model" type="text" placeholder="claude-haiku-4-5-20251001" value="claude-haiku-4-5-20251001"/></div>
+      </div>
+
+      <div id="cfg-openai" class="config-section">
+        <div class="config-sep">OpenAI</div>
+        <div class="m-field"><div class="m-label">API Key</div>
+          <input class="m-input" id="c-openai-key" type="password" placeholder="sk-… (leave blank to use Settings)"/></div>
+        <div class="m-field"><div class="m-label">Default Model</div>
+          <input class="m-input" id="c-openai-model" type="text" placeholder="gpt-4o-mini" value="gpt-4o-mini"/></div>
+      </div>
+
+      <div id="cfg-gemini" class="config-section">
+        <div class="config-sep">Google Gemini</div>
+        <div class="m-field"><div class="m-label">API Key</div>
+          <input class="m-input" id="c-gemini-key" type="password" placeholder="AIza… (leave blank to use Settings)"/></div>
+        <div class="m-field"><div class="m-label">Default Model</div>
+          <input class="m-input" id="c-gemini-model" type="text" placeholder="gemini-2.5-flash" value="gemini-2.5-flash"/></div>
+      </div>
+
+      <div id="cfg-ssh_gpu" class="config-section">
+        <div class="config-sep">Remote SSH GPU</div>
+        <div class="config-grid">
+          <div class="m-field"><div class="m-label">Host</div>
+            <input class="m-input" id="c-ssh-host" type="text" placeholder="54.198.243.26"/></div>
+          <div class="m-field"><div class="m-label">Port</div>
+            <input class="m-input" id="c-ssh-port" type="number" placeholder="22" value="22"/></div>
+        </div>
+        <div class="m-field"><div class="m-label">Username</div>
+          <input class="m-input" id="c-ssh-user" type="text" placeholder="ubuntu"/></div>
+        <div class="m-field"><div class="m-label">KVForge Path on Remote</div>
+          <input class="m-input" id="c-ssh-path" type="text" placeholder="/home/ubuntu/KVForge"/></div>
+        <div class="m-field"><div class="m-label">PEM Key (paste contents)</div>
+          <textarea class="m-input" id="c-ssh-pem" rows="4"
+            placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;...&#10;-----END RSA PRIVATE KEY-----"
+            style="font-family:monospace;font-size:10px;resize:vertical"></textarea></div>
+      </div>
+
+      <div id="cfg-local_gpu" class="config-section">
+        <div class="config-sep">Local GPU</div>
+        <div class="m-field" style="color:var(--text-secondary);font-size:12px;padding:6px 0">
+          Represents the GPU on this machine. No extra configuration needed.
+        </div>
+      </div>
+
+      <div class="test-bar">
+        <button class="btn-test" onclick="testProvider()">▶ Test Connection</button>
+        <span class="test-status" id="m-test-status"></span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveProvider()" id="btn-save">Save Provider</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BACKENDS = {
+  vectordb:     ["qdrant", "chroma", "faiss"],
+  llm_endpoint: ["vllm", "ollama"],
+  cloud_llm:    ["anthropic", "openai", "gemini"],
+  compute:      ["ssh_gpu", "local_gpu"],
+};
+const BADGE_COLORS = {
+  vectordb: "#0052CC", llm_endpoint: "#6554C0",
+  cloud_llm: "#00875A", compute: "#BF2600",
+};
+const BACKEND_LABELS = {
+  qdrant:"Qdrant", chroma:"Chroma", faiss:"FAISS",
+  vllm:"vLLM", ollama:"Ollama",
+  anthropic:"Anthropic", openai:"OpenAI", gemini:"Gemini",
+  ssh_gpu:"SSH GPU", local_gpu:"Local GPU",
+};
+
+let _editId = null;
+let _selectedType = null;
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toggleSidebar() {
+  const s = document.getElementById('sidebar');
+  const btn = document.getElementById('sidebar-toggle-btn');
+  s.classList.toggle('collapsed');
+  btn.textContent = s.classList.contains('collapsed') ? '›' : '‹';
+}
+
+function toggleTheme() {
+  const h = document.documentElement;
+  h.dataset.theme = h.dataset.theme === 'dark' ? 'light' : 'dark';
+}
+
+function toggleProfileMenu() {
+  document.getElementById('profile-menu').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  const w = document.querySelector('.profile-wrap');
+  if (w && !w.contains(e.target)) document.getElementById('profile-menu').classList.remove('open');
+});
+
+async function goToActiveUC(hash) {
+  try {
+    const r = await fetch('/studio/api/registry', {credentials:'include'});
+    const d = await r.json();
+    const ucs = d.use_cases || [];
+    if (ucs.length) { location.href = '/studio/uc/' + ucs[0].id + (hash||''); return; }
+  } catch(e) {}
+  location.href = '/studio';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+fetch('/auth/me', {credentials:'include'}).then(r => r.ok ? r.json() : null).then(u => {
+  if (!u) return;
+  document.getElementById('pm-name').textContent = u.email.split('@')[0];
+  document.getElementById('pm-email').textContent = u.email;
+});
+
+// ── Rendering ────────────────────────────────────────────────────────────────
+
+async function load() {
+  try {
+    const r = await fetch('/studio/api/resources', {credentials:'include'});
+    if (!r.ok) return;
+    const providers = await r.json();
+    const byType = {vectordb:[], llm_endpoint:[], cloud_llm:[], compute:[]};
+    for (const p of providers) {
+      if (byType[p.type]) byType[p.type].push(p);
+    }
+    for (const [type, list] of Object.entries(byType)) {
+      renderSection(type, list);
+    }
+  } catch(e) {
+    console.error('load error', e);
+  }
+}
+
+function renderSection(type, list) {
+  const el = document.getElementById('list-' + type);
+  if (!el) return;
+  const color = BADGE_COLORS[type] || '#555';
+  const abbr = {vectordb:'VDB', llm_endpoint:'LLM', cloud_llm:'API', compute:'GPU'}[type] || type.slice(0,3).toUpperCase();
+
+  if (!list.length) {
+    el.innerHTML = `<button class="btn-add" onclick="showAddModal('${type}')">+ Add ${
+      {vectordb:'Vector DB', llm_endpoint:'LLM Endpoint', cloud_llm:'Cloud LLM API', compute:'Compute Resource'}[type]
+    }</button>`;
+    return;
+  }
+
+  el.innerHTML = list.map(p => {
+    const meta = _providerMeta(p);
+    return `<div class="provider-row" id="pr-${esc(p.id)}">
+      <div class="provider-badge" style="background:${color}">${esc(abbr)}</div>
+      <div class="provider-info">
+        <div class="provider-name">${esc(p.display_name)}</div>
+        <div class="provider-meta">${esc(BACKEND_LABELS[p.backend] || p.backend)} · ${esc(meta)}</div>
+      </div>
+      <div class="status-wrap" id="status-${esc(p.id)}">
+        <div class="status-dot status-unk"></div>
+        <div class="status-text">—</div>
+      </div>
+      <div class="provider-actions">
+        <button class="btn-sm" onclick="testProviderById('${esc(p.id)}')">Test</button>
+        <button class="btn-sm" onclick="deleteProvider('${esc(p.id)}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('') + `<button class="btn-add" onclick="showAddModal('${type}')">+ Add another</button>`;
+}
+
+function _providerMeta(p) {
+  const c = p.config || {};
+  const b = p.backend;
+  if (b === 'qdrant') return `${c.host||'localhost'}:${c.port||6333}`;
+  if (b === 'chroma') return `${c.host||'localhost'}:${c.port||8000}`;
+  if (b === 'faiss') return c.path || 'local index';
+  if (b === 'vllm') return c.endpoint_url || 'no endpoint';
+  if (b === 'ollama') return c.endpoint_url || 'localhost:11434';
+  if (b === 'anthropic') return c.default_model || 'claude-haiku-4-5-20251001';
+  if (b === 'openai') return c.default_model || 'gpt-4o-mini';
+  if (b === 'gemini') return c.default_model || 'gemini-2.5-flash';
+  if (b === 'ssh_gpu') return `${c.user||'ubuntu'}@${c.host||'?'}`;
+  if (b === 'local_gpu') return 'this machine';
+  return '';
+}
+
+async function testProviderById(pid) {
+  const wrap = document.getElementById('status-' + pid);
+  if (!wrap) return;
+  const dot = wrap.querySelector('.status-dot');
+  const txt = wrap.querySelector('.status-text');
+  dot.className = 'status-dot';
+  txt.textContent = 'Testing…';
+  try {
+    const r = await fetch(`/studio/api/resources/${pid}/test`, {method:'POST', credentials:'include'});
+    const d = await r.json();
+    dot.className = 'status-dot ' + (d.ok ? 'status-ok' : 'status-err');
+    txt.textContent = d.ok ? (d.detail || 'OK') : (d.error || 'Failed');
+  } catch(e) {
+    dot.className = 'status-dot status-err';
+    txt.textContent = 'Network error';
+  }
+}
+
+async function deleteProvider(pid) {
+  if (!confirm('Delete this resource provider?')) return;
+  try {
+    const r = await fetch(`/studio/api/resources/${pid}`, {method:'DELETE', credentials:'include'});
+    if (!r.ok) { showToast('Delete failed: ' + r.status); return; }
+    showToast('Provider deleted');
+    load();
+  } catch(e) { showToast('Error: ' + e.message); }
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+
+function showAddModal(preType) {
+  _editId = null;
+  document.getElementById('modal-title').textContent = 'Add Resource Provider';
+  _clearForm();
+  document.getElementById('add-modal').classList.add('open');
+  if (preType) {
+    const tab = document.querySelector(`.type-tab[data-type="${preType}"]`);
+    if (tab) selectType(tab);
+  }
+}
+
+function closeModal() {
+  document.getElementById('add-modal').classList.remove('open');
+}
+
+function _clearForm() {
+  _selectedType = null;
+  document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('sel'));
+  document.getElementById('m-name').value = '';
+  document.getElementById('m-backend').innerHTML = '<option value="">— select type first —</option>';
+  document.querySelectorAll('.config-section').forEach(s => s.classList.remove('visible'));
+  document.getElementById('m-test-status').textContent = '';
+  // Clear all inputs
+  ['c-qdrant-host','c-qdrant-port','c-qdrant-key','c-chroma-host','c-chroma-port',
+   'c-faiss-path','c-vllm-url','c-vllm-model','c-ollama-url',
+   'c-anthropic-key','c-anthropic-model','c-openai-key','c-openai-model',
+   'c-gemini-key','c-gemini-model','c-ssh-host','c-ssh-port','c-ssh-user',
+   'c-ssh-path','c-ssh-pem'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = el.tagName === 'TEXTAREA' ? '' : (el.placeholder || '');
+  });
+}
+
+function selectType(tab) {
+  _selectedType = tab.dataset.type;
+  document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('sel'));
+  tab.classList.add('sel');
+  const backends = BACKENDS[_selectedType] || [];
+  const sel = document.getElementById('m-backend');
+  sel.innerHTML = backends.map(b => `<option value="${b}">${BACKEND_LABELS[b]||b}</option>`).join('');
+  document.querySelectorAll('.config-section').forEach(s => s.classList.remove('visible'));
+  if (backends[0]) showBackendConfig(backends[0]);
+}
+
+function onBackendChange() {
+  document.querySelectorAll('.config-section').forEach(s => s.classList.remove('visible'));
+  const b = document.getElementById('m-backend').value;
+  if (b) showBackendConfig(b);
+}
+
+function showBackendConfig(backend) {
+  const el = document.getElementById('cfg-' + backend);
+  if (el) el.classList.add('visible');
+}
+
+function _buildConfig() {
+  const b = document.getElementById('m-backend').value;
+  if (b === 'qdrant') return {
+    host: document.getElementById('c-qdrant-host').value.trim() || 'localhost',
+    port: parseInt(document.getElementById('c-qdrant-port').value||'6333', 10),
+    api_key: document.getElementById('c-qdrant-key').value.trim() || undefined,
+  };
+  if (b === 'chroma') return {
+    host: document.getElementById('c-chroma-host').value.trim() || 'localhost',
+    port: parseInt(document.getElementById('c-chroma-port').value||'8000', 10),
+  };
+  if (b === 'faiss') return {path: document.getElementById('c-faiss-path').value.trim()};
+  if (b === 'vllm') return {
+    endpoint_url: document.getElementById('c-vllm-url').value.trim(),
+    served_model_name: document.getElementById('c-vllm-model').value.trim(),
+  };
+  if (b === 'ollama') return {endpoint_url: document.getElementById('c-ollama-url').value.trim() || 'http://localhost:11434'};
+  if (b === 'anthropic') return {
+    api_key: document.getElementById('c-anthropic-key').value.trim() || undefined,
+    default_model: document.getElementById('c-anthropic-model').value.trim(),
+  };
+  if (b === 'openai') return {
+    api_key: document.getElementById('c-openai-key').value.trim() || undefined,
+    default_model: document.getElementById('c-openai-model').value.trim(),
+  };
+  if (b === 'gemini') return {
+    api_key: document.getElementById('c-gemini-key').value.trim() || undefined,
+    default_model: document.getElementById('c-gemini-model').value.trim(),
+  };
+  if (b === 'ssh_gpu') return {
+    host: document.getElementById('c-ssh-host').value.trim(),
+    port: parseInt(document.getElementById('c-ssh-port').value||'22', 10),
+    user: document.getElementById('c-ssh-user').value.trim() || 'ubuntu',
+    kvforge_path: document.getElementById('c-ssh-path').value.trim(),
+    pem_content: document.getElementById('c-ssh-pem').value.trim(),
+  };
+  if (b === 'local_gpu') return {};
+  return {};
+}
+
+async function testProvider() {
+  if (!_selectedType) { alert('Select a provider type first'); return; }
+  const backend = document.getElementById('m-backend').value;
+  if (!backend) { alert('Select a backend'); return; }
+  const name = document.getElementById('m-name').value.trim() || '__kvforge_test_' + Date.now();
+  const config = _buildConfig();
+  const status = document.getElementById('m-test-status');
+  status.className = 'test-status test-pending';
+  status.textContent = 'Testing…';
+
+  // Create temp, test, delete
+  let tempId = null;
+  try {
+    const cr = await fetch('/studio/api/resources', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({type: _selectedType, backend, display_name: name, config}),
+    });
+    if (!cr.ok) {
+      const d = await cr.json().catch(()=>({}));
+      status.className = 'test-status test-err';
+      status.textContent = '✗ ' + (d.detail || 'Could not create temp provider');
+      return;
+    }
+    tempId = (await cr.json()).id;
+    const tr = await fetch(`/studio/api/resources/${tempId}/test`, {method:'POST', credentials:'include'});
+    const result = await tr.json();
+    status.className = result.ok ? 'test-status test-ok' : 'test-status test-err';
+    status.textContent = result.ok ? ('✓ ' + (result.detail||'Connected')) : ('✗ ' + (result.error||'Failed'));
+  } catch(e) {
+    status.className = 'test-status test-err';
+    status.textContent = '✗ ' + (e.message || 'Network error');
+  } finally {
+    if (tempId) fetch(`/studio/api/resources/${tempId}`, {method:'DELETE', credentials:'include'});
+  }
+}
+
+async function saveProvider() {
+  if (!_selectedType) { alert('Select a provider type first'); return; }
+  const backend = document.getElementById('m-backend').value;
+  if (!backend) { alert('Select a backend'); return; }
+  const display_name = document.getElementById('m-name').value.trim();
+  if (!display_name) { alert('Enter a display name'); return; }
+  const config = _buildConfig();
+
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true;
+  try {
+    const url = _editId ? `/studio/api/resources/${_editId}` : '/studio/api/resources';
+    const method = _editId ? 'PUT' : 'POST';
+    const r = await fetch(url, {
+      method, credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({type: _selectedType, backend, display_name, config}),
+    });
+    if (!r.ok) {
+      const d = await r.json().catch(()=>({}));
+      showToast('Save failed: ' + (d.detail || r.status));
+      return;
+    }
+    closeModal();
+    showToast(_editId ? 'Provider updated' : 'Provider added');
+    load();
+  } catch(e) {
+    showToast('Error: ' + (e.message || e));
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('add-modal').addEventListener('click', function(e){
+  if (e.target === this) closeModal();
+});
+
+load();
+</script>
+</body>
+</html>

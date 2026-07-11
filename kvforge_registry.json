@@ -1,24 +1,9 @@
 {
   "use_cases": [
     {
-      "id": "usecase1_customer_support",
-      "display_name": "Customer Support",
-      "type": "example"
-    },
-    {
-      "id": "usecase2_pubmedqa",
-      "display_name": "PubMedQA",
-      "type": "example"
-    },
-    {
-      "id": "usecase3_squad",
-      "display_name": "SQuAD",
-      "type": "example"
-    },
-    {
-      "id": "usecase4_bedrock_userguide",
-      "display_name": "Bedrock User Guide",
-      "type": "example"
+      "id": "my-wiki-corpus",
+      "display_name": "my-wiki-corpus",
+      "type": "custom"
     }
   ]
 }

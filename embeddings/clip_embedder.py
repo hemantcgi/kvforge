@@ -26,6 +26,8 @@ class CLIPEmbedder:
             inputs = self._processor(images=img, return_tensors="pt")
         with torch.no_grad():
             feats = self._model.get_image_features(**inputs)
+        if not isinstance(feats, torch.Tensor):
+            feats = feats.pooler_output
         feats = feats / feats.norm(dim=-1, keepdim=True)
         return feats[0].tolist()
 
@@ -33,5 +35,7 @@ class CLIPEmbedder:
         inputs = self._processor(text=[text], return_tensors="pt", padding=True)
         with torch.no_grad():
             feats = self._model.get_text_features(**inputs)
+        if not isinstance(feats, torch.Tensor):
+            feats = feats.pooler_output
         feats = feats / feats.norm(dim=-1, keepdim=True)
         return feats[0].tolist()

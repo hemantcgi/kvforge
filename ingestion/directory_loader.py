@@ -2,7 +2,7 @@
 
 Dispatches to the appropriate per-format loader based on file extension.
 Supported extensions: ``.pdf``, ``.md``, ``.markdown``, ``.jsonl``,
-``.html``, ``.htm``.
+``.html``, ``.htm``, ``.docx``, ``.pptx``, ``.xlsx``, ``.zip``.
 """
 from pathlib import Path
 
@@ -14,6 +14,10 @@ EXTENSION_MAP = {
     ".jsonl": "jsonl",
     ".html": "html",
     ".htm": "html",
+    ".docx": "docx",
+    ".pptx": "pptx",
+    ".xlsx": "xlsx",
+    ".zip": "zip",
 }
 
 

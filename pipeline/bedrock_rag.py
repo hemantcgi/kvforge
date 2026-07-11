@@ -53,6 +53,7 @@ class Config:
     embed_batch:   int = 64
     upsert_batch:  int = 128
     top_k:         int = 5
+    score_threshold: float = 0.55
     loader:        str = "pdf"
     vector_store:  str = "qdrant"
 
@@ -236,7 +237,8 @@ def _run_search(
 ) -> list:
     """Embed question and return scored results from the vector store."""
     q_vector = next(iter(embedder.embed([question]))).tolist()
-    return store.query(cfg.collection, q_vector, cfg.top_k)
+    return store.query(cfg.collection, q_vector, cfg.top_k,
+                       score_threshold=cfg.score_threshold)
 
 
 def _emit_json(question: str, results: list) -> None:

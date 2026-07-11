@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KVForge — Setup</title>
+  <style>
+    :root { --bg:#0f172a; --surface:#1e293b; --border:#334155;
+            --primary:#38bdf8; --text:#f1f5f9; --muted:#94a3b8; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { background:var(--bg); color:var(--text); font-family:system-ui,sans-serif;
+           min-height:100vh; display:flex; align-items:center; justify-content:center; }
+    .card { background:var(--surface); border:1px solid var(--border);
+            border-radius:12px; padding:2.5rem; max-width:560px; width:100%; }
+    h1 { font-size:1.5rem; font-weight:700; color:var(--primary); margin-bottom:0.5rem; }
+    .sub { color:var(--muted); font-size:0.9rem; margin-bottom:2rem; }
+    .step { display:flex; gap:1rem; margin-bottom:1.25rem; align-items:flex-start; }
+    .num { background:var(--primary); color:#0f172a; border-radius:50%;
+           width:28px; height:28px; display:flex; align-items:center;
+           justify-content:center; font-weight:700; font-size:0.85rem; flex-shrink:0; }
+    .step-body h3 { font-size:0.95rem; font-weight:600; margin-bottom:0.2rem; }
+    .step-body p { font-size:0.85rem; color:var(--muted); line-height:1.5; }
+    code { background:#0f172a; padding:0.15rem 0.4rem; border-radius:4px;
+           font-size:0.82rem; color:var(--primary); }
+    .path { background:#0f172a; border:1px solid var(--border); border-radius:6px;
+            padding:0.75rem 1rem; margin-top:1.5rem; font-size:0.82rem;
+            color:var(--muted); }
+    .path span { color:var(--primary); }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>Welcome to KVForge</h1>
+  <p class="sub">No configuration found. Follow these steps to set up your use case.</p>
+
+  <div class="step">
+    <div class="num">1</div>
+    <div class="step-body">
+      <h3>Create a config file</h3>
+      <p>Run <code>kvforge init --name my-corpus</code> to generate a starter
+         <code>KVForgeConfig</code> JSON file with the new addon-based format.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">2</div>
+    <div class="step-body">
+      <h3>Choose your addons</h3>
+      <p>Edit the <code>"addons"</code> list in your config. Available built-in addons:
+         <code>indexing</code>, <code>inference</code>, <code>training</code>,
+         <code>background</code>, <code>sync</code>, <code>monitoring</code>,
+         <code>mcp</code>, <code>model_scout</code>, <code>multimodal</code>,
+         <code>analytics</code>.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">3</div>
+    <div class="step-body">
+      <h3>Configure each addon</h3>
+      <p>Fill in <code>"addon_config"</code> with per-addon settings.
+         At minimum, <code>indexing</code> needs <code>embed_model</code> and
+         <code>vector_dim</code>; <code>inference</code> needs <code>llm_model</code>;
+         <code>training</code> needs <code>checkpoint_dir</code> and
+         <code>replay_db</code>.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">4</div>
+    <div class="step-body">
+      <h3>Restart the dashboard</h3>
+      <p>Run <code>kvforge start --config your-config.json</code> to reload
+         this dashboard with your configuration.</p>
+    </div>
+  </div>
+
+  <div class="path">
+    Looking for config at: <span>{{ config_path }}</span>
+  </div>
+</div>
+</body>
+</html>

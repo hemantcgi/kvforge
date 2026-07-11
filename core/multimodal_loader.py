@@ -7,7 +7,7 @@ from typing import Protocol, runtime_checkable
 
 import torch
 from PIL import Image
-from transformers import AutoModelForCausalLM, AutoProcessor
+from transformers import AutoProcessor, LlavaForConditionalGeneration
 
 import core.kv_utils as kv_utils
 
@@ -35,7 +35,7 @@ class LLaVALoader:
         global _model, _processor, _loaded_model_name
         model_name = cfg.get("multimodal_model", "llava-hf/llava-1.5-7b-hf")
         if _model is None or _loaded_model_name != model_name:
-            _model = AutoModelForCausalLM.from_pretrained(
+            _model = LlavaForConditionalGeneration.from_pretrained(
                 model_name, torch_dtype=torch.float16, device_map="auto"
             )
             _model.eval()

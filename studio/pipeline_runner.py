@@ -5,6 +5,7 @@ import asyncio
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -17,6 +18,8 @@ STEP_MODULES = {
     "prs-eval":  "pipeline.prs_evaluator",
     "ab-eval":   "pipeline.ab_evaluator",
     "sleep-faq": "pipeline.sleep_faq_generator",
+    "faq-gen-cloud": "pipeline.sleep_faq_generator",
+    "setup": "__setup__",  # handled specially in _build_cmd
 }
 
 # Steps that require a free GPU — sleep-faq calls a cloud REST API, no GPU needed
@@ -30,7 +33,121 @@ STEP_EXTRA_ARGS = {
 }
 
 
+def _ensure_config_json(uc_id: str) -> None:
+    """Generate config.json from uc_config.json if it doesn't exist.
+
+    Pipeline modules (kv_indexer, lora_trainer, etc.) all expect the
+    addon_config-format config.json.  Wizard-created UCs only have
+    uc_config.json, so we derive config.json automatically.
+    """
+    config_path = ROOT / "examples" / uc_id / "config.json"
+    if config_path.exists():
+        return  # already present (example UCs or previously generated)
+
+    uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
+    if not uc_cfg_path.exists():
+        return  # nothing to derive from
+
+    try:
+        uc = json.loads(uc_cfg_path.read_text())
+    except Exception:
+        return
+
+    data = uc.get("data", {})
+    vdb = uc.get("vectordb", {})
+    llm = uc.get("llm", {})
+
+    source_type = data.get("source_type", "")
+    loader_map = {
+        "pdf": "pdf", "huggingface": "huggingface", "jsonl": "jsonl",
+        "directory": "directory", "markdown": "markdown", "html": "html",
+        "api": "jsonl",  # connector-synced data lands as jsonl
+    }
+    loader = loader_map.get(source_type, "jsonl")
+
+    local_model = llm.get("local_model", "meta-llama/Llama-3.2-3B-Instruct")
+    collection = uc_id.replace("_", "-")
+
+    cfg = {
+        "use_case_name": uc.get("display_name", uc_id),
+        "collection": collection,
+        "version_file": f"examples/{uc_id}/version.json",
+        "addons": ["indexing", "inference", "training", "background", "sync", "monitoring"],
+        "addon_config": {
+            "indexing": {
+                "loader": loader,
+                "chunk_size": vdb.get("chunk_size", 512),
+                "chunk_overlap": vdb.get("chunk_overlap", 64),
+                "embed_batch": 64,
+                "upsert_batch": 128,
+                "embed_model": vdb.get("embedding_model", "BAAI/bge-small-en-v1.5"),
+                "embedder_backend": "fastembed",
+                "vector_dim": vdb.get("dimensions", 384),
+                "vector_store": vdb.get("store", "qdrant"),
+                "qdrant_host": "localhost",
+                "qdrant_port": 6333,
+                "dataset_id": data.get("dataset_id", ""),
+                "split": data.get("split", "train"),
+                "jsonl_text_key": data.get("text_column", "text"),
+                "max_rows": data.get("max_rows", 5000),
+                "source_path": data.get("source_path", f"examples/{uc_id}/data/"),
+                # HuggingFace-specific keys (used by ingestion/registry.py when loader=huggingface)
+                **({"hf_config_name": data.get("hf_config_name"),
+                    "hf_split": data.get("split", "train"),
+                    "hf_text_column": data.get("text_column", "text"),
+                    "hf_max_rows": data.get("max_rows", 5000)} if loader == "huggingface" else {}),
+                "model_library": {
+                    local_model: {"kv_num_layers": 28, "kv_num_heads": 8, "kv_head_dim": 128}
+                },
+            },
+            "inference": {
+                "top_k": 5,
+                "llm_model": local_model,
+                "quantization": llm.get("quantization", "4bit"),
+                "vllm_url": llm.get("vllm_url", ""),
+                "vllm_model": uc_id,
+                "max_new_tokens": 256,
+                "gate_threshold": 0.75,
+            },
+            "training": {
+                "lora_rank": 16,
+                "lora_alpha": 32,
+                "lora_target_modules": ["q_proj", "k_proj", "v_proj"],
+                "lora_dropout": 0.05,
+                "lora_epochs": 3,
+                "lora_lr": 0.0002,
+                "checkpoint_dir": f"examples/{uc_id}/lora_checkpoints/",
+                "replay_db": f"examples/{uc_id}/replay.db",
+                "prs_threshold": 0.75,
+                "prs_weights": {"accuracy": 0.5, "calibration": 0.3, "consistency": 0.2},
+                "prs_advancement_threshold": 0.72,
+                "prs_regression_threshold": 0.60,
+                "faq_question_key": "question",
+                "faq_answer_key": "answer",
+            },
+            "background": {"flush_seconds": 300, "flush_queries": 50},
+            "sync": {
+                "interval_minutes": 1440,
+                "hitl_mode": "auto",
+                "sync_regression_mode": "pct",
+                "sync_regression_pct_threshold": 0.10,
+                "sync_regression_tier_threshold": 0.15,
+            },
+            "monitoring": {"port": 8085},
+        },
+    }
+
+    # Ensure data directory exists for connector-synced / local sources
+    data_dir = ROOT / "examples" / uc_id / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    config_path.write_text(json.dumps(cfg, indent=2))
+
+
 def _build_cmd(uc_id: str, step: str) -> list[str]:
+    if step == "setup":
+        setup_script = str(ROOT / "examples" / uc_id / "setup.py")
+        return [sys.executable, setup_script]
     module = STEP_MODULES[step]
     config = str(ROOT / "examples" / uc_id / "config.json")
     cmd = [sys.executable, "-m", module, "--config", config]
@@ -62,9 +179,21 @@ def _build_cmd(uc_id: str, step: str) -> list[str]:
         if faqs_path.exists():
             cmd += ["--faqs", str(faqs_path)]
         else:
-            # Fall back to train data if no faqs generated yet
             source_path = ROOT / "examples" / uc_id / "data" / "train.jsonl"
             cmd += ["--faqs", str(source_path)]
+        # Read prs_eval_sample from uc_config; default 20 (5 inference calls × 20 FAQs ≈ 30 min)
+        uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
+        sample = 20
+        if uc_cfg_path.exists():
+            try:
+                uc_cfg = json.loads(uc_cfg_path.read_text())
+                raw = uc_cfg.get("prs_eval_sample", 20)
+                parsed = int(raw)
+                if parsed > 0:
+                    sample = parsed
+            except Exception:
+                pass
+        cmd += ["--sample", str(sample)]
     if step == "sleep-faq":
         # --output is dynamic (depends on uc_id)
         output = str(ROOT / "examples" / uc_id / "faqs.json")
@@ -85,27 +214,102 @@ def _build_cmd(uc_id: str, step: str) -> list[str]:
                 cmd += ["--count", "50"]
         else:
             cmd += ["--count", "50"]
+    if step == "faq-gen-cloud":
+        import json as _json
+        output = str(ROOT / "examples" / uc_id / "faqs.json")
+        cmd += ["--output", output]
+        uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
+        count = 50
+        if uc_cfg_path.exists():
+            try:
+                uc_cfg = _json.loads(uc_cfg_path.read_text())
+                raw_count = uc_cfg.get("llm", {}).get("sleep_faq_count", 50)
+                parsed = int(raw_count)
+                if parsed > 0:
+                    count = parsed
+            except (TypeError, ValueError, KeyError):
+                pass
+            except Exception:
+                pass
+        cmd += ["--count", str(count)]
+    if step == "ab-eval":
+        # ab_evaluator requires --dashboard-url pointing to the per-UC monitoring dashboard
+        cfg_path = ROOT / "examples" / uc_id / "config.json"
+        port = 8081  # fallback
+        if cfg_path.exists():
+            try:
+                cfg = json.loads(cfg_path.read_text())
+                port = int(cfg.get("dashboard_port", 8081))
+            except Exception:
+                pass
+        cmd += ["--dashboard-url", f"http://localhost:{port}"]
     return cmd
 
 
-async def run_step_streaming(uc_id: str, step: str, job_id: str, job_manager):
+_SECRET_FLAGS = {"--api-key", "--token", "--password", "--secret"}
+
+
+def _redact_cmd(cmd: list[str]) -> str:
+    parts = []
+    skip_next = False
+    for part in cmd:
+        if skip_next:
+            parts.append("[REDACTED]")
+            skip_next = False
+        elif part in _SECRET_FLAGS:
+            parts.append(part)
+            skip_next = True
+        else:
+            parts.append(part)
+    return " ".join(parts)
+
+
+def _log_path(uc_id: str) -> Path:
+    """Disk log file for the most recent run of a UC — survives studio restarts."""
+    return ROOT / "examples" / uc_id / "last_run.log"
+
+
+async def run_step_background(
+    uc_id: str, step: str, job_id: str, job_manager, gpu_profile_id: str | None = None
+) -> None:
     """
-    Spawn pipeline step subprocess and yield SSE-formatted lines.
-    Also appends log lines to job_manager.
+    Run pipeline step subprocess as a background task, independent of any SSE
+    connection. Buffers all output in job_manager AND writes to disk so logs
+    survive studio restarts.
     """
+    # Ensure config.json exists (wizard UCs only have uc_config.json)
+    _ensure_config_json(uc_id)
+
+    def _append(line: str):
+        job_manager.append_log(job_id, line)
+        try:
+            with open(_log_path(uc_id), "a") as f:
+                f.write(line + "\n")
+        except OSError:
+            pass
+
+    # Truncate log file at the start of every run so the logs panel always
+    # reflects the current job (even if the job fails early below)
+    try:
+        _log_path(uc_id).write_text(f"[studio] step={step} job={job_id}\n")
+    except OSError:
+        pass
+
     from studio.gpu_monitor import get_gpu_status
 
-    # GPU pre-check — skipped for steps that don't need a GPU
-    if step in GPU_REQUIRED_STEPS:
+    if step in GPU_REQUIRED_STEPS and gpu_profile_id is None:
+        # Only check local GPU when no remote profile was selected
         gpu_status = get_gpu_status()
         if not gpu_status.get("has_free_gpu"):
-            job_manager.fail(job_id, "No free GPU available")
-            yield _sse({"type": "error", "message": "No free GPU available"})
+            msg = "No free GPU available — select a Remote GPU profile before running GPU steps"
+            job_manager.fail(job_id, msg)
+            _append(f"[studio] error: {msg}")
             return
 
     cmd = _build_cmd(uc_id, step)
     env = _build_env(uc_id, step)
-    yield _sse({"type": "start", "cmd": " ".join(cmd)})
+
+    _append(f"[studio] starting: {_redact_cmd(cmd)}")
 
     try:
         proc = await asyncio.create_subprocess_exec(
@@ -114,32 +318,79 @@ async def run_step_streaming(uc_id: str, step: str, job_id: str, job_manager):
             stderr=asyncio.subprocess.STDOUT,
             cwd=str(ROOT),
             env=env,
+            limit=1024 * 1024,  # 1 MB per line — handles long model-loader progress bars
         )
         job_manager.set_pid(job_id, proc.pid)
 
-        async for raw_line in proc.stdout:
-            line = raw_line.decode("utf-8", errors="replace").rstrip()
-            job_manager.append_log(job_id, line)
-            yield _sse({"type": "log", "line": line})
+        while True:
+            try:
+                raw_line = await proc.stdout.readline()
+                if not raw_line:
+                    break
+                line = raw_line.decode("utf-8", errors="replace").rstrip()
+                _append(line)
+            except asyncio.LimitOverrunError:
+                # Line exceeded buffer; drain and log a truncated placeholder
+                await proc.stdout.read(1024 * 1024)
+                _append("[studio] (line too long — truncated)")
 
         exit_code = await proc.wait()
-
         if exit_code == 0:
             job_manager.complete(job_id, exit_code)
-            yield _sse({"type": "done", "exit_code": 0})
+            _append("[studio] done (exit 0)")
         else:
             job_manager.fail(job_id, f"Process exited with code {exit_code}")
-            yield _sse({"type": "error", "exit_code": exit_code,
-                         "message": f"Process exited with code {exit_code}"})
+            _append(f"[studio] failed (exit {exit_code})")
 
     except Exception as e:
         job_manager.fail(job_id, str(e))
-        yield _sse({"type": "error", "message": str(e)})
+        _append(f"[studio] error: {e}")
+
+
+_SSE_HEARTBEAT_INTERVAL = 15  # seconds between SSE keepalive comments
+
+async def run_step_streaming(uc_id: str, step: str, job_id: str, job_manager):
+    """
+    SSE relay: replays buffered log lines then tails new ones until the job
+    finishes. Does NOT spawn a subprocess — call run_step_background for that.
+    Sends SSE comment heartbeats every 15s so browsers don't time out during
+    silent inference phases.
+    """
+    offset = 0
+    last_heartbeat = time.monotonic()
+    while True:
+        job = job_manager.get(job_id)
+        if not job:
+            yield _sse({"type": "error", "message": "job not found"})
+            return
+
+        lines = job.get("last_lines", [])
+        while offset < len(lines):
+            yield _sse({"type": "log", "line": lines[offset]})
+            offset += 1
+            last_heartbeat = time.monotonic()  # data counts as activity
+
+        status = job.get("status")
+        if status != "running":
+            if status == "done":
+                yield _sse({"type": "done", "exit_code": 0})
+            else:
+                yield _sse({"type": "error", "exit_code": -1,
+                             "message": job.get("error", "failed")})
+            return
+
+        now = time.monotonic()
+        if now - last_heartbeat >= _SSE_HEARTBEAT_INTERVAL:
+            yield ": heartbeat\n\n"
+            last_heartbeat = now
+
+        await asyncio.sleep(0.3)
 
 
 def _build_env(uc_id: str, step: str) -> dict:
     """Return subprocess env with CUDA_VISIBLE_DEVICES set for GPU steps."""
     env = os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "1"  # ensure print() output streams immediately through the pipe
     if step in GPU_REQUIRED_STEPS:
         uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
         gpu_id = 0  # default
@@ -150,6 +401,32 @@ def _build_env(uc_id: str, step: str) -> dict:
             except Exception:
                 pass
         env["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
+    if step in {"index", "train", "recompute"}:
+        from studio.settings_manager import get_setting
+        hf_token = get_setting("huggingface_token") or ""
+        if hf_token:
+            env["HF_TOKEN"] = hf_token
+    if step == "faq-gen-cloud":
+        from studio.settings_manager import get_setting
+        import json as _json
+        _PROVIDER_KEY_MAP = {
+            "claude": ("anthropic_api_key", "ANTHROPIC_API_KEY"),
+            "anthropic": ("anthropic_api_key", "ANTHROPIC_API_KEY"),
+            "openai": ("openai_api_key", "OPENAI_API_KEY"),
+            "gemini": ("gemini_api_key", "GEMINI_API_KEY"),
+        }
+        uc_cfg_path = ROOT / "examples" / uc_id / "uc_config.json"
+        provider = "claude"
+        if uc_cfg_path.exists():
+            try:
+                uc_cfg = _json.loads(uc_cfg_path.read_text())
+                provider = uc_cfg.get("llm", {}).get("cloud_provider", "claude")
+            except Exception:
+                pass
+        settings_key, env_var = _PROVIDER_KEY_MAP.get(provider, ("anthropic_api_key", "ANTHROPIC_API_KEY"))
+        api_key = get_setting(settings_key) or ""
+        if api_key:
+            env[env_var] = api_key
     return env
 
 

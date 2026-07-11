@@ -35,6 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import core.kv_utils as kv_utils
 import core.model_loader as model_loader
 import core.version as ver
+from core.kv_utils import compute_per_token_kv, save_token_kv
 from vectorstore.registry import get_store
 
 _kv_queue: queue.Queue = queue.Queue()
@@ -264,6 +265,45 @@ def start(cfg: dict) -> None:
     t1.start()
     t2.start()
     print("✅ kv_background workers started", flush=True)
+
+
+def promote_chunk_to_enhanced_tier(
+    chunk_id: str,
+    chunk_text: str,
+    cfg: dict,
+    model,
+    tokenizer,
+    vector_store,
+    tq_config=None,
+    existing_kv_token_path: str | None = None,
+) -> str | None:
+    """Run LLM forward pass, save per-token KVs, update kv_token_path in VectorStore.
+
+    Returns the path written, or None if skipped (already enhanced).
+    """
+    import torch
+
+    if existing_kv_token_path:
+        return None
+
+    inputs = tokenizer(chunk_text, return_tensors="pt", truncation=True,
+                       max_length=cfg.get("chunk_size", 512))
+    with torch.no_grad():
+        out = model(**inputs, use_cache=True)
+
+    arr = compute_per_token_kv(out.past_key_values)
+
+    kv_dir = Path(cfg["per_token_kv_dir"])
+    kv_dir.mkdir(parents=True, exist_ok=True)
+    path = kv_dir / f"{chunk_id}.npz"
+    save_token_kv(arr, path, tq_config=tq_config)
+
+    vector_store.update_payload(
+        collection=cfg["collection"],
+        point_id=chunk_id,
+        payload={"kv_token_path": str(path)},
+    )
+    return str(path)
 
 
 if __name__ == "__main__":
