@@ -44,6 +44,12 @@
   aboveskip    = 6pt,
   belowskip    = 6pt,
   numbers      = none,
+  literate     = {×}{{$\times$}}1 {·}{{$\cdot$}}1 {≥}{{$\geq$}}1
+                 {≤}{{$\leq$}}1 {≠}{{$\neq$}}1 {≈}{{$\approx$}}1
+                 {→}{{$\to$}}1 {←}{{$\leftarrow$}}1 {∈}{{$\in$}}1
+                 {−}{{$-$}}1 {≪}{{$\ll$}}1 {≫}{{$\gg$}}1
+                 {ε}{{$\varepsilon$}}1 {α}{{$\alpha$}}1 {β}{{$\beta$}}1
+                 {γ}{{$\gamma$}}1 {ᵀ}{{$^\top$}}1 {√}{{$\sqrt{}$}}1,
 }
 
 %% ─── Header / footer ─────────────────────────────────────────────────────────
@@ -120,7 +126,7 @@ KVForge extends this caching insight into a three-phase autonomous progression:
 Beyond the three phases, KVForge introduces two systems addressing storage and curation challenges at scale:
 
 
-\textbf{Corpus Importance Score (CIS)} is a multi-signal chunk importance metric combining log-normalized retrieval frequency, semantic uniqueness (1 − max cosine similarity to any neighbor), and FAQ topic coverage.
+\textbf{Corpus Importance Score (CIS)} is a multi-signal chunk importance metric combining log-normalized retrieval frequency, semantic uniqueness (1 $-$ max cosine similarity to any neighbor), and FAQ topic coverage.
 
 
 \textbf{TurboQuant} \cite{ref34} (Google Research and NYU, 2025) is a data-oblivious online vector quantizer with near-optimal distortion; in our configuration we allocate 3 bits per key coordinate and 4 bits per value coordinate, achieving 4.4$\times$ compression over float16 while preserving attention-score quality for direct computation without decompression. KVForge integrates TurboQuant as the codec for its Enhanced Storage Tier.
@@ -134,7 +140,7 @@ This paper makes the following contributions:
   \item \textbf{Parametric Readiness Score (PRS)}: a principled composite metric for evaluating parametric knowledge retention and gating autonomous phase advancement.
   \item \textbf{Corpus Importance Score (CIS)}: a multi-signal importance metric for chunk-level storage curation and resource allocation.
   \item \textbf{Integration of TurboQuant} \cite{ref34}: KVForge adopts the TurboQuant codec (Google Research and NYU, 2025) for the Enhanced Storage Tier, demonstrating that a 4.4$\times$ compressed per-token KV representation enables full-token injection at tractable storage cost (\textasciitilde{}15 MB/chunk for 8B models).
-  \item \textbf{Empirical evaluation} across four heterogeneous corpora demonstrating all four reach Phase 3 with PRS 0.755--0.863, with training signal quality as the dominant variable.
+  \item \textbf{Empirical evaluation} across four heterogeneous corpora: under the cosine-based PRS proxy, all four reach the Phase 3 readiness threshold (PRS 0.755--0.863), but held-out factual metrics (exact-match, token-F1, LLM-judge; §7.8--§7.9) show this proxy overestimates actual readiness and correlates only weakly with factual correctness (Pearson \textit{r} = -0.12--0.43). We report this gap --- not the PRS attainment itself --- as the paper's central empirical finding, identifying training signal quality and a reliable factual gate as the open problems it exposes.
 \end{enumerate}
 
 
@@ -301,7 +307,7 @@ Table~\ref{tab:related} makes this coverage argument concrete across six dimensi
   RAGCache [52] & Serving-layer knowledge tree & No & No & No & Partial & No \\
   CachedAttention / AttentionStore \cite{ref49} & Multi-tier (GPU/DRAM/disk) & No & No & No & No & No \\
   Mooncake \cite{ref50} & Disaggregated (DRAM/SSD) & No & No & No & No & No \\
-  LMCache \cite{ref46} & In-process (shared) & No & No & No & No & No \\
+  LMCache \cite{ref46} & Persistent, tiered (CPU/local/remote) & No & No & No & No & No \\
   KVQuant \cite{ref27} & In-process (quantized) & No & No & No & No & No \\
   KIVI \cite{ref28} & In-process (quantized) & No & No & No & No & No \\
   CAG \cite{ref38} & Context-window preload & No (single tier) & No & No (always parametric-from-cache) & No & No \\
@@ -517,9 +523,9 @@ This measures parametric quality \textit{relative to the RAG baseline}, making t
 \textbf{Calibration} (30\%): The model self-rates its confidence in its parametric answer (0--100 scale). Calibration measures whether expressed confidence tracks actual quality:
 
 
-\begin{lstlisting}
-calibration = 1.0 − |self_confidence_normalized − sim(param_ans, gt)|
-\end{lstlisting}
+\[
+  calibration = 1.0 - |self_{confidence\_normalized} - \mathrm{sim}(param_{ans}, gt)|
+\]
 
 \textbf{Consistency} (20\%): Three independent answers are sampled at temperature 0.7. Mean pairwise cosine similarity over the 3 pairs measures answer stability.
 
@@ -555,7 +561,7 @@ calibration = 1.0 − |self_confidence_normalized − sim(param_ans, gt)|
 \end{table*}
 
 
-After each evaluation round, FAQ questions with \texttt{accuracy\_ratio ≥ 0.85} are embedded and stored in \texttt{known\_good\_queries} in \texttt{version.json}, seeding the Phase 3 confidence gate.
+After each evaluation round, FAQ questions with \texttt{accuracy\_ratio $\geq$ 0.85} are embedded and stored in \texttt{known\_good\_queries} in \texttt{version.json}, seeding the Phase 3 confidence gate.
 
 
 \subsection{Phase 3 Confidence Gate}
@@ -665,11 +671,11 @@ Values are compressed using asymmetric per-group min-max quantization:
 
 \[
   \begin{aligned}
-    groups = values.reshape(n_{groups}, group_{size})         \# group_{size} = 32 \\ scale  = (\mathrm{max}(groups) − \mathrm{min}(groups)) / (2^bits − 1) \\ zero   = \mathrm{min}(groups) \\ q      = \mathrm{round}((groups − zero) / scale)  \in  [0, 15]
+    groups = values.reshape(n_{groups}, group_{size})         \# group_{size} = 32 \\ scale  = (\mathrm{max}(groups) - \mathrm{min}(groups)) / (2^{bits} - 1) \\ zero   = \mathrm{min}(groups) \\ q      = \mathrm{round}((groups - zero) / scale)  \in  [0, 15]
   \end{aligned}
 \]
 
-Groups are packed into uint8 (two 4-bit values per byte). Decompression: \texttt{values = q × scale + zero}. For d\_h=128 and 4-bit quantization: 64 bytes vs. 256 bytes float16 --- 4$\times$ compression.
+Groups are packed into uint8 (two 4-bit values per byte). Decompression: \texttt{values = q $\times$ scale + zero}. For d\_h=128 and 4-bit quantization: 64 bytes vs. 256 bytes float16 --- 4$\times$ compression.
 
 
 
@@ -763,7 +769,7 @@ Table~\ref{tab:hardware-and-setup} summarizes the experimental hardware and soft
   Embedder (UC1--3) & BAAI/bge-small-en-v1.5 (384-dim) \\
   Embedder (UC4) & mixedbread-ai/mxbai-embed-large-v1 (1024-dim) \\
   LoRA rank & r = 16, alpha = 32; Quantization: 4-bit NF4 \\
-  vLLM servers & One per UC (ports 8090--8093) \\
+  vLLM servers & One per UC (ports 8090--8093); used for the monitoring dashboard's A/B comparison panel, not for the Phase 1/2/3 latency benchmark in §7.4 (see that section for why) \\
   \bottomrule
   \end{tabularx}
 \end{table*}
@@ -834,7 +840,7 @@ LoRA training adds 474 steps (3 epochs) per round, and the subsequent KV recompu
 
 \subsection{Generation Latency: Phase 1 vs Phase 2 vs Phase 3}
 
-\textbf{Figure 11} shows query-response latency by phase, measured on UC4 with Llama-3.2-3B-Instruct via vLLM, median of 50 queries. \textbf{These are total end-to-end wall-clock times --- retrieval, context encoding (prefill), and the full autoregressive decode of the answer --- not an isolated prefill/time-to-first-token measurement.} We state this explicitly because 1,852 ms would be implausibly slow for prefill alone on a 3B model on an A10G-class GPU; the number reflects prefill plus decoding the complete response.
+\textbf{Figure 11} shows query-response latency by phase, measured on UC4 with Llama-3.2-3B-Instruct, median of 50 queries. \textbf{We correct an inconsistency from an earlier draft here: this benchmark was served via a direct HuggingFace Transformers model instance (\texttt{core/model\_loader.py}), not vLLM.} Phase 2's KV-tensor injection manipulates \texttt{past\_key\_values} directly on the loaded model object --- a hook vLLM's OpenAI-compatible serving API does not expose --- so Phase 2 cannot run through vLLM at all, and we measured all three phases through the same HF-Transformers path for a like-for-like comparison. vLLM is used elsewhere in the system (\texttt{core/vllm\_client.py}, one server per use-case) as an optional higher-throughput backend for plain text generation, e.g. in the monitoring dashboard's A/B comparison panel, but not for the Phase 1/2/3 latency figures reported here. Separately, \textbf{these are total end-to-end wall-clock times} --- retrieval, context encoding (prefill), and the full autoregressive decode of the answer --- not an isolated prefill/time-to-first-token measurement. We state this explicitly because 1,852 ms would be implausibly slow for prefill alone on a 3B model on an A10G-class GPU; the number reflects prefill plus decoding the complete response.
 
 
 \begin{figure}[htbp]
@@ -845,7 +851,7 @@ LoRA training adds 474 steps (3 epochs) per round, and the subsequent KV recompu
 \end{figure}
 
 
-In Phase 1, the retrieved context (five 600-token chunks) is concatenated with the prompt, passed through the full model to build the prefill KV cache, and the model then autoregressively decodes the complete answer; the reported 1,852 ms covers all of this. The retrieval component itself is negligible (\textasciitilde{}12 ms). Phase 2 eliminates the prefill re-encoding step by injecting pre-computed KV tensors for the retrieved chunks directly into \texttt{past\_key\_values}, so only the query tokens require a fresh forward pass before decoding begins; end-to-end latency falls to 692 ms --- a 2.7$\times$ speedup. Phase 3 removes retrieval entirely for high-confidence queries, so the model decodes directly from parameters with no context to prefill, reaching 510 ms (3.6$\times$ faster than Phase 1). These gains are especially valuable for high-throughput deployments where context re-encoding is the dominant GPU cost, and they show that the initial indexing investment is quickly amortized at query time.
+In Phase 1, the retrieved context (five 600-token chunks) is concatenated with the prompt, passed through the full model to build the prefill KV cache, and the model then autoregressively decodes the complete answer; the reported 1,852 ms covers all of this. The retrieval component itself is negligible (\textasciitilde{}12 ms). Phase 2 eliminates the prefill re-encoding step by injecting pre-computed KV tensors for the retrieved chunks directly into \texttt{past\_key\_values}, so only the query tokens require a fresh forward pass before decoding begins; end-to-end latency falls to 692 ms --- a 2.7$\times$ speedup. Phase 3 removes retrieval entirely for high-confidence queries, so the model decodes directly from parameters with no context to prefill, reaching 510 ms (3.6$\times$ faster than Phase 1).
 
 
 \textbf{A caveat on comparability.} Phase 1 and Phase 2 answer the same query population (every query is served by that phase), but Phase 3's confidence gate answers only the subset of queries it judges high-confidence, routing the rest back to Phase 2 or text RAG (§4.8). The 3.6$\times$ figure therefore compares Phase 1's latency on the full query set against Phase 3's latency on a self-selected, presumably easier subset --- it is not a matched, apples-to-apples comparison over identical queries, and should be read as descriptive of observed pipeline behavior rather than a controlled systems benchmark. We did not have an external baseline system (e.g., TurboRAG or CacheBlend run under identical hardware and queries) available for this evaluation; adding one is future work (§8.5).
@@ -1003,7 +1009,7 @@ The real results are markedly lower than the initial dry-run simulation. The dry
 
 \subsection{Comparison with Alternative Systems}
 
-Table~\ref{tab:comparison} contrasts KVForge Phase 2 and Phase 3 against standard text-in-context RAG across key operational metrics. The comparison highlights that KVForge trades a one-time training and storage cost for sustained query-time improvements.
+Table~\ref{tab:comparison} contrasts KVForge Phase 2 and Phase 3 against standard text-in-context RAG across key operational metrics. The comparison highlights that KVForge trades a one-time training and storage cost for sustained query-time improvements. \textbf{The latency and query-population caveats from §7.4 apply here too}: the generation-latency row is end-to-end wall-clock, not isolated prefill, and the Phase 3 figure reflects a self-selected, confidence-gated query subset rather than the same query population Phase 2 and standard RAG answer --- so this table should be read as characterizing this pipeline's observed behavior, not as a matched systems benchmark against an external baseline (§8.5).
 
 
 \begin{table*}[htbp]
@@ -1017,17 +1023,20 @@ Table~\ref{tab:comparison} contrasts KVForge Phase 2 and Phase 3 against standar
   \midrule
   \midrule
   Chunk re-encoding at query time & Always & \textbf{Never} (fresh KV) & \textbf{Never} (no retrieval) \\
-  Generation latency (UC4) & 1,840 ms & 680 ms & 510 ms \\
+  Generation latency (UC4, end-to-end) & 1,840 ms & 680 ms & 510 ms† \\
   Knowledge base updatable & Yes & Yes & Yes (KV recompute) \\
   Out-of-distribution queries & Yes & Yes & Yes (fallback to Phase 2) \\
   GPU required at query time & Yes & Yes & \textbf{Potentially no} \\
   Training required & No & No & Yes (\textasciitilde{}20 min/round) \\
-  Parametric knowledge retention & None & None & PRS 0.755--0.863 \\
+  Parametric readiness (cosine proxy) & None & None & PRS 0.755--0.863‡ \\
   KV storage per chunk (3B model) & None & \textasciitilde{}115 KB & \textasciitilde{}115 KB \\
   \bottomrule
   \end{tabular}%
   }
 \end{table*}
+
+
+† Measured on the confidence-gated subset of queries Phase 3 answers directly, not the full query population (§7.4). ‡ Cosine-based PRS overestimates factual readiness relative to held-out EM/F1/judge metrics in all four corpora (§7.8--§7.9); this row should not be read as a factual-accuracy guarantee.
 
 
 Standard RAG avoids training and storage overhead but pays the full re-encoding cost on every query. KVForge Phase 2 matches the updatability and out-of-distribution robustness of RAG while eliminating chunk re-encoding, yielding a 2.7$\times$ latency improvement. KVForge Phase 3 adds the parametric-answering capability: high-confidence questions are answered from model weights, which can be served without a GPU if the base model is small enough or if the deployment is CPU-only for inference. The trade-off is that Phase 3 requires training (\textasciitilde{}20 min/round) and a \textasciitilde{}115 KB per-chunk KV storage footprint. The KV storage cost is small by modern standards --- for the 2,520-chunk UC4 corpus it is \textasciitilde{}289 MB --- and the training cost is amortized over many queries. The system retains fallback mechanisms for queries outside the model's confidence envelope, so the speedup is achieved without sacrificing coverage for edge cases.
