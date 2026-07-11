@@ -69,6 +69,14 @@ def test_fixed_calibration_formula():
     assert abs(_fixed_calibration(self_conf=0.9, factual_acc=0.1) - 0.2) < 0.001
 
 
+def test_coverage_ratio():
+    from pipeline.prs_evaluator import _coverage_ratio
+    assert abs(_coverage_ratio([0.9, 0.3, 0.6, 0.2], threshold=0.5) - 0.5) < 0.001
+    assert _coverage_ratio([], threshold=0.5) == 0.0
+    assert _coverage_ratio([0.1, 0.2], threshold=0.5) == 0.0
+    assert _coverage_ratio([0.9, 0.9], threshold=0.5) == 1.0
+
+
 def test_get_cluster_stats_receives_string_not_dict():
     """Regression: prs_evaluator must pass db_path str, not cfg dict."""
     from pipeline import query_logger
