@@ -67,6 +67,12 @@ PREAMBLE = r"""\documentclass[10pt,twocolumn]{article}
   aboveskip    = 6pt,
   belowskip    = 6pt,
   numbers      = none,
+  literate     = {×}{{$\times$}}1 {·}{{$\cdot$}}1 {≥}{{$\geq$}}1
+                 {≤}{{$\leq$}}1 {≠}{{$\neq$}}1 {≈}{{$\approx$}}1
+                 {→}{{$\to$}}1 {←}{{$\leftarrow$}}1 {∈}{{$\in$}}1
+                 {−}{{$-$}}1 {≪}{{$\ll$}}1 {≫}{{$\gg$}}1
+                 {ε}{{$\varepsilon$}}1 {α}{{$\alpha$}}1 {β}{{$\beta$}}1
+                 {γ}{{$\gamma$}}1 {ᵀ}{{$^\top$}}1 {√}{{$\sqrt{}$}}1,
 }
 
 %% ─── Header / footer ─────────────────────────────────────────────────────────
@@ -189,6 +195,7 @@ _UNICODE_MATH = [
     ("≤",  r"$\leq$"),
     ("≪",  r"$\ll$"),
     ("≫",  r"$\gg$"),
+    ("−",  r"$-$"),
     ("≠",  r"$\neq$"),
     ("≈",  r"$\approx$"),
     ("→",  r"$\to$"),
@@ -300,7 +307,13 @@ def tex(text: str) -> str:
         c = code_spans[int(m.group(1))]
         c = c.replace("\\", r"\textbackslash{}").replace("{", r"\{").replace("}", r"\}")
         c = c.replace("_", r"\_").replace("&", r"\&").replace("%", r"\%")
-        c = c.replace("$", r"\$").replace("#", r"\#").replace("^", r"\textasciicircum{}")
+        c = c.replace("#", r"\#").replace("^", r"\textasciicircum{}")
+        # Unicode math symbols (×, ≥, ·, − etc.) inside inline code were
+        # previously left as raw Unicode, which the monospace font can't
+        # render (e.g. `q × scale` corrupting into "q Πscale"). Convert them
+        # to the same $...$ LaTeX forms used in body text; these introduce
+        # their own "$" delimiters, so we do NOT separately escape "$" here.
+        c = _apply_unicode(c)
         return f"\\texttt{{{c}}}"
     t = re.sub(r'\x00CODE(\d+)\x00', restore_code, t)
     # Markdown links [text](url) → \href{url}{text}
@@ -324,7 +337,7 @@ def _is_display_math(text: str) -> bool:
         return False  # too long to be a formula
     joined = " ".join(lines)
     math_signals = ["=", "×", "≥", "≤", "∑", "→", "ε", "α", "β", "γ", "ᵀ",
-                    "√", "·", "÷", "∈", "ℝ"]
+                    "√", "·", "÷", "∈", "ℝ", "−", "≪", "≫"]
     hits = sum(1 for s in math_signals if s in joined)
     # Also flag single-line things like `size = 2 × L × ...`
     return hits >= 2 and len(lines) <= 4
@@ -347,6 +360,9 @@ def _math_to_latex(text: str) -> str:
         l = l.replace("←", r"\leftarrow ")
         l = l.replace("∈", r"\in ")
         l = l.replace("·", r"\cdot ")
+        l = l.replace("−", "-")
+        l = l.replace("≪", r"\ll ")
+        l = l.replace("≫", r"\gg ")
         l = l.replace("ε", r"\varepsilon ")
         l = l.replace("α", r"\alpha ")
         l = l.replace("β", r"\beta ")
@@ -354,10 +370,19 @@ def _math_to_latex(text: str) -> str:
         l = l.replace("ᵀ", r"^\top")
         l = l.replace("ℝ", r"\mathbb{R}")
         l = l.replace("√", r"\sqrt{}")
-        # Subscripts: _h, _k, _v etc. → _{h} etc.
-        l = re.sub(r'_([a-zA-Z0-9]+)', r'_{\1}', l)
+        # Subscripts: word_suffix -> word_{suffix}. Identifiers with multiple
+        # underscores (e.g. self_confidence_normalized) must become ONE
+        # subscript group with escaped internal underscores, not chained
+        # _{}_{} groups -- LaTeX math mode errors ("Double subscript") on
+        # the latter.
+        def _subscript_repl(m):
+            base, rest = m.group(1), m.group(2)
+            return base + "_{" + rest.replace("_", r"\_") + "}"
+        l = re.sub(r'([a-zA-Z]+)_([a-zA-Z0-9_]+)', _subscript_repl, l)
         # Superscripts: ^(d×k) etc.
         l = re.sub(r'\^\(([^)]+)\)', r'^{\1}', l)
+        # Bare-word superscripts: 2^bits, r^2 etc. (no parens)
+        l = re.sub(r'\^([a-zA-Z0-9]+)', r'^{\1}', l)
         # Text functions: softmax, min, max, round, log, sim
         for fn in ["softmax", "min", "max", "round", "log", "sim",
                    "argmax", "entropy", "Attention"]:
