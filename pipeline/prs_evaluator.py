@@ -58,6 +58,27 @@ def _cosine_sim(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.dot(a, b))
 
 
+def _factual_accuracy(f1: float, judge_correct: bool) -> float:
+    """Combine token-F1 and LLM-judge correctness into a single accuracy score.
+
+    Replaces the legacy cosine-similarity accuracy_ratio, which the paper's
+    own validation (pipeline/eval_prs_validation.py) found correlates only
+    weakly with real factual correctness. This is the same formula that
+    validation script used to simulate a factual PRS variant.
+    """
+    return 0.5 * f1 + 0.5 * float(judge_correct)
+
+
+def _fixed_calibration(self_conf: float, factual_acc: float) -> float:
+    """How well self-reported confidence matches factual accuracy.
+
+    Replaces comparing confidence against cosine similarity (param_sim),
+    which measured confidence against the wrong scale once accuracy_ratio
+    itself moved to factual_acc.
+    """
+    return 1.0 - abs(self_conf - factual_acc)
+
+
 def _generate_parametric(query: str, pipe) -> str:
     """Generate an answer to *query* from model weights with no retrieved context.
 
@@ -171,6 +192,7 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
     embedder = TextEmbedding(model_name=embed_model, show_download_progress=False)
 
     accuracy_ratios, calibrations, consistencies = [], [], []
+    factual_accs = []  # consumed by Task 3's known_good_queries selection
 
     q_key = cfg.get("faq_question_key", "question")
     a_key = cfg.get("faq_answer_key", "answer")
@@ -187,12 +209,23 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
         embs = np.array(list(embedder.embed([param_ans, rag_ans, gt])))
         param_sim = _cosine_sim(embs[0], embs[2])
         rag_sim   = _cosine_sim(embs[1], embs[2])
-        accuracy_ratio = min(param_sim / (rag_sim + 1e-9), 1.0)
-        accuracy_ratios.append(accuracy_ratio)
+        cosine_accuracy_ratio = min(param_sim / (rag_sim + 1e-9), 1.0)  # diagnostic only, not scored
         self_conf = _extract_confidence(param_ans, pipe_conf)
-        calibrations.append(1.0 - abs(self_conf - param_sim))
         consistencies.append(_self_consistency(q, pipe_sample, embedder))
-        print(f"   acc={accuracy_ratio:.3f} conf={calibrations[-1]:.3f} cons={consistencies[-1]:.3f}", flush=True)
+
+        # Factual metrics — now the actual scoring signal, not diagnostic-only.
+        from eval import metrics as _eval_metrics
+        em = _eval_metrics.exact_match(param_ans, gt)
+        f1 = _eval_metrics.token_f1(param_ans, gt)
+        judge = _eval_metrics.llm_judge(q, param_ans, gt)
+        factual_acc = _factual_accuracy(f1, judge["factually_correct"])
+        factual_accs.append(factual_acc)
+        accuracy_ratios.append(factual_acc)
+        calibrations.append(_fixed_calibration(self_conf, factual_acc))
+
+        print(f"   acc={factual_acc:.3f} (cosine={cosine_accuracy_ratio:.3f}) "
+              f"conf={calibrations[-1]:.3f} cons={consistencies[-1]:.3f} "
+              f"EM={em} F1={f1:.3f} judge={int(judge['factually_correct'])}", flush=True)
 
     weights = cfg.get("prs_weights", None)
     prs = _compute_prs(accuracy_ratios, calibrations, consistencies, weights)
