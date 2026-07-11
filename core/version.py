@@ -150,7 +150,7 @@ def append_prs(
             trigger a phase downgrade. Default 0.60.
         stability_window: Number of consecutive rounds required to trigger
             a phase downgrade. Default 3.
-        advance_threshold: PRS ceiling required to advance a phase. Default
+        advance_threshold: PRS floor required to advance a phase. Default
             0.50 — backtested against real factual-accuracy data in
             docs/superpowers/specs/2026-07-11-prs-factual-accuracy-design.md;
             provisional, not statistically validated (see spec for caveats).
