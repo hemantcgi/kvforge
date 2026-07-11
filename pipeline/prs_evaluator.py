@@ -79,6 +79,13 @@ def _fixed_calibration(self_conf: float, factual_acc: float) -> float:
     return 1.0 - abs(self_conf - factual_acc)
 
 
+def _coverage_ratio(scores: list[float], threshold: float) -> float:
+    """Fraction of scores at or above threshold. Returns 0.0 for an empty list."""
+    if not scores:
+        return 0.0
+    return sum(1 for s in scores if s >= threshold) / len(scores)
+
+
 def _generate_parametric(query: str, pipe) -> str:
     """Generate an answer to *query* from model weights with no retrieved context.
 
@@ -171,6 +178,11 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
     Returns:
         PRS score in ``[0.0, 1.0]``.
     """
+    # Support both flat configs and nested addon_config.
+    indexing_cfg = cfg.get("addon_config", {}).get("indexing", {})
+    training_cfg = cfg.get("addon_config", {}).get("training", {})
+    effective_cfg = {**cfg, **indexing_cfg, **training_cfg}
+
     model, tokenizer = model_loader.load(lora_checkpoint)
     embed_model = cfg.get("embed_model", "BAAI/bge-small-en-v1.5")
 
@@ -230,10 +242,12 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
     weights = cfg.get("prs_weights", None)
     prs = _compute_prs(accuracy_ratios, calibrations, consistencies, weights)
 
-    # Populate known_good_queries: queries where accuracy_ratio >= 0.85
-    # Stored as pre-computed embeddings for use by confidence_gate._query_similarity
+    # Populate known_good_queries: queries where factual accuracy clears the
+    # known-good threshold. Stored as pre-computed embeddings for use by
+    # confidence_gate._query_similarity.
+    known_good_threshold = effective_cfg.get("known_good_accuracy_threshold", 0.5)
     good_queries = [faqs[i].get(q_key, faqs[i].get("question", ""))
-                    for i, r in enumerate(accuracy_ratios) if r >= 0.85]
+                    for i, r in enumerate(factual_accs) if r >= known_good_threshold]
     if good_queries:
         good_embs = [e.astype(float).tolist() for e in embedder.embed(good_queries)]
         data = ver.load()
@@ -252,7 +266,7 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
             from core.cluster_manager import load_clusters
             cluster_data = load_clusters(str(cluster_file))
             k = cluster_data["k"]
-            faq_coverage = sum(1 for r in accuracy_ratios if r >= 0.85) / max(len(accuracy_ratios), 1)
+            faq_coverage = _coverage_ratio(factual_accs, known_good_threshold)
             vdb_coverage = min(len(faqs) / max(cfg.get("scout_initial_faq_count", 20), 1), 1.0)
             for cid_int in range(k):
                 cid = str(cid_int)
