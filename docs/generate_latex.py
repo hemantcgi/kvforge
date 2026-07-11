@@ -27,18 +27,18 @@ PREAMBLE = r"""\documentclass[10pt,twocolumn]{article}
 \usepackage[margin=0.72in,columnsep=0.26in,top=0.80in,bottom=0.80in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage{mathptmx}           %% Times for text + math
+%% mathptmx removed — causes missing-character and font errors in BasicTeX
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{tabularx}
 \newcolumntype{L}{>{\raggedright\arraybackslash}X}  %% auto-width wrapping column
 \usepackage[font=small,labelfont=bf,skip=4pt]{caption}
-\usepackage{microtype}
+%% microtype removed — requires scalable fonts not available in BasicTeX
 \usepackage{xcolor}
 \usepackage{url}
 \usepackage{fancyhdr}
-\usepackage{enumitem}
+%% enumitem removed — not available in BasicTeX/TeX Live Basic
 \usepackage{listings}
 \usepackage[normalem]{ulem}     %% for \sout if needed
 \usepackage{hyperref}
@@ -72,8 +72,8 @@ PREAMBLE = r"""\documentclass[10pt,twocolumn]{article}
 %% ─── Header / footer ─────────────────────────────────────────────────────────
 \pagestyle{fancy}
 \fancyhf{}
-\lhead{\small\textit{KVForge — Progressive KV-Cache Persistence}}
-\rhead{\small Dr.\ Hemant Joshi · 2025}
+\lhead{\small\textit{KVForge -- Progressive KV-Cache Persistence}}
+\rhead{\small Dr.\ Hemant Joshi $\cdot$ 2025}
 \cfoot{\small\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 
@@ -81,9 +81,7 @@ PREAMBLE = r"""\documentclass[10pt,twocolumn]{article}
 \setlength{\parskip}{2pt}
 \setlength{\parindent}{1em}
 
-%% ─── Compact lists ───────────────────────────────────────────────────────────
-\setlist[itemize]{leftmargin=*,topsep=3pt,itemsep=1pt,parsep=0pt}
-\setlist[enumerate]{leftmargin=*,topsep=3pt,itemsep=1pt,parsep=0pt}
+%% ─── Compact lists (default LaTeX list spacing; enumitem removed) ─────────────
 
 %% ─── Title ───────────────────────────────────────────────────────────────────
 \title{\Large\textbf{From Retrieval to Recall: Autonomous Phase-Adaptive\\
@@ -189,6 +187,8 @@ _UNICODE_MATH = [
     ("÷",  r"$\div$"),
     ("≥",  r"$\geq$"),
     ("≤",  r"$\leq$"),
+    ("≪",  r"$\ll$"),
+    ("≫",  r"$\gg$"),
     ("≠",  r"$\neq$"),
     ("≈",  r"$\approx$"),
     ("→",  r"$\to$"),
@@ -276,8 +276,17 @@ def escape(text: str) -> str:
 
 def tex(text: str) -> str:
     """Convert inline markdown + escape for LaTeX body text."""
+    # Protect inline code spans BEFORE the global LaTeX-special escape below,
+    # otherwise `past_key_values` gets its underscore escaped once here and
+    # again inside code_repl, corrupting it to "past\{}_key\{}_values".
+    code_spans: list[str] = []
+    def stash_code(m):
+        code_spans.append(m.group(1))
+        return f"\x00CODE{len(code_spans) - 1}\x00"
+    t = re.sub(r'`([^`\n]+?)`', stash_code, text)
+
     # Escape LaTeX specials first (before adding LaTeX commands)
-    t = text.translate(_LATEX_SPECIAL)
+    t = t.translate(_LATEX_SPECIAL)
     # Apply unicode math
     t = _apply_unicode(t)
     # Bold+italic
@@ -286,15 +295,14 @@ def tex(text: str) -> str:
     t = re.sub(r'\*\*(.+?)\*\*', r'\\textbf{\1}', t)
     # Italic
     t = re.sub(r'(?<!\*)\*([^*\n]+?)\*(?!\*)', r'\\textit{\1}', t)
-    # Inline code (escape the content again for verbatim-like rendering)
-    def code_repl(m):
-        c = m.group(1)
-        # Re-escape any LaTeX specials inside code
+    # Restore code spans, escaping each exactly once
+    def restore_code(m):
+        c = code_spans[int(m.group(1))]
         c = c.replace("\\", r"\textbackslash{}").replace("{", r"\{").replace("}", r"\}")
         c = c.replace("_", r"\_").replace("&", r"\&").replace("%", r"\%")
         c = c.replace("$", r"\$").replace("#", r"\#").replace("^", r"\textasciicircum{}")
         return f"\\texttt{{{c}}}"
-    t = re.sub(r'`([^`\n]+?)`', code_repl, t)
+    t = re.sub(r'\x00CODE(\d+)\x00', restore_code, t)
     # Markdown links [text](url) → \href{url}{text}
     def link_repl(m):
         link_text = m.group(1)
@@ -379,6 +387,11 @@ def figure_to_latex(alt: str, rel_path: str, fig_num: list) -> str:
     wide = any(x in rel_path for x in ["fig02", "fig03", "fig07"])
     env  = "figure*" if wide else "figure"
     caption_clean = alt.strip()
+    # Markdown alt-text already reads "Figure N: ..." (written for readers of
+    # the .md source); LaTeX's \caption prepends "Figure N:" again via the
+    # figure counter, so strip the redundant leading prefix here to avoid
+    # "Figure 15: Figure 15: ..." in the compiled PDF.
+    caption_clean = re.sub(r'^Figure\s+\d+\s*:\s*', '', caption_clean)
     # Shorten caption: everything before the first period or the full caption if short
     return (
         f"\\begin{{{env}}}[htbp]\n"
@@ -526,7 +539,7 @@ _TABLE_META: dict[str, tuple[str, str]] = {
         "Comparison with Alternative RAG and KV-Cache Systems",
         "tab:comparison",
     ),
-    "related work": (
+    "positioning kvforge: a combinatorial gap, not yet a benchmarked one": (
         "Related Systems: Comparative Overview",
         "tab:related",
     ),
