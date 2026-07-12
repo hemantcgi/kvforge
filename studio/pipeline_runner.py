@@ -119,7 +119,7 @@ def _ensure_config_json(uc_id: str) -> None:
                 "checkpoint_dir": f"examples/{uc_id}/lora_checkpoints/",
                 "replay_db": f"examples/{uc_id}/replay.db",
                 "prs_threshold": 0.50,
-                "prs_weights": {"accuracy": 0.5, "calibration": 0.3, "consistency": 0.2},
+                "prs_weights": {"accuracy": 0.7, "calibration": 0.15, "consistency": 0.15},
                 "prs_advancement_threshold": 0.72,
                 "prs_regression_threshold": 0.60,
                 "faq_question_key": "question",

@@ -22,7 +22,7 @@ class TrainingConfig(BaseModel):
     # PRS thresholds and weights
     prs_threshold: float = 0.50
     prs_weights: dict = Field(
-        default_factory=lambda: {"accuracy": 0.5, "calibration": 0.3, "consistency": 0.2}
+        default_factory=lambda: {"accuracy": 0.7, "calibration": 0.15, "consistency": 0.15}
     )
     prs_advancement_threshold: float = 0.72
     prs_regression_threshold: float = 0.60
