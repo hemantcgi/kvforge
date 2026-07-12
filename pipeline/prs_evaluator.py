@@ -143,7 +143,7 @@ def _compute_prs(accuracy_ratios: list, calibrations: list, consistencies: list,
             [0, 1]).
         weights: Dict with keys ``'accuracy'``, ``'calibration'``,
             ``'consistency'`` mapping to floats that sum to 1.0.
-            Defaults to ``{accuracy: 0.5, calibration: 0.3, consistency: 0.2}``.
+            Defaults to ``{accuracy: 0.7, calibration: 0.15, consistency: 0.15}``.
 
     Returns:
         PRS score clipped to ``[0.0, 1.0]``.
@@ -168,8 +168,9 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
     2. Embed both answers and the ground-truth answer.
     3. Compute ``accuracy_ratio``, ``calibration``, and ``self_consistency``.
 
-    After evaluation, queries where ``accuracy_ratio >= 0.85`` are recorded as
-    "known-good" in ``version.json`` for use by the confidence gate.
+    After evaluation, queries whose factual accuracy clears
+    ``known_good_accuracy_threshold`` are recorded as "known-good" in
+    ``version.json`` for use by the Phase 2/3 confidence gate.
 
     Args:
         faqs: List of FAQ dicts.  Each must have the keys specified by
