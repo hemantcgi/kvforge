@@ -461,9 +461,14 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
             vllm_model = cfg.get("vllm_model", cfg.get("llm_model", "default"))
 
             # ── Per-query PRS gate ────────────────────────────────────────────
-            # Embed the query and find max cosine similarity to known-good
-            # query embeddings stored by prs_evaluator.  If ≥ 0.75 the model
-            # has "mastered" this question → bypass retrieval entirely.
+            # Phase-2 selective-parametric eligibility check (Component 3 of the
+            # PRS gate rework): embed the query and find max cosine similarity to
+            # known-good query embeddings stored by prs_evaluator. This is the
+            # same HARD gate as core.confidence_gate.is_eligible_for_parametric —
+            # only queries genuinely close to a proven-good query bypass retrieval.
+            # Threshold is configurable (default 0.85), read from
+            # addon_config.inference.parametric_eligibility_threshold or the flat
+            # top-level key, matching the merge pattern used elsewhere for cfg reads.
             per_query_prs = 0.0
             use_parametric = (phase >= 3)
 
@@ -477,6 +482,11 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
             if not use_parametric and phase >= 2:
                 known_good = version_data.get("known_good_queries", [])
                 if known_good:
+                    import core.confidence_gate as _cg
+                    eligibility = cfg.get("addon_config", {}).get("inference", {}).get(
+                        "parametric_eligibility_threshold",
+                        cfg.get("parametric_eligibility_threshold", 0.85),
+                    )
                     _q_emb = list(_get_embedder(cfg).embed([query]))[0]
                     _nq = float(_np.linalg.norm(_q_emb))
                     if _nq > 1e-9:
@@ -486,9 +496,9 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
                             for kg in known_good
                         ]
                         per_query_prs = max(sims)
-                        if per_query_prs >= 0.75:
+                        if _cg.is_eligible_for_parametric(per_query_prs, eligibility):
                             use_parametric = True
-                            _log(tag, f"per-query PRS={per_query_prs:.3f} ≥ 0.75 → parametric override (no retrieval)")
+                            _log(tag, f"per-query sim={per_query_prs:.3f} >= {eligibility} -> parametric override (no retrieval)")
 
             if use_parametric:
                 mode = "parametric"
@@ -1165,8 +1175,8 @@ PRS = 0.7 × Accuracy
     <table>
       <tr><th>Phase</th><th>Condition</th><th>Behaviour</th></tr>
       <tr><td>1</td><td>—</td><td>Standard RAG — text-in-context only</td></tr>
-      <tr><td>2</td><td>PRS ≥ 0.75 (one round)</td><td>KV injection + selective parametric — queries that clear the known-good similarity eligibility gate are answered from weights</td></tr>
-      <tr><td>3</td><td>PRS ≥ 0.80 (two consecutive rounds)</td>
+      <tr><td>2</td><td>PRS ≥ 0.30 (one round)</td><td>KV injection + selective parametric — queries that clear the known-good similarity eligibility gate are answered from weights</td></tr>
+      <tr><td>3</td><td>PRS ≥ 0.55 (two consecutive rounds)</td>
           <td>Corpus-wide confidence gate — runs for every query, not just eligible ones</td></tr>
     </table>
 
