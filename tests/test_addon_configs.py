@@ -43,6 +43,7 @@ def test_inference_config_defaults():
     assert cfg.top_k == 5
     assert cfg.quantization == "4bit"
     assert cfg.gate_threshold == 0.75
+    assert cfg.parametric_eligibility_threshold == 0.85
     assert cfg.max_new_tokens == 256
     assert cfg.query_log_db == "query_log.db"
 

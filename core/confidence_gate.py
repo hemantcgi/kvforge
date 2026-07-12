@@ -1,7 +1,7 @@
-"""Phase 3 confidence gate: answer parametrically or fall back to retrieval.
+"""Confidence gate: answer parametrically or fall back to retrieval.
 
-When the system reaches Phase 3 (``version.json["phase"] >= 3``), every
-incoming query is first evaluated against three confidence signals:
+From Phase 2 onward (``version.json["phase"] >= 2``), incoming queries are
+evaluated against three confidence signals:
 
 1. **Token entropy** — low entropy during a short draft generation indicates
    the model is confident in its answer.
@@ -14,8 +14,12 @@ If the weighted combination exceeds ``gate_threshold`` the query is answered
 directly from the fine-tuned model weights (parametric mode); otherwise the
 full KV-retrieval pipeline is invoked.
 
-If the phase is below 3, all queries are routed to the retrieval pipeline
-unconditionally.
+In Phase 2, parametric answering is additionally gated by a HARD
+similarity-to-known-good eligibility check (``is_eligible_for_parametric``):
+a query must first be genuinely close to one the model was measured to
+answer well before the confidence gate even runs. Phase 3 drops that hard
+prerequisite and trusts the confidence gate corpus-wide. Below Phase 2, all
+queries are routed to the retrieval pipeline unconditionally.
 """
 
 import json
@@ -140,14 +144,16 @@ def _query_similarity_to_known_good(query: str, cfg: dict) -> float:
         cfg: Datasource configuration dict; uses ``cfg['embed_model']``.
 
     Returns:
-        Maximum cosine similarity in [0, 1].  Returns ``0.5`` (neutral) when
-        no known-good queries have been recorded yet.
+        Maximum cosine similarity in [0, 1].  Returns ``0.0`` when no
+        known-good queries have been recorded yet (self-regulating floor:
+        an empty known-good set makes every query ineligible for parametric
+        answering in Phase 2).
     """
     global _embedder
     v = ver.load()
     known_good = v.get("known_good_queries", [])
     if not known_good:
-        return 0.5  # neutral when no history yet
+        return 0.0  # empty set -> nothing is eligible in Phase 2 (self-regulating floor)
 
     from fastembed import TextEmbedding
     if _embedder is None:
@@ -165,50 +171,70 @@ def _query_similarity_to_known_good(query: str, cfg: dict) -> float:
     return float(sims.max())
 
 
-def answer(query: str, cfg: dict) -> str:
-    """Phase 3 entry point: route *query* to parametric or retrieval inference.
-
-    If the current phase is below 3, delegates unconditionally to
-    ``kv_inference.answer_with_retrieval``.  In Phase 3, generates a short
-    draft, evaluates the three confidence signals, and either returns a full
-    parametric answer or falls back to retrieval.
-
-    Args:
-        query: The user query string.
-        cfg: Datasource configuration dict.
-
-    Returns:
-        Final answer string.
+def is_eligible_for_parametric(similarity: float, eligibility_threshold: float) -> bool:
+    """Phase-2 hard gate: a query may only be answered parametrically if it is genuinely close
+    to a query the model was MEASURED to answer correctly (known-good set). This is the real
+    safety mechanism for per-query migration — unlike Phase 3, similarity here is a hard
+    prerequisite, not a soft signal.
     """
-    if ver.get_phase() < 3:
-        from pipeline.kv_inference import answer_with_retrieval
-        return answer_with_retrieval(query, cfg)
+    return similarity >= eligibility_threshold
 
-    threshold = cfg.get("gate_threshold", DEFAULT_THRESHOLD)
+
+def _parametric_or_retrieve(query: str, cfg: dict, effective_cfg: dict,
+                            similarity: float) -> str:
+    """Draft, run the confidence gate, and either answer from weights or retrieve.
+
+    ``similarity`` is precomputed by the caller (Phase 2 also uses it as a hard eligibility
+    gate before calling here; Phase 3 passes it straight through as a soft signal).
+    """
+    threshold = effective_cfg.get("gate_threshold", DEFAULT_THRESHOLD)
     lora_ckpt = ver.load().get("checkpoint_path")
     model, tokenizer = model_loader.load(lora_ckpt)
 
     draft, entropy = _generate_draft(query, model, tokenizer)
     hedging = compute_hedging_score(draft)
-    similarity = _query_similarity_to_known_good(query, cfg)
-
     decision = decide_gate(entropy, hedging, similarity, threshold)
     print(f"  Gate: entropy={entropy:.2f} hedging={hedging:.2f} "
           f"sim={similarity:.2f} -> {decision}", flush=True)
 
     if decision == "direct":
-        # Full generation from weights
         inputs = tokenizer(query, return_tensors="pt").to(model.device)
         with torch.no_grad():
             output = model.generate(**inputs, max_new_tokens=512, do_sample=False)
         result = tokenizer.decode(output[0][inputs["input_ids"].shape[1]:],
                                    skip_special_tokens=True)
-        # Log parametric hit for access tracker
         _log_would_have_retrieved(query, cfg)
         return result
-    else:
-        from pipeline.kv_inference import answer_with_retrieval
+    from pipeline.kv_inference import answer_with_retrieval
+    return answer_with_retrieval(query, cfg)
+
+
+def answer(query: str, cfg: dict) -> str:
+    """Route *query* by phase.
+
+    Phase 1: retrieval only. Phase 2: selective parametric — parametric only for queries that
+    clear the hard similarity-to-known-good eligibility gate AND then pass the confidence gate;
+    everything else retrieves. Phase 3: corpus-wide — the confidence gate runs for every query
+    with no hard eligibility prerequisite.
+    """
+    from pipeline.kv_inference import answer_with_retrieval
+    phase = ver.get_phase()
+    if phase < 2:
         return answer_with_retrieval(query, cfg)
+
+    # Support both flat configs and nested addon_config.inference.
+    inference_cfg = cfg.get("addon_config", {}).get("inference", {})
+    effective_cfg = {**cfg, **inference_cfg}
+    similarity = _query_similarity_to_known_good(query, cfg)
+
+    if phase == 2:
+        eligibility = effective_cfg.get("parametric_eligibility_threshold", 0.85)
+        if not is_eligible_for_parametric(similarity, eligibility):
+            return answer_with_retrieval(query, cfg)
+        return _parametric_or_retrieve(query, cfg, effective_cfg, similarity)
+
+    # phase >= 3: corpus-wide trust, no hard eligibility prerequisite.
+    return _parametric_or_retrieve(query, cfg, effective_cfg, similarity)
 
 
 def _log_would_have_retrieved(query: str, cfg: dict) -> None:
