@@ -316,12 +316,18 @@ def main() -> None:
     v = ver.load()
     prs = evaluate(faqs, cfg, v.get("checkpoint_path"))
     round_num = v["current_lora_version"]
+    # PRS thresholds commonly live under addon_config.training in real
+    # config files, not at cfg's top level — flatten before reading them
+    # so configured values are actually honored instead of silently
+    # falling back to the Python-level defaults every time.
+    training_cfg = cfg.get("addon_config", {}).get("training", {})
+    threshold_cfg = {**cfg, **training_cfg}
     ver.append_prs(
         round_num,
         prs,
-        regression_threshold=cfg.get("prs_regression_threshold", 0.60),
-        stability_window=cfg.get("prs_stability_window", 3),
-        advance_threshold=cfg.get("prs_threshold", 0.50),
+        regression_threshold=threshold_cfg.get("prs_regression_threshold", 0.60),
+        stability_window=threshold_cfg.get("prs_stability_window", 3),
+        advance_threshold=threshold_cfg.get("prs_threshold", 0.50),
     )
     print(f"📊 PRS after round {round_num}: {prs:.4f}")
     print(f"   Phase: {ver.get_phase()}")
