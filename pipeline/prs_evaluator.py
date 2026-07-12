@@ -328,9 +328,10 @@ def main() -> None:
     ver.append_prs(
         round_num,
         prs,
-        regression_threshold=threshold_cfg.get("prs_regression_threshold", 0.60),
+        regression_threshold=threshold_cfg.get("prs_regression_threshold", 0.25),
         stability_window=threshold_cfg.get("prs_stability_window", 3),
-        advance_threshold=threshold_cfg.get("prs_threshold", 0.50),
+        phase2_advance_threshold=threshold_cfg.get("phase2_advance_threshold", 0.30),
+        phase3_advance_threshold=threshold_cfg.get("phase3_advance_threshold", 0.55),
     )
     print(f"📊 PRS after round {round_num}: {prs:.4f}")
     print(f"   Phase: {ver.get_phase()}")
