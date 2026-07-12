@@ -49,7 +49,7 @@ def test_prs_weights_fully_accuracy():
 def test_prs_uses_default_weights_when_none():
     from pipeline.prs_evaluator import _compute_prs
     prs = _compute_prs([0.8], [0.9], [0.7], weights=None)
-    expected = 0.5 * 0.8 + 0.3 * 0.9 + 0.2 * 0.7
+    expected = 0.7 * 0.8 + 0.15 * 0.9 + 0.15 * 0.7
     assert abs(prs - expected) < 0.001
 
 

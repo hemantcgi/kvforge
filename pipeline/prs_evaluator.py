@@ -124,7 +124,10 @@ def _self_consistency(query: str, pipe_sample, embedder, n: int = 3) -> float:
     return float(np.mean(sims)) if sims else 1.0
 
 
-_DEFAULT_PRS_WEIGHTS = {"accuracy": 0.5, "calibration": 0.3, "consistency": 0.2}
+# Provisional weights (data-derived, 4-corpus backtest — see
+# docs/superpowers/specs/2026-07-12-prs-gate-rework-design.md): accuracy-dominant so PRS
+# ranks corpora by real quality rather than by confident-but-wrong self-consistency.
+_DEFAULT_PRS_WEIGHTS = {"accuracy": 0.7, "calibration": 0.15, "consistency": 0.15}
 
 
 def _compute_prs(accuracy_ratios: list, calibrations: list, consistencies: list,
