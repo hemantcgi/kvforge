@@ -126,70 +126,128 @@ def activate_phase_2() -> None:
         print("✅ Phase 2 activated — KV injection enabled")
 
 
+def _enforce_threshold_invariant(
+    phase2_advance: float, phase3_advance: float, regression_threshold: float
+) -> tuple[float, float, float]:
+    """Clamp thresholds so ``phase3_advance >= phase2_advance >= regression_threshold``.
+
+    A config that violates this (e.g. advance below regression) would let a single PRS value
+    both advance and regress, producing phase flapping. Rather than flap, we raise the
+    offending lower bound to its neighbor and warn. Returns the (possibly adjusted) triple.
+    """
+    adj_p2 = max(phase2_advance, regression_threshold)
+    adj_p3 = max(phase3_advance, adj_p2)
+    if (adj_p2, adj_p3) != (phase2_advance, phase3_advance):
+        print(
+            f"⚠️  PRS threshold invariant violated (phase3={phase3_advance}, "
+            f"phase2={phase2_advance}, regression={regression_threshold}); clamped to "
+            f"phase3={adj_p3}, phase2={adj_p2} to prevent phase flapping."
+        )
+    return adj_p2, adj_p3, regression_threshold
+
+
+def decide_phase_transition(
+    history: list,
+    current_phase: int,
+    *,
+    phase2_advance: float,
+    phase3_advance: float,
+    regression_threshold: float,
+    stability_window: int,
+) -> int:
+    """Pure phase-transition policy. Returns the new phase (may equal ``current_phase``).
+
+    Advance: 1->2 when the latest PRS >= ``phase2_advance``; 2->3 when the last two rounds are
+    both >= ``phase3_advance``. Regress one phase when the last ``stability_window`` rounds are
+    all < ``regression_threshold``. Never advances and regresses in the same call; Phase 1 is
+    the floor. Assumes the invariant ``phase3_advance >= phase2_advance >= regression_threshold``
+    holds (call :func:`_enforce_threshold_invariant` first).
+    """
+    if not history:
+        return current_phase
+    phase = current_phase
+    latest = history[-1]["prs"]
+
+    if latest >= phase2_advance and phase < 2:
+        phase = 2
+    if (len(history) >= 2
+            and all(r["prs"] >= phase3_advance for r in history[-2:])
+            and phase < 3):
+        phase = 3
+
+    if phase == current_phase:  # only consider regression if we did not advance this call
+        window = history[-stability_window:]
+        if len(window) >= stability_window and all(
+            r["prs"] < regression_threshold for r in window
+        ):
+            if phase == 3:
+                phase = 2
+            elif phase == 2:
+                phase = 1
+    return phase
+
+
+def record_prs(round_num: int, prs: float) -> list:
+    """Append a PRS score to history WITHOUT changing the phase.
+
+    The record/decide split lets phase-transition policy be a pure, testable function
+    (:func:`decide_phase_transition`) separate from I/O.
+    """
+    data = load()
+    data["prs_history"].append({"round": round_num, "prs": round(prs, 4)})
+    save(data)
+    return data["prs_history"]
+
+
 def append_prs(
     round_num: int,
     prs: float,
-    regression_threshold: float = 0.60,
+    *,
+    regression_threshold: float = 0.25,
     stability_window: int = 3,
-    advance_threshold: float = 0.50,
+    phase2_advance_threshold: float = 0.30,
+    phase3_advance_threshold: float = 0.55,
 ) -> None:
-    """Record a PRS score and automatically advance or downgrade the phase.
+    """Record a PRS score and apply the phase-transition policy.
 
-    Phase advancement:
-    * Phase 2: triggered when ``prs >= advance_threshold`` for the first time.
-    * Phase 3: triggered when ``prs >= advance_threshold`` for two consecutive rounds.
-
-    Phase regression (downgrade):
-    * Triggered when the last ``stability_window`` rounds are ALL below
-      ``regression_threshold``. Downgrades one phase per call.
+    Orchestrates I/O around the pure :func:`decide_phase_transition` policy. Thresholds are
+    provisional/data-derived — see docs/superpowers/specs/2026-07-12-prs-gate-rework-design.md.
 
     Args:
         round_num: LoRA training round number (record-keeping only).
         prs: Parametric Readiness Score in [0, 1].
-        regression_threshold: PRS floor; consecutive rounds below this
-            trigger a phase downgrade. Default 0.60.
-        stability_window: Number of consecutive rounds required to trigger
-            a phase downgrade. Default 3.
-        advance_threshold: PRS floor required to advance a phase. Default
-            0.50 — backtested against real factual-accuracy data in
-            docs/superpowers/specs/2026-07-11-prs-factual-accuracy-design.md;
-            provisional, not statistically validated (see spec for caveats).
+        regression_threshold: consecutive rounds below this trigger a downgrade. Default 0.25.
+        stability_window: consecutive rounds required for a downgrade. Default 3.
+        phase2_advance_threshold: PRS floor to advance 1->2 (KV injection + selective
+            parametric). Default 0.30.
+        phase3_advance_threshold: PRS floor (two consecutive rounds) to advance 2->3
+            (corpus-wide parametric trust). Default 0.55.
     """
+    p2, p3, reg = _enforce_threshold_invariant(
+        phase2_advance_threshold, phase3_advance_threshold, regression_threshold
+    )
     data = load()
     data["prs_history"].append({"round": round_num, "prs": round(prs, 4)})
     history = data["prs_history"]
-
-    # ── Advance ──────────────────────────────────────────────────────────────
-    phase_before_advance = data["phase"]
-    if prs >= advance_threshold and data["phase"] < 2:
-        data["phase"] = 2
-        print("✅ Phase 2 activated — KV injection enabled")
-    if (len(history) >= 2
-            and all(r["prs"] >= advance_threshold for r in history[-2:])
-            and data["phase"] < 3):
-        data["phase"] = 3
-        print("✅ Phase 3 activated — confidence gate now live")
-
-    # ── Regress ───────────────────────────────────────────────────────────────
-    # Skip regression when advance fired in this same call to prevent a
-    # phantom advance→regress flip from a single high-regression-threshold config.
-    window = history[-stability_window:]
-    if (data["phase"] == phase_before_advance
-            and len(window) >= stability_window
-            and all(r["prs"] < regression_threshold for r in window)):
-        if data["phase"] == 3:
-            data["phase"] = 2
+    before = data["phase"]
+    new_phase = decide_phase_transition(
+        history, before,
+        phase2_advance=p2, phase3_advance=p3,
+        regression_threshold=reg, stability_window=stability_window,
+    )
+    if new_phase != before:
+        data["phase"] = new_phase
+        if new_phase > before:
+            label = {
+                2: "KV injection + selective parametric enabled",
+                3: "corpus-wide confidence gate now live",
+            }.get(new_phase, "")
+            print(f"✅ Phase {new_phase} activated — {label}")
+        else:
             print(
-                f"⚠️  Phase regression: 3 → 2 "
-                f"(PRS below {regression_threshold} for {stability_window} consecutive rounds)"
+                f"⚠️  Phase regression: {before} → {new_phase} "
+                f"(PRS below {reg} for {stability_window} consecutive rounds)"
             )
-        elif data["phase"] == 2:
-            data["phase"] = 1
-            print(
-                f"⚠️  Phase regression: 2 → 1 "
-                f"(PRS below {regression_threshold} for {stability_window} consecutive rounds)"
-            )
-
     save(data)
 
 

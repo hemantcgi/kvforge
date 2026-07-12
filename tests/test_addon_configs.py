@@ -66,9 +66,11 @@ def test_training_config_defaults():
     assert cfg.lora_epochs == 3
     assert cfg.lora_lr == 0.0002
     assert cfg.prs_threshold == 0.50
+    assert cfg.phase2_advance_threshold == 0.30
+    assert cfg.phase3_advance_threshold == 0.55
     assert cfg.prs_weights == {"accuracy": 0.7, "calibration": 0.15, "consistency": 0.15}
     assert cfg.prs_advancement_threshold == 0.72
-    assert cfg.prs_regression_threshold == 0.60
+    assert cfg.prs_regression_threshold == 0.25
     assert cfg.faq_question_key == "question"
     assert cfg.faq_answer_key == "answer"
 

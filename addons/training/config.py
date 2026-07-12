@@ -20,12 +20,14 @@ class TrainingConfig(BaseModel):
     replay_db: str       # required
 
     # PRS thresholds and weights
-    prs_threshold: float = 0.50
+    prs_threshold: float = 0.50  # DEPRECATED: superseded by phase2/phase3_advance_threshold
+    phase2_advance_threshold: float = 0.30
+    phase3_advance_threshold: float = 0.55
     prs_weights: dict = Field(
         default_factory=lambda: {"accuracy": 0.7, "calibration": 0.15, "consistency": 0.15}
     )
     prs_advancement_threshold: float = 0.72
-    prs_regression_threshold: float = 0.60
+    prs_regression_threshold: float = 0.25
     prs_auto_weight: bool = True
     prs_signal_weights: dict = Field(
         default_factory=lambda: {"faq": 0.4, "vdb": 0.4, "realtime": 0.2}
