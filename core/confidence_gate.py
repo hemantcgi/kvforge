@@ -147,7 +147,11 @@ def _query_similarity_to_known_good(query: str, cfg: dict) -> float:
         Maximum cosine similarity in [0, 1].  Returns ``0.0`` when no
         known-good queries have been recorded yet (self-regulating floor:
         an empty known-good set makes every query ineligible for parametric
-        answering in Phase 2).
+        answering in Phase 2). The same floor also caps Phase 3: with
+        similarity pinned at 0.0, the best case is entropy 0.4 + hedging 0.3
+        + similarity 0.0 = 0.7, which is below the default ``gate_threshold``
+        of 0.75, so parametric answering stays unreachable there too until
+        known-good queries exist.
     """
     global _embedder
     v = ver.load()

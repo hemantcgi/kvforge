@@ -7,8 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **KVForge** is a progressive RAG (Retrieval-Augmented Generation) system that advances through three phases of increasing autonomy:
 
 - **Phase 1:** Standard text-in-context RAG
-- **Phase 2:** KV cache injection — pre-computed KV tensors stored in the vector store are injected at query time, bypassing the text encoder for matched chunks
-- **Phase 3:** Confidence-gated parametric answering — after LoRA fine-tuning, the model answers from weights when confident enough (entropy + hedging + query similarity ≥ 0.75)
+- **Phase 2:** KV cache injection + *selective* parametric answering — pre-computed KV tensors are injected at query time (bypassing the text encoder for matched chunks), and queries that clear a hard similarity-to-known-good eligibility gate are answered directly from weights
+- **Phase 3:** Corpus-wide confidence-gated parametric answering — after enough of the corpus is proven, the confidence gate (entropy + hedging + query similarity) runs for every query, not just eligible ones
 
 Despite the repo folder being named `qdrant`, this is a **pure Python project** (no Rust, no Cargo).
 

@@ -389,7 +389,7 @@ python -m pipeline.monitoring_dashboard --config cfg.json --claude-key $KEY --cl
   "chunk_size":        600,
   "chunk_overlap":     60,
   "prs_threshold":     0.75,
-  "prs_weights":       { "accuracy": 0.5, "calibration": 0.3, "consistency": 0.2 },
+  "prs_weights":       { "accuracy": 0.7, "calibration": 0.15, "consistency": 0.15 },
   "faq_question_key":  "question",
   "faq_answer_key":    "answer",
   "gate_threshold":    0.75,
@@ -465,7 +465,7 @@ graph LR
 
 PRS measures how well the fine-tuned model has internalized the corpus. It gates phase transitions and is computed after each training round:
 
-$$\text{PRS} = 0.5 \times \text{accuracy} + 0.3 \times \text{calibration} + 0.2 \times \text{consistency}$$
+$$\text{PRS} = 0.7 \times \text{accuracy} + 0.15 \times \text{calibration} + 0.15 \times \text{consistency}$$
 
 | Component | How measured |
 |-----------|-------------|
