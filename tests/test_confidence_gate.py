@@ -38,15 +38,39 @@ def test_gate_high_entropy_retrieves():
     assert result == "retrieve"
 
 
-def test_answer_falls_back_to_retrieval_when_phase_lt_3():
-    """answer() must delegate to kv_inference when phase < 3 (no gate)."""
+def test_answer_falls_back_to_retrieval_when_phase_lt_2():
+    """answer() must delegate to kv_inference when phase < 2 (no gate, no eligibility check)."""
     from unittest.mock import patch, MagicMock
 
     cfg = {"embed_model": "BAAI/bge-small-en-v1.5", "gate_threshold": 0.75}
     # Patch ver inside confidence_gate and patch the function at source
     with patch("core.confidence_gate.ver") as mock_ver, \
          patch("pipeline.kv_inference.answer_with_retrieval", return_value="fallback answer") as mock_fn:
-        mock_ver.get_phase.return_value = 2  # below Phase 3
+        mock_ver.get_phase.return_value = 1  # below Phase 2
         from core.confidence_gate import answer
         result = answer("what is bedrock?", cfg)
         mock_fn.assert_called_once()
+
+
+def test_is_eligible_for_parametric_hard_gate():
+    from core.confidence_gate import is_eligible_for_parametric
+    assert is_eligible_for_parametric(0.90, 0.85) is True
+    assert is_eligible_for_parametric(0.85, 0.85) is True
+    assert is_eligible_for_parametric(0.84, 0.85) is False
+    assert is_eligible_for_parametric(0.0, 0.85) is False
+
+
+def test_similarity_returns_zero_for_empty_known_good(tmp_path):
+    import json
+    from pathlib import Path
+    import core.version as ver
+    from core import confidence_gate
+    vfile = tmp_path / "version.json"
+    vfile.write_text(json.dumps({
+        "current_lora_version": 0, "checkpoint_path": None, "phase": 2,
+        "prs_history": [], "known_good_queries": [], "clusters": {},
+    }))
+    ver.VERSION_FILE = vfile
+    sim = confidence_gate._query_similarity_to_known_good(
+        "any query", {"embed_model": "BAAI/bge-small-en-v1.5"})
+    assert sim == 0.0
