@@ -62,12 +62,17 @@ def _format_query(query: str, tokenizer, sft_format: str) -> str:
     """Format a query for parametric generation.
 
     With ``sft_format == "chat"`` the query is wrapped in the model's chat template with an
-    assistant generation prompt, so eval matches how the model was trained (chat SFT). With
-    ``"bare"`` the raw query is returned unchanged (legacy behavior).
+    assistant generation prompt, so eval matches how the model was trained (chat SFT). The
+    chat branch also strips the ``(variant N)`` augmentation suffix, matching
+    ``lora_trainer.build_sft_example`` so eval content matches chat-SFT training. With
+    ``"bare"`` the raw query is returned unchanged (legacy behavior) — bare mode does not
+    strip at train time either, so eval stays consistent with it unstripped.
     """
     if sft_format == "chat":
+        from pipeline.lora_trainer import _strip_variant_suffix
+        q = _strip_variant_suffix(query)
         return tokenizer.apply_chat_template(
-            [{"role": "user", "content": query}],
+            [{"role": "user", "content": q}],
             add_generation_prompt=True,
             tokenize=False,
         )
