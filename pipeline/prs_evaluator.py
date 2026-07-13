@@ -58,6 +58,22 @@ def _cosine_sim(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.dot(a, b))
 
 
+def _format_query(query: str, tokenizer, sft_format: str) -> str:
+    """Format a query for parametric generation.
+
+    With ``sft_format == "chat"`` the query is wrapped in the model's chat template with an
+    assistant generation prompt, so eval matches how the model was trained (chat SFT). With
+    ``"bare"`` the raw query is returned unchanged (legacy behavior).
+    """
+    if sft_format == "chat":
+        return tokenizer.apply_chat_template(
+            [{"role": "user", "content": query}],
+            add_generation_prompt=True,
+            tokenize=False,
+        )
+    return query
+
+
 def _factual_accuracy(f1: float, judge_correct: bool) -> float:
     """Combine token-F1 and LLM-judge correctness into a single accuracy score.
 

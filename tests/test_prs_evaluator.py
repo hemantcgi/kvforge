@@ -91,3 +91,23 @@ def test_get_cluster_stats_receives_string_not_dict():
         # Passing the resolved string works
         result = query_logger.get_cluster_stats(db_path, "0")
         assert result == {"realtime_coverage": 0.0, "query_count": 0}
+
+
+class _FakeTok:
+    def apply_chat_template(self, messages, add_generation_prompt=False, tokenize=False):
+        # deterministic fake: wrap the user content in a marker scaffold
+        content = messages[0]["content"]
+        return f"<<USER>>{content}<<ASSISTANT>>"
+
+
+def test_format_query_bare_is_identity():
+    from pipeline.prs_evaluator import _format_query
+    assert _format_query("What is X?", _FakeTok(), "bare") == "What is X?"
+
+
+def test_format_query_chat_wraps():
+    from pipeline.prs_evaluator import _format_query
+    out = _format_query("What is X?", _FakeTok(), "chat")
+    assert out != "What is X?"
+    assert "What is X?" in out
+    assert out.startswith("<<USER>>")
