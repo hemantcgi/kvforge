@@ -111,3 +111,12 @@ def test_format_query_chat_wraps():
     assert out != "What is X?"
     assert "What is X?" in out
     assert out.startswith("<<USER>>")
+
+
+def test_format_query_chat_strips_variant_suffix():
+    from pipeline.prs_evaluator import _format_query
+    out = _format_query("How do I reset? (variant 3)", _FakeTok(), "chat")
+    assert "(variant 3)" not in out       # suffix stripped before templating
+    assert "How do I reset?" in out
+    # bare mode does NOT strip (keeps bare train/eval consistent)
+    assert _format_query("How do I reset? (variant 3)", _FakeTok(), "bare") == "How do I reset? (variant 3)"
