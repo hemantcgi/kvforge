@@ -14,6 +14,7 @@ class TrainingConfig(BaseModel):
     lora_dropout: float = 0.05
     lora_epochs: int = 3
     lora_lr: float = 0.0002
+    sft_format: str = "chat"  # "chat" = proper SFT (chat template + answer-loss masking); "bare" = legacy
 
     # Storage paths
     checkpoint_dir: str  # required

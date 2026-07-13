@@ -66,6 +66,7 @@ def test_training_config_defaults():
     assert cfg.lora_dropout == 0.05
     assert cfg.lora_epochs == 3
     assert cfg.lora_lr == 0.0002
+    assert cfg.sft_format == "chat"
     assert cfg.prs_threshold == 0.50
     assert cfg.phase2_advance_threshold == 0.30
     assert cfg.phase3_advance_threshold == 0.55
