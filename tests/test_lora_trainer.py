@@ -103,12 +103,21 @@ def test_mask_prompt_labels():
 
 
 class _FakeChatTok:
-    """Deterministic fake: maps each word to a fake id; encodes chat turns predictably."""
-    def apply_chat_template(self, messages, add_generation_prompt=False, tokenize=True):
+    """Deterministic fake: maps each word to a fake id; encodes chat turns predictably.
+
+    Mimics real transformers (5.13.0) behavior: apply_chat_template(tokenize=True)
+    returns a BatchEncoding (dict-like) by default, and only returns a plain list
+    of int ids when return_dict=False is explicitly passed. Defaulting return_dict
+    to True here means build_sft_example must pass return_dict=False, or it gets a
+    dict instead of a list -- this is the regression guard for that bug.
+    """
+    def apply_chat_template(self, messages, add_generation_prompt=False, tokenize=True,
+                             return_dict=True):
         # prompt (user only, add_generation_prompt) -> ids [1,2]; full (user+assistant) -> [1,2,3,4,9]
-        if len(messages) == 1:
-            return [1, 2]
-        return [1, 2, 3, 4, 9]  # ...+ answer tokens 3,4 + EOS 9
+        ids = [1, 2] if len(messages) == 1 else [1, 2, 3, 4, 9]  # ...+ answer tokens 3,4 + EOS 9
+        if return_dict:
+            return {"input_ids": ids, "attention_mask": [1] * len(ids)}
+        return ids
 
 
 def test_build_sft_example_masks_prompt_and_keeps_eos():
