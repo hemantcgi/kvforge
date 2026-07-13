@@ -2,6 +2,7 @@
 import os
 import tempfile
 
+import numpy as np
 import pytest
 
 
@@ -120,3 +121,60 @@ def test_format_query_chat_strips_variant_suffix():
     assert "How do I reset?" in out
     # bare mode does NOT strip (keeps bare train/eval consistent)
     assert _format_query("How do I reset? (variant 3)", _FakeTok(), "bare") == "How do I reset? (variant 3)"
+
+
+def test_generate_parametric_suppresses_bos_in_chat_mode():
+    """Regression: chat-template strings already contain a literal
+    <|begin_of_text|> BOS token. The HF text-generation pipeline's default
+    add_special_tokens=True would prepend a SECOND BOS at eval time, while
+    chat-SFT training (apply_chat_template(..., tokenize=True)) produces only
+    a single BOS. That train/eval mismatch biases the A/B experiment. Chat
+    mode must pass add_special_tokens=False; bare mode must keep the default
+    (True/unset) since the bare string has no BOS and needs the pipeline to
+    add one, matching bare training.
+    """
+    from pipeline.prs_evaluator import _generate_parametric
+
+    calls = {}
+
+    def fake_pipe(prompt, **kwargs):
+        calls.clear()
+        calls.update(kwargs)
+        calls["prompt"] = prompt
+        return [{"generated_text": prompt + "ANSWER"}]
+
+    # Chat mode -> add_special_tokens must be explicitly False.
+    result = _generate_parametric("q? (variant 1)", fake_pipe, _FakeTok(), "chat")
+    assert calls.get("add_special_tokens") is False
+    assert result == "ANSWER"
+
+    # Bare mode -> default pipeline behavior (True or unset), unchanged.
+    result = _generate_parametric("q?", fake_pipe, None, "bare")
+    assert calls.get("add_special_tokens") in (True, None)
+    assert result == "ANSWER"
+
+
+def test_self_consistency_suppresses_bos_in_chat_mode():
+    """Same BOS-duplication fix applies to the self-consistency sampler,
+    which also feeds the formatted (chat-template) prompt into a pipeline
+    call and must not let the pipeline add a second BOS.
+    """
+    from pipeline.prs_evaluator import _self_consistency
+
+    calls = []
+
+    def fake_pipe_sample(prompt, **kwargs):
+        calls.append(kwargs)
+        return [{"generated_text": prompt + "ANSWER"}]
+
+    class _FakeEmbedder:
+        def embed(self, texts):
+            # deterministic fake embeddings, one dim per call so cosine sim is defined
+            return [np.array([1.0, float(i)]) for i, _ in enumerate(texts)]
+
+    _self_consistency("q?", fake_pipe_sample, _FakeEmbedder(), _FakeTok(), "chat", n=2)
+    assert all(kw.get("add_special_tokens") is False for kw in calls)
+
+    calls.clear()
+    _self_consistency("q?", fake_pipe_sample, _FakeEmbedder(), None, "bare", n=2)
+    assert all(kw.get("add_special_tokens") in (True, None) for kw in calls)
