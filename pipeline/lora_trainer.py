@@ -127,11 +127,12 @@ def build_sft_example(tokenizer, question: str, answer: str, max_length: int) ->
     """
     q = _strip_variant_suffix(question)
     prompt_ids = tokenizer.apply_chat_template(
-        [{"role": "user", "content": q}], add_generation_prompt=True, tokenize=True
+        [{"role": "user", "content": q}], add_generation_prompt=True, tokenize=True,
+        return_dict=False,
     )
     full_ids = tokenizer.apply_chat_template(
         [{"role": "user", "content": q}, {"role": "assistant", "content": answer}],
-        tokenize=True,
+        tokenize=True, return_dict=False,
     )
     labels = mask_prompt_labels(prompt_ids, full_ids)
     input_ids = list(full_ids)[:max_length]
