@@ -100,3 +100,20 @@ def test_mask_prompt_labels():
     assert labels == [-100, -100, -100, -100, 10, 11, 99]
     assert labels[-1] == 99             # EOS unmasked -> model learns to stop
     assert len(labels) == len(full_ids)
+
+
+class _FakeChatTok:
+    """Deterministic fake: maps each word to a fake id; encodes chat turns predictably."""
+    def apply_chat_template(self, messages, add_generation_prompt=False, tokenize=True):
+        # prompt (user only, add_generation_prompt) -> ids [1,2]; full (user+assistant) -> [1,2,3,4,9]
+        if len(messages) == 1:
+            return [1, 2]
+        return [1, 2, 3, 4, 9]  # ...+ answer tokens 3,4 + EOS 9
+
+
+def test_build_sft_example_masks_prompt_and_keeps_eos():
+    from pipeline.lora_trainer import build_sft_example
+    ex = build_sft_example(_FakeChatTok(), "q", "a", max_length=256)
+    assert ex["input_ids"] == [1, 2, 3, 4, 9]
+    assert ex["labels"] == [-100, -100, 3, 4, 9]
+    assert ex["attention_mask"] == [1, 1, 1, 1, 1]

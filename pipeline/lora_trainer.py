@@ -117,8 +117,35 @@ def mask_prompt_labels(prompt_ids: list, full_ids: list) -> list:
     return [-100] * n + list(full_ids[n:])
 
 
+def build_sft_example(tokenizer, question: str, answer: str, max_length: int) -> dict:
+    """Tokenize one QA pair for chat-format SFT with answer-only loss labels.
+
+    Returns ``{"input_ids", "labels", "attention_mask"}``. The prompt (user turn + assistant
+    header) is masked to ``-100`` in labels; loss falls only on the answer tokens and the
+    trailing EOS. Truncates to ``max_length`` (keeps the sequence start; QA pairs are short so
+    truncation should be rare).
+    """
+    q = _strip_variant_suffix(question)
+    prompt_ids = tokenizer.apply_chat_template(
+        [{"role": "user", "content": q}], add_generation_prompt=True, tokenize=True
+    )
+    full_ids = tokenizer.apply_chat_template(
+        [{"role": "user", "content": q}, {"role": "assistant", "content": answer}],
+        tokenize=True,
+    )
+    labels = mask_prompt_labels(prompt_ids, full_ids)
+    input_ids = list(full_ids)[:max_length]
+    labels = labels[:max_length]
+    return {
+        "input_ids": input_ids,
+        "labels": labels,
+        "attention_mask": [1] * len(input_ids),
+    }
+
+
 def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
-          output_dir: str, qa_texts: list[str] | None = None) -> None:
+          output_dir: str, qa_texts: list[str] | None = None,
+          faqs: list[dict] | None = None) -> None:
     """Run LoRA fine-tuning and save the adapter to *output_dir*.
 
     Builds a PEFT ``LoraConfig`` from *cfg*, applies it to the base model,
@@ -140,6 +167,9 @@ def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
         output_dir: Directory where the trained LoRA adapter is saved.
         qa_texts: Pre-formatted Q&A training strings for instruction mode.
             If ``None``, raw-chunk (continuation) mode is used.
+        faqs: Raw FAQ dicts (``{"question", "answer"}``) used by the chat-format
+            SFT path.  Required when ``sft_format == "chat"``; enables the
+            answer-masked, chat-template training examples.
     """
     from peft import LoraConfig, TaskType, get_peft_model  # lazy import
 
@@ -181,6 +211,11 @@ def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
     model = get_peft_model(model, lora_cfg)
     model.print_trainable_parameters()
 
+    # sft_format="chat" (default) selects the answer-masked chat-template SFT
+    # path; "bare" preserves the legacy continuation-LM path for A/B baselines.
+    sft_format = cfg.get("addon_config", {}).get("training", {}).get("sft_format", "chat")
+    use_chat_sft = bool(qa_texts) and sft_format == "chat" and faqs is not None
+
     # Use dynamic max_length: 128 for short Q&A pairs, 512 for raw chunks
     _max_len = 128 if qa_texts else 512
     def tokenize(example):
@@ -189,6 +224,25 @@ def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
 
     dataset = Dataset.from_dict({"text": all_texts})
     tokenized = dataset.map(tokenize, remove_columns=["text"])
+
+    if use_chat_sft:
+        # Chat-format SFT: answer-masked Q&A examples + bare-LM replay chunks
+        # for regularisation, collated with dynamic padding.
+        _sft_max_len = 256
+        examples = [build_sft_example(tokenizer, f["question"], f["answer"], _sft_max_len)
+                    for f in faqs]
+        for c in replay_chunks:
+            ids = tokenizer(c["text"], truncation=True, max_length=_sft_max_len)["input_ids"]
+            examples.append({"input_ids": ids, "labels": list(ids),
+                             "attention_mask": [1] * len(ids)})
+        from datasets import Dataset as _DS
+        tokenized = _DS.from_list(examples)
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+        from transformers import DataCollatorForSeq2Seq
+        collator = DataCollatorForSeq2Seq(tokenizer, padding=True)
+        print(f"🎓 Chat-SFT instruction fine-tuning: {len(faqs)} Q&A (answer-masked) "
+              f"+ {len(replay_chunks)} replay = {len(examples)} examples")
 
     training_args = TrainingArguments(
         output_dir=output_dir,
@@ -207,7 +261,7 @@ def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
         model=model,
         args=training_args,
         train_dataset=tokenized,
-        data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
+        data_collator=collator if use_chat_sft else DataCollatorForLanguageModeling(tokenizer, mlm=False),
     )
     trainer.train()
     model.save_pretrained(output_dir)
@@ -236,6 +290,7 @@ def main() -> None:
     rb = ReplayBuffer(db_path=cfg.get("replay_db", "replay_buffer.db"))
 
     qa_texts = None
+    faqs = None
     if args.faqs:
         # Q&A instruction mode
         with open(args.faqs) as f:
@@ -262,7 +317,8 @@ def main() -> None:
     output_dir = cfg.get("checkpoint_dir", "lora_checkpoints/") + f"v{new_ver}/"
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-    train(cfg, new_chunks, replay_chunks, output_dir, qa_texts=qa_texts)
+    train(cfg, new_chunks, replay_chunks, output_dir, qa_texts=qa_texts,
+          faqs=faqs)
     ver.increment_lora_version(output_dir)
     print(f"✅ LoRA version → {new_ver}  checkpoint: {output_dir}")
 
