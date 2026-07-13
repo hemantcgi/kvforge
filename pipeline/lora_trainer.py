@@ -21,6 +21,7 @@ Usage::
 import argparse
 import json
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -91,6 +92,29 @@ def format_qa_texts(faqs: list[dict]) -> list[str]:
         a = item["answer"].strip()
         texts.append(f"{q}\n{a}")
     return texts
+
+
+def _strip_variant_suffix(question: str) -> str:
+    """Remove a trailing ``(variant N)`` augmentation suffix from a FAQ question.
+
+    100% of the synthetic training FAQs carry this suffix; training on it makes the model
+    echo ``variant N`` at generation time (a confirmed format-artifact leak). Only a trailing
+    ``(variant <digits>)`` is stripped — other parentheticals are preserved.
+    """
+    return re.sub(r"\s*\(variant\s+\d+\)\s*$", "", question).strip()
+
+
+def mask_prompt_labels(prompt_ids: list, full_ids: list) -> list:
+    """Build SFT labels that mask the prompt so loss is computed only on the answer.
+
+    ``full_ids`` is the tokenized ``[user, assistant]`` chat sequence (answer text + EOS);
+    ``prompt_ids`` is the tokenized ``[user]`` chat sequence with the assistant generation
+    prompt. Returns labels equal to ``full_ids`` with the first ``len(prompt_ids)`` positions
+    set to ``-100`` (ignored by the loss). The trailing EOS stays unmasked so the model learns
+    to stop after the answer.
+    """
+    n = len(prompt_ids)
+    return [-100] * n + list(full_ids[n:])
 
 
 def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],

@@ -81,3 +81,22 @@ def test_main_help():
     )
     assert result.returncode == 0
     assert "--source-file" in result.stdout
+
+
+def test_strip_variant_suffix():
+    from pipeline.lora_trainer import _strip_variant_suffix
+    assert _strip_variant_suffix("How do I reset? (variant 187)") == "How do I reset?"
+    assert _strip_variant_suffix("What payment methods? (variant 0)") == "What payment methods?"
+    assert _strip_variant_suffix("No suffix here") == "No suffix here"
+    # a non-variant parenthetical must NOT be stripped
+    assert _strip_variant_suffix("What is X (the protocol)?") == "What is X (the protocol)?"
+
+
+def test_mask_prompt_labels():
+    from pipeline.lora_trainer import mask_prompt_labels
+    prompt_ids = [1, 2, 3, 4]          # user turn + assistant header
+    full_ids = [1, 2, 3, 4, 10, 11, 99]  # + answer tokens + EOS (99)
+    labels = mask_prompt_labels(prompt_ids, full_ids)
+    assert labels == [-100, -100, -100, -100, 10, 11, 99]
+    assert labels[-1] == 99             # EOS unmasked -> model learns to stop
+    assert len(labels) == len(full_ids)
