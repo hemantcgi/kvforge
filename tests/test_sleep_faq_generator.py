@@ -89,3 +89,103 @@ def test_call_openai_returns_text():
     with patch("pipeline.sleep_faq_generator.httpx.post", return_value=mock_resp):
         text = _call_provider("openai", "gpt-4.1", "fake-key", "test prompt")
     assert "Q: Hi" in text
+
+
+def test_build_paraphrase_prompt_contains_question_and_count():
+    from pipeline.sleep_faq_generator import _build_paraphrase_prompt
+    prompt = _build_paraphrase_prompt("How do I reset my password?", n=5)
+    assert "How do I reset my password?" in prompt
+    assert "5" in prompt
+
+
+def test_parse_paraphrase_lines_strips_numbering_and_bullets():
+    from pipeline.sleep_faq_generator import _parse_paraphrase_lines
+    text = (
+        "1. How can I change my password?\n"
+        "- What's the process to reset my login credentials?\n"
+        "* Is there a way to update my password?\n"
+    )
+    results = _parse_paraphrase_lines(text)
+    assert results == [
+        "How can I change my password?",
+        "What's the process to reset my login credentials?",
+        "Is there a way to update my password?",
+    ]
+
+
+def test_parse_paraphrase_lines_drops_blank_lines():
+    from pipeline.sleep_faq_generator import _parse_paraphrase_lines
+    text = "How do I reset it?\n\n\nWhat's the reset process?\n"
+    results = _parse_paraphrase_lines(text)
+    assert results == ["How do I reset it?", "What's the reset process?"]
+
+
+def test_parse_paraphrase_lines_drops_non_question_preamble():
+    from pipeline.sleep_faq_generator import _parse_paraphrase_lines
+    text = (
+        "Here are 5 different ways to ask that:\n"
+        "How can I change my password?\n"
+        "What's the reset process?\n"
+    )
+    results = _parse_paraphrase_lines(text)
+    assert results == ["How can I change my password?", "What's the reset process?"]
+
+
+def test_augment_with_paraphrases_pairs_original_answer():
+    from pipeline.sleep_faq_generator import _augment_with_paraphrases
+    faqs = [{"question": "How do I reset my password?", "answer": "Click 'Forgot password'."}]
+    mock_resp = MagicMock()
+    mock_resp.raise_for_status = MagicMock()
+    mock_resp.json.return_value = {
+        "candidates": [{"content": {"parts": [
+            {"text": "How can I change my password?\nWhat's the password reset process?"}
+        ]}}]
+    }
+    with patch("pipeline.sleep_faq_generator.httpx.post", return_value=mock_resp):
+        result = _augment_with_paraphrases(
+            faqs, "gemini", "gemini-2.5-flash", "fake-key", n_per_faq=2)
+    assert len(result) == 2
+    assert all(item["answer"] == "Click 'Forgot password'." for item in result)
+    assert result[0]["question"] == "How can I change my password?"
+
+
+def test_augment_with_paraphrases_caps_at_n_per_faq():
+    from pipeline.sleep_faq_generator import _augment_with_paraphrases
+    faqs = [{"question": "What is X?", "answer": "X is Y."}]
+    mock_resp = MagicMock()
+    mock_resp.raise_for_status = MagicMock()
+    mock_resp.json.return_value = {
+        "candidates": [{"content": {"parts": [
+            {"text": "Q1?\nQ2?\nQ3?\nQ4?\nQ5?"}
+        ]}}]
+    }
+    with patch("pipeline.sleep_faq_generator.httpx.post", return_value=mock_resp):
+        result = _augment_with_paraphrases(
+            faqs, "gemini", "gemini-2.5-flash", "fake-key", n_per_faq=2)
+    assert len(result) == 2
+
+
+def test_augment_with_paraphrases_skips_faq_on_provider_error():
+    from pipeline.sleep_faq_generator import _augment_with_paraphrases
+    faqs = [{"question": "What is X?", "answer": "X is Y."}]
+    with patch("pipeline.sleep_faq_generator.httpx.post", side_effect=RuntimeError("boom")):
+        result = _augment_with_paraphrases(
+            faqs, "gemini", "gemini-2.5-flash", "fake-key", n_per_faq=2)
+    assert result == []
+
+
+def test_augment_with_paraphrases_retries_on_429_then_succeeds():
+    from pipeline.sleep_faq_generator import _augment_with_paraphrases
+    faqs = [{"question": "What is X?", "answer": "X is Y."}]
+    ok_resp = MagicMock()
+    ok_resp.raise_for_status = MagicMock()
+    ok_resp.json.return_value = {
+        "candidates": [{"content": {"parts": [{"text": "What's X?\nCan you explain X?"}]}}]
+    }
+    with patch("pipeline.sleep_faq_generator.httpx.post",
+               side_effect=[RuntimeError("429 Too Many Requests"), ok_resp]) as mock_post, \
+         patch("time.sleep"):
+        result = _augment_with_paraphrases(
+            faqs, "gemini", "gemini-2.5-flash", "fake-key", n_per_faq=2)
+    assert mock_post.call_count == 2
+    assert len(result) == 2
