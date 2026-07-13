@@ -102,18 +102,22 @@ def _coverage_ratio(scores: list[float], threshold: float) -> float:
     return sum(1 for s in scores if s >= threshold) / len(scores)
 
 
-def _generate_parametric(query: str, pipe) -> str:
+def _generate_parametric(query: str, pipe, tokenizer=None, sft_format: str = "bare") -> str:
     """Generate an answer to *query* from model weights with no retrieved context.
 
     Args:
         query: The question string.
         pipe: A HuggingFace ``text-generation`` pipeline.
+        tokenizer: The model's tokenizer, used to apply the chat template when
+            ``sft_format == "chat"``.
+        sft_format: ``"chat"`` or ``"bare"`` — see ``_format_query``.
 
     Returns:
         The generated answer text (prompt prefix stripped).
     """
-    out = pipe(query)
-    return out[0]["generated_text"][len(query):].strip()
+    prompt = _format_query(query, tokenizer, sft_format)
+    out = pipe(prompt)
+    return out[0]["generated_text"][len(prompt):].strip()
 
 
 def _extract_confidence(answer: str, pipe_short) -> float:
@@ -128,9 +132,11 @@ def _extract_confidence(answer: str, pipe_short) -> float:
         return 0.5
 
 
-def _self_consistency(query: str, pipe_sample, embedder, n: int = 3) -> float:
+def _self_consistency(query: str, pipe_sample, embedder, tokenizer=None,
+                       sft_format: str = "bare", n: int = 3) -> float:
     """Generate n answers at temperature 0.7; return mean pairwise cosine sim."""
-    answers = [pipe_sample(query)[0]["generated_text"][len(query):].strip()
+    prompt = _format_query(query, tokenizer, sft_format)
+    answers = [pipe_sample(prompt)[0]["generated_text"][len(prompt):].strip()
                for _ in range(n)]
     embs = np.array(list(embedder.embed(answers)))
     sims = []
@@ -202,6 +208,7 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
     indexing_cfg = cfg.get("addon_config", {}).get("indexing", {})
     training_cfg = cfg.get("addon_config", {}).get("training", {})
     effective_cfg = {**cfg, **indexing_cfg, **training_cfg}
+    sft_format = effective_cfg.get("sft_format", "chat")
 
     model, tokenizer = model_loader.load(lora_checkpoint)
     embed_model = cfg.get("embed_model", "BAAI/bge-small-en-v1.5")
@@ -233,7 +240,7 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
     for idx, faq in enumerate(faqs, 1):
         q, gt = _extract_qa(faq, q_key=q_key, a_key=a_key)
         print(f"⏳ Evaluating FAQ {idx}/{total}: {q[:60]}…", flush=True)
-        param_ans = _generate_parametric(q, pipe_gen)
+        param_ans = _generate_parametric(q, pipe_gen, tokenizer, sft_format)
         if has_sp3:
             rag_ans = answer_with_retrieval(q, cfg)
         else:
@@ -243,7 +250,7 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
         rag_sim   = _cosine_sim(embs[1], embs[2])
         cosine_accuracy_ratio = min(param_sim / (rag_sim + 1e-9), 1.0)  # diagnostic only, not scored
         self_conf = _extract_confidence(param_ans, pipe_conf)
-        consistencies.append(_self_consistency(q, pipe_sample, embedder))
+        consistencies.append(_self_consistency(q, pipe_sample, embedder, tokenizer, sft_format))
 
         # Factual metrics — now the actual scoring signal, not diagnostic-only.
         from eval import metrics as _eval_metrics
