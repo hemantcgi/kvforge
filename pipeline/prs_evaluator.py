@@ -121,7 +121,11 @@ def _generate_parametric(query: str, pipe, tokenizer=None, sft_format: str = "ba
         The generated answer text (prompt prefix stripped).
     """
     prompt = _format_query(query, tokenizer, sft_format)
-    out = pipe(prompt)
+    # Chat-template strings already contain a literal <|begin_of_text|> BOS;
+    # suppress the pipeline's own BOS insertion so eval tokenization matches
+    # the single-BOS tokenization used by chat-SFT training. Bare mode has no
+    # BOS in the raw string, so the pipeline's default add-BOS is kept.
+    out = pipe(prompt, add_special_tokens=(sft_format != "chat"))
     return out[0]["generated_text"][len(prompt):].strip()
 
 
@@ -141,7 +145,12 @@ def _self_consistency(query: str, pipe_sample, embedder, tokenizer=None,
                        sft_format: str = "bare", n: int = 3) -> float:
     """Generate n answers at temperature 0.7; return mean pairwise cosine sim."""
     prompt = _format_query(query, tokenizer, sft_format)
-    answers = [pipe_sample(prompt)[0]["generated_text"][len(prompt):].strip()
+    # Chat-template strings already contain a literal <|begin_of_text|> BOS;
+    # suppress the pipeline's own BOS insertion so eval tokenization matches
+    # the single-BOS tokenization used by chat-SFT training. Bare mode has no
+    # BOS in the raw string, so the pipeline's default add-BOS is kept.
+    answers = [pipe_sample(prompt, add_special_tokens=(sft_format != "chat"))[0]
+               ["generated_text"][len(prompt):].strip()
                for _ in range(n)]
     embs = np.array(list(embedder.embed(answers)))
     sims = []
