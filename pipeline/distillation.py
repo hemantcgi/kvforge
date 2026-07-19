@@ -32,8 +32,7 @@ def deduplicate_pool(entries: list[dict]) -> list[dict]:
         entries: List of pool dicts, each with a ``question`` key.
 
     Returns:
-        Deduplicated list with a ``deduplicated_with`` field pointing to the
-        original question when a duplicate was dropped.
+        Deduplicated list. Dropped duplicates are omitted entirely.
     """
     seen: set[str] = set()
     result = []
@@ -101,8 +100,8 @@ def load_real_queries(db_path: str, limit: int = 1000) -> list[dict]:
         limit: Maximum number of records to return.
 
     Returns:
-        List of pool entries with keys ``question``, ``answer``, ``source``,
-        ``cluster_id``.
+        List of pool entries with keys ``question``, ``expected_answer``,
+        ``source``, ``cluster_id``.
     """
     from pipeline.query_logger import get_training_pairs
 
@@ -306,6 +305,7 @@ def generate_on_policy_samples(
         List of dicts with ``question``, ``student_answer``, ``teacher_answer``,
         ``confidence_label``, ``factual_accuracy``.
     """
+    from eval.metrics import llm_judge, token_f1
     from pipeline.confidence_token import generate_confidence_label
     from pipeline.prs_evaluator import _generate_parametric
     from transformers import pipeline as hf_pipeline
@@ -327,7 +327,6 @@ def generate_on_policy_samples(
         label = generate_confidence_label(
             q, student_ans, teacher_ans, client=judge_client, judge_model=judge_model
         )
-        from eval.metrics import llm_judge, token_f1
         f1 = token_f1(student_ans, teacher_ans)
         judge = llm_judge(q, student_ans, teacher_ans, client=judge_client, model=judge_model)
         factual_acc = 0.5 * f1 + 0.5 * float(judge["factually_correct"])
