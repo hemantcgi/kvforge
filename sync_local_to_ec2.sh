@@ -3,8 +3,8 @@
 set -euo pipefail
 
 EC2_USER="${EC2_USER:-ubuntu}"
-EC2_HOST="${EC2_HOST:-13.217.195.243}"
-EC2_PEM="${EC2_PEM:-/Users/hemant/Downloads/RoPE/g5.x.pem}"
+: "${EC2_HOST:?Set EC2_HOST}"
+: "${EC2_PEM:?Set EC2_PEM}"
 LOCAL_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REMOTE_REPO="~/kvforge"
 
@@ -19,6 +19,9 @@ RSYNC_EXCLUDES=(
   --exclude='lora_checkpoints/'
   --exclude='.git/'
   --exclude='.GCC/'
+  --exclude='.env'
+  --exclude='*.env'
+  --exclude='*.pem'
   --exclude='*.safetensors'
   --exclude='*.bin'
   --exclude='*.db'
@@ -33,7 +36,7 @@ RSYNC_EXCLUDES=(
   --exclude='eval_*.json'
 )
 
-rsync -avz --update "${RSYNC_EXCLUDES[@]}" \
-  -e "ssh -i ${EC2_PEM} -o StrictHostKeyChecking=no" \
+rsync -avz "${RSYNC_EXCLUDES[@]}" \
+  -e "ssh -i ${EC2_PEM} -o StrictHostKeyChecking=accept-new" \
   "${LOCAL_REPO}/" \
   "${EC2_USER}@${EC2_HOST}:${REMOTE_REPO}/"
