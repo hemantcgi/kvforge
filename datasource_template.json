@@ -46,5 +46,11 @@
 
   "access_flush_seconds": 300,
   "access_flush_queries": 50,
-  "dashboard_port": 8080
+  "dashboard_port": 8080,
+
+  "_enable_enhanced_tier_comment": "When true, hot chunks are promoted to full per-token KV cache. Default false: pending Component 6 empirical validation.",
+  "enable_enhanced_tier": false,
+
+  "_kds_threshold_comment": "Per-chunk KDS eligibility threshold for KV-injection. Calibrated empirically in Component 6; None or absent disables KV injection (fail-closed).",
+  "kds_threshold": null
 }

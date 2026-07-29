@@ -62,5 +62,20 @@
     "weaknesses": ["conversational_qa", "very_short_answers"],
     "lora_targets": ["q_proj", "k_proj", "v_proj"],
     "min_corpus_chunks": 100, "license": "commercial_ok", "family": "deepseek"
+  },
+  "google/gemma-4-E2B-it": {
+    "vram_fp16_gb": 11, "vram_4bit_gb": 4, "vram_lora_overhead_gb": 6,
+    "languages": ["en"],
+    "strengths": ["parametric_qa", "instruction_following", "factual_qa", "kv_injection"],
+    "weaknesses": ["multilingual", "very_long_context"],
+    "lora_targets": ["q_proj", "k_proj", "v_proj", "o_proj"],
+    "kv_num_layers": 35,
+    "kv_num_heads": 1,
+    "kv_head_dim": 256,
+    "min_corpus_chunks": 50,
+    "license": "commercial_ok",
+    "family": "gemma4",
+    "is_multimodal": true,
+    "recommended": true
   }
 }

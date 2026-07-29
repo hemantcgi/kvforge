@@ -420,7 +420,7 @@ def fig_prs_progression():
     ax.set_ylabel("Parametric Readiness Score (PRS)", fontsize=11)
     ax.set_ylim(0.66, 0.93)
     ax.set_title("Figure 14 — PRS Progression Over Training Rounds\n"
-                 "All use-cases · AWS g5.12xlarge (4× A10G) · Llama-3.2-3B-Instruct",
+                 "All use-cases · AWS g5.xlarge · Llama-3.2-3B-Instruct",
                  fontsize=12, pad=10)
     ax.legend(loc="upper left", fontsize=9, ncol=2)
     ax.grid(alpha=0.25, zorder=0)
@@ -1009,7 +1009,7 @@ def fig_pipeline_timing():
 
     ax.set_ylabel("Duration (minutes)", fontsize=11)
     ax.set_title("Figure — UC4 Pipeline Timing (one training round)\n"
-                 "Amazon Bedrock User Guide · 2,520 chunks · AWS g5.12xlarge (4× A10G)",
+                 "Amazon Bedrock User Guide · 2,520 chunks · AWS g5.xlarge",
                  fontsize=12, pad=10)
     ax.grid(axis="y", alpha=0.3, zorder=0)
     ax.set_facecolor("white"); fig.patch.set_facecolor("white")

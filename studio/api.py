@@ -24,11 +24,19 @@ api_router = APIRouter()
 
 
 def _uc_path(uc_id: str) -> Path:
-    """Return the UC directory path, raising 400 on path traversal attempts."""
-    path = (ROOT / "examples" / uc_id).resolve()
-    if not path.is_relative_to((ROOT / "examples").resolve()):
+    """Return the UC directory path, raising 400 on path traversal attempts.
+
+    Uses the unresolved path for the guard so that symlinked UC directories
+    (e.g. examples/my-wiki-corpus -> ../../examples/my-wiki-corpus in a
+    git worktree) pass the check correctly.
+    """
+    unresolved = ROOT / "examples" / uc_id
+    # Guard against path traversal without following symlinks
+    try:
+        unresolved.relative_to(ROOT / "examples")
+    except ValueError:
         raise HTTPException(400, "Invalid use case ID")
-    return path
+    return unresolved
 
 
 # ── Registry ──────────────────────────────────────────────────────────────────
@@ -323,6 +331,30 @@ async def run_step(req: RunStepRequest, background_tasks: BackgroundTasks):
     return {"job_id": job_id, "uc_id": req.uc_id, "step": req.step}
 
 
+@api_router.post("/run-update-pipeline")
+async def run_update_pipeline(req: RunStepRequest, background_tasks: BackgroundTasks):
+    """Run KV Indexer → FAQs → LoRA → PRS Eval as a single chained job."""
+    from studio.pipeline_runner import run_update_pipeline_background
+    from studio.activity_log import log_event
+    jm = get_manager()
+    try:
+        job_id = jm.create(req.uc_id, "update-pipeline")
+    except DuplicateJobError:
+        existing_job_id = jm._uc_locks.get(req.uc_id)
+        return JSONResponse(
+            {"detail": "already_running", "job_id": existing_job_id},
+            status_code=409,
+        )
+    log_event("pipeline", "update-pipeline.started",
+              f"Update pipeline started for '{req.uc_id}'",
+              details={"job_id": job_id, "gpu_profile_id": req.gpu_profile_id},
+              uc_id=req.uc_id, severity="info")
+    background_tasks.add_task(
+        run_update_pipeline_background, req.uc_id, job_id, jm, req.gpu_profile_id
+    )
+    return {"job_id": job_id, "uc_id": req.uc_id, "step": "update-pipeline"}
+
+
 @api_router.delete("/job/{job_id}")
 def stop_job(job_id: str):
     import signal, os
@@ -514,6 +546,23 @@ def get_sync_history(uc_id: str):
     except Exception:
         runs = []
     return {"runs": runs}
+
+
+@api_router.get("/uc/{uc_id}/stale-chunks")
+def get_stale_chunks(uc_id: str):
+    """Return pending new-chunk count from last sync (pending_update.json).
+
+    Falls back to 0 if no sync has produced new chunks since the last
+    update-pipeline run.
+    """
+    pending_path = _uc_path(uc_id) / "pending_update.json"
+    if not pending_path.exists():
+        return JSONResponse({"stale": 0})
+    try:
+        data = json.loads(pending_path.read_text())
+        return JSONResponse({"stale": data.get("chunks", 0), "ts": data.get("ts")})
+    except Exception:
+        return JSONResponse({"stale": 0})
 
 
 @api_router.get("/uc/{uc_id}/eval-summary")

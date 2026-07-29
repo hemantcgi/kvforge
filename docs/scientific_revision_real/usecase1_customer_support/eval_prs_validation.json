@@ -1,0 +1,231 @@
+{
+  "n": 30,
+  "cosine_ratios": [
+    1.0,
+    0.9796,
+    1.0,
+    0.572,
+    1.0,
+    1.0,
+    0.5732,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    0.6311,
+    1.0,
+    0.5739,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    0.9963,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+  ],
+  "correlations": {
+    "em": {
+      "pearson": null,
+      "spearman": null,
+      "note": "zero variance, correlation undefined"
+    },
+    "token_f1": {
+      "pearson": 0.4144,
+      "spearman": 0.511
+    },
+    "judge": {
+      "pearson": 0.3624,
+      "spearman": 0.3148
+    },
+    "factual": {
+      "pearson": 0.4253,
+      "spearman": 0.511
+    }
+  },
+  "disagreements": [
+    {
+      "index": 0,
+      "question": "What payment methods are accepted? (variant 66)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.2037,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 1,
+      "question": "How do I track my order? (variant 187)",
+      "cosine_ratio": 0.9796,
+      "token_f1": 0.3838,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 2,
+      "question": "What payment methods are accepted? (variant 101)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.2037,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 4,
+      "question": "What payment methods are accepted? (variant 111)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1215,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 5,
+      "question": "What payment methods are accepted? (variant 121)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.2037,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 7,
+      "question": "How do I track my order? (variant 2)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.199,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 8,
+      "question": "How do I contact support? (variant 64)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.2121,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 9,
+      "question": "How do I contact support? (variant 44)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1918,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 10,
+      "question": "What payment methods are accepted? (variant 136)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.2037,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 13,
+      "question": "What payment methods are accepted? (variant 76)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.2037,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 15,
+      "question": "How do I track my order? (variant 167)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1939,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 16,
+      "question": "How do I reset my password? (variant 45)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.2473,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 19,
+      "question": "Can I change my shipping address after ordering? (variant 3)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1809,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 20,
+      "question": "How do I contact support? (variant 159)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.2,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 22,
+      "question": "How do I track my order? (variant 42)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.3619,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 23,
+      "question": "What payment methods are accepted? (variant 126)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1642,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 24,
+      "question": "What payment methods are accepted? (variant 186)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.2037,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 25,
+      "question": "How do I track my order? (variant 162)",
+      "cosine_ratio": 0.9963,
+      "token_f1": 0.19,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 26,
+      "question": "How do I track my order? (variant 47)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.199,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 28,
+      "question": "How do I reset my password? (variant 5)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.2444,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 29,
+      "question": "How do I contact support? (variant 194)",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1905,
+      "exact_match": 0,
+      "judge": 1
+    }
+  ],
+  "prs_simulation": {
+    "cosine_mean": 0.9442,
+    "factual_mean": 0.3839,
+    "cosine_reaches_phase3": true,
+    "factual_reaches_phase3": false,
+    "decision_flips": 1
+  }
+}

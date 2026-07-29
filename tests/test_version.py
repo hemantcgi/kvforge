@@ -121,3 +121,27 @@ def test_append_no_new_kwargs_uses_defaults(tmp_path):
     ver = _make_ver_file(tmp_path, phase=1, prs_history=[])
     ver.append_prs(1, 0.10)  # below all thresholds -> stays phase 1
     assert ver.load()["phase"] == 1
+
+
+def test_append_kds_writes_history(tmp_path):
+    ver = _make_ver_file(tmp_path, phase=1, prs_history=[])
+    ver.append_kds(2, 0.75, 5)
+    data = ver.load()
+    assert len(data["kds_history"]) == 1
+    entry = data["kds_history"][0]
+    assert entry["round"] == 2
+    assert entry["mean_kds"] == 0.75
+    assert entry["measured_chunks"] == 5
+    assert "timestamp" in entry
+
+
+def test_append_fkds_writes_history(tmp_path):
+    ver = _make_ver_file(tmp_path, phase=1, prs_history=[])
+    ver.append_fkds(3, 0.82, 7)
+    data = ver.load()
+    assert len(data["fkds_history"]) == 1
+    entry = data["fkds_history"][0]
+    assert entry["round"] == 3
+    assert entry["mean_fkds"] == 0.82
+    assert entry["measured_chunks"] == 7
+    assert "timestamp" in entry

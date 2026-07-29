@@ -42,6 +42,7 @@ BODY_H  = PAGE_H - 2 * MARGIN   # 688.32 pt ≈ 9.56 in
 # First-page split: compact title strip (title + author + github) only
 # Abstract and body go straight into two columns below
 TITLE_H = 1.05 * inch           # full-width title block at top of page 1
+HDR_H   = TITLE_H               # alias used for the page-1 header frame
 TWO_H   = BODY_H - TITLE_H      # two-column section (abstract + body) on page 1
 
 # ── Fonts ──────────────────────────────────────────────────────────────────────

@@ -49,9 +49,14 @@ def main():
     model_loader.init(cfg)
     kv_background.start(cfg)
 
-    embedder = TextEmbedding(model_name=cfg["embed_model"], show_download_progress=False)
+    # Support both flat configs and nested addon_config.
+    embed_model = cfg.get("embed_model", cfg.get("addon_config", {}).get("indexing", {}).get("embed_model", "BAAI/bge-small-en-v1.5"))
+    embedder = TextEmbedding(model_name=embed_model, show_download_progress=False)
     store = get_store(cfg)
-    rag_cfg = Config(**{k: cfg[k] for k in Config.__dataclass_fields__ if k in cfg})
+    indexing_cfg = cfg.get("addon_config", {}).get("indexing", {})
+    inference_cfg = cfg.get("addon_config", {}).get("inference", {})
+    flat_cfg = {**cfg, **indexing_cfg, **inference_cfg}
+    rag_cfg = Config(**{k: flat_cfg[k] for k in Config.__dataclass_fields__ if k in flat_cfg})
 
     hits = _run_search(args.query, embedder, store, rag_cfg)
     if not hits:

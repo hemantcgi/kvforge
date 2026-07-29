@@ -52,7 +52,8 @@ CREATE TABLE IF NOT EXISTS query_log (
     chunk_id    TEXT,
     routed_to   TEXT  NOT NULL,
     requeried   INTEGER DEFAULT 0,
-    embedding   BLOB
+    embedding   BLOB,
+    confidence_score REAL
 );
 CREATE INDEX IF NOT EXISTS idx_cluster   ON query_log(cluster_id);
 CREATE INDEX IF NOT EXISTS idx_timestamp ON query_log(timestamp);
@@ -69,6 +70,10 @@ def init_db(db_path: str) -> None:
     """
     with sqlite3.connect(db_path) as conn:
         conn.executescript(_SCHEMA)
+        try:
+            conn.execute("ALTER TABLE query_log ADD COLUMN confidence_score REAL")
+        except sqlite3.OperationalError:
+            pass  # column already exists
         conn.commit()
 
 
@@ -80,6 +85,7 @@ def log_query(
     cluster_id: Optional[str] = None,
     chunk_id: Optional[str] = None,
     embedding: Optional[list[float]] = None,
+    confidence_score: Optional[float] = None,
 ) -> int:
     """Insert a query record and return the new row id.
 
@@ -91,6 +97,7 @@ def log_query(
         cluster_id: Cluster the query was routed to (optional).
         chunk_id: Specific retrieved chunk id (optional).
         embedding: Query embedding as a Python list (optional; stored as JSON blob).
+        confidence_score: P(yes) from confidence-token gate (optional, Sprint 4).
 
     Returns:
         Integer row id of the inserted record.
@@ -99,9 +106,11 @@ def log_query(
     with _lock, sqlite3.connect(db_path) as conn:
         cur = conn.execute(
             """INSERT INTO query_log
-               (timestamp, query_text, answer_text, cluster_id, chunk_id, routed_to, embedding)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (time.time(), query_text, answer_text, cluster_id, chunk_id, routed_to, emb_blob),
+               (timestamp, query_text, answer_text, cluster_id, chunk_id,
+                routed_to, embedding, confidence_score)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (time.time(), query_text, answer_text, cluster_id, chunk_id,
+             routed_to, emb_blob, confidence_score),
         )
         conn.commit()
         return cur.lastrowid
@@ -166,6 +175,7 @@ def get_training_pairs(
     db_path: str,
     cluster_id: Optional[str] = None,
     limit: int = 1000,
+    max_confidence: Optional[float] = None,
 ) -> list[dict]:
     """Return retrieval-routed Q&A pairs suitable for LoRA fine-tuning.
 
@@ -176,11 +186,31 @@ def get_training_pairs(
         db_path: Path to the SQLite database.
         cluster_id: If provided, filter to this cluster only.
         limit: Maximum number of records to return.
+        max_confidence: If provided, only return queries with confidence_score
+            <= this value (low-confidence frontier, Sprint 4 train-on-drop).
 
     Returns:
         List of dicts with keys ``'question'``, ``'answer'``, ``'cluster_id'``.
     """
     with sqlite3.connect(db_path) as conn:
+        if max_confidence is not None:
+            where = "WHERE routed_to = 'retrieval' AND confidence_score IS NOT NULL AND confidence_score <= ?"
+            if cluster_id is not None:
+                where += " AND cluster_id = ?"
+                rows = conn.execute(
+                    f"SELECT query_text, answer_text, cluster_id, confidence_score FROM query_log {where} ORDER BY timestamp DESC LIMIT ?",
+                    (max_confidence, cluster_id, limit),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    f"SELECT query_text, answer_text, cluster_id, confidence_score FROM query_log {where} ORDER BY timestamp DESC LIMIT ?",
+                    (max_confidence, limit),
+                ).fetchall()
+            return [
+                {"question": r[0], "answer": r[1], "cluster_id": r[2], "confidence_score": r[3]}
+                for r in rows
+            ]
+
         if cluster_id is not None:
             rows = conn.execute(
                 """SELECT query_text, answer_text, cluster_id FROM query_log

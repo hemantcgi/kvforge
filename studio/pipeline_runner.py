@@ -348,6 +348,138 @@ async def run_step_background(
         _append(f"[studio] error: {e}")
 
 
+UPDATE_PIPELINE_STEPS = ["recompute", "faq-gen-cloud", "train", "prs-eval"]
+_STEP_LABELS = {
+    "recompute":     "KV Indexer",
+    "faq-gen-cloud": "FAQ Generation",
+    "train":         "LoRA Training",
+    "prs-eval":      "PRS Evaluation",
+}
+
+
+def _check_compute_worker(uc_id: str) -> str | None:
+    """Return an error string if the remote compute worker is unreachable, else None."""
+    cfg_path = ROOT / "examples" / uc_id / "config.json"
+    if not cfg_path.exists():
+        return None
+    try:
+        import json as _json, httpx as _httpx
+        cfg = _json.loads(cfg_path.read_text())
+        compute = cfg.get("addon_config", {}).get("compute", {})
+        if compute.get("backend") != "remote":
+            return None
+        url = compute.get("worker_url", "").rstrip("/")
+        if not url:
+            return None
+        _httpx.get(f"{url}/health", timeout=5.0).raise_for_status()
+        return None
+    except Exception as e:
+        return str(e)
+
+
+async def run_update_pipeline_background(
+    uc_id: str, job_id: str, job_manager, gpu_profile_id: str | None = None
+) -> None:
+    """Run the full incremental update sequence: KV → FAQs → LoRA → PRS.
+
+    Each step runs as a subprocess. If any step exits non-zero the chain
+    stops and the job is marked failed. The job_id covers the whole chain
+    so the SSE log panel shows a single continuous stream.
+    """
+    _ensure_config_json(uc_id)
+
+    def _append(line: str):
+        job_manager.append_log(job_id, line)
+        try:
+            with open(_log_path(uc_id), "a") as f:
+                f.write(line + "\n")
+        except OSError:
+            pass
+
+    try:
+        _log_path(uc_id).write_text(f"[studio] step=update-pipeline job={job_id}\n")
+    except OSError:
+        pass
+
+    # Preflight: verify remote compute worker before starting the chain
+    worker_err = _check_compute_worker(uc_id)
+    if worker_err:
+        msg = (
+            f"[studio] Cannot reach compute worker: {worker_err}\n"
+            "[studio] The SSH tunnel may have dropped. Re-establish it with:\n"
+            "[studio]   ssh -i <pem> -N -f -o ServerAliveInterval=30 "
+            "-L 8091:localhost:8091 -L 8093:localhost:8093 ubuntu@<ec2-ip>\n"
+            "[studio] Then click Update Pipeline again."
+        )
+        for line in msg.splitlines():
+            _append(line)
+        job_manager.fail(job_id, "Compute worker unreachable")
+        return
+
+    for i, step in enumerate(UPDATE_PIPELINE_STEPS, 1):
+        label = _STEP_LABELS[step]
+        _append(f"\n[studio] ── Step {i}/{len(UPDATE_PIPELINE_STEPS)}: {label} ──")
+
+        # Check job hasn't been stopped between steps
+        job = job_manager.get(job_id)
+        if job and job.get("status") != "running":
+            _append("[studio] pipeline stopped by user")
+            return
+
+        cmd = _build_cmd(uc_id, step)
+        env = _build_env(uc_id, step)
+        _append(f"[studio] starting: {_redact_cmd(cmd)}")
+
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
+                cwd=str(ROOT),
+                env=env,
+                limit=1024 * 1024,
+            )
+            job_manager.set_pid(job_id, proc.pid)
+
+            while True:
+                try:
+                    raw_line = await proc.stdout.readline()
+                    if not raw_line:
+                        break
+                    line = raw_line.decode("utf-8", errors="replace").rstrip()
+                    _append(line)
+                except asyncio.LimitOverrunError:
+                    await proc.stdout.read(1024 * 1024)
+                    _append("[studio] (line too long — truncated)")
+
+                # Honour stop requests mid-step
+                job = job_manager.get(job_id)
+                if job and job.get("status") != "running":
+                    proc.terminate()
+                    await proc.wait()
+                    _append("[studio] pipeline stopped by user")
+                    return
+
+            exit_code = await proc.wait()
+            if exit_code != 0:
+                job_manager.fail(job_id, f"{label} failed (exit {exit_code})")
+                _append(f"[studio] {label} failed (exit {exit_code}) — pipeline aborted")
+                return
+            _append(f"[studio] {label} done ✓")
+
+        except Exception as e:
+            job_manager.fail(job_id, str(e))
+            _append(f"[studio] error in {label}: {e}")
+            return
+
+    job_manager.complete(job_id, 0)
+    _append("[studio] ── Update pipeline complete ✓ ──")
+    try:
+        (ROOT / "examples" / uc_id / "pending_update.json").unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
 _SSE_HEARTBEAT_INTERVAL = 15  # seconds between SSE keepalive comments
 
 async def run_step_streaming(uc_id: str, step: str, job_id: str, job_manager):
@@ -421,7 +553,8 @@ def _build_env(uc_id: str, step: str) -> dict:
         if uc_cfg_path.exists():
             try:
                 uc_cfg = _json.loads(uc_cfg_path.read_text())
-                provider = uc_cfg.get("llm", {}).get("cloud_provider", "claude")
+                provider = uc_cfg.get("llm", {}).get("sleep_faq_provider",
+                           uc_cfg.get("llm", {}).get("cloud_provider", "claude"))
             except Exception:
                 pass
         settings_key, env_var = _PROVIDER_KEY_MAP.get(provider, ("anthropic_api_key", "ANTHROPIC_API_KEY"))

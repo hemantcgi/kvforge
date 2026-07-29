@@ -40,9 +40,9 @@ from pipeline.kv_inference import decide_inference_mode, get_stale_chunk_ids, an
 
 | Function | Description |
 |----------|-------------|
-| `decide_inference_mode(cfg, query)` | Returns `"kv"`, `"text"`, or `"parametric"` based on phase and chunk freshness |
-| `get_stale_chunk_ids(cfg, chunk_ids)` | Returns subset of chunk IDs whose KV tensors are stale |
-| `answer_with_retrieval(cfg, query, top_k)` | Phase 1/2 answer: retrieve chunks, inject KV or use text |
+| `decide_inference_mode(chunks, current_lora_version, phase=2, kds_threshold=None, fkds_threshold=None)` | Returns `"kv_injection"` or `"text_fallback"`. KV injection requires `phase >= 2`, all chunks fresh and cached. When `fkds_threshold` is set, every chunk's `fkds` must clear it; otherwise `kds` must clear `kds_threshold`. If both thresholds are `None` it fails closed to text fallback. |
+| `get_stale_chunk_ids(chunks, current_lora_version)` | Returns subset of chunk IDs whose KV tensors are stale |
+| `answer_with_retrieval(query, cfg)` | Phase 1/2 answer: retrieve chunks, inject KV or use text |
 
 ---
 
@@ -81,12 +81,16 @@ python -m pipeline.lora_trainer --config <cfg.json> --source-file <file.pdf> --r
 python -m pipeline.prs_evaluator --config <cfg.json> --faqs <faqs.json>
 ```
 
-**Output:** Prints PRS breakdown (accuracy / calibration / consistency / total) and whether phase transition was triggered.
+**Output:** Prints PRS breakdown (accuracy / calibration / consistency / total), whether phase transition was triggered, and the corpus-level Knowledge Differentiation Score (KDS) history.
 
 **Programmatic API:**
 ```python
-from pipeline.prs_evaluator import _extract_qa, _compute_prs
+from pipeline.prs_evaluator import _extract_qa, _compute_prs, compute_kds
 ```
+
+| Function | Description |
+|----------|-------------|
+| `compute_kds(faqs, cfg, lora_checkpoint=None, sample_cap=300, n=3)` | Computes per-chunk Knowledge Differentiation Score using topic probes, persists `kds` and `last_kds_round` to each measured chunk's vector-store payload, and appends `mean(KDS)` to `version.json["kds_history"]`. |
 
 ---
 

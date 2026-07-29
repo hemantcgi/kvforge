@@ -133,6 +133,51 @@ def _generate_draft(query: str, model, tokenizer,
     return draft, entropy
 
 
+def _generate_answer_with_confidence(
+    query: str,
+    model,
+    tokenizer,
+    sft_format: str = "chat",
+    max_new_tokens: int = 512,
+) -> tuple[str, float]:
+    """Generate a parametric answer and extract its confidence-token probability.
+
+    Matches the chat-format generation used during training. The answer is
+    generated, any emitted confidence suffix is stripped, then ``\\nConfidence:``
+    is force-appended and a forward pass yields the restricted two-token softmax
+    probability for ``" yes"``.
+
+    Args:
+        query: User query.
+        model: Loaded causal-LM.
+        tokenizer: Corresponding tokenizer.
+        sft_format: ``"chat"`` (default) or ``"bare"``.
+        max_new_tokens: Generation budget.
+
+    Returns:
+        ``(answer_text, p_yes)``.
+    """
+    from pipeline.confidence_token import generate_with_confidence_suffix
+
+    if sft_format == "chat":
+        prompt = tokenizer.apply_chat_template(
+            [{"role": "user", "content": query}],
+            add_generation_prompt=True,
+            tokenize=False,
+        )
+    else:
+        prompt = query
+    inputs = tokenizer(
+        prompt,
+        return_tensors="pt",
+        add_special_tokens=(sft_format != "chat"),
+    ).to(model.device)
+    return generate_with_confidence_suffix(
+        model, tokenizer, inputs,
+        max_new_tokens=max_new_tokens, do_sample=False,
+    )
+
+
 def _query_similarity_to_known_good(query: str, cfg: dict) -> float:
     """Compute the maximum cosine similarity between *query* and known-good query embeddings.
 
@@ -185,16 +230,37 @@ def is_eligible_for_parametric(similarity: float, eligibility_threshold: float) 
 
 
 def _parametric_or_retrieve(query: str, cfg: dict, effective_cfg: dict,
-                            similarity: float) -> str:
+                            similarity: float) -> tuple[str, float | None]:
     """Draft, run the confidence gate, and either answer from weights or retrieve.
 
     ``similarity`` is precomputed by the caller (Phase 2 also uses it as a hard eligibility
     gate before calling here; Phase 3 passes it straight through as a soft signal).
+
+    Returns:
+        ``(answer, confidence_score)`` tuple where confidence_score is P(yes) for
+        confidence-token routing, or None for legacy entropy heuristic.
     """
     threshold = effective_cfg.get("gate_threshold", DEFAULT_THRESHOLD)
     lora_ckpt = ver.load().get("checkpoint_path")
     model, tokenizer = model_loader.load(lora_ckpt)
+    use_confidence_token = effective_cfg.get("use_confidence_token", False)
 
+    if use_confidence_token:
+        sft_format = effective_cfg.get("sft_format", "chat")
+        result, p_yes = _generate_answer_with_confidence(
+            query, model, tokenizer, sft_format=sft_format,
+        )
+        decision = "direct" if p_yes >= threshold else "retrieve"
+        print(f"  Gate: confidence_token_p_yes={p_yes:.4f} -> {decision}", flush=True)
+        _log_query_with_confidence(query, cfg, result if decision == "direct" else "", decision, p_yes)
+        if decision == "direct":
+            _log_would_have_retrieved(query, cfg)
+            return result, p_yes
+        from pipeline.kv_inference import answer_with_retrieval
+        ans = answer_with_retrieval(query, cfg)
+        return ans, p_yes
+
+    # Legacy entropy+hedging heuristic (kept for A/B comparison).
     draft, entropy = _generate_draft(query, model, tokenizer)
     hedging = compute_hedging_score(draft)
     decision = decide_gate(entropy, hedging, similarity, threshold)
@@ -208,9 +274,11 @@ def _parametric_or_retrieve(query: str, cfg: dict, effective_cfg: dict,
         result = tokenizer.decode(output[0][inputs["input_ids"].shape[1]:],
                                    skip_special_tokens=True)
         _log_would_have_retrieved(query, cfg)
-        return result
+        _log_query_with_confidence(query, cfg, result, "parametric", None)
+        return result, None
     from pipeline.kv_inference import answer_with_retrieval
-    return answer_with_retrieval(query, cfg)
+    ans = answer_with_retrieval(query, cfg)
+    return ans, None
 
 
 def answer(query: str, cfg: dict) -> str:
@@ -235,10 +303,58 @@ def answer(query: str, cfg: dict) -> str:
         eligibility = effective_cfg.get("parametric_eligibility_threshold", 0.85)
         if not is_eligible_for_parametric(similarity, eligibility):
             return answer_with_retrieval(query, cfg)
-        return _parametric_or_retrieve(query, cfg, effective_cfg, similarity)
+        ans, _ = _parametric_or_retrieve(query, cfg, effective_cfg, similarity)
+        return ans
 
     # phase >= 3: corpus-wide trust, no hard eligibility prerequisite.
+    ans, _ = _parametric_or_retrieve(query, cfg, effective_cfg, similarity)
+    return ans
+
+
+def answer_with_confidence(query: str, cfg: dict) -> tuple[str, float | None]:
+    """Route *query* by phase and return (answer, confidence_score).
+
+    Same logic as :func:`answer` but also returns the confidence score
+    (P(yes) for confidence-token routing, None for legacy heuristic or
+    non-parametric paths).
+
+    Returns:
+        ``(answer_text, confidence_score)`` where confidence_score is a float
+        in [0, 1] or None.
+    """
+    from pipeline.kv_inference import answer_with_retrieval
+    phase = ver.get_phase()
+    inference_cfg = cfg.get("addon_config", {}).get("inference", {})
+    effective_cfg = {**cfg, **inference_cfg}
+
+    if phase < 2:
+        return answer_with_retrieval(query, cfg), None
+
+    similarity = _query_similarity_to_known_good(query, cfg)
+
+    if phase == 2:
+        eligibility = effective_cfg.get("parametric_eligibility_threshold", 0.85)
+        if not is_eligible_for_parametric(similarity, eligibility):
+            return answer_with_retrieval(query, cfg), None
     return _parametric_or_retrieve(query, cfg, effective_cfg, similarity)
+
+
+def _log_query_with_confidence(query: str, cfg: dict, answer: str,
+                               routed_to: str, confidence_score: float | None) -> None:
+    """Log a query with its confidence score (Sprint 4)."""
+    try:
+        from pipeline import query_logger as _ql
+        _db = cfg.get("query_log_db", "query_log.db")
+        _ql.init_db(_db)
+        _ql.log_query(
+            db_path=_db,
+            query_text=query,
+            answer_text=answer,
+            routed_to=routed_to,
+            confidence_score=confidence_score,
+        )
+    except Exception:
+        pass
 
 
 def _log_would_have_retrieved(query: str, cfg: dict) -> None:

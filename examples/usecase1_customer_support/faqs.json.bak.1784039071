@@ -1,0 +1,830 @@
+[
+  {
+    "question": "How do I reset my password? (variant 0)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 1)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 2)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 3)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 4)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 5)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 6)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 7)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 8)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 9)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 10)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 11)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 12)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 13)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 14)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 15)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 16)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 17)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 18)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 19)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 20)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 21)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 22)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 23)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 24)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 25)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 26)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 27)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 28)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 29)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 30)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 31)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 32)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 33)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 34)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 35)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 36)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 37)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 38)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 39)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 40)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 41)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 42)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 43)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 44)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 45)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 46)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 47)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 48)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 49)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 50)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 51)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 52)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 53)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 54)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 55)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 56)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 57)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 58)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 59)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 60)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 61)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 62)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 63)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 64)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 65)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 66)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 67)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 68)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 69)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 70)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 71)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 72)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 73)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 74)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 75)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 76)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 77)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 78)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 79)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 80)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 81)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 82)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 83)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 84)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 85)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 86)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 87)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 88)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 89)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 90)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 91)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 92)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 93)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 94)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 95)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 96)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 97)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 98)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 99)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 100)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 101)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 102)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 103)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 104)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 105)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 106)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 107)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 108)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 109)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 110)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 111)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 112)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 113)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 114)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 115)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 116)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 117)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 118)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 119)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 120)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 121)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 122)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 123)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 124)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 125)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 126)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 127)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 128)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 129)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 130)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 131)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 132)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 133)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 134)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 135)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 136)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 137)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 138)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 139)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 140)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 141)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 142)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 143)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 144)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 145)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 146)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 147)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 148)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 149)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 150)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 151)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 152)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 153)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 154)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 155)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 156)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 157)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 158)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 159)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 160)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 161)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 162)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 163)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 164)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 165)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 166)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 167)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 168)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 169)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 170)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 171)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 172)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 173)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 174)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 175)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 176)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 177)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 178)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 179)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 180)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 181)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 182)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 183)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 184)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 185)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 186)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 187)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 188)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 189)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 190)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 191)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 192)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 193)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 194)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How do I reset my password? (variant 195)",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What payment methods are accepted? (variant 196)",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "How do I track my order? (variant 197)",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I change my shipping address after ordering? (variant 198)",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "How do I contact support? (variant 199)",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How can I get help with cancelling my order?",
+    "answer": "You can contact customer support and provide your order number. The support team is ready to assist you with any questions regarding cancelling your order and will do their best to provide you with the information you need.",
+    "source_chunk_ids": [
+      0
+    ]
+  },
+  {
+    "question": "What should I do if I run into problems while trying to cancel my order online?",
+    "answer": "If you encounter any difficulties while canceling your order online, you can reach out to the customer support team during their available hours by calling the customer support phone number, using the Live Chat feature on the website, or visiting the online company portal for additional help.",
+    "source_chunk_ids": [
+      2
+    ]
+  },
+  {
+    "question": "What steps do I need to follow to cancel my order?",
+    "answer": "To cancel your order, you need to: 1) Sign in to your account on the Online Company Portal, 2) Navigate to your order history section, 3) Locate the specific order using your order number, 4) Click the cancel option associated with that order, and 5) Confirm the cancellation by following any additional prompts. If you run into any issues, you can also contact customer support by phone, live chat, or during their listed support hours.",
+    "source_chunk_ids": [
+      3
+    ]
+  },
+  {
+    "question": "What steps do I need to follow to cancel my order due to financial difficulties?",
+    "answer": "To cancel your order, follow these steps: (1) Log in to the Online Company Portal, (2) Navigate to the Order History section, (3) Find the purchase associated with your order number, (4) Select the cancellation option on the purchase details page, and (5) Confirm the cancellation by completing any prompts or feedback questions. If you need further help, you can contact customer support during business hours via phone, Live Chat, or the company website.",
+    "source_chunk_ids": [
+      4
+    ]
+  }
+]

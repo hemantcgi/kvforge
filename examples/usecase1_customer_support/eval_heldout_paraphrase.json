@@ -1,0 +1,62 @@
+[
+  {
+    "question": "Is it possible to update my delivery address once an order is placed?",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "After checkout, how can I modify where my package ships?",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "Can the shipping destination be edited after I order?",
+    "answer": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page."
+  },
+  {
+    "question": "Which forms of payment can I use?",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "Do you take credit cards and digital wallets?",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "What ways can I pay for my purchase?",
+    "answer": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay."
+  },
+  {
+    "question": "What is the best way to reach your customer service team?",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "How can I get in touch with a support agent?",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "Where do I go if I need help from a person?",
+    "answer": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123."
+  },
+  {
+    "question": "I forgot my password, how do I set a new one?",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "What are the steps to change my account password?",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "How can I update my login credentials?",
+    "answer": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol."
+  },
+  {
+    "question": "Where can I see the delivery status of my purchase?",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "How do I follow my shipment?",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  },
+  {
+    "question": "Can I check where my order currently is?",
+    "answer": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow."
+  }
+]

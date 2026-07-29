@@ -28,6 +28,7 @@ DEFAULTS: dict[str, Any] = {
     "checkpoint_path": None,
     "phase": 1,
     "prs_history": [],
+    "kds_history": [],
     "known_good_queries": [],
     "clusters": {},
 }
@@ -248,6 +249,44 @@ def append_prs(
                 f"⚠️  Phase regression: {before} → {new_phase} "
                 f"(PRS below {reg} for {stability_window} consecutive rounds)"
             )
+    save(data)
+
+
+def append_kds(round_num: int, mean_kds: float, measured_chunks: int) -> None:
+    """Append a corpus-level KDS record to version.json.
+
+    Args:
+        round_num: LoRA training round number (record-keeping only).
+        mean_kds: Mean KDS score over chunks measured in this round, in [0, 1].
+        measured_chunks: Number of chunks that contributed a KDS value this round.
+    """
+    import time
+    data = load()
+    data["kds_history"].append({
+        "round": round_num,
+        "mean_kds": round(mean_kds, 4),
+        "measured_chunks": measured_chunks,
+        "timestamp": int(time.time()),
+    })
+    save(data)
+
+
+def append_fkds(round_num: int, mean_fkds: float, measured_chunks: int) -> None:
+    """Append a corpus-level factual KDS (fKDS) record to version.json.
+
+    Args:
+        round_num: LoRA training round number (record-keeping only).
+        mean_fkds: Mean fKDS score over chunks measured in this round, in [0, 1].
+        measured_chunks: Number of chunks that contributed an fKDS value this round.
+    """
+    import time
+    data = load()
+    data.setdefault("fkds_history", []).append({
+        "round": round_num,
+        "mean_fkds": round(mean_fkds, 4),
+        "measured_chunks": measured_chunks,
+        "timestamp": int(time.time()),
+    })
     save(data)
 
 

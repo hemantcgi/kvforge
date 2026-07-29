@@ -8,38 +8,6 @@
     "file": "walkthrough_login_to_dashboard__01_redirect_to_login.png"
   },
   {
-    "test": "walkthrough_login_to_dashboard",
-    "step": 2,
-    "slug": "login_form_filled_wrong",
-    "description": "Login form with invalid credentials typed in \u2014 the 'Sign In' button has not been clicked yet.",
-    "action": "Filled email='wrong@example.com' and password='badpassword' in the login form.",
-    "file": "walkthrough_login_to_dashboard__02_login_form_filled_wrong.png"
-  },
-  {
-    "test": "walkthrough_login_to_dashboard",
-    "step": 3,
-    "slug": "login_error_shown",
-    "description": "Login page reloaded with an error message \u2014 the server rejected the credentials and rendered the error template variable.",
-    "action": "Submitted the login form. Server returned 200 with an error message.",
-    "file": "walkthrough_login_to_dashboard__03_login_error_shown.png"
-  },
-  {
-    "test": "walkthrough_login_to_dashboard",
-    "step": 4,
-    "slug": "studio_hub_authenticated",
-    "description": "Studio hub (new Atlassian-style design) \u2014 the main dashboard showing configured use-cases, system status cards, and the sidebar with navigation.",
-    "action": "Injected a valid admin JWT cookie, then navigated to /studio/.",
-    "file": "walkthrough_login_to_dashboard__04_studio_hub_authenticated.png"
-  },
-  {
-    "test": "walkthrough_login_to_dashboard",
-    "step": 5,
-    "slug": "admin_users_page",
-    "description": "Admin user management page \u2014 lists all registered users with their email, role badge, and provider. Admin-only page (403 for non-admins).",
-    "action": "Navigated to /studio/admin/users as an authenticated admin user.",
-    "file": "walkthrough_login_to_dashboard__05_admin_users_page.png"
-  },
-  {
     "test": "walkthrough_create_connector_and_sync",
     "step": 1,
     "slug": "connectors_page_initial",
@@ -51,7 +19,7 @@
     "test": "walkthrough_create_connector_and_sync",
     "step": 2,
     "slug": "connector_added_in_list",
-    "description": "The new connector 'My GDrive 7027ec' now appears in the connectors list with its type badge (GDrive) and a health status dot.",
+    "description": "The new connector 'My GDrive 32ed4b' now appears in the connectors list with its type badge (GDrive) and a health status dot.",
     "action": "Created connector via POST /studio/api/connectors with type='gdrive', then reloaded the page.",
     "file": "walkthrough_create_connector_and_sync__02_connector_added_in_list.png"
   },
@@ -115,8 +83,8 @@
     "test": "walkthrough_monitoring",
     "step": 2,
     "slug": "uc_detail_page",
-    "description": "UC detail page for 'uc1' \u2014 shows the use-case's current pipeline phase, PRS score history, training controls, and live sync status.",
-    "action": "Navigated to /studio/uc/uc1 \u2014 the UC ID was fetched from GET /studio/api/registry.",
+    "description": "UC detail page for 'my-wiki-corpus' \u2014 shows the use-case's current pipeline phase, PRS score history, training controls, and live sync status.",
+    "action": "Navigated to /studio/uc/my-wiki-corpus \u2014 the UC ID was fetched from GET /studio/api/registry.",
     "file": "walkthrough_monitoring__02_uc_detail_page.png"
   },
   {

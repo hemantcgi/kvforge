@@ -1,0 +1,29 @@
+{
+  "id": "my-wiki-corpus",
+  "display_name": "my-wiki-corpus",
+  "type": "example",
+  "created_at": "2026-07-29T01:02:53.765110+00:00",
+  "data": {
+    "source_type": "huggingface",
+    "source_path": "",
+    "dataset_id": "",
+    "split": "train",
+    "text_column": "text",
+    "max_rows": 5000
+  },
+  "vectordb": {
+    "store": "qdrant",
+    "dimensions": 384,
+    "chunk_size": 512,
+    "chunk_overlap": 64,
+    "embedding_model": "BAAI/bge-small-en-v1.5",
+    "index_type": "hnsw"
+  },
+  "llm": {
+    "local_model": "meta-llama/Llama-3.2-3B-Instruct",
+    "quantization": "4bit",
+    "vllm_url": "",
+    "comparison_provider": "gemini",
+    "comparison_model": "gemini-2.5-flash"
+  }
+}

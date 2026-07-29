@@ -49,25 +49,28 @@ def get_store(cfg: dict):
     Raises:
         ValueError: If the backend name is not recognised.
     """
-    backend = cfg.get("vector_store", "qdrant")
+    # Support both flat configs and the nested addon_config.indexing layout.
+    indexing_cfg = cfg.get("addon_config", {}).get("indexing", {})
+    effective_cfg = {**cfg, **indexing_cfg}
+    backend = effective_cfg.get("vector_store", "qdrant")
 
     if backend in _custom_registry:
-        return _custom_registry[backend](cfg)
+        return _custom_registry[backend](effective_cfg)
 
     if backend == "qdrant":
         from vectorstore.qdrant_store import QdrantStore
         return QdrantStore(
-            host=cfg.get("qdrant_host", "localhost"),
-            port=cfg.get("qdrant_port", 6333),
+            host=effective_cfg.get("qdrant_host", "localhost"),
+            port=effective_cfg.get("qdrant_port", 6333),
         )
 
     if backend == "chroma":
         from vectorstore.chroma_store import ChromaStore
-        return ChromaStore(persist_dir=cfg.get("chroma_persist_dir", ".chroma"))
+        return ChromaStore(persist_dir=effective_cfg.get("chroma_persist_dir", ".chroma"))
 
     if backend == "faiss":
         from vectorstore.faiss_store import FAISSStore
-        return FAISSStore(persist_dir=cfg.get("faiss_persist_dir", ".faiss"))
+        return FAISSStore(persist_dir=effective_cfg.get("faiss_persist_dir", ".faiss"))
 
     if backend == "pinecone":
         from vectorstore.pinecone_store import PineconeStore

@@ -1,0 +1,101 @@
+{
+  "use_case_name": "my-wiki-corpus",
+  "collection": "my-wiki-corpus",
+  "version_file": "examples/my-wiki-corpus/version.json",
+  "addons": [
+    "indexing",
+    "inference",
+    "training",
+    "background",
+    "sync",
+    "monitoring",
+    "compute"
+  ],
+  "addon_config": {
+    "indexing": {
+      "loader": "huggingface",
+      "chunk_size": 512,
+      "chunk_overlap": 64,
+      "embed_batch": 64,
+      "upsert_batch": 128,
+      "embed_model": "BAAI/bge-small-en-v1.5",
+      "embedder_backend": "fastembed",
+      "vector_dim": 384,
+      "vector_store": "qdrant",
+      "qdrant_host": "localhost",
+      "qdrant_port": 6333,
+      "dataset_id": "wikitext",
+      "split": "train",
+      "jsonl_text_key": "text",
+      "max_rows": 15000,
+      "source_path": "",
+      "hf_config_name": "wikitext-2-v1",
+      "hf_split": "train",
+      "hf_text_column": "text",
+      "hf_max_rows": 15000,
+      "model_library": {
+        "meta-llama/Llama-3.2-3B-Instruct": {
+          "kv_num_layers": 28,
+          "kv_num_heads": 8,
+          "kv_head_dim": 128
+        }
+      }
+    },
+    "inference": {
+      "top_k": 5,
+      "llm_model": "meta-llama/Llama-3.2-3B-Instruct",
+      "quantization": "4bit",
+      "vllm_url": "http://localhost:8093",
+      "vllm_model": "my-wiki-corpus",
+      "max_new_tokens": 256,
+      "gate_threshold": 0.75
+    },
+    "training": {
+      "lora_rank": 16,
+      "lora_alpha": 32,
+      "lora_target_modules": [
+        "q_proj",
+        "k_proj",
+        "v_proj"
+      ],
+      "lora_dropout": 0.05,
+      "lora_epochs": 15,
+      "lora_lr": 0.0002,
+      "checkpoint_dir": "examples/my-wiki-corpus/lora_checkpoints/",
+      "replay_db": "examples/my-wiki-corpus/replay.db",
+      "prs_threshold": 0.75,
+      "prs_weights": {
+        "accuracy": 0.5,
+        "calibration": 0.3,
+        "consistency": 0.2
+      },
+      "prs_advancement_threshold": 0.72,
+      "prs_regression_threshold": 0.6,
+      "faq_question_key": "question",
+      "faq_answer_key": "answer"
+    },
+    "background": {
+      "flush_seconds": 300,
+      "flush_queries": 50
+    },
+    "sync": {
+      "interval_minutes": 1440,
+      "hitl_mode": "auto",
+      "sync_regression_mode": "pct",
+      "sync_regression_pct_threshold": 0.1,
+      "sync_regression_tier_threshold": 0.15
+    },
+    "monitoring": {
+      "port": 8085
+    },
+    "compute": {
+      "backend": "remote",
+      "worker_url": "http://localhost:8091",
+      "api_key": "",
+      "batch_size": 16,
+      "timeout_seconds": 300.0,
+      "compress": true
+    }
+  },
+  "gpu_profile_id": "b8b09778-df17-4ff8-b79c-eb78793655ec"
+}

@@ -30,9 +30,12 @@ def get_loader(cfg: dict):
     Raises:
         ValueError: If ``cfg['loader']`` is not a recognised loader name.
     """
-    name = cfg.get("loader", "pdf")
-    chunk_size = cfg.get("chunk_size", 600)
-    chunk_overlap = cfg.get("chunk_overlap", 60)
+    # Support both flat configs and the nested addon_config.indexing layout.
+    indexing_cfg = cfg.get("addon_config", {}).get("indexing", {})
+    effective_cfg = {**cfg, **indexing_cfg}
+    name = effective_cfg.get("loader", "pdf")
+    chunk_size = effective_cfg.get("chunk_size", 600)
+    chunk_overlap = effective_cfg.get("chunk_overlap", 60)
 
     if name == "pdf":
         from ingestion.pdf_loader import PDFLoader
