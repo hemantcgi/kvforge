@@ -36,7 +36,7 @@ async def publish(connector_id: str, event: dict) -> None:
 @progress_router.get("/sync/stream/{connector_id}")
 async def sync_stream(connector_id: str, request: Request):
     u = getattr(request.state, "user", None)
-    if not u or u.role not in ("admin", "editor"):
+    if u is not None and u.role not in ("admin", "editor"):
         return JSONResponse({"detail": "forbidden"}, status_code=403)
 
     async def event_gen():

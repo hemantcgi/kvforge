@@ -78,8 +78,7 @@ def cmd_init(args) -> None:
                 "lora_lr": 0.0002,
                 "checkpoint_dir": f"{safe}/lora_checkpoints/",
                 "replay_db": f"{safe}/replay.db",
-                "phase2_advance_threshold": 0.30,
-                "phase3_advance_threshold": 0.55,
+                "prs_threshold": 0.50,
                 "faq_question_key": "question",
                 "faq_answer_key": "answer",
             },
@@ -142,6 +141,11 @@ def cmd_index(args) -> None:
     with open(args.config) as f:
         cfg = _json.load(f)
 
+    # Flatten nested addon_config for legacy pipeline code.
+    addon_config = cfg.get("addon_config", {})
+    for section in ("indexing", "inference", "training", "background", "sync", "monitoring"):
+        cfg.update(addon_config.get(section, {}))
+
     loader = get_loader(cfg)
     embedder = get_embedder(cfg)
     store = get_store(cfg)
@@ -181,6 +185,11 @@ def cmd_search(args) -> None:
 
     with open(args.config) as f:
         cfg = _json.load(f)
+
+    # Flatten nested addon_config for legacy pipeline code.
+    addon_config = cfg.get("addon_config", {})
+    for section in ("indexing", "inference", "training", "background", "sync", "monitoring"):
+        cfg.update(addon_config.get(section, {}))
 
     embedder = get_embedder(cfg)
     store = get_store(cfg)

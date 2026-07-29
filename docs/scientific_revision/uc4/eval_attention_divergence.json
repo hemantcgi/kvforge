@@ -1,0 +1,204 @@
+{
+  "per_layer": [
+    {
+      "layer": 0,
+      "kl_fulltoken_vs_prefill": 0.0471,
+      "kl_meanpool_vs_prefill": 0.0698,
+      "cosine_fulltoken_vs_prefill": 0.0283,
+      "cosine_meanpool_vs_prefill": 0.0419
+    },
+    {
+      "layer": 1,
+      "kl_fulltoken_vs_prefill": 0.0771,
+      "kl_meanpool_vs_prefill": 0.1401,
+      "cosine_fulltoken_vs_prefill": 0.0463,
+      "cosine_meanpool_vs_prefill": 0.0841
+    },
+    {
+      "layer": 2,
+      "kl_fulltoken_vs_prefill": 0.1027,
+      "kl_meanpool_vs_prefill": 0.113,
+      "cosine_fulltoken_vs_prefill": 0.0616,
+      "cosine_meanpool_vs_prefill": 0.0678
+    },
+    {
+      "layer": 3,
+      "kl_fulltoken_vs_prefill": 0.1348,
+      "kl_meanpool_vs_prefill": 0.1842,
+      "cosine_fulltoken_vs_prefill": 0.0809,
+      "cosine_meanpool_vs_prefill": 0.1105
+    },
+    {
+      "layer": 4,
+      "kl_fulltoken_vs_prefill": 0.144,
+      "kl_meanpool_vs_prefill": 0.226,
+      "cosine_fulltoken_vs_prefill": 0.0864,
+      "cosine_meanpool_vs_prefill": 0.1356
+    },
+    {
+      "layer": 5,
+      "kl_fulltoken_vs_prefill": 0.1708,
+      "kl_meanpool_vs_prefill": 0.2842,
+      "cosine_fulltoken_vs_prefill": 0.1025,
+      "cosine_meanpool_vs_prefill": 0.1705
+    },
+    {
+      "layer": 6,
+      "kl_fulltoken_vs_prefill": 0.195,
+      "kl_meanpool_vs_prefill": 0.2762,
+      "cosine_fulltoken_vs_prefill": 0.117,
+      "cosine_meanpool_vs_prefill": 0.1657
+    },
+    {
+      "layer": 7,
+      "kl_fulltoken_vs_prefill": 0.181,
+      "kl_meanpool_vs_prefill": 0.2632,
+      "cosine_fulltoken_vs_prefill": 0.1086,
+      "cosine_meanpool_vs_prefill": 0.1579
+    },
+    {
+      "layer": 8,
+      "kl_fulltoken_vs_prefill": 0.213,
+      "kl_meanpool_vs_prefill": 0.3514,
+      "cosine_fulltoken_vs_prefill": 0.1278,
+      "cosine_meanpool_vs_prefill": 0.2108
+    },
+    {
+      "layer": 9,
+      "kl_fulltoken_vs_prefill": 0.2197,
+      "kl_meanpool_vs_prefill": 0.3251,
+      "cosine_fulltoken_vs_prefill": 0.1318,
+      "cosine_meanpool_vs_prefill": 0.195
+    },
+    {
+      "layer": 10,
+      "kl_fulltoken_vs_prefill": 0.239,
+      "kl_meanpool_vs_prefill": 0.299,
+      "cosine_fulltoken_vs_prefill": 0.1434,
+      "cosine_meanpool_vs_prefill": 0.1794
+    },
+    {
+      "layer": 11,
+      "kl_fulltoken_vs_prefill": 0.2305,
+      "kl_meanpool_vs_prefill": 0.3699,
+      "cosine_fulltoken_vs_prefill": 0.1383,
+      "cosine_meanpool_vs_prefill": 0.2219
+    },
+    {
+      "layer": 12,
+      "kl_fulltoken_vs_prefill": 0.2617,
+      "kl_meanpool_vs_prefill": 0.3591,
+      "cosine_fulltoken_vs_prefill": 0.157,
+      "cosine_meanpool_vs_prefill": 0.2155
+    },
+    {
+      "layer": 13,
+      "kl_fulltoken_vs_prefill": 0.2583,
+      "kl_meanpool_vs_prefill": 0.3836,
+      "cosine_fulltoken_vs_prefill": 0.155,
+      "cosine_meanpool_vs_prefill": 0.2302
+    },
+    {
+      "layer": 14,
+      "kl_fulltoken_vs_prefill": 0.2722,
+      "kl_meanpool_vs_prefill": 0.3514,
+      "cosine_fulltoken_vs_prefill": 0.1633,
+      "cosine_meanpool_vs_prefill": 0.2109
+    },
+    {
+      "layer": 15,
+      "kl_fulltoken_vs_prefill": 0.273,
+      "kl_meanpool_vs_prefill": 0.3471,
+      "cosine_fulltoken_vs_prefill": 0.1638,
+      "cosine_meanpool_vs_prefill": 0.2082
+    },
+    {
+      "layer": 16,
+      "kl_fulltoken_vs_prefill": 0.2138,
+      "kl_meanpool_vs_prefill": 0.381,
+      "cosine_fulltoken_vs_prefill": 0.1283,
+      "cosine_meanpool_vs_prefill": 0.2286
+    },
+    {
+      "layer": 17,
+      "kl_fulltoken_vs_prefill": 0.2518,
+      "kl_meanpool_vs_prefill": 0.4315,
+      "cosine_fulltoken_vs_prefill": 0.1511,
+      "cosine_meanpool_vs_prefill": 0.2589
+    },
+    {
+      "layer": 18,
+      "kl_fulltoken_vs_prefill": 0.2869,
+      "kl_meanpool_vs_prefill": 0.3739,
+      "cosine_fulltoken_vs_prefill": 0.1722,
+      "cosine_meanpool_vs_prefill": 0.2243
+    },
+    {
+      "layer": 19,
+      "kl_fulltoken_vs_prefill": 0.2937,
+      "kl_meanpool_vs_prefill": 0.3851,
+      "cosine_fulltoken_vs_prefill": 0.1762,
+      "cosine_meanpool_vs_prefill": 0.231
+    },
+    {
+      "layer": 20,
+      "kl_fulltoken_vs_prefill": 0.2778,
+      "kl_meanpool_vs_prefill": 0.4104,
+      "cosine_fulltoken_vs_prefill": 0.1667,
+      "cosine_meanpool_vs_prefill": 0.2462
+    },
+    {
+      "layer": 21,
+      "kl_fulltoken_vs_prefill": 0.2842,
+      "kl_meanpool_vs_prefill": 0.4474,
+      "cosine_fulltoken_vs_prefill": 0.1705,
+      "cosine_meanpool_vs_prefill": 0.2684
+    },
+    {
+      "layer": 22,
+      "kl_fulltoken_vs_prefill": 0.2968,
+      "kl_meanpool_vs_prefill": 0.4365,
+      "cosine_fulltoken_vs_prefill": 0.1781,
+      "cosine_meanpool_vs_prefill": 0.2619
+    },
+    {
+      "layer": 23,
+      "kl_fulltoken_vs_prefill": 0.2989,
+      "kl_meanpool_vs_prefill": 0.4432,
+      "cosine_fulltoken_vs_prefill": 0.1793,
+      "cosine_meanpool_vs_prefill": 0.2659
+    },
+    {
+      "layer": 24,
+      "kl_fulltoken_vs_prefill": 0.275,
+      "kl_meanpool_vs_prefill": 0.4098,
+      "cosine_fulltoken_vs_prefill": 0.165,
+      "cosine_meanpool_vs_prefill": 0.2459
+    },
+    {
+      "layer": 25,
+      "kl_fulltoken_vs_prefill": 0.2796,
+      "kl_meanpool_vs_prefill": 0.4485,
+      "cosine_fulltoken_vs_prefill": 0.1678,
+      "cosine_meanpool_vs_prefill": 0.2691
+    },
+    {
+      "layer": 26,
+      "kl_fulltoken_vs_prefill": 0.2853,
+      "kl_meanpool_vs_prefill": 0.5055,
+      "cosine_fulltoken_vs_prefill": 0.1712,
+      "cosine_meanpool_vs_prefill": 0.3033
+    },
+    {
+      "layer": 27,
+      "kl_fulltoken_vs_prefill": 0.2751,
+      "kl_meanpool_vs_prefill": 0.4042,
+      "cosine_fulltoken_vs_prefill": 0.165,
+      "cosine_meanpool_vs_prefill": 0.2425
+    }
+  ],
+  "mean_kl_fulltoken": 0.2264,
+  "mean_kl_meanpool": 0.3364,
+  "n_questions": 50,
+  "dry_run": true
+}

@@ -1,0 +1,69 @@
+{
+  "_comment": "Use Case 4 — Sprint 2.5 Distillation w/ Confidence Supervision | Llama-3.2-3B-Instruct",
+
+  "use_case_name": "AWS Bedrock User Guide",
+  "collection":    "bedrock-userguide",
+  "version_file":  "examples/usecase4_bedrock_userguide/version.json",
+
+  "addons": ["indexing", "inference", "training", "background", "sync", "monitoring"],
+
+  "addon_config": {
+    "indexing": {
+      "loader":           "pdf",
+      "chunk_size":       600,
+      "chunk_overlap":    60,
+      "embed_batch":      64,
+      "upsert_batch":     128,
+      "embed_model":      "BAAI/bge-small-en-v1.5",
+      "embedder_backend": "fastembed",
+      "vector_dim":       384,
+      "vector_store":     "qdrant",
+      "qdrant_host":      "localhost",
+      "qdrant_port":      6333,
+      "model_library": {
+        "meta-llama/Llama-3.2-3B-Instruct": {
+          "kv_num_layers": 28, "kv_num_heads": 8, "kv_head_dim": 128
+        }
+      }
+    },
+    "inference": {
+      "top_k":          5,
+      "llm_model":      "meta-llama/Llama-3.2-3B-Instruct",
+      "quantization":   "4bit",
+      "vllm_url":       "http://localhost:8094",
+      "vllm_model":     "uc4",
+      "max_new_tokens": 256,
+      "gate_threshold": 0.75,
+      "recompute_ratio": 0.0
+    },
+    "training": {
+      "lora_rank":            16,
+      "lora_alpha":           32,
+      "lora_target_modules":  ["q_proj", "k_proj", "v_proj"],
+      "lora_dropout":         0.05,
+      "lora_epochs":          1,
+      "lora_lr":              5e-5,
+      "sft_format":           "chat",
+      "confidence_supervision": true,
+      "kl_to_base_weight":    0.0,
+      "checkpoint_dir":       "examples/usecase4_bedrock_userguide/lora_checkpoints/",
+      "replay_db":            "examples/usecase4_bedrock_userguide/replay.db",
+      "prs_weights":          {"accuracy": 0.7, "calibration": 0.15, "consistency": 0.15},
+      "prs_advancement_threshold": 0.72,
+      "prs_regression_threshold":  0.25,
+      "phase2_advance_threshold":  0.30,
+      "phase3_advance_threshold":  0.55,
+      "faq_question_key":    "question",
+      "faq_answer_key":      "answer"
+    },
+    "background": {"flush_seconds": 300, "flush_queries": 50},
+    "sync": {
+      "interval_minutes": 1440,
+      "hitl_mode": "auto",
+      "sync_regression_mode": "pct",
+      "sync_regression_pct_threshold": 0.10,
+      "sync_regression_tier_threshold": 0.15
+    },
+    "monitoring": {"port": 8084}
+  }
+}

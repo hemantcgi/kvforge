@@ -23,6 +23,9 @@ import httpx
 import numpy as np
 from fastembed import TextEmbedding
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from eval import metrics as eval_metrics
+
 
 def _rouge_l(hyp: str, ref: str) -> float:
     """Compute ROUGE-L F1 score (pure Python, no external deps)."""
@@ -135,6 +138,12 @@ def run_eval(
                 "sem_sim_b": round(sem_sim_b, 4),
                 "rouge_l_a": round(_rouge_l(answer_a, ground_truth), 4),
                 "rouge_l_b": round(_rouge_l(answer_b, ground_truth), 4),
+                "em_a": eval_metrics.exact_match(answer_a, ground_truth),
+                "em_b": eval_metrics.exact_match(answer_b, ground_truth),
+                "token_f1_a": round(eval_metrics.token_f1(answer_a, ground_truth), 4),
+                "token_f1_b": round(eval_metrics.token_f1(answer_b, ground_truth), 4),
+                "judge_a": int(eval_metrics.llm_judge(question, answer_a, ground_truth)["factually_correct"]),
+                "judge_b": int(eval_metrics.llm_judge(question, answer_b, ground_truth)["factually_correct"]),
             })
 
             if (i + 1) % 10 == 0 or (i + 1) == len(faqs):

@@ -61,6 +61,20 @@ def test_get_merged_config_pipeline_compat():
     assert merged["vector_store"] == "qdrant"
 
 
+def test_get_merged_config_includes_thresholds():
+    from core.config import KVForgeConfig
+    cfg = KVForgeConfig(
+        use_case_name="UC",
+        collection="col",
+        version_file="v.json",
+        kds_threshold=0.45,
+        fkds_threshold=0.55,
+    )
+    merged = cfg.get_merged_config()
+    assert merged["kds_threshold"] == 0.45
+    assert merged["fkds_threshold"] == 0.55
+
+
 def test_load_config_strips_comment_keys(tmp_path):
     from core.config import load_config
     p = tmp_path / "cfg.json"
@@ -72,3 +86,22 @@ def test_load_config_strips_comment_keys(tmp_path):
     }))
     cfg = load_config(str(p))
     assert cfg.collection == "col"
+
+
+def test_confidence_flags_in_config_and_merge():
+    from core.config import KVForgeConfig
+    cfg = KVForgeConfig(
+        use_case_name="UC",
+        collection="col",
+        version_file="v.json",
+        confidence_supervision=True,
+        use_confidence_token=True,
+        confidence_label_threshold=0.6,
+    )
+    assert cfg.confidence_supervision is True
+    assert cfg.use_confidence_token is True
+    assert cfg.confidence_label_threshold == 0.6
+    merged = cfg.get_merged_config()
+    assert merged["confidence_supervision"] is True
+    assert merged["use_confidence_token"] is True
+    assert merged["confidence_label_threshold"] == 0.6

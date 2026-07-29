@@ -39,6 +39,7 @@ def migrate() -> None:
     _conn().executescript(schema)
     _conn().commit()
     _migrate_connector_types()
+    _migrate_fix_scope_fk()
 
 
 def _migrate_connector_types() -> None:
@@ -72,6 +73,65 @@ def _migrate_connector_types() -> None:
         DROP TABLE _connector_configs_old;
         PRAGMA foreign_keys=ON;
     """)
+    _conn().commit()
+
+
+def _migrate_fix_scope_fk() -> None:
+    """Rebuild connector_uc_scopes and sync_runs if their FKs still point to the
+    dropped _connector_configs_old table.
+
+    The _migrate_connector_types migration renamed connector_configs to
+    _connector_configs_old, created a new connector_configs, then dropped the
+    old table.  SQLite silently updated FK references in dependent tables to
+    track the rename, leaving them pointing at the non-existent table and
+    causing every INSERT to fail with OperationalError.
+    """
+    needs_fix = []
+    for tbl in ("connector_uc_scopes", "sync_runs"):
+        row = _conn().execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (tbl,)
+        ).fetchone()
+        if row and "_connector_configs_old" in row[0]:
+            needs_fix.append(tbl)
+
+    if not needs_fix:
+        return
+
+    script = ["PRAGMA foreign_keys=OFF;"]
+    if "connector_uc_scopes" in needs_fix:
+        script += [
+            "ALTER TABLE connector_uc_scopes RENAME TO _connector_uc_scopes_old;",
+            """CREATE TABLE connector_uc_scopes (
+                connector_id TEXT NOT NULL REFERENCES connector_configs(id) ON DELETE CASCADE,
+                uc_id TEXT NOT NULL,
+                scope_config_json TEXT NOT NULL DEFAULT '{}',
+                last_sync_at DATETIME,
+                last_delta_token TEXT,
+                PRIMARY KEY (connector_id, uc_id)
+            );""",
+            "INSERT INTO connector_uc_scopes SELECT * FROM _connector_uc_scopes_old;",
+            "DROP TABLE _connector_uc_scopes_old;",
+        ]
+    if "sync_runs" in needs_fix:
+        script += [
+            "ALTER TABLE sync_runs RENAME TO _sync_runs_old;",
+            """CREATE TABLE sync_runs (
+                id TEXT PRIMARY KEY,
+                connector_id TEXT NOT NULL REFERENCES connector_configs(id),
+                uc_id TEXT NOT NULL,
+                trigger TEXT NOT NULL CHECK(trigger IN ('manual','scheduled','webhook')),
+                status TEXT NOT NULL CHECK(status IN ('running','ok','error')),
+                files_total INTEGER DEFAULT 0,
+                files_done INTEGER DEFAULT 0,
+                error TEXT,
+                started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                finished_at DATETIME
+            );""",
+            "INSERT INTO sync_runs SELECT * FROM _sync_runs_old;",
+            "DROP TABLE _sync_runs_old;",
+        ]
+    script.append("PRAGMA foreign_keys=ON;")
+    _conn().executescript("\n".join(script))
     _conn().commit()
 
 

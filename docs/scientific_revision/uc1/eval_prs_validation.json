@@ -1,0 +1,118 @@
+{
+  "n": 30,
+  "cosine_ratios": [
+    0.9393,
+    0.9392,
+    0.9196,
+    0.5902,
+    1.0,
+    0.8125,
+    0.6693,
+    0.8936,
+    1.0,
+    0.8226,
+    0.8467,
+    0.7893,
+    0.5589,
+    0.8246,
+    1.0,
+    0.8855,
+    0.5327,
+    0.9703,
+    0.9093,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    0.8649,
+    1.0,
+    0.9834,
+    0.8544,
+    0.9133,
+    0.932,
+    0.8762
+  ],
+  "correlations": {
+    "em": {
+      "pearson": 0.4646,
+      "spearman": 0.6297
+    },
+    "token_f1": {
+      "pearson": 0.695,
+      "spearman": 0.7625
+    },
+    "judge": {
+      "pearson": 0.2881,
+      "spearman": 0.1916
+    },
+    "factual": {
+      "pearson": 0.5383,
+      "spearman": 0.5141
+    }
+  },
+  "disagreements": [
+    {
+      "index": 2,
+      "question": "What payment methods are accepted? (variant 101)",
+      "cosine_ratio": 0.9196,
+      "token_f1": 0.3077,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 7,
+      "question": "How do I track my order? (variant 2)",
+      "cosine_ratio": 0.8936,
+      "token_f1": 0.4167,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 18,
+      "question": "How do I reset my password? (variant 30)",
+      "cosine_ratio": 0.9093,
+      "token_f1": 0.3571,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 23,
+      "question": "What payment methods are accepted? (variant 126)",
+      "cosine_ratio": 0.8649,
+      "token_f1": 0.4286,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 26,
+      "question": "How do I track my order? (variant 47)",
+      "cosine_ratio": 0.8544,
+      "token_f1": 0.4167,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 28,
+      "question": "How do I reset my password? (variant 5)",
+      "cosine_ratio": 0.932,
+      "token_f1": 0.4667,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 29,
+      "question": "How do I contact support? (variant 194)",
+      "cosine_ratio": 0.8762,
+      "token_f1": 0.3529,
+      "exact_match": 0,
+      "judge": 1
+    }
+  ],
+  "prs_simulation": {
+    "cosine_mean": 0.8776,
+    "factual_mean": 0.5706,
+    "cosine_reaches_phase3": true,
+    "factual_reaches_phase3": false,
+    "decision_flips": 1
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "tier_weighted_cloud": {
+    "checkpoint": "examples/usecase3_squad/lora_checkpoints/v1_seed",
+    "prs": 0.7015,
+    "e1_summary": {
+      "text_rag": {
+        "em": 0.0,
+        "token_f1": 0.003911219393127227,
+        "judge": 0.0,
+        "n": 50
+      },
+      "kv_meanpool": {
+        "em": 0.0,
+        "token_f1": 0.004606673681319847,
+        "judge": 0.0,
+        "n": 50
+      },
+      "kv_fulltoken": {
+        "em": 0.0,
+        "token_f1": 0.0018266827094731298,
+        "judge": 0.0,
+        "n": 50
+      },
+      "parametric": {
+        "em": 0.0,
+        "token_f1": 0.009650184870847534,
+        "judge": 0.0,
+        "n": 50
+      }
+    }
+  },
+  "uniform_cloud": {
+    "checkpoint": "examples/usecase3_squad/lora_checkpoints/v2_uniform",
+    "prs": 0.705,
+    "e1_summary": {
+      "text_rag": {
+        "em": 0.0,
+        "token_f1": 0.00210874944083384,
+        "judge": 0.0,
+        "n": 50
+      },
+      "kv_meanpool": {
+        "em": 0.0,
+        "token_f1": 0.007031354269391399,
+        "judge": 0.0,
+        "n": 50
+      },
+      "kv_fulltoken": {
+        "em": 0.0,
+        "token_f1": 0.0024833962610078058,
+        "judge": 0.0,
+        "n": 50
+      },
+      "parametric": {
+        "em": 0.0,
+        "token_f1": 0.01131852334413641,
+        "judge": 0.0,
+        "n": 50
+      }
+    }
+  },
+  "uniform_heuristic": {
+    "checkpoint": "examples/usecase3_squad/lora_checkpoints/v3_heuristic",
+    "prs": 0.7339,
+    "e1_summary": {
+      "text_rag": {
+        "em": 0.0,
+        "token_f1": 0.002183447924624395,
+        "judge": 0.0,
+        "n": 50
+      },
+      "kv_meanpool": {
+        "em": 0.0,
+        "token_f1": 0.0016839715867980232,
+        "judge": 0.0,
+        "n": 50
+      },
+      "kv_fulltoken": {
+        "em": 0.0,
+        "token_f1": 0.0010612705023173576,
+        "judge": 0.0,
+        "n": 50
+      },
+      "parametric": {
+        "em": 0.0,
+        "token_f1": 0.006140553937456509,
+        "judge": 0.0,
+        "n": 50
+      }
+    }
+  }
+}

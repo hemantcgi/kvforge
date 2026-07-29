@@ -333,7 +333,7 @@ def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
             for b in _parse_sleep_blocks(raw):
                 if len(new_faqs) >= count:
                     break
-                new_faqs.append({q_key: b["question"], a_key: b["answer"]})
+                new_faqs.append(tag_faq_with_chunk_ids({q_key: b["question"], a_key: b["answer"]}, [point_id]))
                 chunk_new.append(b["question"][:80])
             if chunk_new:
                 print(f"  [chunk {chunk_idx}/{len(new_records)}] +{len(chunk_new)} FAQs")

@@ -138,6 +138,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;f
 .pp-name.s-done{color:var(--success);}
 .pp-name.s-active{color:var(--accent);}
 .pp-name.s-locked{color:var(--text-disabled);}
+/* Clickable pipeline steps */
+.pp-step.s-done,.pp-step.s-active,.pp-step.s-pending{cursor:pointer;}
+.pp-step.s-locked{cursor:default;}
+.pp-step.s-done:hover .pp-dot,.pp-step.s-active:hover .pp-dot,.pp-step.s-pending:hover .pp-dot{filter:brightness(1.15);box-shadow:0 0 0 4px rgba(0,82,204,0.12);}
+.pp-step.s-done:hover .pp-name{text-decoration:underline dotted;}
 .pp-action-area{display:flex;align-items:center;gap:14px;border-top:1px solid var(--border);margin-top:14px;padding-top:14px;}
 .pp-action-copy{flex:1;}
 .pp-action-label{font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:3px;}
@@ -535,27 +540,77 @@ svg.prs-chart{width:100%;height:140px;display:block;overflow:visible;}
         </div>
       </div>
 
+      <!-- New-data banner (shown after sync) — 3 states: pending / running / success -->
+      <div id="new-data-banner" style="display:none;background:var(--bg-surface);border:1px solid var(--success);border-radius:8px;padding:14px 18px;margin-bottom:16px;box-shadow:var(--shadow-sm);">
+        <!-- ── STATE: pending ─────────────────────────────────────────────── -->
+        <div id="ndb-state-pending">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span style="font-size:16px">🔄</span>
+            <span style="font-size:13px;font-weight:700;color:var(--text-primary)">New data ready for pipeline update</span>
+            <button onclick="_dismissBanner()" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-subtle);line-height:1;">×</button>
+          </div>
+          <div style="display:flex;gap:16px;margin-bottom:12px;padding:8px 12px;background:var(--bg-sunken);border-radius:6px;font-size:12px;">
+            <span><b id="ndb-chunk-count" style="color:var(--accent)">—</b> <span style="color:var(--text-secondary)">new chunks to index</span></span>
+            <span style="color:var(--border)">|</span>
+            <span style="color:var(--text-secondary)">Steps: KV Indexer → FAQ generation → LoRA re-train → PRS eval</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button class="pp-cta" onclick="runUpdatePipeline()" style="font-size:13px;padding:8px 22px;">▶ Update Pipeline</button>
+            <span id="ndb-est" style="font-size:11px;color:var(--text-subtle)"></span>
+          </div>
+        </div>
+        <!-- ── STATE: running ─────────────────────────────────────────────── -->
+        <div id="ndb-state-running" style="display:none">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span style="font-size:16px">⏳</span>
+            <span style="font-size:13px;font-weight:700;color:var(--text-primary)">Pipeline running…</span>
+            <button onclick="_dismissBanner()" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-subtle);line-height:1;">×</button>
+          </div>
+          <div style="padding:8px 12px;background:var(--bg-sunken);border-radius:6px;font-size:12px;color:var(--text-secondary);">
+            <span id="ndb-running-desc">Processing new chunks — check progress panel and logs below.</span>
+          </div>
+          <div style="margin-top:10px;">
+            <button class="pp-cta" disabled style="font-size:13px;padding:8px 22px;opacity:0.45;cursor:not-allowed;">▶ Update Pipeline</button>
+          </div>
+        </div>
+        <!-- ── STATE: success ─────────────────────────────────────────────── -->
+        <div id="ndb-state-success" style="display:none">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span style="font-size:16px">✅</span>
+            <span style="font-size:13px;font-weight:700;color:var(--success)">Pipeline updated successfully</span>
+            <button onclick="_dismissBanner()" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-subtle);line-height:1;">×</button>
+          </div>
+          <div style="padding:8px 12px;background:var(--bg-metric-g);border-radius:6px;font-size:12px;color:var(--text-secondary);margin-bottom:10px;">
+            <span id="ndb-success-summary">—</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button class="pp-cta" disabled style="font-size:13px;padding:8px 22px;opacity:0.45;cursor:not-allowed;">▶ Update Pipeline</button>
+            <a href="/studio/connectors" style="font-size:12px;color:var(--accent);text-decoration:none;font-weight:600;">View sync history →</a>
+          </div>
+        </div>
+      </div>
+
       <!-- Pipeline progress panel -->
       <div class="pipeline-progress-panel">
         <div class="pp-header">Pipeline Progress</div>
         <div class="pp-track">
-          <div class="pp-step s-pending" id="ps-index">
+          <div class="pp-step s-pending" id="ps-index" onclick="if(!this.classList.contains('s-locked'))runPipelineStep('index')" title="Run indexer">
             <div class="pp-dot s-pending" id="ps-index-dot">1</div>
             <div class="pp-name s-pending" id="ps-index-name">Index</div>
           </div>
-          <div class="pp-step s-locked" id="ps-kv">
+          <div class="pp-step s-locked" id="ps-kv" onclick="if(!this.classList.contains('s-locked'))runPipelineStep('recompute')" title="Run KV Indexer">
             <div class="pp-dot s-locked" id="ps-kv-dot">2</div>
             <div class="pp-name s-locked" id="ps-kv-name">KV Tensors</div>
           </div>
-          <div class="pp-step s-locked" id="ps-faqs">
+          <div class="pp-step s-locked" id="ps-faqs" onclick="if(!this.classList.contains('s-locked'))runPipelineStep('faq-gen-cloud')" title="Regenerate FAQs">
             <div class="pp-dot s-locked" id="ps-faqs-dot">3</div>
             <div class="pp-name s-locked" id="ps-faqs-name">FAQs</div>
           </div>
-          <div class="pp-step s-locked" id="ps-lora">
+          <div class="pp-step s-locked" id="ps-lora" onclick="if(!this.classList.contains('s-locked'))runPipelineStep('train')" title="Re-train LoRA">
             <div class="pp-dot s-locked" id="ps-lora-dot">4</div>
             <div class="pp-name s-locked" id="ps-lora-name">Train LoRA</div>
           </div>
-          <div class="pp-step s-locked" id="ps-prs">
+          <div class="pp-step s-locked" id="ps-prs" onclick="if(!this.classList.contains('s-locked'))runPipelineStep('prs-eval')" title="Run PRS Eval">
             <div class="pp-dot s-locked" id="ps-prs-dot">5</div>
             <div class="pp-name s-locked" id="ps-prs-name">Evaluate</div>
           </div>
@@ -569,6 +624,33 @@ svg.prs-chart{width:100%;height:140px;display:block;overflow:visible;}
           <div class="pp-action-btns">
             <button class="pp-cta" id="pp-cta-btn" style="display:none"></button>
             <button class="pp-reindex" id="pp-reindex-btn" onclick="runPipelineStep('index')" style="display:none">↺ Re-index</button>
+            <button class="pp-reindex" id="pp-llm-config-btn" onclick="openLLMConfig()" style="display:none">⚙ Change LLM</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LLM config modal -->
+      <div id="llm-config-modal" style="display:none;position:fixed;inset:0;background:rgba(9,30,66,0.5);z-index:500;align-items:center;justify-content:center;">
+        <div style="background:var(--bg-surface);border-radius:8px;padding:24px;width:380px;box-shadow:var(--shadow-lg);">
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px;">FAQ Generation — LLM Settings</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Getting 429 rate-limit errors? Switch to a different provider or model.</div>
+          <div style="margin-bottom:12px;">
+            <label style="font-size:11px;font-weight:700;color:var(--text-subtle);display:block;margin-bottom:4px;">PROVIDER</label>
+            <select id="llm-cfg-provider" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;padding:7px 10px;font-size:13px;color:var(--text-primary);" onchange="_onLLMProviderChange()">
+              <option value="gemini">Gemini (Google)</option>
+              <option value="claude">Anthropic (Claude)</option>
+              <option value="openai">OpenAI</option>
+            </select>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="font-size:11px;font-weight:700;color:var(--text-subtle);display:block;margin-bottom:4px;">MODEL</label>
+            <select id="llm-cfg-model" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;padding:7px 10px;font-size:13px;color:var(--text-primary);">
+            </select>
+          </div>
+          <div style="font-size:11px;color:var(--text-subtle);margin-bottom:16px;">API keys are read from Studio → Settings → API Keys.</div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;">
+            <button class="btn-ghost" onclick="closeLLMConfig()" style="padding:7px 14px;font-size:12px;">Cancel</button>
+            <button class="btn-primary" onclick="saveLLMConfig()" style="padding:7px 14px;font-size:12px;">Save & Close</button>
           </div>
         </div>
       </div>
@@ -1068,12 +1150,15 @@ function togglePhaseDetail(phase) {
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
+let _lastUC = null;  // most recent UC state from registry, for banner success summary
+
 async function loadUCState() {
   try {
     const r = await fetch(`/studio/api/registry`, {credentials:'include'});
     const reg = await r.json();
     const uc = (reg.use_cases || []).find(u => u.id === UC_ID);
     if (uc) {
+      _lastUC = uc;
       const name = uc.display_name || UC_ID;
       document.getElementById('topbar-uc-name').textContent = name;
       document.getElementById('uc-page-title').textContent = name;
@@ -1184,6 +1269,8 @@ async function loadUCState() {
       const actionMeta  = document.getElementById('pp-action-meta');
       const ctaBtn      = document.getElementById('pp-cta-btn');
       const reindexBtn  = document.getElementById('pp-reindex-btn');
+      const llmCfgBtn   = document.getElementById('pp-llm-config-btn');
+      llmCfgBtn.style.display = 'none';  // shown only on FAQ + update-pipeline steps
       actionArea.style.display = '';
 
       if (!hasIndex) {
@@ -1211,6 +1298,7 @@ async function loadUCState() {
         ctaBtn.style.display     = '';
         ctaBtn.onclick           = () => runPipelineStep('faq-gen-cloud');
         reindexBtn.style.display = '';
+        document.getElementById('pp-llm-config-btn').style.display = '';
       } else if (!loraDone) {
         actionLabel.textContent  = 'Step 4 — Train LoRA';
         actionDesc.textContent   = 'Fine-tune the model on your corpus using the generated FAQs and a tier-weighted replay buffer.';
@@ -1229,12 +1317,16 @@ async function loadUCState() {
         ctaBtn.onclick           = () => runPipelineStep('prs-eval');
         reindexBtn.style.display = '';
       } else {
-        // Phase 3 active — all done
-        actionLabel.textContent  = 'Phase 3 active — pipeline complete';
-        actionDesc.textContent   = `PRS ${uc.prs != null ? uc.prs.toFixed(3) : '—'} — the model answers from weights when confident. You can re-train LoRA at any time to improve accuracy.`;
+        // Phase 3 active — single update pipeline button
+        actionLabel.textContent  = 'Phase 3 active — PRS ' + (uc.prs != null ? uc.prs.toFixed(3) : '—');
+        actionDesc.textContent   = 'Pipeline complete. After new data is synced, run the full update sequence to keep Phase 2/3 current.';
         actionMeta.style.display = 'none';
-        ctaBtn.style.display     = 'none';
+        ctaBtn.textContent       = '▶ Update Pipeline';
+        ctaBtn.style.display     = '';
+        ctaBtn.onclick           = () => runUpdatePipeline();
+        reindexBtn.textContent   = '↺ Re-index all';
         reindexBtn.style.display = '';
+        document.getElementById('pp-llm-config-btn').style.display = '';
       }
 
       // ── PRS card value (Phase 3 card) ──────────────────────────────────
@@ -1595,6 +1687,80 @@ function _scrollToLogs() {
   if (panel) panel.scrollIntoView({behavior: 'smooth', block: 'start'});
 }
 
+let _ndbChunks = 0;  // chunks count stored for success summary
+
+function _dismissBanner() {
+  document.getElementById('new-data-banner').style.display = 'none';
+}
+
+function _setBannerState(state) {
+  document.getElementById('ndb-state-pending').style.display = state === 'pending' ? '' : 'none';
+  document.getElementById('ndb-state-running').style.display = state === 'running' ? '' : 'none';
+  document.getElementById('ndb-state-success').style.display = state === 'success' ? '' : 'none';
+  const banner = document.getElementById('new-data-banner');
+  if (state === 'success') {
+    banner.style.borderColor = 'var(--success)';
+  } else if (state === 'running') {
+    banner.style.borderColor = 'var(--warning)';
+  } else {
+    banner.style.borderColor = 'var(--success)';
+  }
+  banner.style.display = '';
+}
+
+function _showNewDataBanner(chunks) {
+  _ndbChunks = chunks;
+  document.getElementById('ndb-chunk-count').textContent = chunks;
+  // Rough estimate: ~2 min KV/chunk on A10G + 30s FAQ/chunk + fixed LoRA/PRS overhead
+  const kvMin  = Math.ceil(chunks * 0.5);
+  const faqMin = Math.ceil(chunks * 0.3);
+  const estMin = kvMin + faqMin + 10; // +10 for LoRA + PRS
+  document.getElementById('ndb-est').textContent = `Estimated ~${estMin} min`;
+  _setBannerState('pending');
+  document.getElementById('new-data-banner').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function _setBannerSuccess() {
+  // Build summary line from most recent UC state
+  const uc = _lastUC;
+  const prs = uc && uc.prs != null ? uc.prs.toFixed(3) : null;
+  const loraVer = uc && uc.lora_version ? uc.lora_version : null;
+  let summary = _ndbChunks > 0 ? `${_ndbChunks} chunk${_ndbChunks > 1 ? 's' : ''} integrated` : 'Pipeline complete';
+  if (prs) summary += ` · PRS: ${prs}`;
+  if (loraVer) summary += ` · LoRA v${loraVer}`;
+  document.getElementById('ndb-success-summary').textContent = summary;
+  _setBannerState('success');
+}
+
+let _updatePipelineJobId = null;  // track which job_id is an update-pipeline job
+
+async function runUpdatePipeline() {
+  showToast('Starting update pipeline…');
+  const gpuProfileId = _selectedGpuProfileId || null;
+  try {
+    const r = await fetch('/studio/api/run-update-pipeline', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({uc_id: UC_ID, step: 'update-pipeline', gpu_profile_id: gpuProfileId}),
+    });
+    const d = await r.json();
+    if (r.status === 409) {
+      showToast('A pipeline job is already running');
+      if (d.job_id) { _updatePipelineJobId = d.job_id; _startSSE(d.job_id); }
+      _setBannerState('running');
+      return;
+    }
+    if (!r.ok) { showToast('Failed to start: ' + (d.detail || r.status)); return; }
+    _currentJobId = d.job_id;
+    _updatePipelineJobId = d.job_id;
+    _setBannerState('running');
+    document.getElementById('ndb-running-desc').textContent =
+      `Processing ${_ndbChunks > 0 ? _ndbChunks + ' new chunk' + (_ndbChunks > 1 ? 's' : '') : 'new data'} — check progress panel and logs below.`;
+    setTimeout(() => { _startSSE(d.job_id); }, 400);
+  } catch (e) { showToast('Error: ' + e.message); }
+}
+
 async function runPipelineStep(step) {
   showToast(`Starting ${step}…`);
   try {
@@ -1623,6 +1789,61 @@ async function runPipelineStep(step) {
     // Give the background task a moment to write its first line, then start SSE
     setTimeout(() => { _startSSE(d.job_id); }, 600);
   } catch(e) { showToast('Error: '+e.message); }
+}
+
+// ── LLM Config modal (for FAQ generation provider/model) ──────────────────
+const _LLM_MODELS = {
+  gemini: ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'],
+  claude: ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5-20251001', 'claude-3-5-sonnet-20241022'],
+  openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
+};
+
+function _onLLMProviderChange() {
+  const prov = document.getElementById('llm-cfg-provider').value;
+  const modelSel = document.getElementById('llm-cfg-model');
+  modelSel.innerHTML = (_LLM_MODELS[prov] || []).map(m => `<option value="${m}">${m}</option>`).join('');
+}
+
+async function openLLMConfig() {
+  // Load current values from uc_config
+  try {
+    const r = await fetch(`/studio/api/uc/${UC_ID}/config`, {credentials:'include'});
+    if (r.ok) {
+      const cfg = await r.json();
+      const llm = cfg.llm || {};
+      const prov = llm.sleep_faq_provider || 'gemini';
+      const model = llm.sleep_faq_model || 'gemini-2.5-flash';
+      document.getElementById('llm-cfg-provider').value = prov;
+      _onLLMProviderChange();
+      document.getElementById('llm-cfg-model').value = model;
+    }
+  } catch(_) { _onLLMProviderChange(); }
+  const modal = document.getElementById('llm-config-modal');
+  modal.style.display = 'flex';
+}
+
+function closeLLMConfig() {
+  document.getElementById('llm-config-modal').style.display = 'none';
+}
+
+async function saveLLMConfig() {
+  const prov  = document.getElementById('llm-cfg-provider').value;
+  const model = document.getElementById('llm-cfg-model').value;
+  try {
+    // Load full config, patch llm section, save
+    const r = await fetch(`/studio/api/uc/${UC_ID}/config`, {credentials:'include'});
+    const cfg = r.ok ? await r.json() : {};
+    cfg.llm = cfg.llm || {};
+    cfg.llm.sleep_faq_provider = prov;
+    cfg.llm.sleep_faq_model    = model;
+    await fetch(`/studio/api/uc/${UC_ID}/config`, {
+      method: 'POST', credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({llm: {sleep_faq_provider: prov, sleep_faq_model: model}}),
+    });
+    showToast(`FAQ LLM → ${prov}/${model}`);
+    closeLLMConfig();
+  } catch(e) { showToast('Save failed: ' + e.message); }
 }
 
 // ── GPU Monitor ────────────────────────────────────────────────────────────
@@ -2029,7 +2250,14 @@ function _startSSE(jobId) {
       const d = JSON.parse(text);
       if (d.type === 'done') {
         _liveEs.close(); _liveEs = null;
-        loadUCState();   // advance pipeline progress panel to next step
+        const wasUpdatePipeline = (jobId === _updatePipelineJobId);
+        if (wasUpdatePipeline) _updatePipelineJobId = null;
+        // loadUCState updates _lastUC; after it resolves show success banner if applicable
+        loadUCState().then(() => {
+          if (wasUpdatePipeline) _setBannerSuccess();
+        }).catch(() => {
+          if (wasUpdatePipeline) _setBannerSuccess();
+        });
         refreshLogs();
         return;
       }
@@ -2057,9 +2285,17 @@ async function refreshLogs() {
     // Job just finished — refresh pipeline progress panel to show next step
     if (!isRunning && _wasRunning) {
       _wasRunning = false;
-      loadUCState();
+      const wasUpdate = _updatePipelineJobId && _updatePipelineJobId === d.job_id;
+      if (wasUpdate) _updatePipelineJobId = null;
+      loadUCState().then(() => { if (wasUpdate) _setBannerSuccess(); }).catch(() => {});
     } else {
       _wasRunning = isRunning;
+    }
+    // If a new running update-pipeline job appeared, set banner to running state
+    if (isRunning && d.job_id && d.job_id !== _currentJobId) {
+      _updatePipelineJobId = d.job_id;
+      if (document.getElementById('new-data-banner').style.display !== 'none')
+        _setBannerState('running');
     }
 
     // If there's a live job and we're not already streaming it, start SSE
@@ -2128,6 +2364,36 @@ function _startLogPoll() {
   }, 4000);
 }
 
+// ── Sync-complete notification from connectors page ──────────────────────
+try {
+  const _syncBus = new BroadcastChannel('kvforge-sync');
+  _syncBus.onmessage = (e) => {
+    if (e.data?.type === 'sync-complete' && e.data?.uc_id === UC_ID) {
+      const chunks = e.data.new_chunks ?? 0;
+      loadUCState();
+      loadPRSHistory();
+      if (chunks > 0) {
+        // Don't downgrade banner from running/success back to pending
+        const cur = document.getElementById('ndb-state-running').style.display;
+        const suc = document.getElementById('ndb-state-success').style.display;
+        if (cur === 'none' && suc === 'none') _showNewDataBanner(chunks);
+        else _ndbChunks += chunks;  // accumulate for success summary
+      }
+    }
+  };
+} catch(_) {}
+
+async function checkStaleChunks() {
+  // Only show banner if not already visible (e.g. from BroadcastChannel)
+  if (document.getElementById('new-data-banner').style.display !== 'none') return;
+  try {
+    const r = await fetch(`/studio/api/uc/${UC_ID}/stale-chunks`, {credentials:'include'});
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d.stale > 0) _showNewDataBanner(d.stale);
+  } catch(_) {}
+}
+
 // ── Boot ───────────────────────────────────────────────────────────────────
 loadUCState();
 loadPRSHistory();
@@ -2135,6 +2401,7 @@ refreshLogs();
 _startLogPoll();
 loadGpuProfiles();
 refreshGpuData();
+checkStaleChunks();
 </script>
 <script src="/helper.js"></script>
 </body>

@@ -146,25 +146,30 @@ def cmd_index(cfg: dict) -> None:
     """
     from ingestion.registry import get_loader
 
+    # Support both flat configs and nested addon_config.
+    indexing_cfg = cfg.get("addon_config", {}).get("indexing", {})
+    training_cfg = cfg.get("addon_config", {}).get("training", {})
+    effective_cfg = {**cfg, **indexing_cfg, **training_cfg}
+
     store = get_store(cfg)
     num_layers, num_kv_heads, head_dim = model_loader.get_kv_shape(cfg)
 
     # Resolve source path
-    source_path = cfg.get("_source_path", "")
-    if not source_path and cfg.get("loader", "pdf") != "pdf":
-        ver_dir = Path(cfg.get("version_file", "version.json")).parent
+    source_path = effective_cfg.get("_source_path", "")
+    if not source_path and effective_cfg.get("loader", "pdf") != "pdf":
+        ver_dir = Path(effective_cfg.get("version_file", "version.json")).parent
         candidate = ver_dir / "data" / "corpus.jsonl"
         source_path = str(candidate) if candidate.exists() else ""
 
     # 1. Chunk + embed via ingestion registry
     loader = get_loader(cfg)
     chunks = loader.load(source_path)
-    source_label = Path(source_path).name if source_path else cfg.get("dataset_id", "unknown")
+    source_label = Path(source_path).name if source_path else effective_cfg.get("dataset_id", "unknown")
     print(f"  {len(chunks)} chunks from {source_label}")
 
-    embedder = TextEmbedding(model_name=cfg["embed_model"],
+    embedder = TextEmbedding(model_name=effective_cfg["embed_model"],
                               show_download_progress=False)
-    vectors = embed_chunks(chunks, embedder, cfg["embed_batch"])
+    vectors = embed_chunks(chunks, embedder, effective_cfg["embed_batch"])
 
     # 2. Load LLM for KV computation (optional — skipped gracefully on CPU/no-GPU)
     lora_ckpt = ver.load().get("checkpoint_path")
@@ -212,13 +217,13 @@ def cmd_index(cfg: dict) -> None:
             print(f"  {i+1}/{len(chunks)}", end="\r", flush=True)
 
     # Ensure collection exists before upserting
-    if not store.collection_exists(cfg["collection"]):
-        store.create_collection(cfg["collection"], cfg["vector_dim"])
-        print(f"Created collection '{cfg['collection']}' (dim={cfg['vector_dim']})")
+    if not store.collection_exists(effective_cfg["collection"]):
+        store.create_collection(effective_cfg["collection"], effective_cfg["vector_dim"])
+        print(f"Created collection '{effective_cfg['collection']}' (dim={effective_cfg['vector_dim']})")
 
     # batch upsert
-    for start in range(0, len(points), cfg["upsert_batch"]):
-        store.upsert(cfg["collection"], points[start:start + cfg["upsert_batch"]])
+    for start in range(0, len(points), effective_cfg["upsert_batch"]):
+        store.upsert(effective_cfg["collection"], points[start:start + effective_cfg["upsert_batch"]])
     print(f"\nIndexed {len(points)} chunks {kv_label}")
 
     # Cluster embeddings and tag each chunk with its cluster_id
@@ -226,9 +231,9 @@ def cmd_index(cfg: dict) -> None:
         from core.cluster_manager import cluster_embeddings, save_clusters
         from pathlib import Path as _Path
         vec_array = np.array(vectors)
-        k_range = tuple(cfg.get("cluster_k_range", [3, 20]))
+        k_range = tuple(effective_cfg.get("cluster_k_range", [3, 20]))
         centroids, labels = cluster_embeddings(vec_array, k_range=k_range)
-        cluster_file = str(_Path(cfg["checkpoint_dir"]) / "clusters.json")
+        cluster_file = str(_Path(effective_cfg["checkpoint_dir"]) / "clusters.json")
         save_clusters(cluster_file, centroids, labels, lora_version=ver.get_lora_version())
         for point, label in zip(points, labels):
             store.set_payload(cfg["collection"], point.id, {"cluster_id": str(int(label))})
@@ -258,6 +263,10 @@ def cmd_compute_kv(cfg: dict, filter_type: str, filter_value) -> None:
         filter_value: Numeric version threshold (for ``'stale'``) or source
             filename string (for ``'source'``); ignored for ``'null'``.
     """
+    # Support both flat configs and nested addon_config.
+    indexing_cfg = cfg.get("addon_config", {}).get("indexing", {})
+    effective_cfg = {**cfg, **indexing_cfg}
+
     store = get_store(cfg)
     num_layers, num_kv_heads, head_dim = model_loader.get_kv_shape(cfg)
 
@@ -267,13 +276,11 @@ def cmd_compute_kv(cfg: dict, filter_type: str, filter_value) -> None:
 
     # Build scroll_filter for Qdrant (passed through store.scroll as scroll_filter kwarg)
     scroll_filter = None
-    if cfg.get("vector_store", "qdrant") == "qdrant":
+    if effective_cfg.get("vector_store", "qdrant") == "qdrant":
         from qdrant_client.models import Filter, FieldCondition, IsNullCondition, Range
-        if filter_type == "null":
-            scroll_filter = Filter(must=[IsNullCondition(is_null={"key": "kv_version"})])
-        elif filter_type == "stale":
-            # Qdrant drops null payload fields so IsNullCondition misses absent
-            # kv_version; do a full scan and rely on the client-side filter.
+        if filter_type in ("null", "stale"):
+            # Qdrant drops null payload fields, so IsNullCondition misses absent
+            # kv_version.  Do a full scan and rely on the client-side filter.
             scroll_filter = None
         else:
             scroll_filter = Filter(must=[
@@ -284,7 +291,7 @@ def cmd_compute_kv(cfg: dict, filter_type: str, filter_value) -> None:
     updated = 0
     while True:
         results, offset = store.scroll(
-            cfg["collection"],
+            effective_cfg["collection"],
             limit=50,
             with_payload=True,
             offset=offset,
@@ -308,7 +315,7 @@ def cmd_compute_kv(cfg: dict, filter_type: str, filter_value) -> None:
                 num_layers, num_kv_heads, head_dim
             )
             store.set_payload(
-                cfg["collection"],
+                effective_cfg["collection"],
                 point.id,
                 {"kv_cache": kv_utils.serialize_kv(kv_arr), "kv_version": current_ver},
             )
@@ -356,12 +363,19 @@ def main() -> None:
             cfg["_source_path"] = args.pdf_file
         cmd_index(cfg)
     elif args.cmd == "compute-kv":
+        current_ver = ver.get_lora_version()
         if args.stale_version is not None:
             cmd_compute_kv(cfg, "stale", args.stale_version)
         elif args.source_file:
             cmd_compute_kv(cfg, "source", args.source_file)
         else:
-            cmd_compute_kv(cfg, "null", None)
+            # After a LoRA round, recompute all chunks whose kv_version is missing
+            # or older than the current model version.  On the first round (v0)
+            # we target only un-computed (null) chunks.
+            if current_ver > 0:
+                cmd_compute_kv(cfg, "stale", current_ver)
+            else:
+                cmd_compute_kv(cfg, "null", None)
 
 
 if __name__ == "__main__":

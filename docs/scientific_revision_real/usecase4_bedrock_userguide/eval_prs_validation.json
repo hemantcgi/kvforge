@@ -1,0 +1,96 @@
+{
+  "n": 7,
+  "cosine_ratios": [
+    1.0,
+    0.9544,
+    1.0,
+    1.0,
+    0.9124,
+    1.0,
+    1.0
+  ],
+  "correlations": {
+    "em": {
+      "pearson": null,
+      "spearman": null,
+      "note": "zero variance, correlation undefined"
+    },
+    "token_f1": {
+      "pearson": 0.3677,
+      "spearman": 0.5791
+    },
+    "judge": {
+      "pearson": 0.3747,
+      "spearman": 0.3944
+    },
+    "factual": {
+      "pearson": 0.4249,
+      "spearman": 0.7572
+    }
+  },
+  "disagreements": [
+    {
+      "index": 0,
+      "question": "How does Amazon Bedrock ensure my data used in fine-tuning remains private and confidential?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1925,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 1,
+      "question": "How can I track the input and output tokens?",
+      "cosine_ratio": 0.9544,
+      "token_f1": 0.0838,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 2,
+      "question": "What SDKs are supported for Amazon Bedrock?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1154,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 3,
+      "question": "What are Amazon Bedrock Agents?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.3077,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 4,
+      "question": "What are the most common use cases for Amazon Bedrock?",
+      "cosine_ratio": 0.9124,
+      "token_f1": 0.1818,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 5,
+      "question": "What is Amazon Bedrock Guardrails?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1944,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 6,
+      "question": "Does Amazon Bedrock support continued pretraining?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.3069,
+      "exact_match": 0,
+      "judge": 1
+    }
+  ],
+  "prs_simulation": {
+    "cosine_mean": 0.981,
+    "factual_mean": 0.2416,
+    "cosine_reaches_phase3": true,
+    "factual_reaches_phase3": false,
+    "decision_flips": 1
+  }
+}

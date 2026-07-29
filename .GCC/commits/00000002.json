@@ -1,0 +1,13 @@
+{
+  "artifacts": {
+    "capabilities": "capabilities/omega.json",
+    "log": "log.md",
+    "main": "main.md"
+  },
+  "branch": "main",
+  "concepts": [],
+  "id": "00000002",
+  "message": "Applied fixes for GitHub issues #8-#20: RoPE rerotation and explicit position IDs (#11/#12), fKDS fallback gating (#8), KV healing scroll-by-ID (#9), vector-store set_payload protocol fix (#10), partial recompute token alignment (#16), TurboQuant group_size/seed storage and accuracy test (#14), KDS/fKDS default consistency and naming (#13), mean-pool double precision (#17), model_loader torch_dtype kwarg (#18), eval_rope_rerotation tokenization consistency (#19), and capacity-gate pipeline integration (#15).",
+  "parent": "00000001",
+  "timestamp": "2026-07-29T01:06:16.102971+00:00"
+}

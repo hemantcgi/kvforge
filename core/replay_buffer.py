@@ -21,6 +21,11 @@ from pathlib import Path
 
 TIER_WEIGHTS = {"hot": 8, "warm": 4, "cold": 2, "frozen": 1}
 DEFAULT_DB = str(Path(__file__).parent / "replay_buffer.db")
+DEFAULT_KDS_THRESHOLDS = [
+    (0.0, 0.4, 4.0),   # kds < 0.4   -> 4x boost
+    (0.4, 0.7, 2.0),   # 0.4 <= kds < 0.7 -> 2x boost
+    (0.7, float("inf"), 1.0),  # kds >= 0.7  -> no boost
+]
 
 
 class ReplayBuffer:
@@ -38,7 +43,9 @@ class ReplayBuffer:
         TIER_WEIGHTS: Module-level dict mapping tier names to sampling weights.
     """
 
-    def __init__(self, db_path: str = DEFAULT_DB):
+    def __init__(self, db_path: str = DEFAULT_DB,
+                 kds_thresholds: list[tuple[float, float, float]] | None = None):
+        self.kds_thresholds = kds_thresholds or list(DEFAULT_KDS_THRESHOLDS)
         self._con = sqlite3.connect(db_path, check_same_thread=False)
         self._con.execute("""
             CREATE TABLE IF NOT EXISTS chunks (
@@ -47,12 +54,26 @@ class ReplayBuffer:
                 tier     TEXT NOT NULL DEFAULT 'frozen'
             )
         """)
+        # Migration: add kds column for existing tables.
+        columns = {row[1] for row in self._con.execute("PRAGMA table_info(chunks)").fetchall()}
+        if "kds" not in columns:
+            self._con.execute("ALTER TABLE chunks ADD COLUMN kds REAL")
         self._con.commit()
 
     def add_chunks(self, chunks: list[dict], max_size: int = 5000) -> None:
-        """Insert or replace chunks; evict lowest-value chunks if buffer exceeds max_size."""
+        """Insert or replace chunks; evict lowest-value chunks if buffer exceeds max_size.
+
+        Preserves any existing ``kds`` value on conflict so that KDS feedback
+        scores survive chunk re-indexing.
+        """
         self._con.executemany(
-            "INSERT OR REPLACE INTO chunks (chunk_id, text, tier) VALUES (?,?,?)",
+            """
+            INSERT INTO chunks (chunk_id, text, tier) VALUES (?, ?, ?)
+            ON CONFLICT(chunk_id) DO UPDATE SET
+                text=excluded.text,
+                tier=excluded.tier,
+                kds=COALESCE(chunks.kds, excluded.kds)
+            """,
             [(c["chunk_id"], c["text"], c.get("tier", "frozen")) for c in chunks],
         )
         self._con.commit()
@@ -80,18 +101,63 @@ class ReplayBuffer:
                               [(t, cid) for cid, t in updates])
         self._con.commit()
 
-    def sample(self, n: int, weight_by_tier: bool = True) -> list[dict]:
+    def add_kds(self, chunk_id: int, kds: float | None) -> None:
+        """Store or update a KDS score for *chunk_id*.
+
+        If the chunk is not already in the buffer, a placeholder row is
+        inserted so the score is retained until the chunk's text arrives.
+        """
+        self._con.execute(
+            """
+            INSERT INTO chunks (chunk_id, text, tier, kds) VALUES (?, ?, ?, ?)
+            ON CONFLICT(chunk_id) DO UPDATE SET kds=excluded.kds
+            """,
+            (chunk_id, "", "frozen", kds),
+        )
+        self._con.commit()
+
+    def get_kds_map(self) -> dict[int, float | None]:
+        """Return the current KDS mapping for all chunks in the buffer.
+
+        Returns:
+            Dict mapping ``chunk_id`` to its stored KDS value, or ``None`` if
+            no KDS has been recorded for that chunk.
+        """
+        rows = self._con.execute("SELECT chunk_id, kds FROM chunks").fetchall()
+        return {int(r[0]): r[1] for r in rows}
+
+    def _kds_multiplier(self, kds: float | None) -> float:
+        """Return the sampling-weight multiplier for a given KDS value."""
+        if kds is None:
+            return 1.0
+        for low, high, mult in self.kds_thresholds:
+            if low <= kds < high:
+                return mult
+        return 1.0
+
+    def _row_weight(self, row: tuple, kds_map: dict[int, float] | None) -> float:
+        """Effective sampling weight for a DB row, applying tier and KDS boost."""
+        tier_weight = TIER_WEIGHTS.get(row[2], 1)
+        kds = kds_map.get(row[0]) if kds_map else None
+        return tier_weight * self._kds_multiplier(kds)
+
+    def sample(self, n: int, weight_by_tier: bool = True, kds_map: dict[int, float] | None = None) -> list[dict]:
         """Draw up to *n* chunks from the buffer with optional tier weighting.
 
         When *weight_by_tier* is ``True``, chunks are drawn using
         ``random.choices`` with weights proportional to their tier (see
-        ``TIER_WEIGHTS``), then deduplicated while preserving the approximate
-        distribution.
+        ``TIER_WEIGHTS``) and optional KDS boost, then deduplicated while
+        preserving the approximate distribution.  Low-KDS chunks receive a
+        higher effective weight so the next training round focuses on
+        under-differentiated content.
 
         Args:
             n: Maximum number of chunks to return.
             weight_by_tier: If ``True`` (default), sample proportional to tier
                 weight.  If ``False``, sample uniformly at random.
+            kds_map: Optional mapping of ``chunk_id -> KDS`` used to boost the
+                sampling weight of low-KDS chunks.  When ``None`` or a chunk is
+                missing from the map, the tier weight is used unchanged.
 
         Returns:
             List of dicts with keys ``chunk_id``, ``text``, and ``tier``.
@@ -103,7 +169,7 @@ class ReplayBuffer:
         if not rows:
             return []
         if weight_by_tier:
-            weights = [TIER_WEIGHTS.get(r[2], 1) for r in rows]
+            weights = [self._row_weight(r, kds_map) for r in rows]
             k = min(n, len(rows))
             chosen = random.choices(rows, weights=weights, k=k)
             # deduplicate while preserving approximate distribution
@@ -112,10 +178,10 @@ class ReplayBuffer:
                 if row[0] not in seen:
                     seen.add(row[0])
                     result.append({"chunk_id": row[0], "text": row[1], "tier": row[2]})
-            # if dedup reduced below n, top up using tier weights
+            # if dedup reduced below n, top up using tier + KDS weights
             remaining = [r for r in rows if r[0] not in seen]
             while len(result) < k and remaining:
-                rem_weights = [TIER_WEIGHTS.get(r[2], 1) for r in remaining]
+                rem_weights = [self._row_weight(r, kds_map) for r in remaining]
                 (row,) = random.choices(remaining, weights=rem_weights, k=1)
                 result.append({"chunk_id": row[0], "text": row[1], "tier": row[2]})
                 remaining.remove(row)

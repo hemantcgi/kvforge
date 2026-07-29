@@ -110,6 +110,16 @@ Pluggable backends (Protocol-based, no ABC/inheritance):
 - **cold:** remaining accessed chunks → weight 2
 - **frozen:** never accessed → weight 1
 
+**Enhanced Tier (full per-token KV cache):**
+- Controlled by `enable_enhanced_tier` in `core/config.py` / datasource config.
+- When `true`, hot chunks may be promoted to full per-token KV storage during background KV recompute.
+- Default is `false` pending Component 6 empirical validation to prove the extra storage/compute cost is justified.
+
+**KDS/fKDS-driven KV-injection eligibility:**
+- `kds_threshold` (float or `None`) gates whether retrieved chunks are eligible for KV-injection using the legacy consistency-only KDS.
+- `fkds_threshold` (float or `None`) gates eligibility using factual KDS (fKDS), a blend of consistency KDS and factual answer accuracy against FAQ ground truth. fKDS is preferred when both thresholds are configured; it was added because Component 6 validation found consistency-only KDS does not correlate with KV-injection quality.
+- Either threshold is calibrated empirically in Component 6; a value of `None` (or absent key) for the active threshold disables KV injection and keeps the pipeline in `text_rag`-only mode (fail-closed).
+
 **Subprocess Orchestration:** `index_and_train.py` and `studio/pipeline_runner.py` spawn pipeline steps as subprocesses. Studio streams stdout/stderr to the browser via SSE.
 
 ### Data Flow

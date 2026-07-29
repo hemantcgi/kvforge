@@ -52,7 +52,7 @@ The file is validated by the `DatasourceConfig` Pydantic model on load.
 |-------|------|---------|-------------|
 | `prs_threshold` | `float` | `0.75` | PRS score required to advance to Phase 3 |
 | `gate_threshold` | `float` | `0.75` | Confidence gate threshold within Phase 3 |
-| `prs_weights` | `dict` | `{"accuracy":0.7,"calibration":0.15,"consistency":0.15}` | PRS component weights |
+| `prs_weights` | `dict` | `{"accuracy":0.5,"calibration":0.3,"consistency":0.2}` | PRS component weights |
 
 ## FAQ / Evaluation Fields
 

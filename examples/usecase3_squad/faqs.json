@@ -1,0 +1,802 @@
+[
+  {
+    "question": "What is the capital of France? (variant 0)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 1)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 2)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 3)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 4)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 5)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 6)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 7)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 8)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 9)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 10)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 11)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 12)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 13)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 14)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 15)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 16)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 17)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 18)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 19)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 20)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 21)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 22)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 23)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 24)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 25)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 26)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 27)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 28)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 29)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 30)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 31)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 32)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 33)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 34)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 35)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 36)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 37)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 38)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 39)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 40)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 41)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 42)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 43)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 44)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 45)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 46)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 47)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 48)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 49)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 50)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 51)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 52)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 53)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 54)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 55)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 56)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 57)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 58)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 59)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 60)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 61)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 62)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 63)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 64)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 65)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 66)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 67)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 68)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 69)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 70)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 71)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 72)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 73)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 74)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 75)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 76)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 77)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 78)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 79)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 80)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 81)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 82)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 83)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 84)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 85)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 86)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 87)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 88)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 89)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 90)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 91)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 92)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 93)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 94)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 95)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 96)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 97)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 98)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 99)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 100)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 101)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 102)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 103)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 104)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 105)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 106)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 107)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 108)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 109)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 110)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 111)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 112)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 113)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 114)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 115)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 116)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 117)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 118)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 119)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 120)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 121)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 122)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 123)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 124)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 125)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 126)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 127)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 128)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 129)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 130)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 131)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 132)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 133)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 134)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 135)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 136)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 137)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 138)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 139)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 140)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 141)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 142)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 143)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 144)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 145)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 146)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 147)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 148)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 149)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 150)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 151)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 152)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 153)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 154)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 155)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 156)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 157)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 158)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 159)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 160)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 161)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 162)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 163)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 164)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 165)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 166)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 167)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 168)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 169)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 170)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 171)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 172)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 173)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 174)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 175)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 176)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 177)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 178)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 179)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 180)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 181)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 182)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 183)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 184)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 185)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 186)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 187)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 188)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 189)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 190)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 191)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 192)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 193)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 194)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  },
+  {
+    "question": "What is the capital of France? (variant 195)",
+    "answer": "The capital of France is Paris, which is also the largest city in the country and serves as its political and cultural center."
+  },
+  {
+    "question": "Who wrote Romeo and Juliet? (variant 196)",
+    "answer": "Romeo and Juliet was written by William Shakespeare, the English playwright and poet, around the year 1597."
+  },
+  {
+    "question": "What is the largest planet in the solar system? (variant 197)",
+    "answer": "Jupiter is the largest planet in the solar system, with a diameter about 11 times that of Earth and a mass greater than all other planets combined."
+  },
+  {
+    "question": "When did the Titanic sink? (variant 198)",
+    "answer": "The Titanic sank on April 15, 1912, after striking an iceberg during its maiden voyage from Southampton to New York City."
+  },
+  {
+    "question": "What is the chemical formula for water? (variant 199)",
+    "answer": "The chemical formula for water is H2O, meaning each molecule consists of two hydrogen atoms bonded to one oxygen atom."
+  }
+]

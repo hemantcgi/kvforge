@@ -1,0 +1,537 @@
+{
+  "version": "v1-b7b776282f5f1f72",
+  "source_config": "examples/usecase4_bedrock_userguide/config.json",
+  "source_faqs": "examples/usecase4_bedrock_userguide/faqs.json",
+  "source_chunks": "examples/usecase4_bedrock_userguide/data/amazon-bedrock-user-guide.chunks.json",
+  "n_paraphrase": 39,
+  "n_novel": 40,
+  "n_probe": 10,
+  "seed": 42,
+  "overlap_threshold": 0.85,
+  "items": [
+    {
+      "question": "Can you explain what the Model Evaluation feature in Amazon Bedrock does?",
+      "answer": "Model Evaluation on Amazon Bedrock allows you to evaluate, compare, and select the best FM for your use case in just a few short steps. Amazon Bedrock offers a choice of automatic evaluation and human evaluation. You can use automatic evaluation with predefined metrics such as accuracy, robustness,",
+      "type": "paraphrase",
+      "source_faq": "What is Model Evaluation on Amazon Bedrock?"
+    },
+    {
+      "question": "What is the process for tailoring a model to my needs in Amazon Bedrock?",
+      "answer": "You can easily fine-tune FMs on Amazon Bedrock using tagged data or by using continued pre-train feature to customize the model using non-tagged data. To get started, provide the training and validation dataset, configure hyperparameters (epochs, batch size, learning rate, warmup steps) and submit t",
+      "type": "paraphrase",
+      "source_faq": "How do I customize a model on Amazon Bedrock?"
+    },
+    {
+      "question": "What foundation models can customers access through Amazon Bedrock?",
+      "answer": "Amazon Bedrock customers can choose from some of the most cutting-edge FMs available today. Currently we offer 47 models. This includes language and embeddings models from:  AI21: Jamba 1.5 Large, Jamba 1.5 Mini, Jamba-Instruct, Jurassic-2 Mid, Jurassic-2 Ultra Anthropic: Claude 3.5 Sonnet, Claude 3",
+      "type": "paraphrase",
+      "source_faq": "Which FMs are available on Amazon Bedrock?"
+    },
+    {
+      "question": "Which compliance certifications and security frameworks is Amazon Bedrock aligned with?",
+      "answer": "Amazon Bedrock offers several capabilities to support security and privacy requirements. Amazon Bedrock is in scope for common compliance standards such as Fedramp Moderate, Service and Organization Control (SOC), International Organization for Standardization (ISO), Health Insurance Portability and",
+      "type": "paraphrase",
+      "source_faq": "What security and compliance standards does Amazon Bedrock support?"
+    },
+    {
+      "question": "Does Amazon Bedrock transfer the data it processes to a different AWS Region than the one where I am running it?",
+      "answer": "Any customer content processed by Amazon Bedrock is encrypted and stored at rest in the AWS Region where you are using Amazon Bedrock.",
+      "type": "paraphrase",
+      "source_faq": "Is the content processed by Amazon Bedrock moved outside the AWS Region where I am using Amazon Bedrock?"
+    },
+    {
+      "question": "In what ways do Amazon Bedrock Agents boost the productivity of developers?",
+      "answer": "With agents, developers have seamless support for monitoring, encryption, user permissions, versioning, and API invocation management without writing custom code. Amazon Bedrock Agents automate the prompt engineering and orchestration of user-requested tasks. Developers can use the agent-created pro",
+      "type": "paraphrase",
+      "source_faq": "How do Amazon Bedrock Agents help improve developer productivity?"
+    },
+    {
+      "question": "Is it possible to build my own model and then host it on Amazon Bedrock?",
+      "answer": "Yes, you can train select publicly available models and import them into the Amazon Bedrock using the Custom Model Import feature. Currently, this feature only supports Llama 2/3, Mistral, and Flan architectures. For additional information, please refer the documentation.",
+      "type": "paraphrase",
+      "source_faq": "Can I train a model and deploy it on Amazon Bedrock?"
+    },
+    {
+      "question": "Which AWS Regions currently support Amazon Bedrock?",
+      "answer": "For a list of AWS Regions where Amazon Bedrock is available, see Amazon Bedrock endpoints and quotas in the Amazon Bedrock Reference Guide.",
+      "type": "paraphrase",
+      "source_faq": "In which AWS Regions is Amazon Bedrock available?"
+    },
+    {
+      "question": "Can Amazon Bedrock Knowledge Bases handle conversations that span multiple exchanges?",
+      "answer": "Yes, session context management is built-in, allowing your applications to maintain context across multiple interactions, which is essential for supporting multi-turn conversations.",
+      "type": "paraphrase",
+      "source_faq": "Does Amazon Bedrock Knowledge Bases support multi-turn conversations?"
+    },
+    {
+      "question": "Which types of multi-modal file formats can be handled by Amazon Bedrock Knowledge Bases?",
+      "answer": "Amazon Bedrock Knowledge Bases can process visually rich documents in PDF format, which may contain images, tables, charts, and diagrams. For image-only data, Bedrock Knowledge Bases supports standard image formats like JPEG and PNG, enabling search capabilities where users can retrieve relevant ima",
+      "type": "paraphrase",
+      "source_faq": "What multi-modal data formats does Amazon Bedrock Knowledge Bases support?"
+    },
+    {
+      "question": "What are the benefits of applying continued pretraining when working with Amazon Bedrock?",
+      "answer": "Enterprises may want to build models for tasks in a specific domain. The base models may not be trained on the technical jargon used in that specific domain. Thus, directly fine-tuning the base model requires large amounts of labeled training records and a long training duration to get accurate resu",
+      "type": "paraphrase",
+      "source_faq": "Why should I use continued pretraining in Amazon Bedrock?"
+    },
+    {
+      "question": "What are the reasons for choosing Amazon Bedrock?",
+      "answer": "There are five reasons to use Amazon Bedrock for building generative AI applications.\n\nChoice of leading FMs: Amazon Bedrock offers an easy-to-use developer experience to work with a broad range of high-performing FMs from Amazon and leading AI companies like AI21 Labs, Anthropic, Cohere, Meta, Mist",
+      "type": "paraphrase",
+      "source_faq": "Why should I use Amazon Bedrock?"
+    },
+    {
+      "question": "Is Guardrails compatible with every foundation model and tool offered through Amazon Bedrock?",
+      "answer": "Amazon Bedrock Guardrails works with a wide range of models including FMs supported in Amazon Bedrock, fine-tuned models, as well as, self-hosted models outside Amazon Bedrock. User inputs and model outputs can be evaluated independently for third-party and self-hosted models using the ApplyGuardrai",
+      "type": "paraphrase",
+      "source_faq": "Can I use Guardrails with all available FMs and tools on Amazon Bedrock?"
+    },
+    {
+      "question": "Can you provide an overview of the pre-built (ready-made) guardrails available, along with the options for customization?",
+      "answer": "There are five guardrail policies each with different off-the-shelf protections\n\nContent filters \u2013 This has 6 off the shelf categories (hate, insults, sexual, violence, misconduct (incl. criminal activity) and prompt attack (jailbreak and prompt injection. Each category can have further customized t",
+      "type": "paraphrase",
+      "source_faq": "Do you have a list of off-the-shelf (built-in) guardrails, and what can be customized?"
+    },
+    {
+      "question": "In what scenarios or applications can Amazon Bedrock Agents be utilized?",
+      "answer": "Amazon Bedrock Agents can help you increase productivity, improve your customer service experience, and automate workflows (such as processing insurance claims).",
+      "type": "paraphrase",
+      "source_faq": "What are some use cases for Amazon Bedrock Agents?"
+    },
+    {
+      "question": "Can you explain the process behind evaluating models with human reviewers?",
+      "answer": "Amazon Bedrock allows you to set up human review workflows in a few short steps and bring your in-house employees, or use an expert team managed by AWS, to evaluate models. Through Amazon Bedrock's intuitive interface, humans can review and give feedback on model responses by clicking thumbs up or d",
+      "type": "paraphrase",
+      "source_faq": "How does human evaluation work?"
+    },
+    {
+      "question": "What sources of data are supported for integration with Amazon Bedrock Knowledge Bases?",
+      "answer": "You can ingest content from various sources, including the web, Amazon Simple Storage Service (Amazon S3), Confluence (preview), Salesforce (preview), and SharePoint (preview). You can also programmatically ingest streaming data or data from unsupported sources. You can also connect to your structur",
+      "type": "paraphrase",
+      "source_faq": "Which data sources can I connect to Amazon Bedrock Knowledge Bases?"
+    },
+    {
+      "question": "In what ways does Amazon Bedrock Knowledge Bases support handling multiple data modalities?",
+      "answer": "Amazon Bedrock Knowledge Bases supports multi-modal data processing, allowing developers to build generative AI applications that analyze both text and visual data, including images, charts, diagrams, and tables. Model responses can leverage insights from visual elements in addition to text, providi",
+      "type": "paraphrase",
+      "source_faq": "What multi-modal capabilities does Amazon Bedrock Knowledge Bases offer?"
+    },
+    {
+      "question": "Which protective measures does Amazon Bedrock Guardrails offer?",
+      "answer": "Guardrails help you to define a set of policies to help safeguard your generative AI applications. You can configure the following policies in a guardrail.\n\nContextual grounding checks: help detect and filter hallucinations if the responses are not grounded (e.g., factually inaccurate or new informa",
+      "type": "paraphrase",
+      "source_faq": "What are the safeguards available in Amazon Bedrock Guardrails?"
+    },
+    {
+      "question": "How do human-based evaluations differ from automatic evaluations?",
+      "answer": "Automatic evaluations allow you to quickly narrow down the list of available FMs against standard criteria (such as accuracy, toxicity and robustness). Human-based evaluations are often used to evaluate more nuanced or subjective criteria that require human judgment and where automatic evaluations m",
+      "type": "paraphrase",
+      "source_faq": "What is the difference between human-based and automatic evaluations?"
+    },
+    {
+      "question": "What kind of support options are available for Amazon Bedrock?",
+      "answer": "Depending on your AWS Support contract, Amazon Bedrock is supported under Developer Support, Business Support and Enterprise Support plans.",
+      "type": "paraphrase",
+      "source_faq": "What support is provided for Amazon Bedrock?"
+    },
+    {
+      "question": "Which SDKs offer support for streaming?",
+      "answer": "Streaming is supported on all the SDKs.",
+      "type": "paraphrase",
+      "source_faq": "What SDKs support streaming functionality?"
+    },
+    {
+      "question": "In what way does the continued pretraining capability connect with other services offered by AWS?",
+      "answer": "Amazon Bedrock continued pretraining and fine-tuning have very similar requirements. For this reason, we are choosing to create unified APIs that support both continued pretraining and fine-tuning. Unification of the APIs reduces the learning curve and will help customers use standard features such",
+      "type": "paraphrase",
+      "source_faq": "How does the continued pretraining feature relate to other AWS services?"
+    },
+    {
+      "question": "Can you explain what the Amazon Titan family of models is?",
+      "answer": "Exclusive to Amazon Bedrock, the Amazon Titan family of models incorporates 25 years of Amazon experience innovating with AI and machine learning across the business. Amazon Titan FMs provide customers with a breadth of high-performing image, multimodal, and text model choices through a fully manage",
+      "type": "paraphrase",
+      "source_faq": "What are Amazon Titan models?"
+    },
+    {
+      "question": "What kinds of metrics are available for assessing foundation models?",
+      "answer": "You can evaluate variety of predefined metrics such as accuracy, robustness, and toxicity using automatic evaluations. You can also use human evaluation workflows for subjective or custom metrics, such as friendliness, relevance, style, and alignment to brand voice.",
+      "type": "paraphrase",
+      "source_faq": "Against what metrics can I evaluate FMs?"
+    },
+    {
+      "question": "Is there an IP indemnification provided by AWS that protects customers against copyright claims related to its generative AI offerings?",
+      "answer": "AWS offers an uncapped intellectual property (IP) indemnity for copyright claims arising from generative output of the following generally available Amazon generative AI services: Amazon Titan models, and other services listed in Section 50.10 of the Service Terms (the \"Indemnified Generative AI Ser",
+      "type": "paraphrase",
+      "source_faq": "Does AWS offer an intellectual property indemnity covering copyright claims for its generative AI services?"
+    },
+    {
+      "question": "What mechanism does Amazon Bedrock Knowledge Base use to fetch information from structured data sources?",
+      "answer": "Amazon Bedrock Knowledge Bases provides a managed Natural Language to SQL to convert natural language into actionable SQL queries and retrieve data, allowing you to build application using data from these sources.",
+      "type": "paraphrase",
+      "source_faq": "How does Amazon Bedrock Knowledge Base retrieve data from structured data sources?"
+    },
+    {
+      "question": "Are customer prompts sent to Amazon Bedrock, or the responses it generates, ever used by AWS or third-party model providers for training Amazon Titan or third-party models?",
+      "answer": "No, AWS and the third-party model providers will not use any inputs to or outputs from Amazon Bedrock to train Amazon Titan or any third-party models.",
+      "type": "paraphrase",
+      "source_faq": "Will AWS and third-party model providers use customer inputs to or outputs from Amazon Bedrock to train Amazon Titan or any third-party models?"
+    },
+    {
+      "question": "Can you explain the process behind automatic evaluation?",
+      "answer": "You can quickly evaluate Amazon Bedrock models for metrics such as accuracy, robustness, and toxicity by using curated built-in data sets or by bringing your own prompt datasets. After your prompt datasets are sent to Amazon Bedrock models for inference, the model responses are scored with evaluatio",
+      "type": "paraphrase",
+      "source_faq": "How does automatic evaluation work?"
+    },
+    {
+      "question": "Can you explain what Amazon Bedrock is and what it does?",
+      "answer": "Amazon Bedrock is a fully managed service that offers a choice of industry leading foundation models (FMs) along with a broad set of capabilities that you need to build generative AI applications, simplifying development with security, privacy, and responsible AI. With the comprehensive capabilities",
+      "type": "paraphrase",
+      "source_faq": "What is Amazon Bedrock?"
+    },
+    {
+      "question": "When Amazon Bedrock Knowledge Bases retrieves information, does it indicate where that information came from?",
+      "answer": "Yes, all information retrieved includes citations, improving transparency and minimizing the risk of hallucinations in the generated responses.",
+      "type": "paraphrase",
+      "source_faq": "Does Amazon Bedrock Knowledge Bases provide source attribution for retrieved information?"
+    },
+    {
+      "question": "What options do I have for safely leveraging my own data to tailor foundation models offered on Amazon Bedrock?",
+      "answer": "With Amazon Bedrock, you can privately customize FMs, retaining control over how your data is used and encrypted. Amazon Bedrock makes a separate copy of the base FM and trains this private copy of the model. Your data including prompts, information used to supplement a prompt, and FM responses. Cus",
+      "type": "paraphrase",
+      "source_faq": "How can I securely use my data to customize FMs available through Amazon Bedrock?"
+    },
+    {
+      "question": "What are the steps to begin using latency-optimized inference in Amazon Bedrock?",
+      "answer": "Accessing the latency-optimized inference in Amazon Bedrock requires no additional setup or model fine-tuning, allowing for immediate enhancement of existing generative AI applications with faster response times. You can toggle on the \u201cLatency optimized\u201d parameter while invoking the Bedrock inferenc",
+      "type": "paraphrase",
+      "source_faq": "How do we get started with latency-optimized inference in Amazon Bedrock?"
+    },
+    {
+      "question": "Which parsing choices does Amazon Bedrock Knowledge Bases offer to its users?",
+      "answer": "Customers have three parsing options for Bedrock Knowledge Bases. For text-only processing, the built-in default Bedrock parser is available at no additional cost, ideal for cases where multimodal data processing is not required. Amazon Bedrock Data Automation (BDA) or foundation models can be used",
+      "type": "paraphrase",
+      "source_faq": "What are the different parsing options available in Amazon Bedrock Knowledge Bases?"
+    },
+    {
+      "question": "In what ways does Amazon Bedrock Knowledge Bases handle workflow challenges while keeping data secure?",
+      "answer": "Amazon Bedrock Knowledge Base handles various workflow complexities such as content comparison, failure handling, throughput control, and encryption, ensuring that your data is securely processed and managed according to AWS's stringent security standards.",
+      "type": "paraphrase",
+      "source_faq": "How does Amazon Bedrock Knowledge Bases ensure data security and manage workflow complexities?"
+    },
+    {
+      "question": "What are the first steps to begin using Amazon Bedrock?",
+      "answer": "With the serverless experience of Amazon Bedrock, you can quickly get started. Navigate to Amazon Bedrock in the AWS Management Console and try out the FMs in the playground. You can also create an agent and test it in the console. Once you\u2019ve identified your use case, you can easily integrate the F",
+      "type": "paraphrase",
+      "source_faq": "How can I get started with Amazon Bedrock?"
+    },
+    {
+      "question": "What is the way to link foundation models with the data sources within my organization?",
+      "answer": "You can securely connect FMs to your company data sources using Amazon Bedrock Agents. With a knowledge base, you can use agents to give FMs in Amazon Bedrock access to additional data that helps the model generate more relevant, context-specific, and accurate responses without continually retrainin",
+      "type": "paraphrase",
+      "source_faq": "How can I connect FMs to my company data sources?"
+    },
+    {
+      "question": "What is the pricing for Amazon Bedrock?",
+      "answer": "Please see the Amazon Bedrock pricing page for current pricing information.",
+      "type": "paraphrase",
+      "source_faq": "How much does Amazon Bedrock cost?"
+    },
+    {
+      "question": "Where can I find additional information about the data used in the development and training of Amazon Titan foundation models?",
+      "answer": "To learn more about data processed to develop and train Amazon Titan FMs, visit Amazon Titan Model Training and Privacy page.",
+      "type": "paraphrase",
+      "source_faq": "Where can I learn more about the data processed to develop and train Amazon Titan FMs?"
+    },
+    {
+      "question": "What are the three logging destinations mentioned in the passage?",
+      "answer": "CloudWatch Logs, Amazon S3, or Amazon Data Firehose",
+      "type": "novel",
+      "source_chunk": "orResource \u2013 Required to allow logs to be delivered\nfor the knowledge base resource.\nYou can view an example IAM role/permissions policy with all the required permissions for your\nspecific logging des"
+    },
+    {
+      "question": "In which field of the Converse API do you set the base inference parameters?",
+      "answer": "inferenceConfig",
+      "type": "novel",
+      "source_chunk": "n Bedrock prompt\ncaching.\nInference parameters\nThe Converse API supports a base set of inference parameters that you set in the\ninferenceConfig field (InferenceConfiguration). The base set of inferenc"
+    },
+    {
+      "question": "Which SDK can be used to run example Amazon Bedrock API requests through Python?",
+      "answer": "AWS SDK for Python (Boto3)",
+      "type": "novel",
+      "source_chunk": "an Amazon Bedrock foundation model.\nTry making API calls to Amazon Bedrock\nAfter you've fulfilled all the prerequisites, select one of the following topics to test out making\nmodel invocation requests"
+    },
+    {
+      "question": "What is the value of the agentAliasId in the code example?",
+      "answer": "AVKP1ITZAA",
+      "type": "novel",
+      "source_chunk": "azon Bedrock User Guide\nconst agentAliasId = \"AVKP1ITZAA\";\nconst command = new InvokeAgentCommand({\nagentId,\nagentAliasId,\nsessionId,\ninputText: prompt,\n});\ntry {\nlet completion = \"\";\nconst response ="
+    },
+    {
+      "question": "In the output file saved to your Amazon S3 bucket, to which key value pair are the results from each worker saved?",
+      "answer": "\"evaluationResults\": \"comparisonChoice\"",
+      "type": "novel",
+      "source_chunk": "zon Bedrock User Guide\nJSON output\nThe first child-key under evaluationResults is where the selected rating method is returned.\nIn the output file saved to your Amazon S3 bucket, the results from each"
+    },
+    {
+      "question": "In customer service interactions, what should be verified?",
+      "answer": "that all necessary information is provided",
+      "type": "novel",
+      "source_chunk": "ail and information for the task? For\nexample,\n- For summaries, check if the main points are covered appropriately for the requested\nlevel of detail.\n- For step-by-step solutions or instructions, ensu"
+    },
+    {
+      "question": "In the bad example, what does the model produce instead of choosing from explicit categories?",
+      "answer": "a more free-form summary of the text",
+      "type": "novel",
+      "source_chunk": "or example, consider a classification problem where the user wants an answer from a set of\npossible choices. The \u201cgood\u201c example shown below illustrates output that the user wants in this\ncase. In the "
+    },
+    {
+      "question": "Which SDK for Python is used in the example for listing agents?",
+      "answer": "Boto3",
+      "type": "novel",
+      "source_chunk": "for (const agent of await listAgentsWithCommandObject()) {\nconsole.log(agent);\n}\nconsole.log(\"=\".repeat(68));\nconsole.log(\"Listing agents using the paginateListAgents function:\");\nBasics 2450\nAmazon B"
+    },
+    {
+      "question": "According to the table, what is the effect of a lower Temperature value on higher-probability tokens?",
+      "answer": "Increase likelihood of higher-probability tokens",
+      "type": "novel",
+      "source_chunk": "ion of tokens that could be next in the sequence.\nRandomness and diversity 326\nAmazon Bedrock User Guide\nThe following table summarizes the effects of these parameters.\nParameter Effect of lower value"
+    },
+    {
+      "question": "What AWS Region is used when creating the Bedrock Runtime client in the example?",
+      "answer": "us-east-1",
+      "type": "novel",
+      "source_chunk": "to3)\nNote\nThere's more on GitHub. Find the complete example and learn how to set up and run\nin the AWS Code Examples Repository.\nUse the Invoke Model API to send a text message and process the respons"
+    },
+    {
+      "question": "Where can you find the complete source code and instructions to set up and run this example?",
+      "answer": "the full project on GitHub",
+      "type": "novel",
+      "source_chunk": "agents that interact with external APIs.\nFor complete source code and instructions to set up and run, see the full project on GitHub.\nServices used in this example\n\u2022 Amazon Bedrock\n\u2022 Amazon Bedrock Ru"
+    },
+    {
+      "question": "Which section contains information on the actual content of the document, such as how many semantic elements, figures, words, and lines there are?",
+      "answer": "statistics",
+      "type": "novel",
+      "source_chunk": "_count\":1000,\n\"line_count\":32\n}\n},\nThe above section provides document level granularity information. The description and summary\nsections are the generated fields based on the document The representa"
+    },
+    {
+      "question": "What required parameter is an array of text prompts to use for generation?",
+      "answer": "text_prompt",
+      "type": "novel",
+      "source_chunk": "s\": [\n{\n\"text\": string,\n\"weight\": float\n}\n],\n\"init_image\" : string ,\n\"mask_source\" : string,\n\"mask_image\" : string,\n\"cfg_scale\": float,\n\"clip_guidance_preset\": string,\n\"sampler\": string,\n\"samples\" : i"
+    },
+    {
+      "question": "Which operation sends requests to AWS KMS to create scoped down grants for the asynchronous execution of operations?",
+      "answer": "CreateGrant",
+      "type": "novel",
+      "source_chunk": "erate data keys encrypted by\nyour customer managed key and decrypt the encrypted data keys so that they can be used to\nencrypt your resources.\n\u2022 CreateGrant \u2014 Send requests to AWS KMS to create scoped"
+    },
+    {
+      "question": "What does Amazon Bedrock provide you with an option to customize?",
+      "answer": "your agent\u2019s orchestration strategy",
+      "type": "novel",
+      "source_chunk": "roup(2).strip()\nsummaries.append({\n'topic': topic_name,\n'summary': topic_summary\n})\nif not summaries:\nraise Exception(\"Error while parsing summarizer model output, no topics\nfound!\")\nreturn summaries\n"
+    },
+    {
+      "question": "What are the input modalities supported by the Amazon Titan Image Generator G1 model?",
+      "answer": "Text, Image",
+      "type": "novel",
+      "source_chunk": "text-v1\nwest-2\nap-\nnorthe\nast-1\neu-\ncentra\nl-1\nAmazon Titan amazon.ti us- Text, Image No Link Link\nImage tan- east-1 Image\nGenerator image-\nus-\nG1 v2 generato\nwest-2\nr-v2:0\nSupported foundation models"
+    },
+    {
+      "question": "What can you add to a role to immediately deny access to a model?",
+      "answer": "an IAM policy",
+      "type": "novel",
+      "source_chunk": "e terms.\n9. If you agree with the terms, choose Submit. The changes can take several minutes to be\nreflected in the console.\nNote\nIf you revoke access to a model, it can still be accessed through the "
+    },
+    {
+      "question": "What is the Sid of the policy statement that allows the sagemaker:AddTags and sagemaker:DeleteTags actions?",
+      "answer": "BedrockEndpointTaggingOperations",
+      "type": "novel",
+      "source_chunk": "\"Sid\": \"BedrockEndpointTaggingOperations\",\n\"Effect\": \"Allow\",\n\"Action\": [\n\"sagemaker:AddTags\",\n\"sagemaker:DeleteTags\"\n],\n\"Resource\": [\n\"arn:aws:sagemaker:*:*:endpoint/*\",\n\"arn:aws:sagemaker:*:*:endpoi"
+    },
+    {
+      "question": "On what scale are responses graded before being normalized in the output and the job's report card?",
+      "answer": "a 3-point lickert scale",
+      "type": "novel",
+      "source_chunk": "e model's response is correct. For this metric, if you supplied a ground\ntruth response, it is considered. Responses are graded a 3-point lickert scale, and then normalized\nin the output and the job's"
+    },
+    {
+      "question": "According to the passage, how should the output be formatted?",
+      "answer": "as a XML file",
+      "type": "novel",
+      "source_chunk": "the necessary information and detail is present, or it's\nunclear what the right amount of information is.\n- Generally yes: Most of the necessary information and detail is present.\n- Yes: All necessary"
+    },
+    {
+      "question": "What is the content of the token with ID 128013?",
+      "answer": "<|reserved_special_token_8|>",
+      "type": "novel",
+      "source_chunk": "Converse API code samples for custom model import 1600\nAmazon Bedrock User Guide\n\"rstrip\": false,\n\"single_word\": false,\n\"special\": true\n},\n\"128012\": {\n\"content\": \"<|reserved_special_token_7|>\",\n\"lstri"
+    },
+    {
+      "question": "Which services are examples of services that support ACLs?",
+      "answer": "Amazon S3, AWS WAF, and Amazon VPC",
+      "type": "novel",
+      "source_chunk": "missions to access a resource. ACLs are similar to resource-based policies, although they do not\nuse the JSON policy document format.\nAmazon S3, AWS WAF, and Amazon VPC are examples of services that s"
+    },
+    {
+      "question": "What is the model ID set in the code?",
+      "answer": "amazon.titan-text-express-v1",
+      "type": "novel",
+      "source_chunk": "json\nfrom botocore.exceptions import ClientError\n# Create an Amazon Bedrock Runtime client.\nbrt = boto3.client(\"bedrock-runtime\")\n# Set the model ID, e.g., Amazon Titan Text G1 - Express.\nmodel_id = \""
+    },
+    {
+      "question": "According to the passage, until when does billing continue for a Provisioned Throughput?",
+      "answer": "until you delete the Provisioned Throughput",
+      "type": "novel",
+      "source_chunk": "1\nAmazon Bedrock User Guide\nNote\nBilling continues until you delete the Provisioned Throughput.\nThe following steps outline the process of setting up and using Provisioned Throughput.\n1. Determine the"
+    },
+    {
+      "question": "How many model evaluation jobs can you delete in a single call to BatchDeleteEvaluationJob?",
+      "answer": "up to 25",
+      "type": "novel",
+      "source_chunk": "Status\": \"Deleting\"\n}\n],\nDelete job 640\nAmazon Bedrock User Guide\n\"errors\": []\n}\nSDK for Python\nThe following examples show how to use the AWS SDK for Python to delete a model evaluation\njob. Use the "
+    },
+    {
+      "question": "What model ID is used in the code example?",
+      "answer": "meta.llama3-70b-instruct-v1:0",
+      "type": "novel",
+      "source_chunk": "Amazon Bedrock User Guide\nimport json\nfrom botocore.exceptions import ClientError\n# Create a Bedrock Runtime client in the AWS Region of your choice.\nclient = boto3.client(\"bedrock-runtime\", region_na"
+    },
+    {
+      "question": "Which method is called on the bedrockClient to retrieve the list of foundation models?",
+      "answer": "ListFoundationModels",
+      "type": "novel",
+      "source_chunk": "{\nfmt.Println(\"Couldn't load default configuration. Have you set up your AWS\naccount?\")\nfmt.Println(err)\nreturn\n}\nbedrockClient := bedrock.NewFromConfig(sdkConfig)\nresult, err := bedrockClient.ListFou"
+    },
+    {
+      "question": "Which model is the text message sent to using the native inference API in this example?",
+      "answer": "Cohere Command R",
+      "type": "novel",
+      "source_chunk": "e Invoke Model API.\n.NET\nAWS SDK for .NET\nNote\nThere's more on GitHub. Find the complete example and learn how to set up and run\nin the AWS Code Examples Repository.\nUse the Invoke Model API to send a"
+    },
+    {
+      "question": "How are Bounding Boxes returned in your JSON?",
+      "answer": "as the coordinates of the four corners of the box",
+      "type": "novel",
+      "source_chunk": "re Bounding Boxes, and Generative Fields. Selecting Bounding Boxes will\nprovide a visual outline of the element or word you click on in the console response dropdown. This\nlets you track down particul"
+    },
+    {
+      "question": "What invocationType is set in the response details when there is an ask user?",
+      "answer": "ASK_USER",
+      "type": "novel",
+      "source_chunk": "there is an ask user\ntry:\nask_user = parse_ask_user(content_by_type)\nif ask_user:\nparsed_response['orchestrationParsedResponse']['responseDetails'] = {\n'invocationType': 'ASK_USER',\n'agentAskUser': {\n"
+    },
+    {
+      "question": "According to the score mapping, what score corresponds to the answer 'neutral/mixed'?",
+      "answer": "2.0",
+      "type": "novel",
+      "source_chunk": "ponse absolutely fits a professional setting. There is nothing\nthat you would change in order to make this fit a professional setting.\nHere is the actual task:\nQuestion: {prompt}\nResponse: {prediction"
+    },
+    {
+      "question": "What parameter in request_params is set to True to enable tracing when invoking the flow?",
+      "answer": "enableTrace",
+      "type": "novel",
+      "source_chunk": "Creating and running an example flow 1393\nAmazon Bedrock User Guide\nelse:\nrequest_params = {\n\"flowIdentifier\": flow_id,\n\"flowAliasIdentifier\": flow_alias_id,\n\"executionId\": execution_id,\n\"inputs\": [in"
+    },
+    {
+      "question": "Which permission must you add for the role when using a customer managed key that encrypted a custom imported model?",
+      "answer": "kms:Decrypt",
+      "type": "novel",
+      "source_chunk": "stomer\nmanaged key, you must add kms:Decrypt permissions for the same role, as in the following\npolicy:\n{\n\"Version\": \"2012-10-17\",\n\"Id\": \"KMS key policy for a key that encrypted a custom imported mode"
+    },
+    {
+      "question": "What does Amazon Bedrock do with the temporary copy of your data after the model evaluation job finishes?",
+      "answer": "Amazon Bedrock deletes the data after the job finishes",
+      "type": "novel",
+      "source_chunk": "d selected Saved in Amazon S3\nLikert scale - Individual IndividualLikertScale\nLikert scale - Comparison ComparisonLikertScale\nChoice buttons ComparisonChoice\nOrdinal rank ComparisonRank\nThumbs up/down"
+    },
+    {
+      "question": "On what page is the 'Creating job' section found?",
+      "answer": "659",
+      "type": "novel",
+      "source_chunk": "evaluation jobs ............................................................................................... 659\nCreating job........................................................................"
+    },
+    {
+      "question": "What type of information can sensitive information filters help block or mask?",
+      "answer": "personally identifiable information (PII)",
+      "type": "novel",
+      "source_chunk": "Violence, Misconduct and Prompt Attack.\n\u2022 Denied topics \u2013 Define a set of topics that are undesirable in the context of your application. The\nfilter will help block them if detected in user queries or"
+    },
+    {
+      "question": "Which API is used to send a text message to Cohere Command with the async Java client?",
+      "answer": "the Converse API",
+      "type": "novel",
+      "source_chunk": "lient.\n// Use the Converse API to send a text message to Cohere Command\n// with the async Java client.\nimport software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;\nimport software.amazon"
+    },
+    {
+      "question": "What must the orchestrationType object be specified as?",
+      "answer": "CUSTOM_ORCHESTRATION",
+      "type": "novel",
+      "source_chunk": "nd an UpdateAgent request (see\nlink for request and response formats and field details) with an Agents for Amazon Bedrock\nbuild-time endpoint.Specify the orchestrationType object as CUSTOM_ORCHESTRATI"
+    },
+    {
+      "question": "How many filter groups can you add?",
+      "answer": "up to 5 filter groups",
+      "type": "novel",
+      "source_chunk": "er. You can\nadd up to 5 filters in the group.\nConfigure and customize queries and responses 1043\nAmazon Bedrock User Guide\n\u2022 By default, the query will return results that fulfill all the filtering ex"
+    },
+    {
+      "question": "What type of cardio should beginners start with before attempting HIIT?",
+      "answer": "steady-state cardio",
+      "type": "novel",
+      "source_chunk": "ements that get your heart rate up\nquickly.\\n\\n- The short, intense intervals help improve cardiovascular fitness by\nincreasing heart rate and oxygen consumption.\\n\\n- HIIT burns more calories and fat"
+    },
+    {
+      "question": "How do I configure a GPU instance type like p4d.24xlarge in Amazon EC2 to train my own large language model from scratch, and what CUDA drivers do I need to install?",
+      "answer": "To train a large language model on Amazon EC2, you would launch a GPU instance such as p4d.24xlarge (which has 8 NVIDIA A100 GPUs) through the EC2 console, CLI, or infrastructure-as-code tools. You typically start from an AWS Deep Learning AMI (DLAMI), which comes pre-installed with NVIDIA drivers, CUDA toolkit, cuDNN, and popular frameworks like PyTorch and TensorFlow, so you don't need to install CUDA manually. If you use a base AMI instead, you would install the NVIDIA driver appropriate for the A100 (data center driver branch), the CUDA toolkit version required by your framework (e.g., CUDA 11.x or 12.x), and NCCL for multi-GPU communication. You should also verify your account's vCPU service quotas for P-family instances, consider using EFA (Elastic Fabric Adapter) for multi-node distributed training, and attach fast storage like FSx for Lustre or high-throughput EBS volumes for training data. Note that this is a general EC2/deep learning workflow and is not covered by the Amazon Bedrock User Guide, since Bedrock is a managed service where AWS handles the underlying infrastructure.",
+      "type": "probe"
+    },
+    {
+      "question": "How do I set up a GPU-enabled EC2 instance to fine-tune an open-source LLM like Llama 3 myself, and which instance types should I consider?",
+      "answer": "To fine-tune an open-source LLM on EC2, you would typically launch a GPU-accelerated instance such as those in the p4d (NVIDIA A100), p5 (NVIDIA H100), or g5 (NVIDIA A10G) families. The general steps are: (1) Choose an instance type based on model size \u2014 smaller models (7B parameters) can often be fine-tuned with LoRA/QLoRA on a single g5.2xlarge or g5.12xlarge, while larger models may require p4d.24xlarge or p5.48xlarge instances with multiple GPUs. (2) Launch the instance using a Deep Learning AMI (DLAMI), which comes pre-installed with NVIDIA drivers, CUDA, PyTorch, and other ML frameworks. (3) Install fine-tuning libraries such as Hugging Face Transformers, PEFT, bitsandbytes, and Accelerate. (4) Download the model weights (e.g., from Hugging Face after accepting the license), prepare your training dataset, and run your fine-tuning script, often using parameter-efficient techniques like LoRA to reduce memory requirements. (5) Consider using EBS gp3 or instance store volumes for fast data access, and use spot instances or Savings Plans to reduce cost. Note that GPU instances like p4d/p5 often require a service quota increase request before you can launch them. This is a self-managed alternative to managed services like Amazon SageMaker or Amazon Bedrock's built-in customization features.",
+      "type": "probe"
+    },
+    {
+      "question": "How much does it cost to train a large language model like GPT-4 from scratch?",
+      "answer": "Training a large language model from scratch is extremely expensive. Estimates for training GPT-4 range from $50 million to over $100 million in compute costs alone. Even smaller foundation models can cost millions of dollars to train, factoring in GPU compute (often thousands of NVIDIA A100 or H100 GPUs running for weeks or months), electricity, data acquisition and cleaning, and engineering salaries. For example, training GPT-3 (175B parameters) was estimated to cost around $4-12 million in compute. This is why most organizations choose to use pre-trained foundation models via APIs or fine-tune existing open-source models (like Llama or Mistral) rather than training from scratch, which reduces costs to thousands or tens of thousands of dollars instead of millions.",
+      "type": "probe"
+    },
+    {
+      "question": "How do I fine-tune an open-source Llama model on my own GPU server using Hugging Face, instead of using a managed AWS service?",
+      "answer": "To fine-tune a Llama model on your own hardware, you would typically use the Hugging Face Transformers library along with a technique like LoRA or QLoRA to reduce memory requirements. The general steps are: (1) Request access to the Llama model weights from Meta via Hugging Face and accept the license. (2) Install the required libraries such as transformers, peft, bitsandbytes, accelerate, and datasets. (3) Prepare your training data in a supported format, such as JSONL with prompt-completion pairs or a chat template format. (4) Load the base model, optionally in 4-bit quantized form using bitsandbytes to fit it on consumer or single-node GPUs. (5) Configure a LoRA adapter with the PEFT library, specifying parameters like rank (r), alpha, and target modules (commonly the attention projection layers). (6) Use the Trainer or SFTTrainer (from the TRL library) to run supervised fine-tuning, setting hyperparameters like learning rate (commonly 1e-4 to 2e-4 for LoRA), batch size, and number of epochs. (7) After training, merge the LoRA weights into the base model or keep them as a separate adapter, then evaluate on held-out data. For a 7B\u20138B parameter model with QLoRA, a single GPU with 16\u201324 GB of VRAM is often sufficient. Note that this workflow is independent of AWS managed services; you handle the infrastructure, drivers (CUDA), and model hosting yourself.",
+      "type": "probe"
+    },
+    {
+      "question": "How do I set up a GPU-enabled EC2 instance to fine-tune an open-source LLM like Llama 3 myself, and which instance types should I consider?",
+      "answer": "To fine-tune an open-source LLM on EC2, you would launch a GPU-accelerated instance, such as those in the p4d (NVIDIA A100), p5 (NVIDIA H100), or g5 (NVIDIA A10G) families, depending on model size and budget. A common approach is: (1) launch the instance with a Deep Learning AMI, which comes preinstalled with NVIDIA drivers, CUDA, and frameworks like PyTorch; (2) attach sufficient EBS storage for model weights and datasets; (3) install libraries such as Hugging Face Transformers, PEFT, and bitsandbytes; (4) use parameter-efficient fine-tuning techniques like LoRA or QLoRA to reduce memory requirements\u2014QLoRA can fine-tune a 7B\u20138B parameter model on a single 24 GB GPU like an A10G; and (5) monitor GPU utilization with nvidia-smi. For larger models (70B+), you would typically need multi-GPU instances like p4d.24xlarge or p5.48xlarge and distributed training frameworks such as DeepSpeed or FSDP. Note that this is a self-managed approach on EC2 and is separate from managed services like Amazon Bedrock or SageMaker.",
+      "type": "probe"
+    },
+    {
+      "question": "How do I fine-tune an open-source model like Llama 3 on my own GPU server using Hugging Face, instead of using a managed AWS service?",
+      "answer": "To fine-tune an open-source model like Llama 3 on your own GPU hardware, you would typically use the Hugging Face ecosystem. First, install the required libraries such as transformers, datasets, peft, and bitsandbytes. Then, download the model weights from the Hugging Face Hub (after accepting the model's license). A common approach is parameter-efficient fine-tuning (PEFT) using LoRA or QLoRA, which dramatically reduces memory requirements by training only small adapter layers while keeping the base model frozen, often quantized to 4-bit. You prepare your dataset in an instruction format (e.g., prompt/response pairs), use the SFTTrainer from the TRL library to run supervised fine-tuning, and monitor loss during training. A single 24GB GPU (like an RTX 4090) can fine-tune an 8B parameter model with QLoRA. After training, you can merge the LoRA adapters back into the base model and export it for inference with tools like vLLM or llama.cpp. This is a general machine learning workflow independent of any managed AWS service like Amazon Bedrock, which does not cover self-hosted fine-tuning procedures.",
+      "type": "probe"
+    },
+    {
+      "question": "How do I set up a GPU-enabled EC2 instance to fine-tune an open-source LLM like Llama 3 myself, and which instance types should I consider?",
+      "answer": "To fine-tune an open-source LLM on EC2, you would launch a GPU-accelerated instance such as those in the p4d, p5 (NVIDIA A100/H100), or g5/g6 (NVIDIA A10G/L4) families, depending on model size and budget. Steps generally include: (1) requesting a service quota increase for the desired GPU instance type, (2) launching the instance with a Deep Learning AMI (DLAMI) that comes preinstalled with CUDA, PyTorch, and NVIDIA drivers, (3) attaching sufficient EBS or FSx storage for model weights and training data, (4) installing fine-tuning frameworks like Hugging Face Transformers, PEFT (for LoRA/QLoRA), or Axolotl, and (5) running the training job, optionally using techniques like quantization and gradient checkpointing to fit larger models in GPU memory. For a 7B\u20138B parameter model with QLoRA, a single g5.2xlarge (24 GB A10G) can suffice, while full fine-tuning of larger models typically requires multi-GPU p4d/p5 instances. Note this is a self-managed approach on EC2, distinct from managed services like Amazon SageMaker or Amazon Bedrock's built-in customization features.",
+      "type": "probe"
+    },
+    {
+      "question": "How do I set up a GPU-enabled EC2 instance to fine-tune an open-source LLM like Llama 3 myself, and which instance types should I consider?",
+      "answer": "To fine-tune an open-source LLM on EC2, you would launch a GPU-accelerated instance such as those in the p4d (NVIDIA A100), p5 (NVIDIA H100), or g5/g6 (NVIDIA A10G/L4) families, depending on model size and budget. A common approach is: (1) choose an AMI with NVIDIA drivers and CUDA pre-installed, such as the AWS Deep Learning AMI; (2) attach sufficient EBS storage for model weights and datasets; (3) install a training framework like PyTorch with Hugging Face Transformers and PEFT/LoRA libraries to reduce memory requirements; (4) download the model weights (e.g., from Hugging Face after accepting the license); and (5) run fine-tuning, optionally using techniques like QLoRA to fit larger models on fewer GPUs. For a 7B\u20138B parameter model with LoRA, a single g5.2xlarge or g5.12xlarge can often suffice, while full fine-tuning of larger models typically requires multi-GPU p4d/p5 instances with distributed training tools like DeepSpeed or FSDP. Note that this is a self-managed approach on EC2, distinct from managed services like Amazon SageMaker or Amazon Bedrock's managed fine-tuning.",
+      "type": "probe"
+    },
+    {
+      "question": "How do I set up a GPU-enabled EC2 instance to fine-tune an open-source LLM like Llama 3 myself, and which instance types should I consider?",
+      "answer": "To fine-tune an open-source LLM on EC2, you would typically launch a GPU instance such as those in the p4d (NVIDIA A100), p5 (NVIDIA H100), or g5 (NVIDIA A10G) families, depending on model size and budget. The general steps are: (1) Choose an AMI with GPU drivers preinstalled, such as the AWS Deep Learning AMI, which includes CUDA, cuDNN, and popular frameworks like PyTorch. (2) Launch the instance with sufficient EBS storage for model weights and training data. (3) SSH in and set up your environment, often using Hugging Face Transformers, PEFT/LoRA for parameter-efficient fine-tuning, and libraries like bitsandbytes for quantization to reduce memory requirements. (4) Download the model weights (e.g., from Hugging Face after accepting the license) and run your training script, monitoring GPU utilization with nvidia-smi. For a 7B-8B parameter model with LoRA, a single g5.12xlarge or p4d instance is often sufficient, while full fine-tuning of larger models may require multi-GPU or multi-node setups with tools like DeepSpeed or FSDP. Note that this is a self-managed approach on EC2, distinct from managed services like Amazon SageMaker, which handles much of this infrastructure setup for you.",
+      "type": "probe"
+    },
+    {
+      "question": "How do I fine-tune an open-source LLM like Llama 3 on my own GPU hardware using Hugging Face libraries?",
+      "answer": "To fine-tune an open-source LLM like Llama 3 on your own GPU hardware, you would typically use the Hugging Face ecosystem. First, install the required libraries: transformers, datasets, peft, bitsandbytes, and accelerate. Then, load the base model with quantization (such as 4-bit via bitsandbytes) to reduce memory requirements. Use parameter-efficient fine-tuning (PEFT) methods like LoRA or QLoRA, which train small adapter layers instead of all model weights, making it feasible on consumer GPUs (e.g., a 24GB RTX 4090 can fine-tune a 7B-8B parameter model with QLoRA). Prepare your dataset in an instruction format, configure a trainer (such as the SFTTrainer from the TRL library), set hyperparameters like learning rate (commonly 1e-4 to 2e-4 for LoRA), and run training. After training, you can merge the LoRA adapters back into the base model or keep them separate. Note that Llama 3 requires accepting Meta's license agreement before downloading the weights from Hugging Face. This is a general machine learning workflow and is not covered by Amazon Bedrock documentation, which focuses on Bedrock's managed fine-tuning features instead.",
+      "type": "probe"
+    }
+  ]
+}

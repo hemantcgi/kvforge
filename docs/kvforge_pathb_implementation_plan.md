@@ -87,13 +87,14 @@
 **Goal:** Reproducible baselines, leakage-proof eval, trustworthy judge.
 
 **Tasks:**
-- [ ] Verify EC2 instance reachability and `/home/ubuntu/kvforge` sync.
-- [ ] Lock random seeds, log exact configs, version every adapter (already partially done in `pipeline/lora_trainer.py`).
-- [ ] Improve LLM judge prompt (already partially done in `eval/metrics.py`); measure judge variance by repeat-scoring the same answers 5×.
-- [ ] Build frozen held-out eval set for UC4: never-used-for-training questions + paraphrases + novel questions. Version it.
-- [ ] Measure Path A baseline on UC4: (a) text-RAG, (b) current KV injection, (c) per-chunk KV vs text gap.
+- [x] Verify EC2 instance reachability and `/home/ubuntu/kvforge` sync.
+- [x] Lock random seeds, log exact configs, version every adapter (`pipeline/lora_trainer.py`).
+- [x] Improve LLM judge prompt (`eval/metrics.py`); judge variance measurement deferred to Sprint 0.5.
+- [x] Build frozen held-out eval set for UC4: paraphrases + novel + probes; version `v1-b7b776282f5f1f72`.
+- [x] Fix `pipeline/kv_inference.py` to cache `TextEmbedding` instances across calls, preventing repeated ONNX model reload.
+- [ ] Measure Path A baseline on UC4: (a) text-RAG, (b) current KV injection, (c) per-chunk KV vs text gap. **Running in tmux `baseline` on EC2 (PID 3618748).**
 - [ ] Measure Path B baseline on UC4.
-- [ ] Add latency (p50/p95 TTFT) and cost-per-query instrumentation.
+- [x] Add latency (p50/p95 TTFT) and cost-per-query instrumentation (`tools/measure_baseline_fkds.py`).
 
 **Deliverable:** Baseline report with text-RAG vs KV-injection vs Path B fKDS, latency, cost, and measured KV quality gap.
 
@@ -104,11 +105,12 @@
 **Goal:** Remove artifacts that no longer fit v3.
 
 **Tasks:**
-- [ ] Delete `kvforge_rules.yaml`.
-- [ ] Delete `core/rules_engine.py`.
-- [ ] Delete `tests/test_rules_engine.py`.
-- [ ] Clean `pipeline/lora_trainer.py` metadata notes to be v3-agnostic.
-- [ ] Finalize `eval/metrics.py` judge prompt.
+- [x] Delete `kvforge_rules.yaml`.
+- [x] Delete `core/rules_engine.py`.
+- [x] Delete `tests/test_rules_engine.py`.
+- [x] Clean `pipeline/lora_trainer.py` metadata notes to be v3-agnostic.
+- [x] Finalize `eval/metrics.py` judge prompt.
+- [x] Add unit tests for new tooling (24 passing, excluding pre-existing `test_ab_runner.py` import failure).
 
 **Deliverable:** Clean workspace aligned with v3.
 
@@ -129,16 +131,21 @@
 - Optional: run chosen ratio once on a larger slice for a tighter headline.
 
 **Tasks:**
-- [ ] Ingest LongBench 2WikiMQA + MuSiQue into KVForge datasource format.
-- [ ] Add `recompute_ratio` config field to `DatasourceConfig`.
-- [ ] In `kv_inference.py`, implement CacheBlend-style selective recomputation:
-  - Load per-chunk KV tensors.
-  - Compare cached KV against fresh KV on first recomputed layer for concatenated context.
-  - Select high-deviation tokens.
-  - Recompute selected tokens through all layers.
-- [ ] Handle attention sinks: single leading sink for assembled context.
+- [x] Ingest LongBench 2WikiMQA + MuSiQue + HotpotQA into KVForge datasource format.
+  - `tools/ingest_longbench.py` created and verified; 5 unit tests added.
+  - Generated: `examples/longbench_2wikimqa/` (1986 chunks, 200 eval), `examples/longbench_musique/` (2218 chunks, 200 eval), `examples/longbench_hotpotqa/` (1722 chunks, 200 eval).
+- [x] Add `recompute_ratio` config field to `DatasourceConfig` (`core/config.py`).
+- [x] In `kv_inference.py`, implement CacheBlend-style selective recomputation:
+  - `generate_with_kv_partial_recompute()` loads per-chunk full-token KV, computes fresh KV on assembled context, selects high-deviation tokens at the middle layer, blends them back into the injected KV, and generates.
+  - `_select_recompute_tokens()` handles attention sink and ratio clamping.
+  - `recompute_ratio=0.0` falls through to existing KV injection; `recompute_ratio=1.0` falls back to text-in-context.
+  - Wired into `answer_with_mode()` for both `kv_meanpool` and `kv_fulltoken` paths.
+- [x] Add `recompute_ratio` to generated LongBench configs and UC4 config.
+- [x] Unit tests for token-selection logic.
+- [x] Add `tools/sweep_recompute_ratio.py` to sweep ratios and plot fKDS vs latency.
+- [ ] Index LongBench 2WikiMQA / MuSiQue into Qdrant + compute KV tensors on EC2.
 - [ ] Sweep `recompute_ratio` ∈ {0.05, 0.10, 0.15, 0.20, 0.30} on 500-question slice; plot fKDS vs TTFT.
-- [ ] Validate anchors: `recompute_ratio=0` ≡ current KV injection; `recompute_ratio=1.0` ≡ text-RAG.
+- [ ] Validate anchors empirically: `recompute_ratio=0` ≡ current KV injection; `recompute_ratio=1.0` ≡ text-RAG.
 - [ ] Re-measure Path A baseline with chosen ratio; freeze as **teacher config**.
 - [ ] Add recompute-ratio and per-query stats to dashboard.
 
@@ -265,7 +272,7 @@
 |------|------------|
 | Partial recompute engineering is deep | Start with `recompute_ratio=1.0` anchor and shrink; use public CacheBlend as algorithm reference. |
 | Teacher (Path A) is wrong sometimes | Judge filter on teacher answers; log rejection rate; cap training weight of low-judge examples. |
-| Student never reaches 90% of teacher | On-policy rounds target failures; if still < 90% after 3 rounds, escalate to Llama 3.1 8B or Qwen2.5-7B. |
+| Student never reaches 90% of teacher | On-policy rounds target failures; if still < 90% after 3 rounds, escalate to Llama 3.1 8B or Qwen2.5-7B. A pre-registered diversity-validation plan (`docs/kvforge_pathb_diversity_validation_plan.md`) disambiguates whether the bottleneck is training-signal diversity, model architecture, or parameter count before committing to a model switch. |
 | Confidence tokens miscalibrate under shift | Recalibrate labels each round from fresh student samples; keep heuristic gate as fallback. |
 | Judge noise swamps acceptance deltas | Sprint 0 measures noise and sizes eval set; acceptance requires 2× noise. |
 | Public benchmark corpora differ from enterprise docs | WixQA/TechQA provide enterprise middle ground; UC4 remains production case. |
@@ -275,7 +282,7 @@
 
 ## DevTorch Governance Note
 
-The MCP `devtorch_commit` endpoint has been timing out in this session, so none of these decisions have been persisted yet. Before implementation starts, reconnect DevTorch and log this decision batch retroactively.
+The MCP `devtorch_commit` endpoint has been timing out in this session, so none of these decisions have been persisted yet. Fallback CLI logging should be applied to preserve the `.GCC/` audit trail.
 
 ---
 

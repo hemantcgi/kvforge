@@ -1,0 +1,778 @@
+{
+  "teacher_pairs": [
+    {
+      "question": "1. What is the value of the key designated as 'special' for the token whose content is ' '?",
+      "teacher_answer": "The value of the special key for this token is 'true'.",
+      "expected_answer": "The value of the 'special' key for the token with content '<|reserved_special_token_166|>' is true.",
+      "source": "faq_paraphrase",
+      "chunk_ids": [
+        "1516",
+        "1546",
+        "1544",
+        "1548",
+        "1645"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.8999999999999999
+    },
+    {
+      "question": "What is the name of the company that owns the Amazon Bedrock?",
+      "teacher_answer": "boundary provided by AWS IAM IdentityCenter. If there is no explicit permission boundary defined for a builder action, it falls back to global permissions that allow full access to resources. • AWS Lambda — Amazon Bedrack Studio executes functions written by developers using AWS Lambda services. These functions are invoked automatically based on changes detected within the source code associated with each function. • AWS S3 — stores generated files temporarily before transferring to the customer’s storage solution.\n---[end]\n\nTo answer the question \"What can I do\" with Amazon Bedrook?\nYou can experiment with prompts and configurations, and add information from various data sources to improve the quality of responses. You have two options:\n• **Use the text, Image, and Chat Playgrounds**—Experiment in a graphical user interface with simple input and output formats; then, submit your prompt and configure settings via the `InvokeModel` API.\n• or\n• **Submit Prompts Directly**: Use the `Invoke Model` API to receive results for custom text inputs and configuration parameters. Note that if you want to run experiments with images, you must select the `Text`, `Image`, and “Chat” modes simultaneously in the UI to obtain both modalities.\nExplain how to use Amazon Bedroock for experimentation and",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "1907",
+        "17",
+        "0",
+        "2517",
+        "1910"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is prompt engineering?",
+      "teacher_answer": "Amazon Bed rock. Best Practices for Crafting Effective Prompts According to Amazon Bedrock's prompt engineering guidelines, there are several key elements to craft effective prompts: Be clear and concisely state what you expect the assistant to do; specify who should assist; clearly describe any additional information needed such as names, dates, times etc.; make sure to indicate whether the conversation should take place privately or publicly; avoid ambiguity or uncertainty which could lead to incorrect answers or inappropriate actions; ensure clarity throughout the entire dialog; use proper grammar, spelling, capitalization, punctuations, and formatting; and define any variables. Use natural language while avoiding overly formal language to improve readability; however, ensure consistency throughout the dialog to maintain focus; use present tense since future states would likely mislead users into thinking the situation exists now; and avoid using jargon, acronyms, abbreviations unless absolutely essential. Finally, check your prompt against relevant sources or ask humans to verify accuracy before proceeding with the request.\nTo determine the correct prompt structure, analyze the LLM’s response history to identify patterns common among similar questions asked by the users. These insights will allow you to develop structured prompt formats tailored specifically to meet the needs of both users and the LLM. Additionally, understand how different models respond to",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "459",
+        "460",
+        "506",
+        "469",
+        "466"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the purpose of query number 1019?",
+      "teacher_answer": "keys other than those present in the input prompt. Also, if you need to add additional metadata, please refer to [Metadata](https://docs.amazon.com/bedrock/knowledge-base/user-guide/metadata.html). Turn on generative capabilities like auto-generate response template and auto-generate completion prompts. Use the Amazon Bedrock User Interface to configure models, turn on/off certain features, view logs, manage users, etc. Set up AWS IAM roles to grant access to resources and perform tasks outside of the interface, such as running scripts with custom commands and logging. Instructed Models Model Id Description Command Parameters Response Type 5xg01hjxjzbfkzr3ybxpfxqf6d1t5xg03hjxjqmxxr3ybsxfqfvbftxzr3ymxbxpfxnqf6dx3hjxqqmmxxr3ymnbxpxfmxbxpmqf5xd7xqmxwqr3yrpfxqfcqmxwmxnxrnrfmrxsrmxmwrpfmdmrxsrnmwxrdmwprxrfrsmrrdmrrmrprmfqmxwnrqmxwmrprnrq",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "551",
+        "898",
+        "897",
+        "727",
+        "688"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the number assigned to the HandleModelNotReadyException in the Amazon Bedrock User Guide?",
+      "teacher_answer": "Learn more about the availability of this feature and usage examples at: //https://www.coherent.ai/blog/command-invocation-with-coherelike-models-for-generative-aio-and-humans-in-one-platform// cohere command light 2377\n\nTo summarize what happened when invoking Coherence with no prompts provided, we saw that it returned a greeting saying “You are talking to AI.” This indicates that Coherence was unable to understand any input because none were supplied, so it did not generate anything.\nWhen providing inputs like these, there should be some output generated by the system. It’s always good practice to validate whether the requested resources and services were utilized successfully before continuing further operations in the pipeline. In this case, since everything worked correctly, I continued processing the workflow using all the outputs received. \nSo far, both models have been successful in responding to requests without errors. However, as noted earlier, if either model encounters issues during execution, they may return error responses such as those encountered by Coherence with its own prompt being passed through.\nTherefore, based on my analysis, I recommend adding additional logging for error detection mechanisms within our workflows. We will also need to add monitoring checks after completing each operation to detect potential issues early and avoid unnecessary reprocessing of",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "1504",
+        "2286",
+        "2239",
+        "1947",
+        "2352"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "Who created Stable Diﬀusion?",
+      "teacher_answer": "Stability AI created Stable Di\\ﬀusions (SD3). While no single person was identified as its creator, we believe that it has been continuously developed since stability.ai announced their diﬀuser in May 2022 (stable-diubfusion-stable-prompt), followed by additional updates throughout June and July. This update allowed users to enable the di﬍ution of user-provided input via the `dof` parameter. We also updated our stable image core and added several new features including improved style transfer capabilities, increased control over the output format and ability to upload custom style transfers into the platform through the “Upload Style Transfer” option in the UI. With these improvements, users can now better customize the look-and-feel of the resulting image while still achieving great results out-of-the-box. Additionally, users could enable multiple di﬊users simultaneously which allows them to work on different prompts at once, increasing productivity and efficiency. As always, all stable diffusion outputs remain within fair use guidelines. —Stacy, Stability AI Support Engineer ([support@stabilityai.com](mailto:support@stabilityaicom)) <hr/>, First, let’s talk about who made Stable Di﫽usion. According to Stability AI,",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "263",
+        "2425",
+        "111",
+        "2429",
+        "285"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the purpose of a prompt in model inference?",
+      "teacher_answer": "capacity with cloud-based training. To submit a prompt and get a response, follow these steps: Step 1: Write a prompt and identify the model that will produce a response for you. If you don’t know what kind of response a particular model generates, try submitting different types of prompts to find out. For most models, this means selecting the prompt type listed under “Prompt Type” next to the model name. Step 2: Select the desired model, inferencing profile, region and access key ID to invoke. After entering the request details, click “Invoke Now.” This starts the execution of the specified operation. Step 3: Check the status of the invoked job to confirm whether the processing was successful. You’ll receive the status immediately after clicking Invoke Now. Step 4: Review the results of the processed prompt. The system displays both the original prompt and any subsequent changes made by the model.\nText: We need to increase our workforce to address growing demand from customers who want to hire remote workers. As we expand our business globally, we expect to require many more people to support sales operations, customer service, and technical support — including software engineers, IT professionals, and cybersecurity experts. Furthermore, our expansion plans indicate a significant shift toward digital transformation within various sectors",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "20",
+        "271",
+        "505",
+        "339",
+        "510"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the name of the AWS managed policy to be attached to the Amazon Bedrock role?",
+      "teacher_answer": "policy and an inline policy, see Choosing between inline policies and managed policies in your organization in the IAM Users Guide. Customer managed policies are created based on specific requirements and used at any time without affecting other customers' usage rights. AWS provides pre-made AWS managed policies through the AWS Policy Hub. For detailed descriptions of each policy, click on its title in the AWS PolicyHub. Custom managed policies provide a way for administrators to define custom set of permissions tailored to their business needs while maintaining consistency across their applications. Customers may build their own custom policies using tools like AWS Management Tools and AWS SDKs. AWS recommends reviewing the documentation related to customer managed policies before building one. It’s worth noting that if you’re using a public customer-managed policy that contains the \"bedrock.amazonaws.com\" prefix, consider upgrading to the latest supported version because older versions will cause issues during sign-in due to changes made to IAM policies. For more recommendations on managing policies, see Recommendations for best practices when defining IAM policies in your environment in the IAM Best Practices Guidelines in the IAM Admin guide. AWS provides a comprehensive list of available managed policies through both the AWS Policy Hubs and the AWS Trusted Advisor, making it easy to find relevant policies that match your business requirements. Review the provided options carefully according to",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "2009",
+        "2066",
+        "2016",
+        "1983",
+        "2023"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the name of the model selected for demonstration purposes?",
+      "teacher_answer": "output file invoke-model-output .txt Command-line tool The following command performs exactly the same actions as the preceding CLI example. Note that these commands do not automatically save any results; therefore, manually copy them to execute in an environment like the one described above. aws bed-rock runtime invoke-model --model-id \"anthropic-clauDev -v2 —body “\\” prompt \\(\\“ Human: story of dogstwo \\n\\n Assistant:\\(“ max-tokens-to-sample” : 300 \\” } —output file invoke_model_output .txt Command-Line Tool For more information on using the command-line tools to interactively build custom models, refer to Customizing a model with command-line tools. Interactive UI (Console) The following steps outline what happens when you run the command in the interactive UI (console): Go to the AWS Management portal and navigate to Amazon Bedrock under Services > Amazon Bedrock and select Workspaces. Click Create workspace, then choose Amazon Novasubspace as the template type. Choose Next, provide an instance name and description, click Review configuration, and then click Launch. Open the command-line tool or terminal, login with an IAM user account that has permissions to launch and manage instances. Run aws autoscale launch --instance-name \"",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "115",
+        "227",
+        "20",
+        "357",
+        "356"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the recommended method for ensuring IAM user access keys expire in case they are mishandled?",
+      "teacher_answer": "Limiting the duration of access keys signed under a specific short-lived token and attaching a restrictive inline IAM policy to the IAM user ensures IAM user access key expires within 72 hours if mishandled. (See page 2479.) Thus, the recommended method is limiting the duration of each access key to less than three months. (See pages 2458–2466.)\nCitation: See pages 34–37.\nThis response was generated automatically and does not necessarily reflect the opinions of its creators or endorse their views. This response should not be cited unless otherwise specified. Citing page numbers indicates citations according to our automated citation generator. Page numbers refer to the corresponding text on page 31 of the document. Citations are formatted according to the style guide associated with each page number. The page references listed above indicate where relevant content appears on the related page; however, they did not influence this response’s automatic generation process. The author made adjustments based upon feedback given during evaluation. Therefore, while both responses were generated automatically, one response reflects changes relative to another based solely on comments received about accuracy, relevance, and completeness. As such, while the initial output would have been inaccurate, well-informed readers could obtain accurate results directly from the original material by referencing those sections",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "31",
+        "32",
+        "2493",
+        "30",
+        "33"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the name of the Amazon Bedrock runtime endpoint used to run the Converse operation?",
+      "teacher_answer": "that receives messages from users through various interfaces like APIs, command-line tools, or webhooks? (Answer will be provided based solely upon this specific query.) \nCohere Command \n\nThe correct answer should include the words \"Bedrock\" and \"receive\". The other options do not meet these requirements.\nNo, none of those are right. None of them match the description. These answers don't contain any information about the interface type described above. That makes sense given they refer back to our previous examples without including “through” — so no good candidates were listed there either. Using just the first three lines of the definition, we can infer what was asked here—what’s the name of... —and thus conclude that Answer A matches both criteria because its full title includes all three required words: “the name of…,” “bedrock”, and “receive”. Since there aren’t multiple correct answers, only Answer A meets both criteria — making it the best choice among all four possible answers. Choice B doesn’t mention bedrock at all. While Choice C does describe a function that involves receiving, it says nothing about whether the responses come “from.” Given this lack of specificity, neither choice C nor D provides sufficient evidence to support their claims as being correct. Therefore",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "2321",
+        "2188",
+        "2319",
+        "2365",
+        "2326"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the purpose of the `exit(1)` statement in the code?",
+      "teacher_answer": "It causes the program to terminate immediately and display the error message indicating it has failed after processing the user's query.\n Page number: 1347.",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "1288",
+        "588",
+        "1352",
+        "1259",
+        "2310"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the name of the SDK that provides code examples for AWS SDK for SAP ABAP?",
+      "teacher_answer": "None provided in the passage; however, based on the title headers of pages 2289 and 2492 (the latter of which links directly back to page 2289), one could infer that the correct answer would be \"AWS SDK for SAP...\". Therefore:\n\nThe final answer is AWS SDK for Sap Abap.",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "44",
+        "2282",
+        "43",
+        "2485",
+        "2476"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is required to use a foundation model in Amazon Bedrock? Requesting access to it.",
+      "teacher_answer": "Amazon Bedroot User Guid (Note: there was no title.) Step 1: Select Amazon Bedrock Users — Choose the users who will receive notifications when their email address becomes associated with an organization, or those whose accounts become active once they join the organization. Click Send to confirm. Step 2: Select Organization Details — Enter details about your organization’s headquarters location, company name, description, website URL, phone number, country code, and timezone. In the Region field, enter the region where your headquarters is located. In the Company Type field, enter your type of business. Click Save to save these settings. Step 3: Organize Your Members — Group members based on roles or other criteria, allowing you to associate specific member groups with organizations’ shared documents. You can organize members across multiple organizations if desired. Step 4: Manage Shared Documents — Assign members to share certain documents; enable or disable document sharing for different types of resources. As part of step three, assign your group manager(s) to create shared folders within your organization. Step 5: Configure Permissions — Enable additional permissions like viewing public profiles, managing group memberships, and associating personal emails with work addresses. Follow the configuration guidelines outlined here for enabling permissions. Step 6: Activate Accounts —",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "45",
+        "51",
+        "17",
+        "26",
+        "2158"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the name of the tool used to look up the model ID for Provisioned Throughput?",
+      "teacher_answer": "provided to the new provisionedModelID variable. Let's say the original Provisioned Throughputation had been deleted after being used to test one day’s worth of responses per month, but now we have received additional funding and would like to restart usage. We will change the name of this Provisioned Throughupto to “MyPT2” and then update our model units to reflect increased demand by setting them to two thousand instead of just one thousand. Finally, let’s add another user account group so they too can make requests against these provisioned throughput capabilities, adding a few lines to the script. These changes are documented in Figure 10-14. Update the provisionsedModelUnits value when making a call to aws bedrockdelete-provisioned-mode-throughput--provisioned-mode-id=\"MyPT2\". Also, note that even though the name changed, the underlying provider remains unchanged.\n--- [page 1478, score  0.7726] Amazon Bedrock UserGuide —model-id **${provisioned-model-arn }** \\ —body ”{“inputText”: “What is AWS?” , “text- Generation Config.” {“temperature ”: 0.50}}’ \\ — cli-binary-format raw -in -base",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "1454",
+        "355",
+        "52",
+        "1456",
+        "1885"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "Which Amazon model is used for text embedding? Amazon Titan Embedding s G1 - Text.",
+      "teacher_answer": ", Thai, Vietnamese, Greek, Romanian, Ukrainian, Hungarian, Finnish, Belarusian, Indonesian, Lithuanian, Malaysian, Mongolian, Norwegian, Bengali, Croatian, Serbian, Albanian, Armenian, Georgian, Swahili, Telugu, and Urdu. Embedding Length and Token Count 1887\n\n--- [page 63, score  0.853] Amazon Bedrock User Guide Amazon Titan Embeddings V2 provides better results when compared to traditional user-generated prompts. Traditional user-generated prompts rely solely on natural language processing, while Amazon Titan Embedblings V2 combines natural language understanding and machine learning to analyze and understand human intent behind a query. Additionally, Amazon Titan Embedgings V2 includes support for entities, attributes, and concepts to help build highly accurate chatbots through advanced entity recognition and knowledge-based reasoning. Amazon Titan Embedded Prompts Examples (e.g., \"What is the current temperature?\" vs. \"Tell me about weather.\") Both methods require the user to explicitly state their request; they do not infer intent from conversational history or other factors. However, unlike traditional user-generated user prompts, embedded prompts allow users to ask questions based on their prior knowledge rather than simply asking what something does. This means that users may get answers about",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "1897",
+        "59",
+        "1895",
+        "1898",
+        "1896"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What regions are supported by the Amazon Bedrock User Guide?",
+      "teacher_answer": "According to page 1057, \"Supported regions include ap-northeast-1, ca-central-1, eu-east-1, us-east-1\", which corresponds to pages 1106-1111 and [page 2530](https://docs.aws.amazon.com/bbeditor/latest/userguide/using-endpoints.html#region-expansion), respectively.\nHowever, considering the entire text from the beginning until the end we find the correct statement: “The region where you request an account must be one of those listed as ‘Supported regions’.” Page 1073. So then there are two statements about this: “In addition, if you select U.S., you will also need to confirm whether you want to create a new user ID or log into an existing user ID associated with the account you have selected” Page 1069. And finally, “If you choose U.S., provide either a username or email address to associate with your agent and access credentials.” Page 1149. These three sections correspond to pages 1174–1182, so it appears that none of these are related to what’s asked; however, after reevaluating I found another part of the section: “For example, Amazon supports the Amazon Bedro ck Agent for",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "1095",
+        "87",
+        "421",
+        "99",
+        "2513"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "Which model is supported in the us-west-2 region?",
+      "teacher_answer": "Ultra Stability AI J2 Large is not supported; however, stability ai stable image core is supported on all regions including US west (Oregon).  However, prompt optimization is not available at this time in other regions but can be accessed using a latency optimized version of ultra-stability AI j2 large via cross region inference from US east (N. virginia), US East (ohio), or AWS gov cloud (us-West).  This results in an increased cost per request.\n \nCitation: [Page 100]",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "97",
+        "98",
+        "96",
+        "95",
+        "94"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the name of the provider model?",
+      "teacher_answer": "Amazon Bedrock provides three pre-trained provider models. You can select any one of these providers. [page 59, score  0.7187] (choose either): AmazonBedrockPro - ProvenancePlus - Genie, AmazonBedrockConversationalAI - LargeGenie, Amazon Bedrock Enterprise Edition - Basic, AmazonBedro ckEnterpriseEditionProver, Amazon Bedro ckBasic - Genie. [page 2149, score 1.0000] (select one of them). We recommend choosing the most basic one because they have been tested extensively with all the test prompts and are easier to work with than the others. [page  1919 ,score 0.7298](use the **AmazonBedro ckBasic** option). It uses the same text embeddings used by our conversational AI model. While not perfect, this is good enough for many users who want a high-quality language generator without having to go through extensive testing.\nCitation: Amazon Bed rock User Gu ide r, p. 1920. <https://docs.aws.amazon.com/bbedition/latest/userguide/model-support.html> (accessed August 2023).\nNote: Although I've answered according to the instructions provided, there may be",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "2147",
+        "355",
+        "1877",
+        "52",
+        "62"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the name of the provider model used in the Cohere Command R?",
+      "teacher_answer": "Cohere Command (Cohere Command R) - model product id c61c46 fe-1747 41 aa 9 af 0 2 e 0 ae 8 a 9 ce 05 ( page 49 , score 0 . 81 28 ). It indicates that the provider model is named “Cohere Command” and has a model product ID of “cohere.command-r-v1: 0”. However, since it's not explicitly mentioned what kind of command this is, we'll assume it refers to a generic model usage case rather than a specific type of command. Therefore, our final answer will be based on the provided title without assuming additional context.\nThe best answer is Cohere Command model product id c61c46 fe – 1747 4 1 aa 9 af 0 2 e 0 ae 8 a 9 ce 05.",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "47",
+        "72",
+        "225",
+        "205",
+        "204"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What regions is the foundation model supported in?",
+      "teacher_answer": "West) Asia Pacific (Tokyo ) Asia Pacific (Seoul ) Asia Pacific(Mumbai) Asia Pacific(Singapore) Asia Pacific(Australia) Asia Pacific(Guam) Canada(Central) Europe(Frankfurt) Europe(Zurich) European Union(East) European Union(West) European Union(North) European Union(South) European Union(UK) South America(SãoPaulo) Latin America (Mexico City) Latin America(Bogotá) Latin America(Lima) Middle East(Internationalsupportsnoinputoutputmodality) Africa(Kinshasa) Africa(Pretoria) Africa(Tokyo) Africa(Victoria Falls) North America(Chandler)(NoteThisRegionisnotlistedherebutitisanoptionontheAmazonBedrockConsole) North America(Houston) South America(Denver)(NotelistedasavailableregioninAmazonBedrockQuotas butitsuppliedthroughProvisionedThroughput) Americas(Ecuador)(NoteThisRegistisonlysupportedfordataentryandmodelexportprovisioning;itdoesntsupportcross-regionalinference.) Americas(SouthAmerica—Buenos Aires) Latin America(Rio de Janeiro) Latin America(Santiago Chile) Middle East(Oman)(No input/",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "97",
+        "632",
+        "51",
+        "116",
+        "87"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the name of the Meta Llama model that is supported in the US West-2 region?",
+      "teacher_answer": "The name of this model is \"meta.llama3\" which has an instruction version of `us-west-2` (including sub-regions like **`miami-us-west-2_**`) [See Page 80, score  0.7879] . \n\nPlease cite your source if necessary. I have not cited any text because it was not requested, but be aware there are references listed at the bottom of each section. If needed citations should look something like this: [Page #, Score], (Author). This provides both the location where the relevant data may reside within the user guide and its associated confidence level.\nThe reference for the provided answer would thus appear like this:\n\nMeta Llama3 - Instructional Version, Us-west-2, Miami-U S-West-2 (Source: Page 80; Confidence Level = 0.79)\n[80, 0.799]; Source: Author; Confidence Level: Author's confidence in their report\nNote: We do *not* use the title format specified by the original authors since our task involves answering questions using the content presented without necessarily citing every item included throughout the document. That said, please verify whether my response matches what you expect given such nuances.",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "423",
+        "93",
+        "94",
+        "79",
+        "352"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the name of the Mistral AI model that is supported in the us-east-1 region?",
+      "teacher_answer": "Mistral AI Mis tral- sm all -2402-V1:0. This response refers back to [page 87, score 202, line 15] on p. 88, where it states, “The provided text generation models are supported in the U.S.-East-1 region as shown in Table 29.” On this page, we also see that there is an entry corresponding to “Mis tral – S m al l—V2” under “Instructed models,” indicating that both “Mis tr al Sm all — V2” and “Mis tra l-Sm al l–V1:0” are supported in both regions. We now know which one is used when invoking the model from anywhere within the us-east region. If we invoke the model from outside the us-east location, then the request will be sent directly to the us-west endpoint without any redirection.\nFinally, note that the specific model invoked does not matter; what matters most is whether or not the model is accessible. A user may choose to invoke either of two different models if they prefer. However, since they do not care how the model was accessed, neither choice has significant implications for their workflow. Here’s why: regardless of whether the model was invoked",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "95",
+        "84",
+        "83",
+        "82",
+        "244"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the availability of Amazon Nova Pro in the Asia Pacific region?",
+      "teacher_answer": "According to the information provided on pages [423] (score 0.7), [1867] (score .67), and [55] (score (.67)), there are no available regions listed under \"Model name\" or \"Supported regions and models.\" Hence, it does not appear that this particular model is currently available anywhere as indicated in the prompt; however, other instances may be. Therefore, based solely on these three entries we cannot conclude with certainty whether this model is actually unavailable across all 18+ possible locations because such information isn't explicitly stated within any single entry about Availability.\nBased upon further review of an additional data point located at ([1868](https://docs.aws.amazon.com/bedrock/latest/dg/guide/availability.html#provision-throughput-models-in-us-east-1-and-us-west-2)) where both models were found available, we must infer that while they do meet certain requirements, their full scope may remain limited due to unmentioned specifics regarding different geographic areas. As a result, our conclusion will reflect some ambiguity surrounding model accessibility across its potentially diverse range of international markets. Thus, although based on general understanding one might expect wider global applicability, our findings reveal otherwise—specifically, a more restricted presence compared to",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "88",
+        "421",
+        "1866",
+        "1865",
+        "55"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What are the names of the AWS regions in Asia Pacific that are not listed in the passage?",
+      "teacher_answer": "is the feature of prompt optimization that allows you to fine-tune or retrain models using your own custom prompts? \nAnswer: This feature uses a special type of training called prompt finetuning. You can create custom responses with your own text input and use them as examples during testing. This helps refine the understanding between users' requests and the response generated from those inputs. (Page 104, score 1). \n\nNote - The original request asked how one could perform prompt optimization using only the provided information; however, it was clear based on the subsequent discussion that this cannot be done without access to additional resources like \"Prompt Management\" since prompting requires a user's specific task-related intent.\nHowever, I have answered both questions posed within our conversation. First, we explored which regions supported prompt optimization throughput, revealing that prompt optimization does not exist in certain regions. Second, although there wasn't an explicit answer within the pages cited above regarding whether prompt optimization enables prompt customization via manual tuning or fine-tuning, these two answers are essentially complementary — prompt optimization supports both types of prompts when enabled (\"Yes\"), whereas prompt customization may not always require such capabilities (as seen on p. 105 line #10).\nTherefore, while my initial analysis focused solely upon the latter query,",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "101",
+        "100",
+        "92",
+        "94",
+        "93"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "Where is the Stable Image Core 1.0 available?",
+      "teacher_answer": "In Amazon US East (N.Virginia), US East (Ontario), US West (Orando), AWS GovCloud(U.S.-East), AWS Gov Cloud U.S.-West, Asia Pacific (Tokyo), Asia Pacific (Seoul), Asia Pacific(Mumbai), Asia Pacific(Singapore), Asia Pacific( Sydney), Canada(Central), Europe(Frankfurt), Europe(Zurich), Europe(Irland), Europe(London), Europe(Paris), South America(Brazil)(Sao Paulo), and Stability AI StableImageUltra is also available in these regions including all others except Japan and China. All three are included under stabilityai SD3 large which means no additional fee applies if running multiple instances across any of those regions simultaneously while maintaining consistency between both data center locations. StabilityAI’s SD3 Large provides access to over 400 different features when combined with the capabilities offered through our free tier and enterprise accounts. This includes stable diffusion models, text prompts, batch processing, knowledge-based models, and other advanced tools such as latency optimization and user-defined training. Additionally, users who opt into the program get free access to new models and updates without requiring additional payments beyond what's already included in their subscription. Furthermore, each region now supports up to five concurrent requests per",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "96",
+        "111",
+        "263",
+        "277",
+        "280"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What are the names of the AWS regions that are located in South America?",
+      "teacher_answer": "São Paulo. \n\nNote: Since this question requires the name(s), we will format it as requested.\nWhat are the names used to refer to AWS regions located in South American? \nThe results show one region named \"South America (Sao Paulo)\". Therefore, there was insufficient text provided to determine whether another region existed. \nTherefore, based solely upon the given data, the correct response cannot be completed accurately according to your instructions since you specified providing an answer within two-to-four sentence paragraphs citing specific page numbers from the reference material. While one valid result exists which refers to “São” or “South America”, other answers exist like “Latin America (Santiago)” and “North America (Canada Central).” Thus, additional text must be analyzed to provide complete and accurate responses. As such, the response cannot proceed with citations but may still include the name found using proper formatting as follows:\n\nSouth America (South America - Sao Paulo)\nPlease note the slight difference between original requests and final output formatted to comply strictly with those requirements while also indicating possible ambiguity without sufficient supporting evidence due primarily to incomplete understanding of user expectations versus actual capabilities demonstrated by the system's generated outputs.",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "101",
+        "1095",
+        "87",
+        "99",
+        "94"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the name of the Amazon product line that is a text-based AI model?",
+      "teacher_answer": "Amazon Titan Text (Express/Text/Lite are sub-product lines under this category.) [Page 1882] Amazon Titan Text Product Line The Amazon Titan Text family offers a suite of capabilities which includes Amazon Titan Text Express, Amazon Titan Text Lite, Amazon Titan Embeddings v2, and Titan Image Generator V2. These products together form an integrated solution designed to meet customer needs across various industries and domains. Amazon Titan Express uses Amazon Titan Express’s state-of-the-art model along with its own inference layer enabling it to perform complex natural language processing tasks while reducing latency compared to other similar models on the market. This makes it suitable for high-volume users who need quick responses or those looking at real-time feedback through chatbots, voice assistants, and many other applications. Amazon Titans embedded version offers both faster response times and higher accuracy by utilizing pre-trained transformers from the larger full Titan Text model. It provides an efficient way for developers to integrate these powerful features into their existing applications using just a few simple commands.\nAmazon Titan Embedded, Amazon Titan Expression, and Amazon Titan Text are all based off Amazon's full Titan Text Model. All three are optimized for low-latency and fast-performance, making them great candidates for application builders seeking rapid development without sacrificing quality. Amazon Titan Lite takes advantage",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "1894",
+        "63",
+        "1895",
+        "56",
+        "61"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the name of the model used to generate text for Meta Llama 3.5?",
+      "teacher_answer": "Meta Llama",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "241",
+        "2385",
+        "79",
+        "2393",
+        "238"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the name of the AI model that is part of the Amazon Bedrock platform?",
+      "teacher_answer": "and concepts covered in this guide. Review key terminologies, supported regions, foundation models, and usage guidelines in the Terms and Concepts section. 2.\n3. Choose a starting point based on what you want to achieve with Amazon BedRock, either as an individual contributor, team lead, or business manager. Select \"Create an account\" if you are new to cloud computing; otherwise select \"Get Started with Amazon Bed Rock.\" If you need assistance during sign-up, contact our Customer Service team via phone or email. Visit our Help center for common issues, FAQs, and troubleshooting tips. Read the Getting Started section carefully because there may not be a clear-cut path toward success with all users. A good practice would be to follow the most commonly recommended workflow when signing up for your first Amazon Bedrock account and then continue along the provided guidance throughout the rest of the documentation. Start creating an Amazon BedRock account now! [back button] “I’m already familiar with cloud services.” Skip to Choosing Your Foundation Models. “I'm looking for further learning resources and tutorials” Go to Learning Resources and Tutorials. [back button]\n\n---  [page 11, score 1]  [back button]* [Next page*](https://docs.aws.amazon.com/amazon",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "17",
+        "2183",
+        "1090",
+        "18",
+        "2476"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "Which features are supported by Amazon Nova models?",
+      "teacher_answer": "Amazon Nova models do not support RERANKING or Continuation of Pre-training, but they do support various other features such as Customization of Hyper Parameters, Support for Text, Image and video inputs & outputs, and more. Additionally, it is noted that these models have been designed for both batch and streaming inference modes. These capabilities provide users with greater flexibility while allowing them to leverage Amazon Nova's strengths across different scenarios. As stated in the \"Modality Support\" section, there are limitations related to model IDs being required for each query, prompting requirements needing to be fulfilled before making any requests, and some modality pairs may require additional resources beyond standard inferences provided by Amazon Novas. Furthermore, unlike the conversational abilities offered by Amazon Titan, all responses returned during an interaction will adhere strictly to guidelines set forth by Amazon Nova providers.\nFor instance, despite both offering multilingual language generation capabilities and customizable fine-tuned conversational interfaces, interactions generated via Amazon Titan would follow the conversation structure established by clients' initial dialogue prompt; whereas those produced via Amazon Nova would incorporate client-specific phrases within their respective domains to reflect the user's own voice better than traditional single-turn chatbots. Moreover, because Amazon Titan does offer additional advanced functionality like supporting multimodal dialogues between human",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "55",
+        "103",
+        "116",
+        "1865",
+        "290"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the feature called that is disabled in the passage?",
+      "teacher_answer": "<reasoning>This passage does not mention any specific features.</reasoning><answer>No</answer></response>  \n(Note: I added '<answer>No</a‌nswer>' at the end because Amazon Bedrock asks you if your response matches the provided choice.)",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "821",
+        "785",
+        "220",
+        "839",
+        "576"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the service name used by the Amazon Bedrock User Guide?",
+      "teacher_answer": "1245abcdef-20de-47df-52ae-20cbf-SAMPLE\", \"operationResult\": \"success\", \"timestamp\": \"1546374406000\", \"signatureVersion\": \"S256\", \"signingCertificateArn\": \"arn :aws:kms:support+emr:us-east-1:13534554322122055555:resource-id=12123455252200122424444544434444744445045544545454544444444444677777\", \"renewalWindowStart\": \"Wed Feb 15 17:24:48 UTC 2024\", \"renewsAfterTimestamp\": \"Sat Jan 13 16:23:36 UTC 2023\" } } Function call information for AWS IAM role management 2097\n\n--- Amazon Bedrock User guide – Page 2126 [page 2109, score 1] “To invoke a model with an input stream that contains a prompt, you must also specify the `responseStream` parameter to receive both the response and additional output streams.” (emphasis added) For more information on using responses from models, refer to Using Responses from Models or see Invoking a Model without Output Streams for details about invoking models without specifying any inputs",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "2073",
+        "2064",
+        "1246",
+        "2129",
+        "1947"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the type of task for removing the background from an image?",
+      "teacher_answer": "The type of task is BACKGROUND_REMOVAL, and its definition includes providing information on object detection, masking, and returning results in various formats such as JSON, CSV, etc., using APIs like DescribeBackgroundRemovalResult, GetInferenceResultsForBackgroundRemovalTask, and GetGeneratedInferencesForBackgroundRemotion. (Page 131)\n\nNote: Since there isn't enough space provided to fit all questions within these answers, we're highlighting specific types of content where relevant details reside.\nWe will focus on key points while omitting irrelevant data to preserve clarity. As needed, refer back to our full answers.",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "128",
+        "136",
+        "130",
+        "127",
+        "1853"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the purpose of defining one of the two specified fields in the Amazon Bedrock User Guide?",
+      "teacher_answer": "The purpose is to set permission for users with the proper permissions to invoke models and use all features (including API calls). In this case, it's to allow access to create stacks as shown on page 2035.\nPage number cited: 2040",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "2067",
+        "2010",
+        "432",
+        "2064",
+        "2070"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the required text prompt in colorGuidedGenerationParams?",
+      "teacher_answer": "``` —— Example usage (see section 8: Using the CLI). ``` cli run --use-cloud --model-id stability.titan-clue-gen-v1 --input-type=cli --output-format=plain --text-input=\"Use your own text.\" --mode=express ``` “Use my voice.” —— Example Usage for generating images using the command-line interface (CLI). ``` cli invoke --use-cloud --model-id stability.stable-image- core-v1 --body=\\{“prompt”:”Make me look like Albert Einstein,”\\} –out-format=png –color-guiding-hex-codes=[#FFC080,\\ #F7DC6F]\\} –version=latest —— Example use case (see section \\ref{secusing-the-cli}. ) ``` cli run —use-cloud —model-id stable.model-112 —input-type=csv —output-format= plain —expression-id=aXoJqGxkZwL9fPQyYdRjgBzZ —— Model Customization Overview Models can be customized to enable features such as fine-tuning, logging support, and permission-based access control. Customizing Your Own Model You may customize some aspects",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "136",
+        "278",
+        "1426",
+        "127",
+        "2177"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the minimum value for the Amazon Titan Image Generator's seed parameter?",
+      "teacher_answer": "16:9 512 x512 384 384 6:10 256 x 128 128 256 12:11 512 x255 204 170 20:19 256 x127 130 165 24:21 256 x128 132 160 32:29 192 x 96 108 138 40:39 128 x62 67 80 48:47 192 x95 103 120 60:59 128 x72 69 90 50:49 256 x51 52 66 Images larger than 1024x1024 cannot be requested because they require additional memory. Images smaller than 1022x1022 can result in incomplete rendering due to insufficient rendering resources. Images larger than those specified above do not have better quality; instead, their resolution may degrade slightly. This information applies to all Amazon Titan Image Generators, including both G1 and V2. Prices are shown per million images rendered. Pricing information appears under Additional Resources > Pricing & Cost Estimation in the Amazon Titan User Guide. Example code 126\nNote: Please provide the complete context before answering.\nWhat happens when an image generated by Amazon Titan’s Image Generation service includes text written",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "140",
+        "2210",
+        "1902",
+        "142",
+        "138"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the service name of the bedrock runtime?",
+      "teacher_answer": "The service name of bedrock runtime can be found on page 2208 of this document by looking at the first column under \"Service Names.\" It will appear that the service name is indeed `bedrock.runtime`. To confirm, we'll look up the value associated with key `\"service_name\"` within the `invocation_context` returned when calling `client.InvokeModel()`:\n\n```csharp\nvar invocationContext = response.InvocationContext;\nstring service_name = invocationContext.ContainsKey(\"service_name\") ? \n    invocationContext[\"service_name\"].ToString(): \"\";\nConsole.WriteLine($\"The service name of invoked models was found: {service_name}\");\n```\n\nThis reveals that the service names are also `[bedrock.runtime]`, which confirms our initial assertion.\n```html\n<a href=\"https://docs.aws.amazon.com/AWSCloudWatch/latest/userguide/what-is-cloudwatch.html\">AWS CloudWatch</a>\n<i class=\"fa fa-linkedin\"></i> <a href=\"https:/nlp.stanford.edu/software/maven.shtml\">Stanford Natural Language Processing Group</a>\n[i](https://www.microsoft.com/en-us/research/project/huggingface-microsoft-references-and-benchmarking-suite/)\n<a href=\"/en_us/getting_started/mapping_model_results_to_text",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "2237",
+        "2252",
+        "2064",
+        "2400",
+        "2405"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What does the \"image_bytes\" variable represent in the code?",
+      "teacher_answer": "It represents the bytes produced during an image-to-image translation task using Amazon Titan Image Model. Page 163, lines 34–35. In the code snippet provided above, `image_bytes` is used as the byte stream to pass directly to the AWS SDK’s `BytesIO()` method instead of passing in either a single byte or a bytearray instance.\nCitation: [page 163], line 33. (Note: citation links may vary depending on the source.) \nThus, we can safely ignore any additional metadata associated with the image data (e.g., “Copyright notice” etc.). (This step helps avoid potential errors such as those caused when dealing with very large files whose headers aren’t properly read.)\nPage 164, lines 25–26. The AWS SDK handles the rest of the process internally, including converting the byte streams back into images. Hence there is no need to do anything further than setting up the appropriate environment variables before calling `invoke_model`. Thus, once your application starts using these APIs, they’re ready to go out-of-the-box without requiring additional configuration beyond what was done here. (The reason for providing the same API endpoint URL across both applications—both the “Generate Image From File” and “Text Prompt Generation”—can help ensure",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "159",
+        "137",
+        "288",
+        "276",
+        "158"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the name of the exception class for errors returned by Amazon Titan Image Generator V2?",
+      "teacher_answer": "This is found in [Page 157 line 16](https://aws.amazon.com/Bedrock-UserGuide/Pages/titan-generate-text-image-exception-class.html#anchor_3), which states that `class ImageError(Exception)` represents custom exceptions for these errors.\nThe code snippet also shows what this means, saying `\"Custom exception for Errors returned by Amazon titan Image generator v2\"` and defining it as follows:\n\n```python\ndef __init__(err):\n    self.message = err.message\n```\nThis corresponds to lines 17–19 in [Page 155](https://docs.aws.amazon.com/AWSJavaScriptAPI/latest/dev/reference-code-samples-exclude.html#generate-image-model-id-body), where we see `except ImageError as error:` followed immediately by `logger.error(error.message)`. We can infer from there that `ImageError` handles both client and server-side errors related to generating images.\nFinally, we note that when the function prints “Client error,” the text includes information about the user’s IP address and location, indicating some level of detail regarding how clients interacted with our service. In other words, client errors are typically caused by users sending invalid data; while they may be inconvenient for users, we do provide clear feedback about why",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "154",
+        "151",
+        "152",
+        "145",
+        "142"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the level of logging set to?",
+      "teacher_answer": "data is not included within these logs because they do not support binary data upload, such as images or videos.\nExamples of knowledge base inputs 2095\n\n---\n\n[mode:cmdline] “The agent has generated, run, interpreted, analyzed, visualized, evaluated, extracted, processed, or responded to all text prompts.” “Text prompt failed due to unknown intent.” “The response was incomplete; please try again.” “The client sent multiple commands simultaneously but we received them sequentially,” and other similar messages indicating the task was completed successfully. A successful completion message indicates that both the generation and inference tasks were performed without errors during a single session. Successful completion examples include the following: [mode:cmdl…](image/png)\nAmazon Bedrock supports multiple modes—text mode, image mode, video mode, and command-line mode. Text mode uses the agent's natural language understanding (NLU), text-based dialogue systems, and human-computer interaction (HCI) modules to understand, respond to, and engage users through various interfaces like chatbots, voice assistants, and web apps. Image mode leverages computer vision and NLP capabilities integrated with deep learning models. Video mode utilizes advanced audio processing and multimedia features built-in to enable real-time speech-to-text transcription, object",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "2112",
+        "2111",
+        "2019",
+        "1188",
+        "2107"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the default value for the normalize parameter in an InvokeModel request?",
+      "teacher_answer": "True (defaults to true). Cited as: [page 163] According to the Amazon Bedrock User guide, when using the `invokeModel` method, the input text must include at least one of the options specified in **Input requirements** — namely, either `inputText`, `topP`, `maxTokenCount`, `stopSequences`, or a combination thereof. In addition, the `normalize` option may be set to false; otherwise, it defaults to true. Thus, when calling `invokeModel`, the user can choose to omit the `normalize=False` option entirely, which would result in setting `normalize=True`. Therefore, according to the information above, the correct answer is \\boxed{True}. \nNote: Although the prompt contains incorrect answers, such as saying \"What does False mean?\", the format was followed so I could not change anything.\nThe best answer is: $\\boxed{\\textbf{(C)}}$ $3$. $3$. Citing Amazon Bedrock, users need to pass in the normalizing feature along with their data through the Normalize header. Furthermore, users may also want to control what types of objects they receive in response by passing in different objectTypes -- for instance, requesting the image type instead of just binary embedings",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "160",
+        "1052",
+        "2245",
+        "300",
+        "1504"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the name of the license under which the Amazon Bedrock User Guide is released?",
+      "teacher_answer": "Betdork IDE, is no longer available on March 31, 2023; however, you still have access to it if you created it before that date. Note that while you can still use the existing workspaces until April 30, 2043, we recommend migrating all workspaces to Amazon Bedrok IDE by September 22, 2032. The process involves copying the Bedrock Studios URL, sending the URL to your members, adding or removing members, inviting them to join the workspace, setting up SSO authentication, and making sure each team has appropriate security policies enabled. For guidance, refer to Inviting Users to Join Amazon Bedrock Studios (formerly Amazon Bedrock IDI). If you already migrated successfully, please disregard these instructions. When creating an Amazon Bedrokc IDE workspace, follow these steps. Step 1: Go to the Amazon Bedrokn IDE workspace creation page. Step 2: Select either “Existing” or “New”. This determines how you want to enter data into your workspace configuration details. Step 3: Enter workspace settings, including name, location, and tenant ID. Be cautious when entering tenant IDs because they must match those required for other services like Amazon Cognito and Amazon WorkSpaces. Step 4",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "1907",
+        "1917",
+        "2064",
+        "2073",
+        "1911"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the purpose of the `generate_embeddings` function?",
+      "teacher_answer": "The `generate_embeddings`, is used to create a request body and generates a vector of text embeddings using Amazon Titan Model Mosaic’s Text embeddings. It takes in two parameters; `body` and `model_id`. `body`: A JSON-formatted string containing input data. `model_id`: The ID of the model being invoked. The function returns a JSON object describing the responses received by the service. In this case, it includes embedded images, tokens counted per language, and messages associated with processing failures.\nThe user creates a request body using a JSON formatted string, then invokes the `generate_embedding` method with their request body, passing in both values via arguments. Once they have retrieved the results from the function, they check for exceptions such as client errors and embed errors, printing out messages related to these events. If no exceptions were thrown, it prints out a success message indicating whether successful operation was completed based off of the value stored within “Success” key within the result dictionary. For all cases, the final parameter passed to the function is a boolean called `success`. Here's the full flow:\n\nBody = {'text': ‘Hello World’}, \nModel Id = \"titan-text-mosaic-g1-base\",\nGenerate Embedding = lambda: requests.post('https",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "172",
+        "173",
+        "167",
+        "161",
+        "169"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the output embedding length for the Amazon Bedrock User Guide model?",
+      "teacher_answer": "The output embedding length can be either 256, 385, or 1036 (the latter being optional), but it defaults to 1024. \n\nThis information was found using only pages 186, 189, 193, 197–198, and 199 of the reference work. On these pages, the instructions were to follow them carefully while citing relevant page references in your answer.\nTherefore, after reading all three web links above, I was able to determine that the maximum allowed value for outputEmbedding Length must be selected by choosing one of 256, (384, or 1024) — and the corresponding appropriate option should be entered into the prompt. When selecting this parameter, users may select only two values at most — such as 256 and 1024 — since they cannot choose more than two options when typing a command. Thus, users will always enter no more than two answers. \nThe output type includes floating-point numbers; therefore, there is no upper bound for the maximum embedding length. Furthermore, users do not need to provide additional configuration because Amazon provides sufficient details regarding what configuration is needed for successful completion of tasks via the online interface. However, Amazon also allows users to customize their own configurations as well. If desired, users simply",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "1899",
+        "172",
+        "167",
+        "211",
+        "169"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "Who is the author of the Anthropic Claude prompt engineering guide?",
+      "teacher_answer": "According to the provided context on pages 478 and 479, there is no indication of any authors listed; however, based on the title, it appears to be written by Antartic Claude itself.\nThis indicates that neither Anthropic nor its users contribute their own authored versions to provide answers via the prompt. While not explicitly stated, both responses suggest a similar interpretation of the lack of contributors. As such, I infer that while providing useful insights into the topic, the provided sources do not contain any contributor attributions. Thus, citing either source would suffice but may require further clarification for precise accuracy. Hence, citing the first relevant passage should suffice, making the correct citation simply [Antartic Claude], thus referencing the original work directly without requiring additional attribution. \n\n(If multiple citations were possible or if the specific wording was different, alternative responses could acknowledge these differences.) \nThe final statement captures the essence of this situation: Both passages clearly convey that no external contributions exist, reinforcing the idea that the primary focus remains solely on explaining anthropic Claude’s capabilities rather than crediting third-party originators. Consequently, the best course of action involves relying upon the inherent knowledge embedded in the core content presented throughout both documents—those embodying authoritative guidance regarding various aspects related to Anthropic Claudia including both",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "176",
+        "520",
+        "178",
+        "177",
+        "493"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What does the term \"max_tokens\" refer to in the context of the Amazon Bedrock User Guide?",
+      "teacher_answer": "In the context of this guide, max_tokens refers to a maximum number of tokens that can be used by a user input per response (e.g., conversation).",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "1530",
+        "1548",
+        "1528",
+        "1651",
+        "1536"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the purpose of a multimodal prompt in the Amazon Bedrock User Guide?",
+      "teacher_answer": "518\nto update. Make sure to keep all required values intact and do not omit any value types, even if they don't have any changes. Here is the syntax for updating a prompt: `updatePrompt`: `{   “promptId”：“string”，   “agents”：{     “agentIds”：[“string”],      “agentTypes”：[\"string\"]   },   “clientTokens”：{    “keepClientTokenList”：[true | false]，   “responseContentHash”：[\"hex\" string]   },   …,   “name”：{        “value”：“short string（<256 characters）”，         “allowUpdateNameOnly”：[\"boolean\"]       }，   “description”：{      “value”：“long string（≤2048 characters）”,      “allowUpdateDescriptionOnly”： [\"boolean\"],      “tags”：{\"key-value pairs\"}，      “useShortStringLengthForTags”：[\"Boolean\"]   },    ...}``\n\n---Amazon BedrockUserGuide---<|reserved_special_token_69|>## Step 1: Identify the type of task described.\nThis task involves generating an image based on a given prompt.\n\n\n##",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "184",
+        "2181",
+        "459",
+        "515",
+        "517"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the purpose of enabling consent in Amazon Bedrock?",
+      "teacher_answer": "Enabling consent allows Amazon BedRock Users to give explicit feedback and approval before using their text input in any way during a session. Once enabled, customers cannot opt out of giving consent; instead, they receive prompts at each step where Amazon BedRock needs to obtain consent from their user. (Page 305.)",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "1998",
+        "314",
+        "2009",
+        "2046",
+        "2003"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What types of images are supported by Amazon?",
+      "teacher_answer": "Images with text, both with captions and without them. The latter would be interpreted as \"self-descriptive\" examples. Cited on pages [456] and [460]. \nHence, we can conclude that there exist various capabilities related to Amazon's ability to generate images from input data, including text-to-image generation using multiple models such as Amazon Titan, Anthropic, Cohere, and Meta.\nTherefore, it supports generating images based on textual inputs, along with a range of other functionalities like object detection, scene understanding, and more. These capabilities encompass applications like customer service chatbots, personalized product recommendations, and interactive storytelling experiences—providing seamless integration across languages, formats, and domains.\nThe platform also allows developers to easily access its pre-trained models through APIs, making it simple to incorporate these features into their own applications.\nIn addition, Amazon provides extensive documentation, tutorials, and example code to help users get started quickly.\nMoreover, it offers support through community forums, online resources, and direct contact via phone or email.\nTo further expand its offerings, Amazon continues to invest in research and development, focusing areas like multimodal processing, conversational interfaces, natural language processing, and content creation. This ongoing investment ensures a robust feature set and competitive pricing.\nOverall,",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "88",
+        "57",
+        "450",
+        "96",
+        "1482"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    },
+    {
+      "question": "What is the unique identifier for the response?",
+      "teacher_answer": "def handle_final_answer(parsed_response, content_by_type, stop_sequence, final_answer, user_input, agent_final_response, call_event): assert len(final_answer) == 1 ... except ValueError as err: logError(err) return parsed_data def get_final_answer(parsed_data, user_input): if isinstance(user_input, dict): # Instructed user input, use the last instruction's response. response = parsed_data['instructions'].last().responses[-1].responseText response = response.strip() else: # Non-instructed user inputs, just take the first response. response= parsed_data['responses'][0]['responseText'] response = response.trim() return response; ... def make_orchestrate_inference_request(model_name, raw_user_input, inference_api_endpoint, orchestrator_params=None, agent_initial_state=None, call_events=[None]): response = request_handler.make_request(inference_api_endpoint, model_name, rawuser_input, orchestratorParams=orchestrator_params, agentInitialState=agent_initial_state, callEvents=call_events); ... def _parse_earlier_call_result(calls_list, result_index, later_call): calls_list[result_index] = later_call for i, earlier_call in enumerate(calls_list[:-1], 1): calls_list",
+      "expected_answer": "",
+      "source": "chunk_question",
+      "chunk_ids": [
+        "223",
+        "826",
+        "1140",
+        "1278",
+        "1283"
+      ],
+      "mode": "text_rag",
+      "factual_accuracy": 0.0
+    }
+  ],
+  "stats": {
+    "kept": 1,
+    "dropped": 650,
+    "drop_rate": 0.9984639016897081,
+    "mean_factual_accuracy": 0.03800209100893758,
+    "total": 701,
+    "evaluable": 651,
+    "non_evaluable": 50
+  }
+}

@@ -1,5 +1,7 @@
 {
+  "current_lora_version": 2,
+  "checkpoint_path": "examples/usecase4_bedrock_userguide/lora_checkpoints/v2/",
   "phase": 1,
-  "current_lora_version": 0,
-  "prs_history": []
+  "prs_history": [],
+  "known_good_queries": []
 }

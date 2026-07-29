@@ -1,0 +1,802 @@
+[
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 0)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 1)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 2)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 3)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 4)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 5)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 6)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 7)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 8)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 9)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 10)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 11)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 12)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 13)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 14)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 15)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 16)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 17)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 18)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 19)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 20)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 21)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 22)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 23)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 24)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 25)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 26)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 27)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 28)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 29)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 30)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 31)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 32)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 33)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 34)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 35)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 36)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 37)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 38)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 39)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 40)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 41)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 42)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 43)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 44)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 45)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 46)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 47)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 48)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 49)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 50)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 51)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 52)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 53)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 54)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 55)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 56)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 57)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 58)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 59)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 60)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 61)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 62)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 63)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 64)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 65)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 66)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 67)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 68)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 69)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 70)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 71)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 72)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 73)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 74)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 75)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 76)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 77)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 78)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 79)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 80)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 81)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 82)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 83)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 84)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 85)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 86)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 87)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 88)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 89)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 90)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 91)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 92)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 93)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 94)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 95)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 96)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 97)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 98)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 99)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 100)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 101)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 102)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 103)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 104)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 105)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 106)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 107)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 108)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 109)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 110)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 111)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 112)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 113)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 114)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 115)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 116)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 117)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 118)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 119)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 120)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 121)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 122)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 123)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 124)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 125)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 126)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 127)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 128)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 129)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 130)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 131)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 132)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 133)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 134)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 135)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 136)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 137)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 138)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 139)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 140)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 141)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 142)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 143)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 144)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 145)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 146)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 147)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 148)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 149)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 150)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 151)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 152)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 153)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 154)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 155)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 156)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 157)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 158)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 159)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 160)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 161)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 162)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 163)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 164)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 165)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 166)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 167)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 168)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 169)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 170)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 171)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 172)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 173)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 174)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 175)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 176)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 177)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 178)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 179)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 180)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 181)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 182)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 183)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 184)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 185)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 186)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 187)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 188)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 189)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 190)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 191)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 192)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 193)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 194)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  },
+  {
+    "question": "Does aspirin reduce cardiovascular risk? (variant 195)",
+    "answer": "Low-dose aspirin reduces the risk of major cardiovascular events in high-risk patients but increases bleeding risk."
+  },
+  {
+    "question": "What is the effect of metformin on type 2 diabetes? (variant 196)",
+    "answer": "Metformin lowers hepatic glucose production and improves insulin sensitivity, reducing HbA1c by approximately 1-1.5%."
+  },
+  {
+    "question": "Are statins effective for primary prevention? (variant 197)",
+    "answer": "Statins reduce LDL cholesterol and lower the incidence of cardiovascular events in individuals without prior disease."
+  },
+  {
+    "question": "Does smoking cessation improve lung function? (variant 198)",
+    "answer": "Smoking cessation slows the decline in FEV1 and improves respiratory symptoms within weeks to months."
+  },
+  {
+    "question": "Is mindfulness meditation effective for chronic pain? (variant 199)",
+    "answer": "Mindfulness meditation provides modest improvements in pain severity and pain-related disability compared to usual care."
+  }
+]

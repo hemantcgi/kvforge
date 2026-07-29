@@ -1,0 +1,451 @@
+{
+  "n": 50,
+  "cosine_ratios": [
+    1.0,
+    0.9693,
+    1.0,
+    0.9022,
+    0.9417,
+    1.0,
+    1.0,
+    0.9322,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    0.9805,
+    0.972,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    0.9085,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    0.6731,
+    1.0,
+    1.0,
+    0.9958,
+    1.0,
+    0.8194,
+    1.0,
+    1.0,
+    1.0,
+    0.8431,
+    1.0,
+    0.9926,
+    1.0,
+    1.0,
+    0.8697,
+    1.0,
+    0.9951,
+    0.9939,
+    1.0,
+    0.9237,
+    1.0,
+    1.0,
+    0.9591,
+    0.9052,
+    0.7944,
+    0.9098
+  ],
+  "correlations": {
+    "em": {
+      "pearson": null,
+      "spearman": null,
+      "note": "zero variance, correlation undefined"
+    },
+    "token_f1": {
+      "pearson": 0.1634,
+      "spearman": 0.2264
+    },
+    "judge": {
+      "pearson": 0.1978,
+      "spearman": 0.2478
+    },
+    "factual": {
+      "pearson": 0.2016,
+      "spearman": 0.2575
+    }
+  },
+  "disagreements": [
+    {
+      "index": 0,
+      "question": "In what country is Normandy located?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0588,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 1,
+      "question": "When were the Normans in Normandy?",
+      "cosine_ratio": 0.9693,
+      "token_f1": 0.0682,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 2,
+      "question": "From which countries did the Norse originate?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1081,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 3,
+      "question": "Who was the Norse leader?",
+      "cosine_ratio": 0.9022,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 4,
+      "question": "What century did the Normans first gain their separate identity?",
+      "cosine_ratio": 0.9417,
+      "token_f1": 0.0678,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 5,
+      "question": "Who gave their name to Normandy in the 1000's and 1100's",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 6,
+      "question": "What is France a region of?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 7,
+      "question": "Who did King Charles III swear fealty to?",
+      "cosine_ratio": 0.9322,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 8,
+      "question": "When did the Frankish identity emerge?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 9,
+      "question": "Who was the duke in the battle of Hastings?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1053,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 10,
+      "question": "Who ruled the duchy of Normandy",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 11,
+      "question": "What religion were the Normans",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0222,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 12,
+      "question": "What type of major impact did the Norman dynasty have on modern Europe?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 13,
+      "question": "Who was famed for their Christian spirit?",
+      "cosine_ratio": 0.9805,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 14,
+      "question": "Who assimilted the Roman language?",
+      "cosine_ratio": 0.972,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 15,
+      "question": "Who ruled the country of Normandy?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 16,
+      "question": "What principality did William the conquerer found?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 17,
+      "question": "What is the original meaning of the word Norman?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0169,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 18,
+      "question": "When was the Latin version of the word Norman first recorded?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0588,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 19,
+      "question": "What name comes from the English words Normans/Normanz?",
+      "cosine_ratio": 0.9085,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 20,
+      "question": "When was the French version of the word Norman first recorded?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 21,
+      "question": "When was the Duchy of Normandy founded?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0244,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 22,
+      "question": "Who did Rollo sign the treaty of Saint-Clair-sur-Epte with?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0296,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 23,
+      "question": "What river originally bounded the Duchy",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 25,
+      "question": "What treaty was established in the 9th century?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 26,
+      "question": "Who established a treaty with King Charles the third of France?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 27,
+      "question": "What did the French promises to protect Rollo and his men from?",
+      "cosine_ratio": 0.9958,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 28,
+      "question": "Who upon arriving gave the original viking settlers a common identity?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 30,
+      "question": "What Viking groups were conquered by Rollo?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 31,
+      "question": "What was the Norman religion?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0308,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 32,
+      "question": "What part of France were the Normans located?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 34,
+      "question": "What did maternal Old Norse traditions merge with?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 35,
+      "question": "What language replaced the Gallo-Romance language?",
+      "cosine_ratio": 0.9926,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 36,
+      "question": "What was one of the Norman's major exports?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 37,
+      "question": "Who adopted the fuedel doctrines of the Normans?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 38,
+      "question": "What was one of the Norman's major imports?",
+      "cosine_ratio": 0.8697,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 39,
+      "question": "Who's arristocracy eventually served as avid Crusaders?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 40,
+      "question": "Who was the Normans' main enemy in Italy, the Byzantine Empire and Armenia?",
+      "cosine_ratio": 0.9951,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 41,
+      "question": "Who entered Italy soon after the Byzantine Empire?",
+      "cosine_ratio": 0.9939,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 42,
+      "question": "Who did the Normans fight in Italy?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 43,
+      "question": "Who did the Normans encourage to come to the south?",
+      "cosine_ratio": 0.9237,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 44,
+      "question": "During what campaign did the Vargian and Lombard fight?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 45,
+      "question": "When did Herve serve as a Byzantine general?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 46,
+      "question": "When did Robert Crispin go up against the Turks?",
+      "cosine_ratio": 0.9591,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 47,
+      "question": "Who ruined Roussel de Bailleul's plans for an independent state?",
+      "cosine_ratio": 0.9052,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 49,
+      "question": "When did Herve serve as a Norman general?",
+      "cosine_ratio": 0.9098,
+      "token_f1": 0.0,
+      "exact_match": 0,
+      "judge": 0
+    }
+  ],
+  "prs_simulation": {
+    "cosine_mean": 0.9656,
+    "factual_mean": 0.1759,
+    "cosine_reaches_phase3": true,
+    "factual_reaches_phase3": false,
+    "decision_flips": 1
+  }
+}

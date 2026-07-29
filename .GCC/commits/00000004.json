@@ -1,0 +1,13 @@
+{
+  "artifacts": {
+    "capabilities": "capabilities/omega.json",
+    "log": "log.md",
+    "main": "main.md"
+  },
+  "branch": "main",
+  "concepts": [],
+  "id": "00000004",
+  "message": "Starting implementation of Knowledge Absorption Curve plan \u2014 Phase 0 tooling with full TDD. Building 6 tools (corpus_slicer, noise_injector, entigraph_generator, validate_diversity_data, absorption_curve_runner, readiness_predictor) on branch research/absorption-curve.",
+  "parent": "00000003",
+  "timestamp": "2026-07-29T03:56:51.476767+00:00"
+}

@@ -126,35 +126,38 @@ def test_inference_mode_logic():
     """decide_inference_mode returns kv_injection only when all chunks are fresh + cached."""
     current_version = 5
 
-    # All fresh chunks with valid kv_cache → kv_injection
+    # All fresh chunks with valid kv_cache + KDS threshold 0.0 → kv_injection
     fresh_chunks = [
-        {"chunk_id": 1, "kv_version": 5, "kv_cache": "abc123"},
-        {"chunk_id": 2, "kv_version": 5, "kv_cache": "def456"},
+        {"chunk_id": 1, "kv_version": 5, "kv_cache": "abc123", "kds": 0.5},
+        {"chunk_id": 2, "kv_version": 5, "kv_cache": "def456", "kds": 0.6},
     ]
-    assert decide_inference_mode(fresh_chunks, current_version) == "kv_injection"
+    assert decide_inference_mode(fresh_chunks, current_version, kds_threshold=0.0) == "kv_injection"
 
     # One stale chunk (kv_version < current) → text_fallback
     stale_chunks = [
-        {"chunk_id": 1, "kv_version": 3, "kv_cache": "abc123"},
-        {"chunk_id": 2, "kv_version": 5, "kv_cache": "def456"},
+        {"chunk_id": 1, "kv_version": 3, "kv_cache": "abc123", "kds": 0.5},
+        {"chunk_id": 2, "kv_version": 5, "kv_cache": "def456", "kds": 0.6},
     ]
-    assert decide_inference_mode(stale_chunks, current_version) == "text_fallback"
+    assert decide_inference_mode(stale_chunks, current_version, kds_threshold=0.0) == "text_fallback"
 
     # Chunk with kv_cache=None → text_fallback
     null_cache_chunks = [
-        {"chunk_id": 1, "kv_version": 5, "kv_cache": None},
-        {"chunk_id": 2, "kv_version": 5, "kv_cache": "def456"},
+        {"chunk_id": 1, "kv_version": 5, "kv_cache": None, "kds": 0.5},
+        {"chunk_id": 2, "kv_version": 5, "kv_cache": "def456", "kds": 0.6},
     ]
-    assert decide_inference_mode(null_cache_chunks, current_version) == "text_fallback"
+    assert decide_inference_mode(null_cache_chunks, current_version, kds_threshold=0.0) == "text_fallback"
 
     # Chunk with kv_version missing entirely → text_fallback
     missing_version_chunks = [
-        {"chunk_id": 1, "kv_cache": "abc123"},  # no kv_version key
+        {"chunk_id": 1, "kv_cache": "abc123", "kds": 0.5},  # no kv_version key
     ]
-    assert decide_inference_mode(missing_version_chunks, current_version) == "text_fallback"
+    assert decide_inference_mode(missing_version_chunks, current_version, kds_threshold=0.0) == "text_fallback"
 
     # Empty list → no stale chunks → kv_injection
-    assert decide_inference_mode([], current_version) == "kv_injection"
+    assert decide_inference_mode([], current_version, kds_threshold=0.0) == "kv_injection"
+
+    # No calibrated KDS threshold (None) → fail-closed to text_fallback
+    assert decide_inference_mode(fresh_chunks, current_version) == "text_fallback"
 
 
 # ── Test 5: gate pure logic ───────────────────────────────────────────────

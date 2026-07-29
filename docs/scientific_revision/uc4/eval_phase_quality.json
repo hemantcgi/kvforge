@@ -1,0 +1,398 @@
+{
+  "config": "/Users/hemant/Downloads/RoPE/KVForge/examples/usecase4_bedrock_userguide/config.json",
+  "dry_run": true,
+  "modes": {
+    "text_rag": {
+      "per_question": [
+        {
+          "question": "How does Amazon Bedrock ensure my data used in fine-tuning remains private and confidential?",
+          "ground_truth": "When you’re fine-tuning a model, your data is never exposed to the public internet, never leaves the AWS network, is securely transferred through your VPC, and is encrypted in transit and at rest. Amazon Bedrock also enforces the same AWS access controls that you have with any of our other services.",
+          "prediction": "When you’re fine-tuning a model, your data is never exposed to the public internet, never leaves the AWS network, is securely transferred through your VPC, and is encrypted in transit and at rest. Amazon Bedrock also enforces the same AWS access controls that you have with any of our other services.",
+          "mode": "text_rag",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.91"
+        },
+        {
+          "question": "How can I track the input and output tokens?",
+          "ground_truth": "You can use CloudWatch metrics to track the inputs and output token.",
+          "prediction": "can use CloudWatch track the inputs output",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.7058823529411764,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.71, judge_prob=0.71"
+        },
+        {
+          "question": "What SDKs are supported for Amazon Bedrock?",
+          "ground_truth": "Amazon Bedrock supports SDKs for runtime services. iOS and Android SDKs, as well as Java, JS, Python, CLI, .Net, Ruby, PHP, Go, and C++, support both text and speech input.",
+          "prediction": "Amazon Bedrock supports SDKs for runtime services. iOS and Android SDKs, as well as Java, JS, Python, CLI, .Net, Ruby, PHP, Go, and C++, support both text and speech input.",
+          "mode": "text_rag",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.87"
+        },
+        {
+          "question": "What are Amazon Bedrock Agents?",
+          "ground_truth": "Amazon Bedrock Agents are fully managed capabilities that make it easier for developers to create generative AI–based applications that can complete complex tasks for a wide range of use cases and deliver up-to-date answers based on proprietary knowledge sources. In just a few short steps, Amazon Bedrock Agents automatically break down tasks and create an orchestration plan–without any manual coding. The agent securely connects to company data through an API, automatically converting data into a machine-readable format, and augmenting the request with relevant information to generate the most accurate response. Agents can then automatically call APIs to fulfill a user’s request. For example, a manufacturing company might want to develop a generative AI application that automates tracking inventory levels, sales data, supply chain information and that can recommend optimal reorder points and quantities to maximize efficiency. As fully managed capabilities, Amazon Bedrock Agents remove the undifferentiated lifting of managing system integration and infrastructure provisioning, allowing developers to use generative AI to its full extent throughout their organization.",
+          "prediction": "Amazon Agents fully managed capabilities make it easier for to generative ... that complete complex a wide range of cases deliver ... on sources. ... few steps, Amazon Bedrock automatically ... tasks and create an orchestration any ... ... The securely company data ... an API, into a the ... with relevant information ... generate accurate response. can automatically APIs ... ... ... a manufacturing want to generative AI application automates ... data, supply and that can recommend ... and maximize fully managed Agents remove the lifting ... ... integration and ... use full extent throughout their ...",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.6343612334801763,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.63, judge_prob=0.77"
+        },
+        {
+          "question": "What are the most common use cases for Amazon Bedrock?",
+          "ground_truth": "You can quickly get started with use cases:\n\nCreate new pieces of original content, such as short stories, essays, social media posts, and web page copy.\nSearch, find, and synthesize information to answer questions from a large corpus of data.\nCreate realistic and artistic images of various subjects, environments, and scenes from language prompts.\nHelp customers find what they’re looking for with more relevant and contextual product recommendations than word matching.\nGet a summary of textual content such as articles, blog posts, books, and documents to get the gist without having to read the full content.\nSuggest products that match shopper preferences and past purchases\n\nExplore more generative AI use cases.",
+          "prediction": "You can quickly get started with use cases:\n\nCreate new pieces of original content, such as short stories, essays, social media posts, and web page copy.\nSearch, find, and synthesize information to answer questions from a large corpus of data.\nCreate realistic and artistic images of various subjects, environments, and scenes from language prompts.\nHelp customers find what they’re looking for with more relevant and contextual product recommendations than word matching.\nGet a summary of textual content such as articles, blog posts, books, and documents to get the gist without having to read the full content.\nSuggest products that match shopper preferences and past purchases\n\nExplore more generative AI use cases.",
+          "mode": "text_rag",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.83"
+        },
+        {
+          "question": "What is Amazon Bedrock Guardrails?",
+          "ground_truth": "Amazon Bedrock Guardrails help you implement safeguards for your generative AI applications based on your use cases and responsible AI policies. Guardrails helps control the interaction between users and FMs by filtering undesirable and harmful content and will soon redact personally identifiable information (PII), enhancing content safety and privacy in generative AI applications. You can create multiple guardrails with different configurations tailored to specific use cases. Additionally, with the guardrails you can continually monitor and analyze user inputs and FM responses that might violate customer-defined policies.",
+          "prediction": "Amazon Bedrock Guardrails help you implement safeguards for your generative AI applications based on your use cases and responsible AI policies. Guardrails helps control the interaction between users and FMs by filtering undesirable and harmful content and will soon redact personally identifiable information (PII), enhancing content safety and privacy in generative AI applications. You can create multiple guardrails with different configurations tailored to specific use cases. Additionally, with the guardrails you can continually monitor and analyze user inputs and FM responses that might violate customer-defined policies.",
+          "mode": "text_rag",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.80"
+        },
+        {
+          "question": "Does Amazon Bedrock support continued pretraining?",
+          "ground_truth": "We launched continued pretraining for Amazon Titan Text Express and Amazon Titan models on Amazon Bedrock. Continued pretraining allows you to continue the pretraining on an Amazon Titan base model using large amounts of unlabeled data. This type of training will adapt the model from a general domain corpus to a more specific domain corpus such as medical, law, finance, and so on, while still preserving most of the capabilities of the Amazon Titan base model.",
+          "prediction": "... continued pretraining for ... Text Titan models Amazon Bedrock. you to continue on base model of unlabeled data. This of will ... ... ... corpus to a more ... domain corpus as medical, law, finance, so most of ... of the Amazon ...",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.6601941747572816,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.66, judge_prob=0.64"
+        }
+      ],
+      "summary": {
+        "n": 7,
+        "em": {
+          "mean": 0.5714285714285714,
+          "sem": 0.20203050891044214,
+          "ci_lower": 0.14285714285714285,
+          "ci_upper": 0.8571428571428571,
+          "n": 7
+        },
+        "token_f1": {
+          "mean": 0.8572053944540906,
+          "sem": 0.06777638322197047,
+          "ci_lower": 0.7181012090906247,
+          "ci_upper": 0.957983193277311,
+          "n": 7
+        },
+        "judge": {
+          "mean": 0.7142857142857143,
+          "sem": 0.18442777839082938,
+          "ci_lower": 0.42857142857142855,
+          "ci_upper": 1.0,
+          "n": 7
+        }
+      }
+    },
+    "kv_meanpool": {
+      "per_question": [
+        {
+          "question": "How does Amazon Bedrock ensure my data used in fine-tuning remains private and confidential?",
+          "ground_truth": "When you’re fine-tuning a model, your data is never exposed to the public internet, never leaves the AWS network, is securely transferred through your VPC, and is encrypted in transit and at rest. Amazon Bedrock also enforces the same AWS access controls that you have with any of our other services.",
+          "prediction": "When you’re fine-tuning a model, your data is never exposed to the public internet, never leaves the AWS network, is securely transferred through your VPC, and is encrypted in transit and at rest. Amazon Bedrock also enforces the same AWS access controls that you have with any of our other services.",
+          "mode": "kv_meanpool",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.77"
+        },
+        {
+          "question": "How can I track the input and output tokens?",
+          "ground_truth": "You can use CloudWatch metrics to track the inputs and output token.",
+          "prediction": "You can use CloudWatch metrics to track the inputs and output token.",
+          "mode": "kv_meanpool",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.84"
+        },
+        {
+          "question": "What SDKs are supported for Amazon Bedrock?",
+          "ground_truth": "Amazon Bedrock supports SDKs for runtime services. iOS and Android SDKs, as well as Java, JS, Python, CLI, .Net, Ruby, PHP, Go, and C++, support both text and speech input.",
+          "prediction": "Amazon supports SDKs SDKs, as CLI, ... speech input.",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.4210526315789474,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.42, judge_prob=0.55"
+        },
+        {
+          "question": "What are Amazon Bedrock Agents?",
+          "ground_truth": "Amazon Bedrock Agents are fully managed capabilities that make it easier for developers to create generative AI–based applications that can complete complex tasks for a wide range of use cases and deliver up-to-date answers based on proprietary knowledge sources. In just a few short steps, Amazon Bedrock Agents automatically break down tasks and create an orchestration plan–without any manual coding. The agent securely connects to company data through an API, automatically converting data into a machine-readable format, and augmenting the request with relevant information to generate the most accurate response. Agents can then automatically call APIs to fulfill a user’s request. For example, a manufacturing company might want to develop a generative AI application that automates tracking inventory levels, sales data, supply chain information and that can recommend optimal reorder points and quantities to maximize efficiency. As fully managed capabilities, Amazon Bedrock Agents remove the undifferentiated lifting of managing system integration and infrastructure provisioning, allowing developers to use generative AI to its full extent throughout their organization.",
+          "prediction": "... Agents ... fully it easier ... developers to applications can tasks a ... of cases and deliver ... proprietary ... steps, ... ... automatically tasks and create orchestration plan–without any ... The agent connects to data through ... converting data ... a the ... information ... ... accurate response. automatically call APIs to fulfill request. For example, a ... company to ... generative that tracking inventory levels, ... ... ... that reorder ... ... maximize As managed Agents undifferentiated lifting of ... developers to ... ...",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.5446009389671361,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.54, judge_prob=0.69"
+        },
+        {
+          "question": "What are the most common use cases for Amazon Bedrock?",
+          "ground_truth": "You can quickly get started with use cases:\n\nCreate new pieces of original content, such as short stories, essays, social media posts, and web page copy.\nSearch, find, and synthesize information to answer questions from a large corpus of data.\nCreate realistic and artistic images of various subjects, environments, and scenes from language prompts.\nHelp customers find what they’re looking for with more relevant and contextual product recommendations than word matching.\nGet a summary of textual content such as articles, blog posts, books, and documents to get the gist without having to read the full content.\nSuggest products that match shopper preferences and past purchases\n\nExplore more generative AI use cases.",
+          "prediction": "You ... get Create new ... ... ... such as ... essays, social media posts, web find, synthesize ... answer ... corpus data. Create ... ... ... ... ... ... ... prompts. for with more ... ... contextual product ... word Get summary ... content posts, books, and ... ... the products that Explore ... ... use cases.",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.49295774647887325,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.49, judge_prob=0.67"
+        },
+        {
+          "question": "What is Amazon Bedrock Guardrails?",
+          "ground_truth": "Amazon Bedrock Guardrails help you implement safeguards for your generative AI applications based on your use cases and responsible AI policies. Guardrails helps control the interaction between users and FMs by filtering undesirable and harmful content and will soon redact personally identifiable information (PII), enhancing content safety and privacy in generative AI applications. You can create multiple guardrails with different configurations tailored to specific use cases. Additionally, with the guardrails you can continually monitor and analyze user inputs and FM responses that might violate customer-defined policies.",
+          "prediction": "... help ... implement your ... ... on and ... Guardrails interaction between ... harmful will redact ... identifiable information enhancing and ... applications. You can guardrails use cases. with guardrails continually and inputs and FM might violate customer-defined ...",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.5391304347826087,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.54, judge_prob=0.65"
+        },
+        {
+          "question": "Does Amazon Bedrock support continued pretraining?",
+          "ground_truth": "We launched continued pretraining for Amazon Titan Text Express and Amazon Titan models on Amazon Bedrock. Continued pretraining allows you to continue the pretraining on an Amazon Titan base model using large amounts of unlabeled data. This type of training will adapt the model from a general domain corpus to a more specific domain corpus such as medical, law, finance, and so on, while still preserving most of the capabilities of the Amazon Titan base model.",
+          "prediction": "launched continued Amazon ... ... ... Amazon ... ... on ... pretraining ... on an Titan model amounts of ... type training will adapt domain specific ... ... ... ... ... preserving most the ... ... base",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.44943820224719105,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.45, judge_prob=0.63"
+        }
+      ],
+      "summary": {
+        "n": 7,
+        "em": {
+          "mean": 0.2857142857142857,
+          "sem": 0.18442777839082938,
+          "ci_lower": 0.0,
+          "ci_upper": 0.5714285714285714,
+          "n": 7
+        },
+        "token_f1": {
+          "mean": 0.6353114220078223,
+          "sem": 0.09564255676486211,
+          "ci_lower": 0.4813110311092207,
+          "ci_upper": 0.8040474732452686,
+          "n": 7
+        },
+        "judge": {
+          "mean": 0.7142857142857143,
+          "sem": 0.18442777839082938,
+          "ci_lower": 0.2857142857142857,
+          "ci_upper": 1.0,
+          "n": 7
+        }
+      }
+    },
+    "kv_fulltoken": {
+      "per_question": [
+        {
+          "question": "How does Amazon Bedrock ensure my data used in fine-tuning remains private and confidential?",
+          "ground_truth": "When you’re fine-tuning a model, your data is never exposed to the public internet, never leaves the AWS network, is securely transferred through your VPC, and is encrypted in transit and at rest. Amazon Bedrock also enforces the same AWS access controls that you have with any of our other services.",
+          "prediction": "When you’re fine-tuning a model, your data is never exposed to the public internet, never leaves the AWS network, is securely transferred through your VPC, and is encrypted in transit and at rest. Amazon Bedrock also enforces the same AWS access controls that you have with any of our other services.",
+          "mode": "kv_fulltoken",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.91"
+        },
+        {
+          "question": "How can I track the input and output tokens?",
+          "ground_truth": "You can use CloudWatch metrics to track the inputs and output token.",
+          "prediction": "You ... CloudWatch metrics the and",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.5333333333333333,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.53, judge_prob=0.73"
+        },
+        {
+          "question": "What SDKs are supported for Amazon Bedrock?",
+          "ground_truth": "Amazon Bedrock supports SDKs for runtime services. iOS and Android SDKs, as well as Java, JS, Python, CLI, .Net, Ruby, PHP, Go, and C++, support both text and speech input.",
+          "prediction": "Amazon Bedrock supports SDKs for runtime services. iOS and Android SDKs, as well as Java, JS, Python, CLI, .Net, Ruby, PHP, Go, and C++, support both text and speech input.",
+          "mode": "kv_fulltoken",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.85"
+        },
+        {
+          "question": "What are Amazon Bedrock Agents?",
+          "ground_truth": "Amazon Bedrock Agents are fully managed capabilities that make it easier for developers to create generative AI–based applications that can complete complex tasks for a wide range of use cases and deliver up-to-date answers based on proprietary knowledge sources. In just a few short steps, Amazon Bedrock Agents automatically break down tasks and create an orchestration plan–without any manual coding. The agent securely connects to company data through an API, automatically converting data into a machine-readable format, and augmenting the request with relevant information to generate the most accurate response. Agents can then automatically call APIs to fulfill a user’s request. For example, a manufacturing company might want to develop a generative AI application that automates tracking inventory levels, sales data, supply chain information and that can recommend optimal reorder points and quantities to maximize efficiency. As fully managed capabilities, Amazon Bedrock Agents remove the undifferentiated lifting of managing system integration and infrastructure provisioning, allowing developers to use generative AI to its full extent throughout their organization.",
+          "prediction": "Amazon Bedrock Agents are fully managed capabilities that make it easier for developers to create generative AI–based applications that can complete complex tasks for a wide range of use cases and deliver up-to-date answers based on proprietary knowledge sources. In just a few short steps, Amazon Bedrock Agents automatically break down tasks and create an orchestration plan–without any manual coding. The agent securely connects to company data through an API, automatically converting data into a machine-readable format, and augmenting the request with relevant information to generate the most accurate response. Agents can then automatically call APIs to fulfill a user’s request. For example, a manufacturing company might want to develop a generative AI application that automates tracking inventory levels, sales data, supply chain information and that can recommend optimal reorder points and quantities to maximize efficiency. As fully managed capabilities, Amazon Bedrock Agents remove the undifferentiated lifting of managing system integration and infrastructure provisioning, allowing developers to use generative AI to its full extent throughout their organization.",
+          "mode": "kv_fulltoken",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.78"
+        },
+        {
+          "question": "What are the most common use cases for Amazon Bedrock?",
+          "ground_truth": "You can quickly get started with use cases:\n\nCreate new pieces of original content, such as short stories, essays, social media posts, and web page copy.\nSearch, find, and synthesize information to answer questions from a large corpus of data.\nCreate realistic and artistic images of various subjects, environments, and scenes from language prompts.\nHelp customers find what they’re looking for with more relevant and contextual product recommendations than word matching.\nGet a summary of textual content such as articles, blog posts, books, and documents to get the gist without having to read the full content.\nSuggest products that match shopper preferences and past purchases\n\nExplore more generative AI use cases.",
+          "prediction": "You can quickly get started with use cases:\n\nCreate new pieces of original content, such as short stories, essays, social media posts, and web page copy.\nSearch, find, and synthesize information to answer questions from a large corpus of data.\nCreate realistic and artistic images of various subjects, environments, and scenes from language prompts.\nHelp customers find what they’re looking for with more relevant and contextual product recommendations than word matching.\nGet a summary of textual content such as articles, blog posts, books, and documents to get the gist without having to read the full content.\nSuggest products that match shopper preferences and past purchases\n\nExplore more generative AI use cases.",
+          "mode": "kv_fulltoken",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.87"
+        },
+        {
+          "question": "What is Amazon Bedrock Guardrails?",
+          "ground_truth": "Amazon Bedrock Guardrails help you implement safeguards for your generative AI applications based on your use cases and responsible AI policies. Guardrails helps control the interaction between users and FMs by filtering undesirable and harmful content and will soon redact personally identifiable information (PII), enhancing content safety and privacy in generative AI applications. You can create multiple guardrails with different configurations tailored to specific use cases. Additionally, with the guardrails you can continually monitor and analyze user inputs and FM responses that might violate customer-defined policies.",
+          "prediction": "Amazon Bedrock Guardrails help you implement safeguards for your generative AI applications based on your use cases and responsible AI policies. Guardrails helps control the interaction between users and FMs by filtering undesirable and harmful content and will soon redact personally identifiable information (PII), enhancing content safety and privacy in generative AI applications. You can create multiple guardrails with different configurations tailored to specific use cases. Additionally, with the guardrails you can continually monitor and analyze user inputs and FM responses that might violate customer-defined policies.",
+          "mode": "kv_fulltoken",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.85"
+        },
+        {
+          "question": "Does Amazon Bedrock support continued pretraining?",
+          "ground_truth": "We launched continued pretraining for Amazon Titan Text Express and Amazon Titan models on Amazon Bedrock. Continued pretraining allows you to continue the pretraining on an Amazon Titan base model using large amounts of unlabeled data. This type of training will adapt the model from a general domain corpus to a more specific domain corpus such as medical, law, finance, and so on, while still preserving most of the capabilities of the Amazon Titan base model.",
+          "prediction": "We launched continued pretraining for Amazon Titan Text Express and Amazon Titan models on Amazon Bedrock. Continued pretraining allows you to continue the pretraining on an Amazon Titan base model using large amounts of unlabeled data. This type of training will adapt the model from a general domain corpus to a more specific domain corpus such as medical, law, finance, and so on, while still preserving most of the capabilities of the Amazon Titan base model.",
+          "mode": "kv_fulltoken",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.81"
+        }
+      ],
+      "summary": {
+        "n": 7,
+        "em": {
+          "mean": 0.8571428571428571,
+          "sem": 0.14285714285714285,
+          "ci_lower": 0.5714285714285714,
+          "ci_upper": 1.0,
+          "n": 7
+        },
+        "token_f1": {
+          "mean": 0.9333333333333333,
+          "sem": 0.06666666666666667,
+          "ci_lower": 0.7999999999999999,
+          "ci_upper": 1.0,
+          "n": 7
+        },
+        "judge": {
+          "mean": 0.8571428571428571,
+          "sem": 0.14285714285714285,
+          "ci_lower": 0.5714285714285714,
+          "ci_upper": 1.0,
+          "n": 7
+        }
+      }
+    },
+    "parametric": {
+      "per_question": [
+        {
+          "question": "How does Amazon Bedrock ensure my data used in fine-tuning remains private and confidential?",
+          "ground_truth": "When you’re fine-tuning a model, your data is never exposed to the public internet, never leaves the AWS network, is securely transferred through your VPC, and is encrypted in transit and at rest. Amazon Bedrock also enforces the same AWS access controls that you have with any of our other services.",
+          "prediction": "When you’re fine-tuning a model, your data is never exposed to the public internet, never leaves the AWS network, is securely transferred through your VPC, and is encrypted in transit and at rest. Amazon Bedrock also enforces the same AWS access controls that you have with any of our other services.",
+          "mode": "parametric",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.72"
+        },
+        {
+          "question": "How can I track the input and output tokens?",
+          "ground_truth": "You can use CloudWatch metrics to track the inputs and output token.",
+          "prediction": "... and",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.16666666666666669,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.17, judge_prob=0.35"
+        },
+        {
+          "question": "What SDKs are supported for Amazon Bedrock?",
+          "ground_truth": "Amazon Bedrock supports SDKs for runtime services. iOS and Android SDKs, as well as Java, JS, Python, CLI, .Net, Ruby, PHP, Go, and C++, support both text and speech input.",
+          "prediction": "supports ... iOS and Android SDKs, ... well ... both input.",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.4210526315789474,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.42, judge_prob=0.63"
+        },
+        {
+          "question": "What are Amazon Bedrock Agents?",
+          "ground_truth": "Amazon Bedrock Agents are fully managed capabilities that make it easier for developers to create generative AI–based applications that can complete complex tasks for a wide range of use cases and deliver up-to-date answers based on proprietary knowledge sources. In just a few short steps, Amazon Bedrock Agents automatically break down tasks and create an orchestration plan–without any manual coding. The agent securely connects to company data through an API, automatically converting data into a machine-readable format, and augmenting the request with relevant information to generate the most accurate response. Agents can then automatically call APIs to fulfill a user’s request. For example, a manufacturing company might want to develop a generative AI application that automates tracking inventory levels, sales data, supply chain information and that can recommend optimal reorder points and quantities to maximize efficiency. As fully managed capabilities, Amazon Bedrock Agents remove the undifferentiated lifting of managing system integration and infrastructure provisioning, allowing developers to use generative AI to its full extent throughout their organization.",
+          "prediction": "Amazon Bedrock Agents are fully managed capabilities that make it easier for developers to create generative AI–based applications that can complete complex tasks for a wide range of use cases and deliver up-to-date answers based on proprietary knowledge sources. In just a few short steps, Amazon Bedrock Agents automatically break down tasks and create an orchestration plan–without any manual coding. The agent securely connects to company data through an API, automatically converting data into a machine-readable format, and augmenting the request with relevant information to generate the most accurate response. Agents can then automatically call APIs to fulfill a user’s request. For example, a manufacturing company might want to develop a generative AI application that automates tracking inventory levels, sales data, supply chain information and that can recommend optimal reorder points and quantities to maximize efficiency. As fully managed capabilities, Amazon Bedrock Agents remove the undifferentiated lifting of managing system integration and infrastructure provisioning, allowing developers to use generative AI to its full extent throughout their organization.",
+          "mode": "parametric",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.66"
+        },
+        {
+          "question": "What are the most common use cases for Amazon Bedrock?",
+          "ground_truth": "You can quickly get started with use cases:\n\nCreate new pieces of original content, such as short stories, essays, social media posts, and web page copy.\nSearch, find, and synthesize information to answer questions from a large corpus of data.\nCreate realistic and artistic images of various subjects, environments, and scenes from language prompts.\nHelp customers find what they’re looking for with more relevant and contextual product recommendations than word matching.\nGet a summary of textual content such as articles, blog posts, books, and documents to get the gist without having to read the full content.\nSuggest products that match shopper preferences and past purchases\n\nExplore more generative AI use cases.",
+          "prediction": "You can quickly get started with use cases:\n\nCreate new pieces of original content, such as short stories, essays, social media posts, and web page copy.\nSearch, find, and synthesize information to answer questions from a large corpus of data.\nCreate realistic and artistic images of various subjects, environments, and scenes from language prompts.\nHelp customers find what they’re looking for with more relevant and contextual product recommendations than word matching.\nGet a summary of textual content such as articles, blog posts, books, and documents to get the gist without having to read the full content.\nSuggest products that match shopper preferences and past purchases\n\nExplore more generative AI use cases.",
+          "mode": "parametric",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.67"
+        },
+        {
+          "question": "What is Amazon Bedrock Guardrails?",
+          "ground_truth": "Amazon Bedrock Guardrails help you implement safeguards for your generative AI applications based on your use cases and responsible AI policies. Guardrails helps control the interaction between users and FMs by filtering undesirable and harmful content and will soon redact personally identifiable information (PII), enhancing content safety and privacy in generative AI applications. You can create multiple guardrails with different configurations tailored to specific use cases. Additionally, with the guardrails you can continually monitor and analyze user inputs and FM responses that might violate customer-defined policies.",
+          "prediction": "Amazon Bedrock Guardrails help you implement safeguards for your generative AI applications based on your use cases and responsible AI policies. Guardrails helps control the interaction between users and FMs by filtering undesirable and harmful content and will soon redact personally identifiable information (PII), enhancing content safety and privacy in generative AI applications. You can create multiple guardrails with different configurations tailored to specific use cases. Additionally, with the guardrails you can continually monitor and analyze user inputs and FM responses that might violate customer-defined policies.",
+          "mode": "parametric",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.67"
+        },
+        {
+          "question": "Does Amazon Bedrock support continued pretraining?",
+          "ground_truth": "We launched continued pretraining for Amazon Titan Text Express and Amazon Titan models on Amazon Bedrock. Continued pretraining allows you to continue the pretraining on an Amazon Titan base model using large amounts of unlabeled data. This type of training will adapt the model from a general domain corpus to a more specific domain corpus such as medical, law, finance, and so on, while still preserving most of the capabilities of the Amazon Titan base model.",
+          "prediction": "pretraining ... ... ... Bedrock. allows you to ... ... using unlabeled ... training ... adapt the ... corpus ... ... corpus such as ... ... ... still the of Amazon Titan base model.",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.4318181818181819,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.43, judge_prob=0.49"
+        }
+      ],
+      "summary": {
+        "n": 7,
+        "em": {
+          "mean": 0.5714285714285714,
+          "sem": 0.20203050891044214,
+          "ci_lower": 0.14285714285714285,
+          "ci_upper": 1.0,
+          "n": 7
+        },
+        "token_f1": {
+          "mean": 0.7170767828662565,
+          "sem": 0.13733312391385022,
+          "ci_lower": 0.44100592390066085,
+          "ci_upper": 1.0,
+          "n": 7
+        },
+        "judge": {
+          "mean": 0.14285714285714285,
+          "sem": 0.14285714285714285,
+          "ci_lower": 0.0,
+          "ci_upper": 0.42857142857142855,
+          "n": 7
+        }
+      }
+    }
+  }
+}

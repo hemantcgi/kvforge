@@ -1,0 +1,47 @@
+{
+  "n": 7,
+  "cosine_ratios": [
+    1.0,
+    0.6165,
+    0.7312,
+    1.0,
+    1.0,
+    1.0,
+    0.9744
+  ],
+  "correlations": {
+    "em": {
+      "pearson": 0.7532,
+      "spearman": 0.8739
+    },
+    "token_f1": {
+      "pearson": 0.8522,
+      "spearman": 0.9145
+    },
+    "judge": {
+      "pearson": 0.2663,
+      "spearman": 0.103
+    },
+    "factual": {
+      "pearson": 0.6753,
+      "spearman": 0.7854
+    }
+  },
+  "disagreements": [
+    {
+      "index": 6,
+      "question": "Does Amazon Bedrock support continued pretraining?",
+      "cosine_ratio": 0.9744,
+      "token_f1": 0.4318,
+      "exact_match": 0,
+      "judge": 0
+    }
+  ],
+  "prs_simulation": {
+    "cosine_mean": 0.9032,
+    "factual_mean": 0.43,
+    "cosine_reaches_phase3": true,
+    "factual_reaches_phase3": false,
+    "decision_flips": 1
+  }
+}

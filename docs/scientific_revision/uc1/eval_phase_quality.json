@@ -1,0 +1,1318 @@
+{
+  "config": "/Users/hemant/Downloads/RoPE/KVForge/examples/usecase1_customer_support/config.json",
+  "dry_run": true,
+  "modes": {
+    "text_rag": {
+      "per_question": [
+        {
+          "question": "What payment methods are accepted? (variant 66)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We ... ... Mastercard, American Express, Discover, PayPal, Pay.",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.7777777777777778,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.78, judge_prob=0.73"
+        },
+        {
+          "question": "How do I track my order? (variant 187)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "Log in to your account, to ... and click Track next the order want",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.7741935483870968,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.77, judge_prob=0.77"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 101)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "... American Express, ... PayPal, Pay.",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.5333333333333333,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.53, judge_prob=0.69"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 193)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "mode": "text_rag",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.90"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 111)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "... ... Mastercard, American Discover, ... Pay.",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.5333333333333333,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.53, judge_prob=0.66"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 121)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "mode": "text_rag",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.83"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 13)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "mode": "text_rag",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.76"
+        },
+        {
+          "question": "How do I track my order? (variant 2)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "... in to your navigate and Track Shipment ... ... want ...",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.5925925925925926,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.59, judge_prob=0.69"
+        },
+        {
+          "question": "How do I contact support? (variant 64)",
+          "ground_truth": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123.",
+          "prediction": "You ... through the by support@example.com, or by calling ...",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.6666666666666666,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.67, judge_prob=0.66"
+        },
+        {
+          "question": "How do I contact support? (variant 44)",
+          "ground_truth": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123.",
+          "prediction": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123.",
+          "mode": "text_rag",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.80"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 136)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "mode": "text_rag",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.85"
+        },
+        {
+          "question": "How do I reset my password? (variant 170)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "mode": "text_rag",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.83"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 128)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "mode": "text_rag",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.84"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 76)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "mode": "text_rag",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.82"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 158)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "can shipping address ... minutes of placing order Edit Order the ...",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.6666666666666666,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.67, judge_prob=0.79"
+        },
+        {
+          "question": "How do I track my order? (variant 167)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "in to account, ... to click Track Shipment next ... you follow.",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.6896551724137931,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.69, judge_prob=0.75"
+        },
+        {
+          "question": "How do I reset my password? (variant 45)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "Go Settings ... Security > Password, enter password, then choose new ... at characters a number and symbol.",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.7567567567567568,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.76, judge_prob=0.76"
+        },
+        {
+          "question": "How do I reset my password? (variant 130)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "... > Security Change Password, enter password, a ... password ... ... 8 including a number and",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.6060606060606061,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.61, judge_prob=0.60"
+        },
+        {
+          "question": "How do I reset my password? (variant 30)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "to > Security > Change Password, enter ... current password, new ... with 8 a a symbol.",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.6470588235294118,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.65, judge_prob=0.74"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 3)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "... ... the within 30 of placing the order by clicking ... Order on confirmation",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.7142857142857143,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.71, judge_prob=0.66"
+        },
+        {
+          "question": "How do I contact support? (variant 159)",
+          "ground_truth": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123.",
+          "prediction": "can reach through ... chat, emailing",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.5263157894736842,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.53, judge_prob=0.64"
+        },
+        {
+          "question": "How do I reset my password? (variant 15)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "Go ... ... Security ... Change Password, ... current password, then choose password with 8 including a number ... symbol.",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.7567567567567568,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.76, judge_prob=0.73"
+        },
+        {
+          "question": "How do I track my order? (variant 42)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "to your navigate to Orders, Track ... next the you follow.",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.6428571428571429,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.64, judge_prob=0.79"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 126)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We Mastercard, Express, ... PayPal, and Apple Pay.",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.7777777777777778,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.78, judge_prob=0.78"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 186)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "mode": "text_rag",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.84"
+        },
+        {
+          "question": "How do I track my order? (variant 162)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "your ... to Orders, ... Track Shipment next to the order ... want follow.",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.6896551724137931,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.69, judge_prob=0.67"
+        },
+        {
+          "question": "How do I track my order? (variant 47)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "mode": "text_rag",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.88"
+        },
+        {
+          "question": "How do I reset my password? (variant 110)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "Go Settings > Security Password, current ... choose a new password ... at least 8 symbol.",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.6857142857142856,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.69, judge_prob=0.69"
+        },
+        {
+          "question": "How do I reset my password? (variant 5)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "to Settings ... ... > Password, enter password, then new ... ... a number ... ... symbol.",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.5625,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.56, judge_prob=0.68"
+        },
+        {
+          "question": "How do I contact support? (variant 194)",
+          "ground_truth": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123.",
+          "prediction": "You can reach support the ... by emailing ... or calling 1-800-555-0123.",
+          "mode": "text_rag",
+          "em": 0,
+          "token_f1": 0.782608695652174,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.78, judge_prob=0.78"
+        }
+      ],
+      "summary": {
+        "n": 30,
+        "em": {
+          "mean": 0.3333333333333333,
+          "sem": 0.0875376219064817,
+          "ci_lower": 0.16666666666666666,
+          "ci_upper": 0.5,
+          "n": 30
+        },
+        "token_f1": {
+          "mean": 0.7794188870816455,
+          "sem": 0.031723499700061504,
+          "ci_lower": 0.716614125557752,
+          "ci_upper": 0.842510293716945,
+          "n": 30
+        },
+        "judge": {
+          "mean": 0.7666666666666667,
+          "sem": 0.07854032324531728,
+          "ci_lower": 0.6,
+          "ci_upper": 0.9,
+          "n": 30
+        }
+      }
+    },
+    "kv_meanpool": {
+      "per_question": [
+        {
+          "question": "What payment methods are accepted? (variant 66)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We accept ... Mastercard, American Express, PayPal,",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.7058823529411764,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.71, judge_prob=0.66"
+        },
+        {
+          "question": "How do I track my order? (variant 187)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "mode": "kv_meanpool",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.84"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 101)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "... Visa, ... and Apple ...",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.42857142857142855,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.43, judge_prob=0.52"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 193)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "mode": "kv_meanpool",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.73"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 111)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "Visa, Discover, ... and Pay.",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.5333333333333333,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.53, judge_prob=0.56"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 121)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We Visa, and ...",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.42857142857142855,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.43, judge_prob=0.51"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 13)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "... shipping 30 the order ... Edit Order on the confirmation",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.56,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.56, judge_prob=0.53"
+        },
+        {
+          "question": "How do I track my order? (variant 2)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "Log to account, navigate ... Orders, ... click next to order follow.",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.6896551724137931,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.69, judge_prob=0.68"
+        },
+        {
+          "question": "How do I contact support? (variant 64)",
+          "ground_truth": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123.",
+          "prediction": "... support through ... by emailing support@example.com, or ... ...",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.6,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.60, judge_prob=0.60"
+        },
+        {
+          "question": "How do I contact support? (variant 44)",
+          "ground_truth": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123.",
+          "prediction": "... ... ... through chat, ... ... by 1-800-555-0123.",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.4444444444444445,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.44, judge_prob=0.66"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 136)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "accept Visa, Discover,",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.42857142857142855,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.43, judge_prob=0.53"
+        },
+        {
+          "question": "How do I reset my password? (variant 170)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "mode": "kv_meanpool",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.82"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 128)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "You can change the address within 30 ... of the Edit Order on the ...",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.7142857142857143,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.71, judge_prob=0.71"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 76)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "mode": "kv_meanpool",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.78"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 158)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "the ... 30 minutes of ... clicking Edit on the confirmation",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.56,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.56, judge_prob=0.60"
+        },
+        {
+          "question": "How do I track my order? (variant 167)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "Log ... your ... to Shipment the ... follow.",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.4166666666666667,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.42, judge_prob=0.60"
+        },
+        {
+          "question": "How do I reset my password? (variant 45)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "mode": "kv_meanpool",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.87"
+        },
+        {
+          "question": "How do I reset my password? (variant 130)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "Go Settings > Password, ... current then password with least 8 ... number a",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.6060606060606061,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.61, judge_prob=0.58"
+        },
+        {
+          "question": "How do I reset my password? (variant 30)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "... to Settings Security Change Password, password, new 8 including ... ... symbol.",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.6060606060606061,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.61, judge_prob=0.75"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 3)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "... change the 30 minutes of the clicking Order ...",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.5,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.50, judge_prob=0.57"
+        },
+        {
+          "question": "How do I contact support? (variant 159)",
+          "ground_truth": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123.",
+          "prediction": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123.",
+          "mode": "kv_meanpool",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.76"
+        },
+        {
+          "question": "How do I reset my password? (variant 15)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "... Settings Security Change ... password, then choose ... with least ... characters including and a symbol.",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.6857142857142856,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.69, judge_prob=0.65"
+        },
+        {
+          "question": "How do I track my order? (variant 42)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "mode": "kv_meanpool",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.78"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 126)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "mode": "kv_meanpool",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.73"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 186)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We ... PayPal, and Apple",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.5333333333333333,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.53, judge_prob=0.73"
+        },
+        {
+          "question": "How do I track my order? (variant 162)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "mode": "kv_meanpool",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.84"
+        },
+        {
+          "question": "How do I track my order? (variant 47)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "your ... Orders, and click Track order to follow.",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.5925925925925926,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.59, judge_prob=0.64"
+        },
+        {
+          "question": "How do I reset my password? (variant 110)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "mode": "kv_meanpool",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.85"
+        },
+        {
+          "question": "How do I reset my password? (variant 5)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "mode": "kv_meanpool",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.81"
+        },
+        {
+          "question": "How do I contact support? (variant 194)",
+          "ground_truth": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123.",
+          "prediction": "reach support the by ...",
+          "mode": "kv_meanpool",
+          "em": 0,
+          "token_f1": 0.35294117647058826,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.35, judge_prob=0.58"
+        }
+      ],
+      "summary": {
+        "n": 30,
+        "em": {
+          "mean": 0.36666666666666664,
+          "sem": 0.08948554539839962,
+          "ci_lower": 0.2,
+          "ci_upper": 0.5333333333333333,
+          "n": 30
+        },
+        "token_f1": {
+          "mean": 0.7128894856677143,
+          "sem": 0.04350404125329869,
+          "ci_lower": 0.6297318050429274,
+          "ci_upper": 0.7930970938009477,
+          "n": 30
+        },
+        "judge": {
+          "mean": 0.7666666666666667,
+          "sem": 0.07854032324531728,
+          "ci_lower": 0.6,
+          "ci_upper": 0.9,
+          "n": 30
+        }
+      }
+    },
+    "kv_fulltoken": {
+      "per_question": [
+        {
+          "question": "What payment methods are accepted? (variant 66)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "mode": "kv_fulltoken",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.94"
+        },
+        {
+          "question": "How do I track my order? (variant 187)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "Log in to Orders, and click Track Shipment next the ...",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.6428571428571429,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.64, judge_prob=0.67"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 101)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We accept Visa, Mastercard, American Express, Discover, PayPal, Pay.",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.9,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.90, judge_prob=0.87"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 193)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "mode": "kv_fulltoken",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.83"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 111)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We Visa, ... Discover, Pay.",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.5333333333333333,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.53, judge_prob=0.61"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 121)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "mode": "kv_fulltoken",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.82"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 13)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "mode": "kv_fulltoken",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.84"
+        },
+        {
+          "question": "How do I track my order? (variant 2)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "mode": "kv_fulltoken",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.89"
+        },
+        {
+          "question": "How do I contact support? (variant 64)",
+          "ground_truth": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123.",
+          "prediction": "You can support ... in-app chat, by emailing ... or 1-800-555-0123.",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.782608695652174,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.78, judge_prob=0.80"
+        },
+        {
+          "question": "How do I contact support? (variant 44)",
+          "ground_truth": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123.",
+          "prediction": "You can support in-app chat, by support@example.com, calling",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.7272727272727273,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.73, judge_prob=0.70"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 136)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "... accept ... American Express, Discover, ...",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.5333333333333333,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.53, judge_prob=0.63"
+        },
+        {
+          "question": "How do I reset my password? (variant 170)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "mode": "kv_fulltoken",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.83"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 128)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "can change the address minutes of Edit ... confirmation page.",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.6153846153846153,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.62, judge_prob=0.72"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 76)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We accept Visa, Mastercard, Express, and Apple Pay.",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.8421052631578948,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.84, judge_prob=0.74"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 158)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "You can the ... address within minutes placing order by Edit confirmation ...",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.7142857142857143,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.71, judge_prob=0.70"
+        },
+        {
+          "question": "How do I track my order? (variant 167)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "... to your ... Shipment next the ... want follow.",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.4799999999999999,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.48, judge_prob=0.66"
+        },
+        {
+          "question": "How do I reset my password? (variant 45)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "to Settings Change Password, your password, then new password with at 8 characters ... a",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.7222222222222222,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.72, judge_prob=0.81"
+        },
+        {
+          "question": "How do I reset my password? (variant 130)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "Go Settings > ... > ... your ... a new ... least including ... ... symbol.",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.4666666666666667,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.47, judge_prob=0.59"
+        },
+        {
+          "question": "How do I reset my password? (variant 30)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "to ... ... > Password, ... password, ... at a",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.29629629629629634,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.30, judge_prob=0.48"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 3)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "You ... the 30 minutes of placing the by Edit Order confirmation",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.6666666666666666,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.67, judge_prob=0.66"
+        },
+        {
+          "question": "How do I contact support? (variant 159)",
+          "ground_truth": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123.",
+          "prediction": "You can ... ... emailing support@example.com, or by calling",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.6666666666666666,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.67, judge_prob=0.64"
+        },
+        {
+          "question": "How do I reset my password? (variant 15)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "mode": "kv_fulltoken",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.84"
+        },
+        {
+          "question": "How do I track my order? (variant 42)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "Log in ... ... to Orders, Track ... to ... ...",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.4799999999999999,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.48, judge_prob=0.56"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 126)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "mode": "kv_fulltoken",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.82"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 186)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "mode": "kv_fulltoken",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.83"
+        },
+        {
+          "question": "How do I track my order? (variant 162)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "mode": "kv_fulltoken",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.89"
+        },
+        {
+          "question": "How do I track my order? (variant 47)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "... ... navigate Orders, and Track you ...",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.4166666666666667,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.42, judge_prob=0.62"
+        },
+        {
+          "question": "How do I reset my password? (variant 110)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "Go Settings > Change enter ... a ... ... 8 characters symbol.",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.4666666666666667,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.47, judge_prob=0.57"
+        },
+        {
+          "question": "How do I reset my password? (variant 5)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "Go to ... > Password, current password, then choose ... least characters ... number",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.6060606060606061,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.61, judge_prob=0.79"
+        },
+        {
+          "question": "How do I contact support? (variant 194)",
+          "ground_truth": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123.",
+          "prediction": "You can reach support the ... chat, by emailing support@example.com, by calling",
+          "mode": "kv_fulltoken",
+          "em": 0,
+          "token_f1": 0.8333333333333333,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.83, judge_prob=0.84"
+        }
+      ],
+      "summary": {
+        "n": 30,
+        "em": {
+          "mean": 0.3333333333333333,
+          "sem": 0.0875376219064817,
+          "ci_lower": 0.16666666666666666,
+          "ci_upper": 0.5,
+          "n": 30
+        },
+        "token_f1": {
+          "mean": 0.7464142205507576,
+          "sem": 0.040790747183793906,
+          "ci_lower": 0.6690474305181779,
+          "ci_upper": 0.8252979485109349,
+          "n": 30
+        },
+        "judge": {
+          "mean": 0.6,
+          "sem": 0.09097176522946843,
+          "ci_lower": 0.43333333333333335,
+          "ci_upper": 0.7666666666666667,
+          "n": 30
+        }
+      }
+    },
+    "parametric": {
+      "per_question": [
+        {
+          "question": "What payment methods are accepted? (variant 66)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We accept Visa, ... American ...",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.5333333333333333,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.53, judge_prob=0.45"
+        },
+        {
+          "question": "How do I track my order? (variant 187)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "Log in ... Orders, and Track Shipment the ... want to ...",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.5925925925925926,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.59, judge_prob=0.44"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 101)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "... Visa, American ...",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.3076923076923077,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.31, judge_prob=0.44"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 193)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "... ... of ... the Edit ... ... page.",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.2857142857142857,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.29, judge_prob=0.35"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 111)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "mode": "parametric",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.72"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 121)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "... Mastercard, Express, Discover, ...",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.42857142857142855,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.43, judge_prob=0.54"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 13)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "... change ... ... placing ... ... ...",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.19999999999999998,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.20, judge_prob=0.32"
+        },
+        {
+          "question": "How do I track my order? (variant 2)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "in ... and ... Track next the to",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.4166666666666667,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.42, judge_prob=0.38"
+        },
+        {
+          "question": "How do I contact support? (variant 64)",
+          "ground_truth": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123.",
+          "prediction": "You can reach through in-app support@example.com, by",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.6666666666666666,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.67, judge_prob=0.58"
+        },
+        {
+          "question": "How do I contact support? (variant 44)",
+          "ground_truth": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123.",
+          "prediction": "can reach support ... in-app chat, or by calling",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.7272727272727273,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.73, judge_prob=0.62"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 136)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We ... Mastercard, ... Express, Discover, Pay.",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.625,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.62, judge_prob=0.67"
+        },
+        {
+          "question": "How do I reset my password? (variant 170)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "to ... > ... Password, a password ... ... and",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.29629629629629634,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.30, judge_prob=0.35"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 128)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "You can 30 the ... ... the page.",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.3636363636363636,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.36, judge_prob=0.43"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 76)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "accept Visa, ... ... Express, and",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.5333333333333333,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.53, judge_prob=0.55"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 158)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "mode": "parametric",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.83"
+        },
+        {
+          "question": "How do I track my order? (variant 167)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "in to navigate to click ... next to order you",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.6428571428571429,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.64, judge_prob=0.57"
+        },
+        {
+          "question": "How do I reset my password? (variant 45)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "... ... > then choose a at",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.23076923076923078,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.23, judge_prob=0.39"
+        },
+        {
+          "question": "How do I reset my password? (variant 130)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "... Settings Security > ... Password, your current password, choose ... at ... including a symbol.",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.6060606060606061,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.61, judge_prob=0.60"
+        },
+        {
+          "question": "How do I reset my password? (variant 30)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "> Password, ... choose with ... number symbol.",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.3571428571428571,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.36, judge_prob=0.50"
+        },
+        {
+          "question": "Can I change my shipping address after ordering? (variant 3)",
+          "ground_truth": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "prediction": "You can change the shipping address within 30 minutes of placing the order by clicking Edit Order on the confirmation page.",
+          "mode": "parametric",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.70"
+        },
+        {
+          "question": "How do I contact support? (variant 159)",
+          "ground_truth": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123.",
+          "prediction": "... support chat, by emailing calling 1-800-555-0123.",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.6,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.60, judge_prob=0.52"
+        },
+        {
+          "question": "How do I reset my password? (variant 15)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "mode": "parametric",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.76"
+        },
+        {
+          "question": "How do I track my order? (variant 42)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "mode": "parametric",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.61"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 126)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "Mastercard, American Discover,",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.42857142857142855,
+          "judge_correct": 0,
+          "judge_rationale": "dry-run heuristic: f1=0.43, judge_prob=0.50"
+        },
+        {
+          "question": "What payment methods are accepted? (variant 186)",
+          "ground_truth": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "prediction": "We accept Visa, Mastercard, American Express, Discover, PayPal, and Apple Pay.",
+          "mode": "parametric",
+          "em": 1,
+          "token_f1": 1.0,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=1.00, judge_prob=0.84"
+        },
+        {
+          "question": "How do I track my order? (variant 162)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "your navigate to Orders, and click next ... ... to follow.",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.6428571428571429,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.64, judge_prob=0.65"
+        },
+        {
+          "question": "How do I track my order? (variant 47)",
+          "ground_truth": "Log in to your account, navigate to Orders, and click Track Shipment next to the order you want to follow.",
+          "prediction": "to account, navigate Orders, ... ... ... ... follow.",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.4166666666666667,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.42, judge_prob=0.56"
+        },
+        {
+          "question": "How do I reset my password? (variant 110)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "> Security ... Change ... password, ... least 8 ... including a number and",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.5161290322580645,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.52, judge_prob=0.41"
+        },
+        {
+          "question": "How do I reset my password? (variant 5)",
+          "ground_truth": "Go to Settings > Security > Change Password, enter your current password, then choose a new password with at least 8 characters including a number and a symbol.",
+          "prediction": "to ... > Change Password, enter ... new at ... 8 ... a ... a",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.4666666666666667,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.47, judge_prob=0.73"
+        },
+        {
+          "question": "How do I contact support? (variant 194)",
+          "ground_truth": "You can reach support through the in-app chat, by emailing support@example.com, or by calling 1-800-555-0123.",
+          "prediction": "support the chat, calling",
+          "mode": "parametric",
+          "em": 0,
+          "token_f1": 0.35294117647058826,
+          "judge_correct": 1,
+          "judge_rationale": "dry-run heuristic: f1=0.35, judge_prob=0.52"
+        }
+      ],
+      "summary": {
+        "n": 30,
+        "em": {
+          "mean": 0.2,
+          "sem": 0.07427813527082075,
+          "ci_lower": 0.06666666666666667,
+          "ci_upper": 0.3333333333333333,
+          "n": 30
+        },
+        "token_f1": {
+          "mean": 0.5745812650698797,
+          "sem": 0.04641170405574368,
+          "ci_lower": 0.4931014944568866,
+          "ci_upper": 0.6651836114725109,
+          "n": 30
+        },
+        "judge": {
+          "mean": 0.5666666666666667,
+          "sem": 0.09201865544655373,
+          "ci_lower": 0.4,
+          "ci_upper": 0.7333333333333333,
+          "n": 30
+        }
+      }
+    }
+  }
+}

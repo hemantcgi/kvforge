@@ -27,9 +27,12 @@ def get_embedder(cfg: dict):
     Raises:
         ValueError: If ``cfg['embedder_backend']`` is not a recognised value.
     """
-    backend = cfg.get("embedder_backend", "fastembed")
-    model_name = cfg.get("embed_model", "BAAI/bge-small-en-v1.5")
-    dim = cfg.get("vector_dim", 384)
+    # Support both flat configs and the nested addon_config.indexing layout.
+    indexing_cfg = cfg.get("addon_config", {}).get("indexing", {})
+    effective_cfg = {**cfg, **indexing_cfg}
+    backend = effective_cfg.get("embedder_backend", "fastembed")
+    model_name = effective_cfg.get("embed_model", "BAAI/bge-small-en-v1.5")
+    dim = effective_cfg.get("vector_dim", 384)
 
     if backend == "fastembed":
         from embeddings.fastembed_embedder import FastEmbedEmbedder

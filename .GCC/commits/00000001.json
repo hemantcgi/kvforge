@@ -1,0 +1,13 @@
+{
+  "artifacts": {
+    "capabilities": "capabilities/omega.json",
+    "log": "log.md",
+    "main": "main.md"
+  },
+  "branch": "main",
+  "concepts": [],
+  "id": "00000001",
+  "message": "Selected comprehensive PR from dirty working tree because issues #8 and #11-#16 reference local-only experiment files (eval_rope_rerotation, capacity_gate, compute_fkds) that do not exist in the clean sprint/0-baseline branch; a minimal baseline-only PR would leave those issues unaddressed and could create merge conflicts when the experiment code lands later.",
+  "parent": null,
+  "timestamp": "2026-07-29T00:47:46.761775+00:00"
+}

@@ -1,0 +1,467 @@
+{
+  "n": 50,
+  "cosine_ratios": [
+    0.9643,
+    0.9987,
+    0.8795,
+    0.9134,
+    1.0,
+    0.9108,
+    0.8673,
+    1.0,
+    0.8729,
+    1.0,
+    0.9501,
+    0.8937,
+    1.0,
+    0.9543,
+    0.9471,
+    0.8987,
+    1.0,
+    0.9538,
+    0.9706,
+    1.0,
+    1.0,
+    0.9146,
+    0.9444,
+    1.0,
+    0.9898,
+    0.9781,
+    0.8804,
+    1.0,
+    0.866,
+    1.0,
+    1.0,
+    0.869,
+    0.9789,
+    0.8879,
+    1.0,
+    1.0,
+    0.8386,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    0.8466,
+    0.9829,
+    0.9518,
+    1.0,
+    1.0,
+    0.9261,
+    1.0,
+    1.0,
+    0.9894
+  ],
+  "correlations": {
+    "em": {
+      "pearson": null,
+      "spearman": null,
+      "note": "zero variance, correlation undefined"
+    },
+    "token_f1": {
+      "pearson": 0.3142,
+      "spearman": 0.2868
+    },
+    "judge": {
+      "pearson": -0.1782,
+      "spearman": -0.1017
+    },
+    "factual": {
+      "pearson": -0.117,
+      "spearman": 0.0947
+    }
+  },
+  "disagreements": [
+    {
+      "index": 0,
+      "question": "Does open access endoscopy close the door to an adequately informed patient?",
+      "cosine_ratio": 0.9643,
+      "token_f1": 0.2574,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 1,
+      "question": "Are sports medicine journals relevant and applicable to practitioners and athletes?",
+      "cosine_ratio": 0.9987,
+      "token_f1": 0.1317,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 2,
+      "question": "Is there awareness of pharmaceutical expenditure in the reformed primary care system?",
+      "cosine_ratio": 0.8795,
+      "token_f1": 0.2273,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 3,
+      "question": "Rectal cancer threatening or affecting the prostatic plane: is partial prostatectomy oncologically adequate?",
+      "cosine_ratio": 0.9134,
+      "token_f1": 0.1117,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 4,
+      "question": "Is Acupuncture Efficacious for Treating Phonotraumatic Vocal Pathologies?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0452,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 5,
+      "question": "Gender difference in survival of resected non-small cell lung cancer: histology-related phenomenon?",
+      "cosine_ratio": 0.9108,
+      "token_f1": 0.1744,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 6,
+      "question": "Are normally sighted, visually impaired, and blind pedestrians accurate and reliable at making street crossing decisions?",
+      "cosine_ratio": 0.8673,
+      "token_f1": 0.1164,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 7,
+      "question": "Orthostatic myoclonus: an underrecognized cause of unsteadiness?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.2256,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 8,
+      "question": "Do symptoms matter when considering patients for phase I clinical trials?",
+      "cosine_ratio": 0.8729,
+      "token_f1": 0.0833,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 9,
+      "question": "Spleen-preserving distal pancreatectomy with resection of the splenic vessels. Should one rely on the short gastric arteries?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.303,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 10,
+      "question": "Are there risk factors that increase the rate of staple line leakage in patients undergoing primary sleeve gastrectomy for morbid obesity?",
+      "cosine_ratio": 0.9501,
+      "token_f1": 0.2479,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 11,
+      "question": "Does quilting suture prevent seroma in abdominoplasty?",
+      "cosine_ratio": 0.8937,
+      "token_f1": 0.0488,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 12,
+      "question": "Evaluation of pediatric VCUG at an academic children's hospital: is the radiographic scout image necessary?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1556,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 13,
+      "question": "Does ibuprofen increase perioperative blood loss during hip arthroplasty?",
+      "cosine_ratio": 0.9543,
+      "token_f1": 0.1136,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 14,
+      "question": "Prostate-specific antigen and free prostate-specific antigen in the early detection of prostate cancer: do combination tests improve detection?",
+      "cosine_ratio": 0.9471,
+      "token_f1": 0.1802,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 15,
+      "question": "Does patella position influence ligament balancing in total knee arthroplasty?",
+      "cosine_ratio": 0.8987,
+      "token_f1": 0.169,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 16,
+      "question": "Is Bare-Metal Stent Implantation Still Justifiable in High Bleeding Risk Patients Undergoing Percutaneous Coronary Intervention?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0959,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 17,
+      "question": "Assessment of carotid artery stenosis before coronary artery bypass surgery. Is it always necessary?",
+      "cosine_ratio": 0.9538,
+      "token_f1": 0.113,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 18,
+      "question": "Bony defects in chronic anterior posttraumatic dislocation of the shoulder: Is there a correlation between humeral and glenoidal lesions?",
+      "cosine_ratio": 0.9706,
+      "token_f1": 0.0909,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 19,
+      "question": "School food policy at Dutch primary schools: room for improvement?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.2011,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 20,
+      "question": "Does occupational nuclear power plant radiation affect conception and pregnancy?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.2353,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 21,
+      "question": "Utility of unenhanced fat-suppressed T1-weighted MRI in children with sickle cell disease -- can it differentiate bone infarcts from acute osteomyelitis?",
+      "cosine_ratio": 0.9146,
+      "token_f1": 0.1642,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 22,
+      "question": "Birth characteristics and risk of low intellectual performance in early adulthood: are the associations confounded by socioeconomic factors in adolescence or familial effects?",
+      "cosine_ratio": 0.9444,
+      "token_f1": 0.1333,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 23,
+      "question": "Do inhaled corticosteroids affect perception of dyspnea during bronchoconstriction in asthma?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.0658,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 24,
+      "question": "Analysis of the epidemiological pattern of Shigellosis in Barcelona between 1988 and 2012: Is it an emerging sexually transmitted infection?",
+      "cosine_ratio": 0.9898,
+      "token_f1": 0.1659,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 25,
+      "question": "Can routine offering of influenza vaccination in office-based settings reduce racial and ethnic disparities in adult influenza vaccination?",
+      "cosine_ratio": 0.9781,
+      "token_f1": 0.0648,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 26,
+      "question": "Is pelvic pain associated with defecatory symptoms in women with pelvic organ prolapse?",
+      "cosine_ratio": 0.8804,
+      "token_f1": 0.1304,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 27,
+      "question": "Are WHO/UNAIDS/UNICEF-recommended replacement milks for infants of HIV-infected mothers appropriate in the South African context?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.2569,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 28,
+      "question": "Is there an intrauterine influence on obesity?",
+      "cosine_ratio": 0.866,
+      "token_f1": 0.1064,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 29,
+      "question": "Can myometrial electrical activity identify patients in preterm labor?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1176,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 30,
+      "question": "Cerebromediastinal tuberculosis in a child with a probable Say-Barber-Miller syndrome: a causative link?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1786,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 31,
+      "question": "Fatigue in primary Sjögren's syndrome: is there a link with the fibromyalgia syndrome?",
+      "cosine_ratio": 0.869,
+      "token_f1": 0.1685,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 32,
+      "question": "MiraLAX vs. Golytely: is there a significant difference in the adenoma detection rate?",
+      "cosine_ratio": 0.9789,
+      "token_f1": 0.2024,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 33,
+      "question": "Is intrapartum vibroacoustic stimulation an effective predictor of fetal acidosis?",
+      "cosine_ratio": 0.8879,
+      "token_f1": 0.0741,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 34,
+      "question": "Are intraoperative precursor events associated with postoperative major adverse events?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1935,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 35,
+      "question": "Cutaneous melanoma in a multiethnic population: is this a different disease?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1262,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 37,
+      "question": "Expression of c-kit protooncogen in hepatitis B virus-induced chronic hepatitis, cirrhosis and hepatocellular carcinoma: has it a diagnostic role?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.129,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 38,
+      "question": "Processing fluency effects: can the content and presentation of participant information sheets influence recruitment and participation for an antenatal intervention?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.024,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 39,
+      "question": "Has the mammography quality standards act affected the mammography quality in North Carolina?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1707,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 40,
+      "question": "Does immediate breast reconstruction compromise the delivery of adjuvant chemotherapy?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.2381,
+      "exact_match": 0,
+      "judge": 1
+    },
+    {
+      "index": 42,
+      "question": "Is ankle/arm pressure predictive for cardiovascular mortality in older patients living in nursing homes?",
+      "cosine_ratio": 0.9829,
+      "token_f1": 0.1408,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 43,
+      "question": "Chronic functional somatic symptoms: a single syndrome?",
+      "cosine_ratio": 0.9518,
+      "token_f1": 0.1842,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 44,
+      "question": "An HIV1/2 point of care test on sputum for screening TB/HIV co-infection in Central India - Will it work?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1852,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 45,
+      "question": "Does confined placental mosaicism account for adverse perinatal outcomes in IVF pregnancies?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.1622,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 46,
+      "question": "Quality of life in lung cancer patients: does socioeconomic status matter?",
+      "cosine_ratio": 0.9261,
+      "token_f1": 0.2243,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 47,
+      "question": "Are serum leptin levels a prognostic factor in advanced lung cancer?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.2791,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 48,
+      "question": "Can CT predict the level of CSF block in tuberculous hydrocephalus?",
+      "cosine_ratio": 1.0,
+      "token_f1": 0.2105,
+      "exact_match": 0,
+      "judge": 0
+    },
+    {
+      "index": 49,
+      "question": "Perioperative care in an animal model for training in abdominal surgery: is it necessary a preoperative fasting?",
+      "cosine_ratio": 0.9894,
+      "token_f1": 0.2449,
+      "exact_match": 0,
+      "judge": 0
+    }
+  ],
+  "prs_simulation": {
+    "cosine_mean": 0.9564,
+    "factual_mean": 0.1481,
+    "cosine_reaches_phase3": true,
+    "factual_reaches_phase3": false,
+    "decision_flips": 1
+  }
+}

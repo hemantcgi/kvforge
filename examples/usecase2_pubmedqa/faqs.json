@@ -1,0 +1,2081 @@
+[
+  {
+    "question": "What is the role of mitochondria in programmed cell death (PCD) in plants compared to animals?",
+    "answer": "While the role of mitochondria during PCD has been well recognized in animals, it has been less studied in the context of PCD in plants, including in the lace plant (Aponogeton madagascariensis).",
+    "source_chunk_ids": [
+      "0"
+    ]
+  },
+  {
+    "question": "What does the cyclosporine A (CsA) treatment experiment suggest about the role of mitochondrial permeability transition pore (PTP) formation in lace plant PCD?",
+    "answer": "The CsA treatment experiment suggests that mitochondrial PTP formation plays an important role in developmentally regulated PCD in the lace plant. CsA, which inhibits PTP formation, resulted in leaves with significantly fewer perforations compared to controls and caused mitochondrial dynamics to resemble those of non-PCD cells. This indicates that PTP formation is likely necessary for the progression of PCD that leads to the characteristic perforation formation in lace plant leaves.",
+    "source_chunk_ids": [
+      "1"
+    ]
+  },
+  {
+    "question": "Why might visual acuity measurements differ depending on which optotype is used?",
+    "answer": "Visual acuity measurements can differ depending on the optotype used because the ability to recognize different optotypes varies even when their critical details subtend the same visual angle. Additionally, since optotypes are typically evaluated on individuals with good visual acuity and no eye disorders, differences in performance between optotypes may emerge in the lower visual acuity range.",
+    "source_chunk_ids": [
+      "2"
+    ]
+  },
+  {
+    "question": "What criteria was used to determine if a patient could identify a line on the visual acuity chart?",
+    "answer": "A patient needed to correctly identify at least 3 out of 5 optotypes per line to pass that line, while incorrect answers were also tracked.",
+    "source_chunk_ids": [
+      "3"
+    ]
+  },
+  {
+    "question": "How do Landolt C acuity and Snellen E acuity measurements compare in patients with strabismus amblyopia?",
+    "answer": "In patients with strabismus amblyopia, Landolt C acuity (LR) and Snellen E acuity (SE) showed small but consistent differences. The mean decimal values were 0.14 for LR and 0.16 for SE, with a mean difference of 0.55 lines between the two measures. SE consistently yielded slightly higher (better) acuity values than LR in this group.",
+    "source_chunk_ids": [
+      "4"
+    ]
+  },
+  {
+    "question": "Why are apparent life-threatening events (ALTEs) in infants considered a serious concern?",
+    "answer": "ALTEs in infants are considered serious because they are both difficult to manage and frequently encountered in pediatric practice, and they carry an uncertain prognosis due to the associated risk of sudden infant death syndrome (SIDS).",
+    "source_chunk_ids": [
+      "5"
+    ]
+  },
+  {
+    "question": "What treatment approach was found to be effective for infants experiencing \"aquagenic maladies\" during bathing?",
+    "answer": "The evolution of the \"aquagenic maladies\" was favorable after a few weeks without baths, suggesting that avoiding water immersion (i.e., refraining from baths) was the effective treatment approach for these infants.",
+    "source_chunk_ids": [
+      "6"
+    ]
+  },
+  {
+    "question": "What is a potential concern with the transanal endorectal pull-through (TERPT) procedure for treating Hirschsprung disease?",
+    "answer": "A potential concern with TERPT is the overstretching of the anal sphincters, which may negatively impact long-term continence in patients treated for Hirschsprung disease.",
+    "source_chunk_ids": [
+      "7"
+    ]
+  },
+  {
+    "question": "What scoring range indicates a \"good\" outcome on the post-pull-through long-term outcome questionnaire used in this study?",
+    "answer": "A score of 11 to 20 indicates a \"good\" outcome on the 15-item post-pull-through long-term outcome questionnaire, which has a total scoring range of 0 to 40.",
+    "source_chunk_ids": [
+      "8"
+    ]
+  },
+  {
+    "question": "Which surgical group showed better continence scores, and which showed better stool pattern scores?",
+    "answer": "The ABD (abdominoperineal) group had significantly better continence scores, while the TERPT (transanal endorectal pull-through) group had significantly better stool pattern scores.",
+    "source_chunk_ids": [
+      "9"
+    ]
+  },
+  {
+    "question": "What was the main research question being investigated in this study about mammography screening?",
+    "answer": "The study investigated whether tailored telephone counseling or tailored print materials was more effective than usual care for promoting mammography screening, and specifically compared the two intervention methods against each other and against a high-quality usual care system.",
+    "source_chunk_ids": [
+      "10"
+    ]
+  },
+  {
+    "question": "How many groups were women divided into in this study, and what were they?",
+    "answer": "Women were divided into 3 groups: (1) usual care, (2) tailored print communications, and (3) tailored telephone counseling.",
+    "source_chunk_ids": [
+      "11"
+    ]
+  },
+  {
+    "question": "Which intervention was more effective at getting women back on schedule with mammogram screening if they had fallen behind?",
+    "answer": "Telephone counseling was more effective than tailored print materials at getting women who were off-schedule back on track with mammogram screening during 1996 and 1997.",
+    "source_chunk_ids": [
+      "12"
+    ]
+  },
+  {
+    "question": "What percentage of patients underwent video-capsule endoscopy (VCE) before their DBE procedure?",
+    "answer": "Approximately 65% of patients (43 out of 66) underwent video-capsule endoscopy (VCE) prior to their DBE evaluation.",
+    "source_chunk_ids": [
+      "13"
+    ]
+  },
+  {
+    "question": "How accurate was video capsule endoscopy (VCE) compared to double balloon endoscopy (DBE) in confirming pathological findings?",
+    "answer": "VCE showed a 74.4% confirmation rate with DBE, as 32 out of 43 VCEs with noted pathology had their findings endoscopically confirmed by DBE. Additionally, in 3 cases, DBE revealed findings that were not detected by VCE, suggesting that DBE can identify pathology missed by VCE.",
+    "source_chunk_ids": [
+      "14"
+    ]
+  },
+  {
+    "question": "What is the reported 30-day mortality rate associated with emergency surgery according to recent studies mentioned in the passage?",
+    "answer": "Recent studies suggest the 30-day mortality rate associated with emergency surgery is 14-15%.",
+    "source_chunk_ids": [
+      "15"
+    ]
+  },
+  {
+    "question": "What were the primary endpoints measured in this retrospective study of emergency laparotomy patients?",
+    "answer": "The primary endpoints of the study were 30-day mortality, age-related 30-day mortality, and 1-year all-cause mortality.",
+    "source_chunk_ids": [
+      "16"
+    ]
+  },
+  {
+    "question": "How does age affect mortality outcomes in patients who underwent laparotomy?",
+    "answer": "Age significantly impacts mortality outcomes. Patients aged over 70 years had notably higher mortality rates compared to those under 70: 30-day mortality was 22% vs. 12% (nearly double), and 1-year mortality was 38% vs. 15% (more than double), with both differences being statistically significant (p<0.001).",
+    "source_chunk_ids": [
+      "17"
+    ]
+  },
+  {
+    "question": "What is the purpose of using anchoring vignettes in this research on sleep disorders in Japan?",
+    "answer": "Anchoring vignettes are used to identify factors associated with sleep disorders in adult Japanese populations, both before and after adjusting for reporting heterogeneity in self-reports. They also help evaluate whether adjustments for reporting heterogeneity are necessary in managing sleep and energy-related problems in Japan.",
+    "source_chunk_ids": [
+      "18"
+    ]
+  },
+  {
+    "question": "What statistical models were used in this study to analyze sleep and energy associations, and what was the advantage of using the CHOPIT model?",
+    "answer": "The study employed two models: the ordered probit model and the Compound Hierarchical Ordered Probit (CHOPIT) model. The CHOPIT model incorporated anchoring vignettes, which gave it the advantage of adjusting for differences in response category cut-points for each individual — meaning it could account for the fact that different respondents may interpret survey response scales differently (e.g., what one person considers \"good\" sleep may differ from another's interpretation), allowing for more accurate comparisons of sleep and energy associations with socio-demographic and lifestyle factors.",
+    "source_chunk_ids": [
+      "19"
+    ]
+  },
+  {
+    "question": "How did correcting for cut-point shifts (reporting heterogeneity) change the factors associated with sleep-related problem severity?",
+    "answer": "After correcting for cut-point shifts using the CHOPIT model, age, number of comorbidities, and regular exercise remained significantly associated with greater severity of sleep-related problems, but sex was no longer a significant factor — a notable change from the uncorrected analysis where sex was significant.",
+    "source_chunk_ids": [
+      "20"
+    ]
+  },
+  {
+    "question": "Why might someone with a genetic HDL deficiency not necessarily develop coronary heart disease early in life?",
+    "answer": "Because although observational data show an inverse relationship between HDL cholesterol levels and CHD (higher HDL is associated with lower CHD risk), genetic HDL deficiency states often do not correlate with premature CHD, suggesting that low HDL caused by genetics does not automatically lead to early heart disease.",
+    "source_chunk_ids": [
+      "21"
+    ]
+  },
+  {
+    "question": "What was the purpose of measuring carotid intima-media thickness (cIMT) in individuals with mutations in LCAT, ABCA1, and APOA1?",
+    "answer": "The purpose of measuring cIMT in these individuals was to further evaluate the relationship between genetically caused low HDL levels and early atherosclerosis, using cases with 10 different mutations across the three genes as a model for studying this association.",
+    "source_chunk_ids": [
+      "22"
+    ]
+  },
+  {
+    "question": "In the case-control study described, did lower HDL cholesterol and apolipoprotein A-I levels in cases correspond to significantly greater carotid intima-media thickness (cIMT) compared to controls?",
+    "answer": "No. Despite cases having significantly lower HDL cholesterol (0.67 vs. 1.58 mmol/l) and apolipoprotein A-I levels (96.7 vs. 151.4 mg/dl), cIMT was nearly identical between cases (0.66 ± 0.17 cm) and controls (0.65 ± 0.18 cm), suggesting no meaningful difference in subclinical atherosclerosis as measured by cIMT.",
+    "source_chunk_ids": [
+      "23"
+    ]
+  },
+  {
+    "question": "What was the purpose of evaluating the short stay or 23-hour ward in the pediatric units mentioned in the passage?",
+    "answer": "The purpose was to determine whether a short stay or 23-hour ward is a useful addition to the emergency service in a pediatric setting.",
+    "source_chunk_ids": [
+      "24"
+    ]
+  },
+  {
+    "question": "What outcome measures were used to evaluate the short stay wards at Westmead Hospital and the New Children's Hospital?",
+    "answer": "The outcome measures used were: length of stay, appropriateness of stay, rate of admission to an in-hospital bed, rate of unscheduled visits within 72 hours of discharge, adverse event reporting, and patient follow-up at 48 hours after discharge.",
+    "source_chunk_ids": [
+      "25"
+    ]
+  },
+  {
+    "question": "How did the short stay ward impact hospital costs and efficiency at Westmead Hospital and New Children's Hospital?",
+    "answer": "The short stay ward improved hospital efficiency by reducing the average length of stay — 17.5 hours at Westmead Hospital compared to 20.5 hours at New Children's Hospital. It was funded through reallocation of existing hospital resources, resulting in estimated cost savings of $0.5 million at Westmead Hospital and $2.3 million at New Children's Hospital, due to more efficient bed usage.",
+    "source_chunk_ids": [
+      "26"
+    ]
+  },
+  {
+    "question": "What is the main focus of the study described in this passage?",
+    "answer": "The study aims to determine the extent to which the reduction in Chile's traffic fatalities and injuries between 2000 and 2012 was related to the increase in police traffic enforcement that followed the introduction of Chile's 2005 traffic law reform.",
+    "source_chunk_ids": [
+      "27"
+    ]
+  },
+  {
+    "question": "What statistical methods were used to analyze the relationship between traffic enforcement variables and road safety outcomes?",
+    "answer": "The study used ordinary least square (OLS) and robust random effects models to analyze the data.",
+    "source_chunk_ids": [
+      "28"
+    ]
+  },
+  {
+    "question": "What were the estimated effects of police traffic enforcement on traffic fatalities and severe injuries between 2007 and 2012?",
+    "answer": "According to the piecewise regression model results for the 2007-2012 period, police traffic enforcement reduced traffic fatalities by 59% and severe injuries by 37%.",
+    "source_chunk_ids": [
+      "29"
+    ]
+  },
+  {
+    "question": "What were the two main objectives of this study on trauma patients requiring therapeutic anticoagulation?",
+    "answer": "The study aimed to determine (1) the incidence of complications that arise when therapeutic anticoagulation is used in trauma patients, and (2) whether any specific patient factors are associated with those complications.",
+    "source_chunk_ids": [
+      "30"
+    ]
+  },
+  {
+    "question": "How was a \"complication\" defined in this anticoagulation study?",
+    "answer": "A complication was defined as any unanticipated discontinuation of the anticoagulant due to bleeding or other adverse events.",
+    "source_chunk_ids": [
+      "31"
+    ]
+  },
+  {
+    "question": "What factors were identified as being associated with anticoagulation complications in trauma patients?",
+    "answer": "Logistic regression analysis identified three factors associated with anticoagulation complications: chronic obstructive pulmonary disease (OR = 9.2, 95%CI = 1.5–54.7), unfractionated heparin (UH) use (OR = 3.8, 95%CI = 1.1–13.0), and lower initial platelet count (OR = 1.004, 95%CI = 1.000–1.008).",
+    "source_chunk_ids": [
+      "32"
+    ]
+  },
+  {
+    "question": "Why is it important to find markers that can differentiate NASH from ASH?",
+    "answer": "It is important because specific markers for distinguishing nonalcoholic steatohepatitis (NASH) from alcoholic steatohepatitis (ASH) are currently lacking, making diagnosis difficult. Researchers are investigating whether routine laboratory parameters could help differentiate between these two conditions, which would improve diagnostic accuracy and guide appropriate treatment.",
+    "source_chunk_ids": [
+      "33"
+    ]
+  },
+  {
+    "question": "How did researchers distinguish between NASH and ASH in this study?",
+    "answer": "Researchers distinguished between NASH and ASH based on two criteria: the liver biopsy results and the patient's history of alcohol consumption, with ASH being associated with higher alcohol intake and NASH diagnosed in those consuming less than 140 g/week of alcohol, while also excluding other liver diseases from consideration.",
+    "source_chunk_ids": [
+      "34"
+    ]
+  },
+  {
+    "question": "What clinical markers were found to be most useful in distinguishing between NASH and ASH?",
+    "answer": "Multivariate analysis identified three key markers for distinguishing NASH from ASH: MCV (mean corpuscular volume), AST/ALT ratio, and sex. These three regressors together achieved an area under the ROC curve (aROC) of 0.92, indicating excellent discriminatory ability. Notably, MCV was elevated in 53% of ASH patients but normal in all NASH patients, and an AST/ALT ratio >1 was more common in ASH (54.1%) than NASH (20.7%).",
+    "source_chunk_ids": [
+      "35"
+    ]
+  },
+  {
+    "question": "What was the main goal of the study described in this passage?",
+    "answer": "The main goal of the study was to determine whether automated, at-the-visit tailored prompts about family history risk could change the behavior of primary care physicians (PCPs).",
+    "source_chunk_ids": [
+      "36"
+    ]
+  },
+  {
+    "question": "What was the purpose of implementing automated, tailored prompts in this study, and which diseases were targeted?",
+    "answer": "The automated, tailored prompts were implemented to highlight familial risk for six specific diseases: heart disease, stroke, diabetes, and breast, colorectal, or ovarian cancer. The goal was to improve primary care physician (PCP) responses to family history risk, encourage adding family history risk to problem summary lists, and assess patient screening status for each of these diseases.",
+    "source_chunk_ids": [
+      "37"
+    ]
+  },
+  {
+    "question": "What percentage of physician visits resulted in family history being reviewed or discussed, and what was the least common response?",
+    "answer": "Combined, family history was reviewed (53.5%) or discussed (22.9%) in approximately 76.4% of the documented visits. The least common physician response was reviewing family history and ordering tests/referrals, which occurred in only 0.7% of visits (5 out of 695 documented visits).",
+    "source_chunk_ids": [
+      "38"
+    ]
+  },
+  {
+    "question": "What gap in knowledge does this study aim to address regarding emergency ultrasound fellowships?",
+    "answer": "The study aims to address the lack of evidence on whether emergency ultrasound (EUS) fellowships actually improve or enhance ultrasound education for emergency medicine residents, by determining the impact of EUS fellowships on EM residents' ultrasound education.",
+    "source_chunk_ids": [
+      "39"
+    ]
+  },
+  {
+    "question": "What was the main purpose of this cross-sectional study conducted at academic medical centers?",
+    "answer": "The main purpose was to evaluate ultrasound (US) education and bedside US use among emergency medicine (EM) residents, examining outcomes such as the number of US examinations performed, scope of bedside US applications, barriers to US education, and US use in the emergency department, while also comparing these outcomes between programs with and without emergency ultrasound (EUS) fellowships.",
+    "source_chunk_ids": [
+      "40"
+    ]
+  },
+  {
+    "question": "How did the presence of emergency ultrasound (EUS) fellowships affect residents' scan volume and ultrasound education?",
+    "answer": "Residents in programs with EUS fellowships reported performing more scans than those without fellowships (P = .04). Additionally, there were significant differences in most applications of bedside ultrasound (P < .05) and in barriers to ultrasound education (P < .05) between programs with and without fellowships, suggesting that EUS fellowships are associated with greater ultrasound experience and fewer educational barriers.",
+    "source_chunk_ids": [
+      "41"
+    ]
+  },
+  {
+    "question": "What are the current routes of drug administration used to manage breathlessness in advanced illness, and what potential alternative is being considered?",
+    "answer": "The current routes of drug administration for managing breathlessness in advanced illness include oral, buccal, and parenteral routes, all of which are provider-controlled. Patient-controlled therapy (PCT) systems are being considered as a potential additional treatment option, though their role remains unclear.",
+    "source_chunk_ids": [
+      "42"
+    ]
+  },
+  {
+    "question": "What is the primary goal of investigating intravenous opioid PCT in patients with advanced disease?",
+    "answer": "The primary goal is to determine whether intravenous opioid PCT (Patient-Controlled Therapy) can be an effective therapeutic method for reducing breathlessness in patients with advanced disease. Secondary aims include studying the feasibility and acceptance of this approach in patients with refractory (treatment-resistant) breathlessness.",
+    "source_chunk_ids": [
+      "43"
+    ]
+  },
+  {
+    "question": "What statistical methods were used to analyze the data in this pilot observational study?",
+    "answer": "The study used descriptive and inferential analyses including the Friedman test, followed by post hoc analyses using Wilcoxon tests with Bonferroni corrections to control for multiple comparisons.",
+    "source_chunk_ids": [
+      "44"
+    ]
+  },
+  {
+    "question": "Did opioid patient-controlled therapy (PCT) effectively reduce breathlessness in advanced cancer patients, and was it considered safe?",
+    "answer": "Yes, opioid PCT effectively reduced breathlessness in advanced cancer patients. The numeric rating scale for breathlessness significantly decreased from a baseline median of 5 to a median of 4 on both Day 1 and Day 2 (both P < 0.01). Physiological parameters remained stable throughout the treatment period, suggesting safety. Additionally, on Day 3, all 12 evaluable patients (12/12) confirmed that this mode of application provided relief of breathlessness.",
+    "source_chunk_ids": [
+      "45"
+    ]
+  },
+  {
+    "question": "How does the in situ split technique relate to living donor liver transplantation (LDLT), and has LDLT become unnecessary?",
+    "answer": "The in situ split technique is a development derived from living related transplantation (LRT), which represents the gold standard for postoperative graft function and survival. When combined with split liver transplantation (SLT), it has eliminated deaths on the waiting list, which raises the question of whether living donor liver transplantation is still needed — though the passage does not definitively conclude that LDLT is obsolete, only that its necessity is now being questioned.",
+    "source_chunk_ids": [
+      "46"
+    ]
+  },
+  {
+    "question": "What statistical method was used to analyze survival rates in this study comparing LRT and SLT patients?",
+    "answer": "Survival rates were analyzed using the Kaplan-Meier method.",
+    "source_chunk_ids": [
+      "47"
+    ]
+  },
+  {
+    "question": "How did the incidence of primary nonfunction compare between the SLT and LRT groups?",
+    "answer": "The incidence of primary nonfunction was significantly higher in the SLT (split liver transplantation) group at 12%, compared to only 2.3% in the LRT (living related transplantation) group.",
+    "source_chunk_ids": [
+      "48"
+    ]
+  },
+  {
+    "question": "Which cluster had the highest rate of ever receiving the influenza vaccine, and what was their defining belief?",
+    "answer": "The \"Potentials\" cluster had the highest rate of ever receiving the influenza vaccine at 75%. Their defining belief was that they would receive the influenza vaccine in order to prevent disease, making them the most receptive group toward vaccination.",
+    "source_chunk_ids": [
+      "49"
+    ]
+  },
+  {
+    "question": "Why might there be a need to develop a training model specifically for retroperitoneoscopy?",
+    "answer": "A training model for retroperitoneoscopy is needed because, despite the retroperitoneal approach being the preferred choice for open urological procedures, it is not the preferred approach for laparoscopy. This discrepancy suggests that surgeons may lack sufficient familiarity and training with the technique in a laparoscopic context, making a dedicated training model and established learning curve essential to improve adoption and proficiency.",
+    "source_chunk_ids": [
+      "50"
+    ]
+  },
+  {
+    "question": "What was the purpose of dividing the animals into groups A and B in this study?",
+    "answer": "The animals were divided into groups A (first eight cases) and B (last seven cases) likely to compare early versus later procedural performance, enabling analysis of the learning curve for the retroperitoneoscopic nephrectomy technique — assessing whether operative metrics such as time, blood loss, and complications improved as the surgeon gained experience.",
+    "source_chunk_ids": [
+      "51"
+    ]
+  },
+  {
+    "question": "What were the statistically significant differences found between groups A and B in the robotic partial nephrectomy study?",
+    "answer": "There were statistically significant differences between groups A and B in three areas: peritoneal opening (p = 0.025), operative time (p = 0.0037), and blood loss (p = 0.026). All three p-values are below the conventional significance threshold of 0.05, indicating meaningful differences between the two groups in these outcomes.",
+    "source_chunk_ids": [
+      "52"
+    ]
+  },
+  {
+    "question": "How many cases are needed to complete the learning curve for RPN in a porcine model?",
+    "answer": "The experimental learning curve for RPN (Retroperitoneal Partial Nephrectomy) in a porcine model is eight cases, as determined through statistical data analysis.",
+    "source_chunk_ids": [
+      "53"
+    ]
+  },
+  {
+    "question": "Why is elevated resting heart rate considered important to study in sub-Saharan African populations?",
+    "answer": "Elevated resting heart rate (RHR) is considered important to study in sub-Saharan African populations because it is a neglected marker in cardiovascular risk factor studies in that region. Despite its potential relevance as an indicator of cardiovascular disease (CVD) risk, it has not received adequate attention in research focused on these populations, making studies like this one in rural Ghana necessary to understand its prevalence and associations with other CVD risk factors.",
+    "source_chunk_ids": [
+      "54"
+    ]
+  },
+  {
+    "question": "How was within-person variability in resting heart rate (RHR) assessed in this study?",
+    "answer": "Within-person variability in RHR was assessed by taking repeat measurements two weeks apart and calculating the variation between those measurements for each individual.",
+    "source_chunk_ids": [
+      "55"
+    ]
+  },
+  {
+    "question": "What was the odds ratio for elevated resting heart rate (RHR) being associated with casual high blood pressure, and was this statistically significant?",
+    "answer": "Individuals with an elevated RHR (>90 bpm) had an odds ratio of 1.94 (95% CI 1.15–3.26) for casual high blood pressure compared to those with normal RHR, and this association was statistically significant (p = 0.013), even after adjusting for several established cardiovascular disease (CVD) risk factors.",
+    "source_chunk_ids": [
+      "56"
+    ]
+  },
+  {
+    "question": "What is the readiness guideline established by the Israeli Ministry of Health for hospitals dealing with multiple casualties?",
+    "answer": "The Israeli Ministry of Health's Emergency and Disaster Medicine Division established a guideline of 20% of each hospital's bed capacity as its readiness standard for multiple casualties, with the expectation that half of those casualties will require immediate medical treatment.",
+    "source_chunk_ids": [
+      "57"
+    ]
+  },
+  {
+    "question": "What is the definition of a High-Mass Casualty Incident (HMCI) according to the Israeli Ministry of Health?",
+    "answer": "According to the Emergency and Disaster Medicine Division in the Israeli Ministry of Health, an HMCI is defined as an event resulting in 10 or more casualties, or 4 or more casualties suffering from injuries with an Injury Severity Score (ISS) of 16 or greater, all arriving to a single hospital.",
+    "source_chunk_ids": [
+      "58"
+    ]
+  },
+  {
+    "question": "What percentage of casualties in the study required immediate medical treatment?",
+    "answer": "Only 20.8% of casualties required immediate medical treatment. The remaining 79.2% (1,022 out of 1,292 casualties) did not necessitate immediate medical treatment, as determined by severity scores and ED discharges.",
+    "source_chunk_ids": [
+      "59"
+    ]
+  },
+  {
+    "question": "What was the main objective of this study?",
+    "answer": "The main objective of this study was to identify early respiratory predictors of mortality in children with hemato-oncology malignancies who developed acute respiratory distress syndrome (ARDS).",
+    "source_chunk_ids": [
+      "60"
+    ]
+  },
+  {
+    "question": "What was the time period covered by the retrospective chart review of children with malignancies and ARDS requiring mechanical ventilation in the PICU?",
+    "answer": "The retrospective chart review covered a 10-year period from January 1987 to January 1997.",
+    "source_chunk_ids": [
+      "61"
+    ]
+  },
+  {
+    "question": "What was the survival rate of children with ARDS and malignancy in this study, and which early indicators could predict patient outcomes?",
+    "answer": "The survival rate was 35.3% (6 out of 17 children). By day 3, peak inspiratory pressure, positive end-expiratory pressure (PEEP), and ventilation index values could distinguish between survivors and non-survivors. Additionally, oxygenation efficiency measures (PaO2/FiO2 and P(A-a)O2) became significantly related to outcome from day 8 onward.",
+    "source_chunk_ids": [
+      "62"
+    ]
+  },
+  {
+    "question": "What factors were hypothesized to influence secondhand smoke exposure and household smoking bans in families with high respiratory risk infants in the NICU study?",
+    "answer": "Socioeconomic status, race, and mental health status were hypothesized to be related to secondhand smoke exposure (SHSe) and household smoking bans in families with high respiratory risk infants discharged from the NICU.",
+    "source_chunk_ids": [
+      "63"
+    ]
+  },
+  {
+    "question": "What was the primary focus of The Baby's Breath Project and who were the target participants?",
+    "answer": "The Baby's Breath Project was a hospital-based intervention trial focused on reducing secondhand smoke exposure (SHSe). It targeted parents of high-risk infants in the NICU (Neonatal Intensive Care Unit) who had at least one smoker in their household, with a total sample size of 99 participants.",
+    "source_chunk_ids": [
+      "64"
+    ]
+  },
+  {
+    "question": "How does household income relate to the presence of a total smoking ban among families with high-risk infants in the NICU?",
+    "answer": "There is a significant disparity in smoking ban adoption based on income. Only 27.8% of families earning less than $25,000 per year reported having a total smoking ban in both their homes and cars, compared to nearly 60% of families earning more than $25,000 (p<.01). This suggests that lower-income families are far less likely to implement smoke-free environments for their high-risk infants.",
+    "source_chunk_ids": [
+      "65"
+    ]
+  },
+  {
+    "question": "Why might nomograms be more useful for predicting aggressive BCR than standard BCR after radical prostatectomy?",
+    "answer": "Nomograms may be more useful for predicting aggressive BCR (defined as PSADT <9 months) than standard BCR because aggressive BCR is a more clinically meaningful endpoint that better correlates with serious outcomes. A previous study demonstrated that several nomograms could predict aggressive BCR more accurately than BCR alone, suggesting that the PSA, grade, and stage variables used in these nomograms capture risk factors more relevant to rapid disease progression than to BCR in general.",
+    "source_chunk_ids": [
+      "66"
+    ]
+  },
+  {
+    "question": "What was the purpose of the Cox analyses performed in this study?",
+    "answer": "The Cox analyses were performed to examine the ability of four postoperative nomograms — the Duke Prostate Center (DPC) nomogram, the Kattan postoperative nomogram, the Johns Hopkins Hospital (JHH) nomogram, and the CPDR/CaPSURE nomogram — to predict biochemical recurrence (BCR) and prostate cancer-specific mortality (PCSM) among 1,778 men in the SEARCH database who underwent radical prostatectomy (RP) between 1990 and 2009. The study also compared their ability to predict BCR and aggressive BCR in a subset of men, using the c-index to measure each nomogram's predictive accuracy.",
+    "source_chunk_ids": [
+      "67"
+    ]
+  },
+  {
+    "question": "How did the nomograms compare in their ability to predict biochemical recurrence (BCR) versus prostate cancer-specific mortality (PCSM)?",
+    "answer": "The nomograms predicted prostate cancer-specific mortality (PCSM) more accurately than they predicted aggressive biochemical recurrence (BCR), as evidenced by higher c-index values for PCSM predictions.",
+    "source_chunk_ids": [
+      "68"
+    ]
+  },
+  {
+    "question": "What are the two main objectives of this study regarding oro-facial pain?",
+    "answer": "The study has two main objectives: (i) to examine the association between self-reported mechanical factors and chronic oro-facial pain, and (ii) to test whether this relationship can be explained by either (a) psychological factors reported by patients, or (b) a common association of self-reported mechanical factors with other unexplained syndromes.",
+    "source_chunk_ids": [
+      "69"
+    ]
+  },
+  {
+    "question": "What type of study design was used to investigate the association between chronic oro-facial pain and mechanical factors in North West England?",
+    "answer": "A population-based cross-sectional study design was used, involving 4,200 randomly selected adults registered with a General Medical Practice in North West England.",
+    "source_chunk_ids": [
+      "70"
+    ]
+  },
+  {
+    "question": "What mechanical factors were independently associated with chronic oro-facial pain after adjusting for psychological factors?",
+    "answer": "Two mechanical factors were independently associated with chronic oro-facial pain after adjusting for psychological factors: teeth grinding (OR 2.0, 95% CI 1.3-3.0) and facial trauma (OR 2.0, 95% CI 1.3-2.9).",
+    "source_chunk_ids": [
+      "71"
+    ]
+  },
+  {
+    "question": "Out of the 465 patients with age-related macular degeneration, how many underwent full clinical examination and standardized refraction on at least two occasions?",
+    "answer": "189 patients underwent a full clinical examination and standardized refraction on a minimum of two occasions.",
+    "source_chunk_ids": [
+      "72"
+    ]
+  },
+  {
+    "question": "What was the average improvement in distance visual acuity for amblyopic eyes over 12 months?",
+    "answer": "The mean improvement in distance acuity for amblyopic eyes by 12 months was 3.3 lines logMAR, while near acuity improved by 1.9 lines logMAR. This improvement typically occurred between 1 and 12 months from baseline and remained stable throughout the follow-up period.",
+    "source_chunk_ids": [
+      "73"
+    ]
+  },
+  {
+    "question": "What was the main purpose of the study described in this passage?",
+    "answer": "The main purpose of the study was to conduct a 2-year audit on the use of epidural analgesia for pain relief during childbirth, evaluating its acceptance among women and caregivers, its penetration into hospital practice, and its safety and efficacy. The study was launched at the same time as the implementation of labor analgesia in the department.",
+    "source_chunk_ids": [
+      "74"
+    ]
+  },
+  {
+    "question": "What were the four standards used to evaluate epidural analgesia performance in this audit cycle?",
+    "answer": "The four standards were: (1) Implementation of epidural analgesia for labor to all patients; (2) Acceptance and good satisfaction level reported by patients and caregivers; (3) Effectiveness of labor analgesia; and (4) No maternal or fetal side effects.",
+    "source_chunk_ids": [
+      "75"
+    ]
+  },
+  {
+    "question": "What were the two clusters identified in the hierarchical clustering analysis, and how did they differ in terms of pain relief after epidural analgesia?",
+    "answer": "The hierarchical clustering analysis identified two clusters based on VAS time course. In Cluster 1 (226 patients), VAS scores decreased from 8.5±1.4 before epidural analgesia to 4.1±1.3 after — indicating moderate pain relief. In Cluster 2 (1002 patients), VAS scores decreased from 8.12±1.7 before to 0.76±0.79 after — indicating much greater pain relief. The pre-epidural VAS scores were not significantly different between the two clusters, but the post-epidural scores were significantly different (p<0.001), suggesting that Cluster 2 experienced substantially better pain control than Cluster 1.",
+    "source_chunk_ids": [
+      "76"
+    ]
+  },
+  {
+    "question": "What was the purpose of evaluating HER2 immunoreactivity in locally advanced urothelial carcinoma patients?",
+    "answer": "The purpose was to assess how HER2 immunoreactivity (protein expression detected by immunohistochemistry) impacts clinical outcomes in locally advanced urothelial carcinoma patients who either underwent surgery alone or received M-VEC (methotrexate, vinblastine, epirubicin, and cisplatin) as adjuvant chemotherapy.",
+    "source_chunk_ids": [
+      "77"
+    ]
+  },
+  {
+    "question": "What was the primary purpose of evaluating HER2 immunoreactivity in this study of urothelial carcinoma patients?",
+    "answer": "The primary purpose of evaluating HER2 immunoreactivity was to explore its influence, along with pathological parameters, on progression-free survival (PFS) and disease-specific overall survival (OS) in locally advanced urothelial carcinoma patients, using univariate and multivariate Cox's analyses.",
+    "source_chunk_ids": [
+      "78"
+    ]
+  },
+  {
+    "question": "What is the significance of HER2 immunoreactivity in advanced urothelial carcinoma patients receiving adjuvant M-VEC chemotherapy?",
+    "answer": "In advanced urothelial carcinoma patients receiving adjuvant M-VEC chemotherapy, HER2 immunoreactivity was a significant prognostic factor for both progression-free survival (PFS) (p = 0.03) and disease-specific overall survival (OS) (p = 0.02) based on univariate analysis. However, this significance did not hold up in multivariate analysis, suggesting that HER2 immunoreactivity's prognostic value may be confounded by other variables. Additionally, HER2 immunoreactivity was not a significant prognostic factor for patients receiving watchful waiting.",
+    "source_chunk_ids": [
+      "79"
+    ]
+  },
+  {
+    "question": "Why has the introduction of halofantrine been delayed?",
+    "answer": "The introduction of halofantrine has been delayed due to its possible side effects and insufficient studies on adverse reactions in humans.",
+    "source_chunk_ids": [
+      "80"
+    ]
+  },
+  {
+    "question": "How many guinea pigs were in each group, and what staining methods were used to examine the cochlea specimens?",
+    "answer": "Each group contained 10 guinea pigs (30 total divided into 3 groups). Two cochlea specimens were taken from each animal — one stained with haematoxylin and eosin, and the other with toluidine blue.",
+    "source_chunk_ids": [
+      "81"
+    ]
+  },
+  {
+    "question": "What structural differences were observed between the therapeutic dose and double therapeutic dose of halofantrine in terms of cochlear damage?",
+    "answer": "At the therapeutic dose, halofantrine caused loss and distortion of inner hair cells and inner phalangeal cells, along with loss of spiral ganglia cells. At the double therapeutic dose, both inner and outer hair cells were distorted (not just inner), and there was also loss of spiral ganglia cells — indicating that a higher dose extends damage to the outer hair cells as well.",
+    "source_chunk_ids": [
+      "82"
+    ]
+  },
+  {
+    "question": "Why is it important to find the optimal CT slice location for measuring visceral adipose tissue (VAT)?",
+    "answer": "Finding the optimal CT slice location is important because VAT measurement needs to be both accurate and sensitive to changes in order to effectively monitor health risks. By identifying the single CT slice where VAT area best reflects changes in overall VAT volume and body weight, clinicians can minimize radiation exposure and cost while still obtaining clinically meaningful data for risk assessment.",
+    "source_chunk_ids": [
+      "83"
+    ]
+  },
+  {
+    "question": "What was the study design used to evaluate visceral adipose tissue (VAT) changes in relation to body weight?",
+    "answer": "The study used 60 plain abdominal CT images from 30 males who underwent workplace screenings twice within a 1-year interval. Automatically calculated and manually corrected VAT areas at various scan levels were measured using a \"freeform curve\" region of interest on CT and then compared with body weight changes over that period.",
+    "source_chunk_ids": [
+      "84"
+    ]
+  },
+  {
+    "question": "At which anatomical location were the strongest correlations found between VAT area and both VAT volume and body weight changes?",
+    "answer": "The strongest correlations were found at a slice located 3 cm above the lower margin of L3, where the correlation (r) with VAT volume was 0.853 and with body weight changes was 0.902.",
+    "source_chunk_ids": [
+      "85"
+    ]
+  },
+  {
+    "question": "What is the standard treatment for necrotizing fasciitis, and where does hyperbaric oxygenation fit in?",
+    "answer": "The standard treatment for necrotizing fasciitis consists of extensive surgery and wide spectrum antibiotics. Hyperbaric oxygenation (HBO) is not part of the primary treatment but has been recommended as an adjuvant (supplementary) therapy, with some evidence suggesting it may improve patient mortality and outcomes — though its beneficial effect remains controversial.",
+    "source_chunk_ids": [
+      "86"
+    ]
+  },
+  {
+    "question": "What were the two treatment groups compared in this retrospective study of necrotizing fasciitis patients?",
+    "answer": "The study compared a group of 25 patients who received hyperbaric oxygen (HBO) therapy as part of their treatment protocol against a group of 12 patients who were treated with surgical excision and antibiotics alone.",
+    "source_chunk_ids": [
+      "87"
+    ]
+  },
+  {
+    "question": "Did hyperbaric oxygen (HBO) therapy lead to better survival outcomes compared to non-HBO treatment in this study?",
+    "answer": "No, HBO therapy did not lead to better survival outcomes. The mortality rate among HBO-treated patients was actually higher at 36%, compared to 25% in the non-HBO group. Additionally, HBO-treated patients required significantly more surgical débridements on average (3.3 vs. 1.5), though survivors in the HBO group had a slightly shorter average hospitalization length, which was not statistically significant.",
+    "source_chunk_ids": [
+      "88"
+    ]
+  },
+  {
+    "question": "What is the purpose of evaluating the Hawkins sign in relation to astragalus (talus) neck fractures?",
+    "answer": "The Hawkins sign is evaluated to predict whether astragalus neck fractures will develop avascular necrosis (AVN). Additionally, the study examines whether AVN occurrence is related to factors such as fracture displacement, soft tissue injury, or delays in reduction or surgery, with findings compared to existing literature.",
+    "source_chunk_ids": [
+      "89"
+    ]
+  },
+  {
+    "question": "What was the duration and sample size of the retrospective study on talar neck fractures?",
+    "answer": "The retrospective study was conducted over a period of thirteen years and included 23 talar neck fractures.",
+    "source_chunk_ids": [
+      "90"
+    ]
+  },
+  {
+    "question": "What is the significance of the Hawkins sign in predicting avascular necrosis in talus fractures?",
+    "answer": "The Hawkins sign is a statistically significant predictor of avascular necrosis (P=.03). In this study, all 12 cases that showed a positive Hawkins sign did not develop avascular necrosis, while all 4 cases that developed avascular necrosis had a negative Hawkins sign. This indicates that a positive Hawkins sign is a reassuring finding against the development of avascular necrosis, whereas a negative Hawkins sign raises concern for its development.",
+    "source_chunk_ids": [
+      "91"
+    ]
+  },
+  {
+    "question": "Why is the mandatory general surgery rotation in surgical clerkships being questioned?",
+    "answer": "The mandatory general surgery rotation is being questioned because the spectrum of general surgery and the way surgical care is delivered have undergone significant changes, making it uncertain whether such a rotation remains a necessary requirement in the surgical clerkship curriculum.",
+    "source_chunk_ids": [
+      "92"
+    ]
+  },
+  {
+    "question": "What methods were used to assess students' mastery of surgical clerkship objectives in this study?",
+    "answer": "Students were assessed using five methods: a written examination, an objective structured clinical examination (OSCE), ward evaluations, a self-assessment objectives questionnaire, and a satisfaction survey.",
+    "source_chunk_ids": [
+      "93"
+    ]
+  },
+  {
+    "question": "What did the data from 54 students reveal about the differences in scores between groups?",
+    "answer": "The data from 54 students showed no differences in scores between groups on any parameter, and no specific concerns were identified related to the absence of general surgery.",
+    "source_chunk_ids": [
+      "94"
+    ]
+  },
+  {
+    "question": "How many participants dropped out or had incomplete data across the three groups by the end of the study?",
+    "answer": "Out of 123 initially recruited participants, 6 did not complete the study (ending with 117 completers). Of those completers, only 84 had a complete set of vocal functions and quality of life measures, and only 42 had a complete set of endoscopic data, meaning significant data attrition occurred beyond just study dropout.",
+    "source_chunk_ids": [
+      "95"
+    ]
+  },
+  {
+    "question": "What was the key difference in outcomes between the genuine acupuncture group and the sham acupuncture group?",
+    "answer": "Both groups showed improvement in vocal function (maximum fundamental frequency) and perceived quality of life, but only the genuine acupuncture group demonstrated structural improvements, specifically a significant reduction in the size of vocal fold lesions.",
+    "source_chunk_ids": [
+      "96"
+    ]
+  },
+  {
+    "question": "What is the primary objective of the study described in this passage?",
+    "answer": "The primary objective of the study is to investigate the feasibility of definitive surgery for acute subarachnoid hemorrhage (aSAH) cases in patients aged 80 or older, filling a gap in research that previously had not compared elderly aSAH patients receiving definitive treatment versus those treated conservatively.",
+    "source_chunk_ids": [
+      "97"
+    ]
+  },
+  {
+    "question": "What criteria were used to exclude cases from the study of acute aSAH patients?",
+    "answer": "Cases were excluded if they were dead-on-arrival or if both pupils were dilated, as these were considered inoperable cases.",
+    "source_chunk_ids": [
+      "98"
+    ]
+  },
+  {
+    "question": "What percentage of cases in the study had aneurysms in the anterior circulation, and how did treatment outcomes compare between those who received aneurysm repair versus those treated conservatively?",
+    "answer": "81.2% of cases (56 out of 69) had aneurysms in the anterior circulation. Cases that received aneurysm repair (either clipping or coil embolization) showed significantly better clinical outcomes compared to those treated conservatively, despite there being no significant difference in WFNS grade on admission or premorbid modified Rankin Scale between the two groups.",
+    "source_chunk_ids": [
+      "99"
+    ]
+  },
+  {
+    "question": "What was the purpose of evaluating structural characteristics of general practices in relation to the web-based clinical information system?",
+    "answer": "The purpose was to determine whether structural characteristics of a general practice were associated with variations in the use of a web-based clinical information system that supported a Managed Clinical Network in diabetes, studied between 2001 and 2003.",
+    "source_chunk_ids": [
+      "100"
+    ]
+  },
+  {
+    "question": "What structural characteristics of a practice were examined to determine their association with the total use of the web-based system?",
+    "answer": "The structural characteristics examined included total list size, training status, numbers of GPs, mean age of the GPs, numbers of female GPs, level of deprivation of the population, and whether staff had received advanced training in diabetes care.",
+    "source_chunk_ids": [
+      "101"
+    ]
+  },
+  {
+    "question": "What factor was found to be associated with increased online system use by both nurses and GPs?",
+    "answer": "The number of diabetes-educated staff was the only general practice variable consistently associated with increased online system use by both nurses and GPs.",
+    "source_chunk_ids": [
+      "102"
+    ]
+  },
+  {
+    "question": "What is the main objective of this study regarding hepatocellular carcinoma?",
+    "answer": "The main objective of the study is to investigate whether well differentiated (w-d) hepatocellular carcinoma (HCC) truly represents a clinically early stage of cancer.",
+    "source_chunk_ids": [
+      "103"
+    ]
+  },
+  {
+    "question": "How were the 76 patients with small HCCs divided in this study, and what classification system was used?",
+    "answer": "The 76 patients were divided into two groups based on tumor differentiation: 10 patients with well-differentiated (w-d) HCCs classified as Edmondson and Steiner's grade I, and 66 patients with less differentiated (l-d) HCCs classified as Edmondson and Steiner's grades I-II, II-III, and III.",
+    "source_chunk_ids": [
+      "104"
+    ]
+  },
+  {
+    "question": "What histological difference was found between well-differentiated (w-d) and less-differentiated (l-d) hepatocellular carcinomas (HCCs) regarding fibrous capsule formation?",
+    "answer": "Well-differentiated (w-d) HCCs had significantly lower incidences of fibrous capsule formation compared to less-differentiated (l-d) HCCs, with a statistically significant difference (P<0.01). However, there were no significant differences between the two groups in terms of intrahepatic metastasis, portal vein invasion, or disease-free survival.",
+    "source_chunk_ids": [
+      "105"
+    ]
+  },
+  {
+    "question": "What is the main focus of this study described in the passage?",
+    "answer": "The main focus of this study is to compare how well women adhere to follow-up recommendations — specifically colposcopy or repeated Pap smears — after receiving abnormal Pap smear results.",
+    "source_chunk_ids": [
+      "106"
+    ]
+  },
+  {
+    "question": "What percentage of women referred for colposcopy had their medical records successfully located and reviewed?",
+    "answer": "Approximately 84% (90 out of 107) of women referred for colposcopy had their medical records located and reviewed.",
+    "source_chunk_ids": [
+      "107"
+    ]
+  },
+  {
+    "question": "How were follow-up protocols applied in the clinic regarding Pap smear abnormalities?",
+    "answer": "The follow-up protocols (telephone call, letter, or certified letter) were applied uniformly, without taking into account the specific type of abnormality found on a Pap smear or the type of examination recommended.",
+    "source_chunk_ids": [
+      "108"
+    ]
+  },
+  {
+    "question": "What statistical methods were used to analyze patient follow-up adherence in this study?",
+    "answer": "The study used two main statistical methods: survival analysis to model the probability of adherence to follow-up versus the number of follow-up attempts, and Cox proportional hazards models to examine multivariate relationships related to adherence.",
+    "source_chunk_ids": [
+      "109"
+    ]
+  },
+  {
+    "question": "What factors were associated with lower adherence to follow-up recommendations?",
+    "answer": "Two key factors were associated with lower adherence: lacking insurance (hazard ratio 0.43, 95% CI 0.20–0.93) and attending one specific clinic out of the three studied (hazard ratio 0.35, 95% CI 0.15–0.73). Both factors significantly reduced the likelihood of following through with recommended follow-up care.",
+    "source_chunk_ids": [
+      "110"
+    ]
+  },
+  {
+    "question": "What is the main limitation of current airborne pollen monitoring systems?",
+    "answer": "The main limitation of current airborne pollen monitoring systems is that they rely on morphologic identification, which is a time-consuming method that can hinder the expansion and enhancement of sampling networks.",
+    "source_chunk_ids": [
+      "111"
+    ]
+  },
+  {
+    "question": "What is the purpose of developing a real-time PCR approach for airborne allergenic pollen detection?",
+    "answer": "The purpose is to verify the feasibility of using real-time PCR as a rapid, accurate, and automated alternative to optical analysis for detecting and quantifying airborne allergenic pollen taxa.",
+    "source_chunk_ids": [
+      "112"
+    ]
+  },
+  {
+    "question": "What modifications were made to the traditional DNA isolation method, and how were the TaqMan probes developed for the quantitative real-time PCR assay?",
+    "answer": "The traditional cetyl trimethyl ammonium bromide (CTAB)-based method was modified specifically for DNA isolation from pollen. Taxon-specific DNA sequences were identified through bioinformatics analysis or literature searches, then PCR amplified from the relevant allergenic taxa. Based on the sequences of these PCR products, complementary or degenerate TaqMan probes were designed. The accuracy of the resulting quantitative real-time PCR assay was validated using 3 plant species.",
+    "source_chunk_ids": [
+      "113"
+    ]
+  },
+  {
+    "question": "What were the key achievements of the modified DNA extraction protocol described in the passage?",
+    "answer": "The modified DNA extraction protocol achieved several key outcomes: (1) good-quality pollen DNA extraction, (2) identification and sequencing of taxon-specific nuclear gene fragments, (3) design of primer pairs and probes that could identify selected pollen taxa mostly at the required classification level, (4) successful identification of pollen collected on routine aerobiological tape, and (5) successful preliminary quantification assays on pollen grains in both test species and mixed samples.",
+    "source_chunk_ids": [
+      "114"
+    ]
+  },
+  {
+    "question": "Why might FDG-PET scans be less reliable for cervical cancer patients who have diabetes mellitus?",
+    "answer": "FDG-PET scans may be less reliable in cervical cancer patients with diabetes mellitus because the degree of tumor uptake of FDG (the radioactive glucose tracer used in PET imaging) can be influenced by DM, potentially affecting the accuracy of the diagnostic results.",
+    "source_chunk_ids": [
+      "115"
+    ]
+  },
+  {
+    "question": "How were patients categorized based on their blood sugar levels in this study?",
+    "answer": "Patients were categorized into three groups: hyperglycaemic DM (fasting blood sugar >126 mg/dl), euglycaemic DM, and non-DM.",
+    "source_chunk_ids": [
+      "116"
+    ]
+  },
+  {
+    "question": "How did PET scanning compare to MRI/CT scans in detecting metastatic lesions in diabetic patients with cervical cancer?",
+    "answer": "PET scanning demonstrated significantly higher detection power than MRI/CT scans for identifying metastatic lesions in diabetic patients, with an AUC of 0.956 versus 0.824 for MRI/CT (P=0.012).",
+    "source_chunk_ids": [
+      "117"
+    ]
+  },
+  {
+    "question": "What types of corneal specimens were evaluated in this study, and how many of each were included?",
+    "answer": "The study evaluated 8 types of corneal specimens: 25 normal human corneal specimens, 206 uncomplicated LASIK specimens, 17 uncomplicated sub-Bowman's keratomileusis (SBK) specimens, 4 uncomplicated photorefractive keratectomy (PRK) specimens, 2 uncomplicated advanced surface ablation (ASA) specimens, 5 keratoconus specimens, 12 postoperative LASIK ectasia specimens, and 1 postoperative PRK ectasia specimen.",
+    "source_chunk_ids": [
+      "118"
+    ]
+  },
+  {
+    "question": "Why are PRK and ASA considered biomechanically safer than conventional LASIK in terms of keratectasia risk?",
+    "answer": "PRK and ASA are considered biomechanically safer than conventional LASIK because they preserve the anterior and peripheral regions of the cornea, which are the stronger and more rigid areas. Histologic studies show that the anterior third of the corneal stroma and Bowman's layer have distinct collagen fibril directions and lamellar interweaving that contribute to greater cohesive tensile strength. Conventional LASIK disrupts these stronger anterior regions more significantly, increasing the risk of keratectasia, whereas PRK and ASA (and to a lesser extent SBK) leave more of this biomechanically critical tissue intact.",
+    "source_chunk_ids": [
+      "119"
+    ]
+  },
+  {
+    "question": "What are the potential drawbacks of using radiotherapy for treating local recurrence?",
+    "answer": "While radiotherapy can reduce local recurrence rates, it has several potential drawbacks: it can cause both short- and long-term toxicity, and if local recurrence develops despite previous radiotherapy, it makes subsequent treatment of that recurrence more difficult and challenging.",
+    "source_chunk_ids": [
+      "120"
+    ]
+  },
+  {
+    "question": "What was the focus of this study regarding rectal cancer treatment?",
+    "answer": "The study focused on examining how prior radiotherapy administered for primary rectal cancer affects patient outcomes following pelvic exenteration performed to treat local recurrence of the cancer.",
+    "source_chunk_ids": [
+      "121"
+    ]
+  },
+  {
+    "question": "What was the time period during which patients referred for pelvic exenteration were reviewed in this study?",
+    "answer": "Patients referred for pelvic exenteration were reviewed from October 1994 to November 2012, spanning approximately 18 years.",
+    "source_chunk_ids": [
+      "122"
+    ]
+  },
+  {
+    "question": "How did prior radiotherapy for primary rectal cancer affect surgical outcomes and survival in patients undergoing pelvic exenteration?",
+    "answer": "Patients who had previously received radiotherapy for their primary rectal cancer had significantly worse outcomes across multiple measures: they required more radical exenterations (68% vs 44%), had lower rates of clear resection margins (63% vs 87%), experienced more surgical complications, and had lower disease-free survival. Even among patients who achieved clear margins, prior irradiation was associated with lower overall survival and disease-free survival. These differences remained significant after multivariate analysis controlling for T and N stages of the primary tumor.",
+    "source_chunk_ids": [
+      "123"
+    ]
+  },
+  {
+    "question": "What criteria were used to identify lymphedema in the breast cancer patient trial?",
+    "answer": "Lymphedema was identified using either a 10% or greater increase in limb volume or a greater than 1 cm increase in arm circumference, with confirmation by a lymphedema specialist.",
+    "source_chunk_ids": [
+      "124"
+    ]
+  },
+  {
+    "question": "Which measurement criterion provides the highest sensitivity for detecting lymphedema cases?",
+    "answer": "Using a 5% increase in circumference at any site provides the highest sensitivity, detecting 91% of lymphedema cases identified in the academic trial.",
+    "source_chunk_ids": [
+      "125"
+    ]
+  },
+  {
+    "question": "What percentage of colorectal cancers develop synchronous liver metastases, and what are the two management approaches for treating them?",
+    "answer": "Synchronous liver metastases (SLM) occur in 20% of colorectal cancers. The two management approaches are: Separate Management (SM), where resection of SLM and colorectal cancer (CRC) is performed at different centres, and Global Management (GM), where both resections are handled at the same centre.",
+    "source_chunk_ids": [
+      "126"
+    ]
+  },
+  {
+    "question": "What type of study was conducted on SLM and CRC resections, and what time period did it cover?",
+    "answer": "A retrospective study was conducted on synchronous liver metastases (SLM) and colorectal cancer (CRC) resections, covering the period from January 2000 to December 2006.",
+    "source_chunk_ids": [
+      "127"
+    ]
+  },
+  {
+    "question": "How did disease-free survival at 5 years compare between patients who underwent simultaneous resection (SM) versus staged/delayed resection (GM) for colorectal cancer with synchronous liver metastases?",
+    "answer": "Disease-free survival at 5 years was significantly higher in SM (simultaneous resection) patients at 14% compared to 11% for GM (staged/delayed resection) patients (P = 0.009). This was the only survival metric that showed a statistically significant difference between the two groups, as overall survival at both 3 years (67% SM vs. 51% GM) and 5 years (35% SM vs. 31% GM) did not differ significantly.",
+    "source_chunk_ids": [
+      "128"
+    ]
+  },
+  {
+    "question": "What is the relationship between motion perception deficits and eye-tracking abnormalities in schizophrenia?",
+    "answer": "The relationship is bidirectional and interactive. While motion perception deficits were initially thought to cause eye-tracking abnormalities in schizophrenia, the passage suggests that the known eye-tracking difficulties in schizophrenia patients may also interact with and influence their motion perception, meaning the two processes mutually affect each other rather than having a simple one-way causal relationship.",
+    "source_chunk_ids": [
+      "129"
+    ]
+  },
+  {
+    "question": "Why was the stimulus duration increased from 150 msec in experiment 1 to 300 msec in experiment 2?",
+    "answer": "The stimulus duration was increased from 150 msec to 300 msec in experiment 2 to deliberately increase the possibility of eye movement intrusion, allowing researchers to study how eye movements might affect speed discrimination performance compared to the condition where eye movements were minimized.",
+    "source_chunk_ids": [
+      "130"
+    ]
+  },
+  {
+    "question": "Why might schizophrenia patients show higher speed discrimination thresholds at 300 msec but not at 150 msec?",
+    "answer": "At 150 msec, the stimulus duration is too brief for eye tracking to initiate, so both groups perform similarly. At 300 msec, control subjects can begin tracking the stimulus with their eyes, which improves their speed discrimination performance. Since eye-tracking frequency during the 300 msec stimulus was significantly correlated with speed discrimination in controls but not in patients, the deficit in patients at 300 msec likely reflects an inability to benefit from eye-tracking initiation — a compensatory mechanism that controls can use but patients cannot.",
+    "source_chunk_ids": [
+      "131"
+    ]
+  },
+  {
+    "question": "What was the purpose of the study described in this passage?",
+    "answer": "The purpose of the study was to determine the technical feasibility of performing a splenectomy using a per-oral transgastric approach with a flexible endoscope in a porcine (pig) model.",
+    "source_chunk_ids": [
+      "132"
+    ]
+  },
+  {
+    "question": "What animal model and preparation method were used in this experimental procedure?",
+    "answer": "The experiments were performed on 50-kg pigs. The animals were fed liquids for 3 days prior to the procedure and underwent general anesthesia with endotracheal intubation. A flexible endoscope was passed orally into the stomach, where a 1.5-cm incision was made to allow a double-channel endoscope to enter the peritoneal cavity for the surgical procedure.",
+    "source_chunk_ids": [
+      "133"
+    ]
+  },
+  {
+    "question": "What approach was used to perform the splenectomy in this study, and what were the outcomes?",
+    "answer": "An endoscopic (natural orifice) approach was used, involving a gastric incision to enter the peritoneal cavity. The outcomes were positive: there were no complications during gastric entry, visualization of the spleen and other intraperitoneal organs was very good, and ligation of splenic vessels and spleen mobilization were successfully accomplished using commercially available endoscopic devices and accessories.",
+    "source_chunk_ids": [
+      "134"
+    ]
+  },
+  {
+    "question": "What is the prognosis for patients with Fournier's gangrene even with treatment?",
+    "answer": "Even with treatment including antibiotics and aggressive debridement, the mortality rate for Fournier's gangrene remains high, indicating a poor prognosis.",
+    "source_chunk_ids": [
+      "135"
+    ]
+  },
+  {
+    "question": "How many patients with Fournier's gangrene were included in this retrospective study, and over what time period was the data collected?",
+    "answer": "The study included 14 patients with Fournier's gangrene, with data collected over a 10-year period from January 1997 to December 2006 at the University Hospital Center \"Mother Teresa.\"",
+    "source_chunk_ids": [
+      "136"
+    ]
+  },
+  {
+    "question": "What was the difference in leukocyte count between patients who survived and those who died?",
+    "answer": "Survivors had a leukocyte count ranging from 4,900–17,000/mm³, while those who died had a significantly higher leukocyte count ranging from 20,300–31,000/mm³, indicating a significant difference between the two groups.",
+    "source_chunk_ids": [
+      "137"
+    ]
+  },
+  {
+    "question": "What is the typical practice for matching kidney donors and recipients based on age, and how does this study differ from that norm?",
+    "answer": "The typical practice is to match elderly kidney donors with elderly recipients. This study differs by examining the outcomes of transplanting kidneys from elderly donors into young recipients, presenting 10 years of follow-up data on this non-standard approach.",
+    "source_chunk_ids": [
+      "138"
+    ]
+  },
+  {
+    "question": "What is the main difference between the study group and the control group in this transplant research?",
+    "answer": "The study group consists of 91 transplants where kidneys from cadaver donors older than 60 years were implanted in recipients younger than 60 years, while the control group consists of 91 matched transplants where both donors and recipients were younger than 60 years.",
+    "source_chunk_ids": [
+      "139"
+    ]
+  },
+  {
+    "question": "Were there significant differences in patient or graft survival between the two groups over a 10-year period?",
+    "answer": "No, there were no significant differences in patient survival (P=0.642), graft survival (P=0.980), or graft survival with death censured (P=0.747) between the two groups at 1, 5, or 10 years.",
+    "source_chunk_ids": [
+      "140"
+    ]
+  },
+  {
+    "question": "What data sources and time periods were used to evaluate the impact of Florida's Medicaid Demonstration?",
+    "answer": "The study used Florida Medicaid claims data spanning two fiscal years before the Demonstration's implementation (FY2004-05 and FY2005-06) and four fiscal years after implementation (FY2006-07 through FY2009-10), drawn from two urban Demonstration counties and two urban non-Demonstration counties used as a comparison group.",
+    "source_chunk_ids": [
+      "141"
+    ]
+  },
+  {
+    "question": "What statistical method was used to evaluate the impact of the Demonstration on enrollee expenditures?",
+    "answer": "A difference-in-difference approach was used to evaluate the impact of the Demonstration on enrollee expenditures, comparing changes before and after implementation both overall and separately for HMOs and PSNs.",
+    "source_chunk_ids": [
+      "142"
+    ]
+  },
+  {
+    "question": "How many person-months of claims data were analyzed in this study?",
+    "answer": "The claims data were collapsed into monthly amounts totaling 26,819,987 person-months, drawn from enrollees in both Demonstration and non-Demonstration counties.",
+    "source_chunk_ids": [
+      "143"
+    ]
+  },
+  {
+    "question": "How did the Demonstration affect PMPM expenditures for SSI enrollees compared to non-Demonstration counties?",
+    "answer": "The Demonstration resulted in significantly lower increases in PMPM expenditures over time for SSI enrollees — only $40 compared to $186 in non-Demonstration counties. Additionally, Demonstration PSNs outperformed HMOs by lowering PMPM expenditures by an additional $7.",
+    "source_chunk_ids": [
+      "144"
+    ]
+  },
+  {
+    "question": "What is the purpose of comparing selective versus non-selective carotid screening methods in patients undergoing coronary artery bypass surgery?",
+    "answer": "The purpose is to determine whether selective carotid screening is as effective as non-selective screening in identifying significant carotid artery disease, given that extracranial internal carotid artery stenosis is a known risk factor for perioperative stroke in CAB patients, and the clinical relevance of such screening remains uncertain.",
+    "source_chunk_ids": [
+      "145"
+    ]
+  },
+  {
+    "question": "What risk factors were used to stratify patients into high- or low-risk groups for significant carotid stenosis and perioperative stroke in this study?",
+    "answer": "Patients were stratified into high- or low-risk groups based on the following risk factors: peripheral vascular disease (PVD), carotid bruit, diabetes mellitus, age greater than 70 years, and/or a history of cerebrovascular disease.",
+    "source_chunk_ids": [
+      "146"
+    ]
+  },
+  {
+    "question": "What risk factors were found to be significantly associated with carotid stenosis in preoperative screening?",
+    "answer": "Univariate analysis identified three significant risk factors for carotid stenosis: peripheral vascular disease (PVD) (P=0.005), carotid bruit (P=0.003), and diabetes mellitus (P=0.05). Additionally, carotid stenosis itself was found to be a risk factor for stroke (P=0.03), and the prevalence of carotid stenosis was notably higher in the high-risk group (9.1%) compared to the low-risk group (1.2%).",
+    "source_chunk_ids": [
+      "147"
+    ]
+  },
+  {
+    "question": "Why is mesocolon invasion from gastric cancer significant despite not being mentioned by the UICC?",
+    "answer": "Mesocolon invasion is significant because it is one of the most frequently invaded sites by gastric cancer, yet the UICC (Union for International Cancer Control) does not recognize it as an adjacent structure in gastric cancer staging. This gap in classification prompted researchers to study, characterize, and classify mesocolon invasion to better understand and potentially improve the staging and treatment of gastric cancer.",
+    "source_chunk_ids": [
+      "148"
+    ]
+  },
+  {
+    "question": "How many patients were included in the study of advanced gastric carcinoma surgery at Gangnam Severance Hospital?",
+    "answer": "The study examined 806 patients who underwent surgery for advanced gastric carcinoma between 1992 and 2007 at the Department of Surgery, Gangnam Severance Hospital, Korea.",
+    "source_chunk_ids": [
+      "149"
+    ]
+  },
+  {
+    "question": "How does the survival rate of patients with mesocolon invasion compare to those with T3 tumors and those with incurable factors?",
+    "answer": "Patients with mesocolon invasion have significantly worse survival than T3 patients, but those who undergo curative resection have considerably better survival than patients who have incurable factors.",
+    "source_chunk_ids": [
+      "150"
+    ]
+  },
+  {
+    "question": "What is the main goal of studying injury severity surrogates in relation to heterotopic ossification after acetabular fracture surgery?",
+    "answer": "The main goal is to determine how injury severity surrogates and other patient factors relate to the development and severity of heterotopic ossification (HO) following open reduction internal fixation (ORIF) of acetabular fractures treated with a posterior surgical approach.",
+    "source_chunk_ids": [
+      "151"
+    ]
+  },
+  {
+    "question": "How many patients were included in this study of acetabular fractures treated through a posterior approach?",
+    "answer": "241 patients were included in the study, all of whom were treated through a posterior approach and had a minimum of 6 months of radiographic follow-up.",
+    "source_chunk_ids": [
+      "152"
+    ]
+  },
+  {
+    "question": "What factors were found to be significantly associated with the development of heterotopic ossification (HO) in a multivariate model?",
+    "answer": "In a multivariate model, the factors significantly associated with the development of HO were: length of stay (LOS) in the ICU, non-ICU LOS greater than 10 days, and HO prophylaxis with external radiation beam therapy (XRT).",
+    "source_chunk_ids": [
+      "153"
+    ]
+  },
+  {
+    "question": "What effect does XRT (radiation therapy) prophylaxis have on the development of heterotopic ossification (HO)?",
+    "answer": "XRT prophylaxis significantly reduces the odds of developing HO, with an odds ratio of 0.29 (95% CI: 0.10–0.85), meaning patients who received XRT prophylaxis had approximately 71% lower odds of developing HO compared to those who did not.",
+    "source_chunk_ids": [
+      "154"
+    ]
+  },
+  {
+    "question": "What properties do statins have beyond lipid lowering that may benefit stroke patients?",
+    "answer": "Beyond lipid lowering, statins have antiatherothrombotic and neuroprotective properties, which may contribute to improved clinical outcomes in stroke patients.",
+    "source_chunk_ids": [
+      "155"
+    ]
+  },
+  {
+    "question": "What was the ratio of statin-treated cases to non-statin-treated referents in this study, and how were they matched?",
+    "answer": "The study used a 1:2 matching ratio, with 125 statin-treated stroke patients (cases) matched to 250 non-statin-treated stroke patients (referents). They were matched based on four criteria: age, gender, year of stroke onset, and stroke subtype.",
+    "source_chunk_ids": [
+      "156"
+    ]
+  },
+  {
+    "question": "Did statin use significantly predict early discharge to home after stroke in this study?",
+    "answer": "No, statin use did not significantly predict early discharge to home. While the multiple-adjusted odds ratio was 1.42 (95% CI 0.90 to 2.22), suggesting a moderately positive association, the result was statistically nonsignificant because the confidence interval crossed 1.0.",
+    "source_chunk_ids": [
+      "157"
+    ]
+  },
+  {
+    "question": "What were the four experimental conditions used in the study involving pregnant women and trainee midwives?",
+    "answer": "The four experimental conditions were created by manipulating the title and font of the Participant Information Sheets (PISs): (1) Double Fluent, where both the title and font were fluent; (2) Double Awkward, where both the title and font were awkward; (3) Fluent Title-Awkward Font, where the title was fluent but the font was awkward; and (4) Awkward Title-Fluent Font, where the title was awkward but the font was fluent.",
+    "source_chunk_ids": [
+      "159"
+    ]
+  },
+  {
+    "question": "Which conditions did pregnant women find significantly less complex than the Double Awkward condition?",
+    "answer": "Pregnant women found both the Double Fluent condition (p=.024) and the Awkward Title-Fluent Font condition (p=.021) significantly less complex than the Double Awkward condition.",
+    "source_chunk_ids": [
+      "160"
+    ]
+  },
+  {
+    "question": "What is the primary focus of this study on sternal fractures in childhood?",
+    "answer": "The study focuses on three main aspects: investigating the accident mechanism (how the injuries occur), identifying radiological and sonographical criteria (imaging characteristics for detection), and considering associated injuries that may accompany sternal fractures in children.",
+    "source_chunk_ids": [
+      "161"
+    ]
+  },
+  {
+    "question": "What time period was used to collect data on patients with sternal fractures?",
+    "answer": "Data on patients with sternal fractures was collected from January 2010 to December 2012, covering a three-year period, and included both inpatients and outpatients.",
+    "source_chunk_ids": [
+      "162"
+    ]
+  },
+  {
+    "question": "How were the children with sternal fractures managed, and what proportion required hospitalization?",
+    "answer": "Of the 4 children aged 5-14 years treated for sternal fractures over 2 years, 2 (50%) required hospitalization for pain management, while the other 2 (50%) were managed in outpatient care.",
+    "source_chunk_ids": [
+      "163"
+    ]
+  },
+  {
+    "question": "Why might measuring androsterone glucuronide (ADT-G) be more useful than measuring circulating androgens when studying sexual desire in women?",
+    "answer": "Measuring ADT-G may be more useful because it is the primary androgen metabolite and may better reflect bioactive androgen activity. Since measuring bioactive testosterone directly is difficult with current methods, ADT-G has been proposed as a more accurate indicator of androgen activity, potentially showing a stronger correlation with sexual desire than circulating androgen levels alone.",
+    "source_chunk_ids": [
+      "164"
+    ]
+  },
+  {
+    "question": "What was the age range and sample size of the participants in this study?",
+    "answer": "The study included 560 healthy women aged 19-65 years, divided into three age groups.",
+    "source_chunk_ids": [
+      "165"
+    ]
+  },
+  {
+    "question": "What method was used to analyze the hormone levels in this study?",
+    "answer": "Mass spectrometry was used to analyze the hormone levels, including total testosterone (TT), calculated free testosterone (FT), androstenedione, dehydroepiandrosterone sulfate (DHEAS), and ADT-G.",
+    "source_chunk_ids": [
+      "166"
+    ]
+  },
+  {
+    "question": "Which androgen showed a correlation with sexual desire across multiple age groups of women, including both the total cohort and the 45-65 age group?",
+    "answer": "Androstenedione showed a correlation with sexual desire across multiple groups, including the total cohort of women and specifically in women aged 45-65 years.",
+    "source_chunk_ids": [
+      "167"
+    ]
+  },
+  {
+    "question": "What is the main concern associated with immediate breast reconstruction (IBR) in early breast cancer patients?",
+    "answer": "The main concern associated with IBR is its potential impact on the delivery of adjuvant chemotherapy, despite the psychological benefits it provides to many early breast cancer patients.",
+    "source_chunk_ids": [
+      "168"
+    ]
+  },
+  {
+    "question": "What type of study design was used to analyze patients who underwent mastectomy and received adjuvant chemotherapy?",
+    "answer": "The study used a retrospective analysis design, examining patients from an academic breast service who underwent mastectomy (with or without reconstruction) and received adjuvant chemotherapy.",
+    "source_chunk_ids": [
+      "169"
+    ]
+  },
+  {
+    "question": "Did immediate breast reconstruction (IBR) significantly delay the start of chemotherapy compared to mastectomy alone?",
+    "answer": "No, there was no significant difference in the median time to chemotherapy between patients who received IBR and those who received mastectomy alone.",
+    "source_chunk_ids": [
+      "170"
+    ]
+  },
+  {
+    "question": "What is the relationship between HPV and pterygium development?",
+    "answer": "The relationship between HPV and pterygium development is currently inconclusive. While several studies have investigated HPV as a potential risk factor for pterygium, the results have been inconsistent. The passage describes an aim to investigate a large sample of pterygia for HPV presence in order to clarify this putative (supposed but not proven) association.",
+    "source_chunk_ids": [
+      "171"
+    ]
+  },
+  {
+    "question": "What methods were used to detect and type HPV in the pterygium specimens?",
+    "answer": "The study used PCR technique with beta-globin primers (to verify DNA quality), HPV primers MY09/11 and GP5+/6+ (for initial HPV detection), type-specific HPV primers (for typing of HPV-positive specimens), and DNA in situ hybridisation (ISH) for further investigation of HPV-positive cases.",
+    "source_chunk_ids": [
+      "172"
+    ]
+  },
+  {
+    "question": "What percentage of pterygia tested positive for HPV, and which HPV type was found?",
+    "answer": "4 out of 90 suitable specimens (approximately 4.4%) tested positive for HPV, and all four were identified as HPV type 6.",
+    "source_chunk_ids": [
+      "173"
+    ]
+  },
+  {
+    "question": "What is the purpose of using an Artificial Neural Network (ANN) in this study?",
+    "answer": "The ANN is used to estimate Length of Stay (LOS) based on PRISM item patterns, serving as a predictive modeling tool to evaluate how well patient severity data can forecast hospital stay duration.",
+    "source_chunk_ids": [
+      "174"
+    ]
+  },
+  {
+    "question": "What data was used to train the artificial neural network (ANN) and how was its performance validated?",
+    "answer": "The ANN was trained on the chronologically first 75% of the PRISM data collected from consecutive PICU admissions between 1994 and 1999 (over 2000 patients), using PRISM items, age, and sex as inputs and length of stay (LOS) as the output. Its performance was then validated on the remaining most recent 25% of the dataset.",
+    "source_chunk_ids": [
+      "175"
+    ]
+  },
+  {
+    "question": "How does the ANN-derived LOS estimate compare to PRISM in predicting actual length of stay?",
+    "answer": "The ANN-derived LOS estimate shows a stronger correlation with actual LOS than PRISM does. When LOS is logarithmically transformed, the ANN model achieves a Pearson correlation of 0.34 (p<0.001) in the independent validation sample, compared to PRISM's Pearson correlation of only 0.08 (p=0.0003) with raw LOS. This suggests the ANN model is a better predictor of length of stay than the PRISM score.",
+    "source_chunk_ids": [
+      "176"
+    ]
+  },
+  {
+    "question": "What is the purpose of balloon predilatation in the context of transcatheter aortic valve replacement (TAVI)?",
+    "answer": "Balloon predilatation is used to dilate the aortic stenosis before the valve is deployed when using a balloon expandable stent valve in TAVI. However, the study aims to investigate whether this step is actually necessary in the TAVI procedure.",
+    "source_chunk_ids": [
+      "177"
+    ]
+  },
+  {
+    "question": "Why is it important for pediatricians to be educated about autoerotic asphyxiation (AEA)?",
+    "answer": "It is important for pediatricians to be educated about AEA because the practice typically begins among young patients and can lead to unintended death. With relevant knowledge, pediatricians can identify the syndrome early, show willingness to discuss it with patients, reduce distress, and potentially prevent tragic outcomes. Since AEA is clandestine and elusive by nature, informed pediatricians are in a key position to recognize warning signs that might otherwise go undetected.",
+    "source_chunk_ids": [
+      "178"
+    ]
+  },
+  {
+    "question": "What types of sources were used in this retrospective study on AEA manifestations?",
+    "answer": "The study drew from multiple source types including published cases (both fatal and nonfatal), personal communications, referenced citations, clinical experience, and theoretical formulations about causation.",
+    "source_chunk_ids": [
+      "179"
+    ]
+  },
+  {
+    "question": "What are the psychological and symbolic elements associated with AEA, and what makes it dangerous?",
+    "answer": "AEA (autoerotic asphyxiation) is described as a personalized, ritualized, and symbolic biopsychosocial drama that involves a reenactment of intense emotional feeling-states, often featuring an identification and sadomasochistic relationship with a female figure. It is dangerous because inexperienced or unskilled practitioners may misjudge the level of risk in the situation they have created, leading to accidental death.",
+    "source_chunk_ids": [
+      "180"
+    ]
+  },
+  {
+    "question": "How does having both major depression and alcohol use disorder affect outcomes in adolescents?",
+    "answer": "Having both major depression (MD) and alcohol use disorder (AUD) simultaneously, especially in adolescents, is associated with worse subsequent major depression outcomes compared to having major depression alone.",
+    "source_chunk_ids": [
+      "181"
+    ]
+  },
+  {
+    "question": "What was the purpose of adjusting the associations between MD/AUD classification and later MD outcomes for childhood factors?",
+    "answer": "The purpose of adjusting for childhood factors was to control for potential confounding variables, ensuring that the observed associations between the four-level MD/AUD classification during ages 15-18 and MD outcomes during ages 18-35 reflect more accurate, unbiased relationships rather than being explained by pre-existing conditions or characteristics measured in childhood.",
+    "source_chunk_ids": [
+      "182"
+    ]
+  },
+  {
+    "question": "What factors explained the higher rates of adult major depression (MD) in the comorbid MD/AUD group compared to the MD-only group?",
+    "answer": "After adjusting for confounding variables, the difference in adult MD rates between the MD-only and MD/AUD groups was no longer statistically significant. The factors that explained this association were gender, childhood behavior problems, and exposure to physical and sexual abuse.",
+    "source_chunk_ids": [
+      "183"
+    ]
+  },
+  {
+    "question": "What type of study design was used to evaluate how caregivers administer cough medicine to children?",
+    "answer": "A cross-sectional observational study using convenience sampling was conducted in a pediatric emergency department (PED) during the fall of 2010, where caregivers were shown 6 common cough medicine preparations and asked to demonstrate how they would administer them to their children.",
+    "source_chunk_ids": [
+      "185"
+    ]
+  },
+  {
+    "question": "What percentage of the total study participants both wanted to use cough or cold medicines AND incorrectly dosed the medication?",
+    "answer": "Approximately 58% (38 out of 65) of the total participants both intended to treat with cough or cold medicines and incorrectly dosed the medication.",
+    "source_chunk_ids": [
+      "186"
+    ]
+  },
+  {
+    "question": "What was the main goal of the pilot study described in the passage?",
+    "answer": "The main goal of the pilot study was to determine whether a simple instruction manual consisting of four diagrams could enable laypersons (people with no medical training) to successfully operate a Laryngeal Mask Supreme® (LMAS) on a manikin.",
+    "source_chunk_ids": [
+      "187"
+    ]
+  },
+  {
+    "question": "What materials were provided to laypersons to help them use the LMAS on a manikin?",
+    "answer": "Laypersons were provided with a bag containing a LMAS (Laryngeal Mask Airway System), a bag mask valve device (BMV), a syringe prefilled with air, and an instruction sheet featuring four illustrated panels with speech bubbles showing the correct use of the LMAS.",
+    "source_chunk_ids": [
+      "188"
+    ]
+  },
+  {
+    "question": "What percentage of laypersons were able to successfully insert the LMAS and provide adequate tidal volumes within the first 2 minutes?",
+    "answer": "79.3% (119 out of 150) of laypersons were able to insert the LMAS and provide tidal volumes greater than 150 ml within the first 2 minutes, with an average time to insertion and first ventilation of 83.2 ± 29 seconds.",
+    "source_chunk_ids": [
+      "189"
+    ]
+  },
+  {
+    "question": "What is the purpose of the study described in this passage?",
+    "answer": "The purpose of the study is to evaluate a slit-lamp biomicroscopy-based method (SLBM) for measuring pupil diameter and to compare its accuracy and reliability against Colvard infrared pupillometry (CIP), an established pupil measurement technique.",
+    "source_chunk_ids": [
+      "190"
+    ]
+  },
+  {
+    "question": "What was the purpose of comparing SLBM and CIP measurements in this study?",
+    "answer": "The purpose was to determine the agreement between SLBM (slit-lamp biomicroscopy) and CIP (corneal infrared pupillometry), assess intraobserver and interobserver repeatabilities, evaluate interobserver concordance using kappa statistics, and determine SLBM's ability to detect pupil sizes over 6.0 mm — all tested across 40 healthy eyes with three repeated measurements per instrument by two examiners.",
+    "source_chunk_ids": [
+      "191"
+    ]
+  },
+  {
+    "question": "How did pupil diameter measurements compare between the slit-lamp biomicroscopy (SLBM) and corneal infrared photography (CIP) methods?",
+    "answer": "The mean pupil diameter measured with SLBM (5.81 ± 0.70 mm) was significantly smaller than with CIP (6.26 ± 0.68 mm), with a statistically significant difference (p = 0.01). The mean differences between SLBM and CIP ranged from -0.30 mm to -0.60 mm depending on the examiner, indicating that SLBM consistently underestimates pupil size compared to CIP.",
+    "source_chunk_ids": [
+      "192"
+    ]
+  },
+  {
+    "question": "What is the main purpose of this study described in the passage?",
+    "answer": "The study aims to evaluate prepuce (foreskin) development and retractibility in boys, while also highlighting the importance of circumcision and forced prepucial dilation as interventions during childhood.",
+    "source_chunk_ids": [
+      "193"
+    ]
+  },
+  {
+    "question": "What percentage of boys in the study were considered to actually need circumcision, and what were the main reasons?",
+    "answer": "Only 2.7% of all examined boys were considered in need of circumcision. The reasons included: prepucial orifice stenosis preventing normal urination (3 boys), a constrictive ring below the prepucial edge that would prevent future retractability (1 boy), repetitive balanopostitis (2 boys), and xerosol balanitis (5 boys).",
+    "source_chunk_ids": [
+      "194"
+    ]
+  },
+  {
+    "question": "How many patients were ultimately included in the study of acute diverticulitis?",
+    "answer": "205 patients were ultimately included in the study. Out of the 220 patients initially reviewed, 15 were excluded due to questionable CT findings or hematochezia, leaving 205 patients in the analysis.",
+    "source_chunk_ids": [
+      "195"
+    ]
+  },
+  {
+    "question": "What were the findings of the colonoscopy performed on patients after hospital discharge?",
+    "answer": "The colonoscopy, performed early (4 to 6 weeks) after hospital discharge on 100 patients, found no colonic malignancy. However, 32 patients (32%) had at least one polyp, with only one identified as an advanced adenoma. No new or different diagnosis was made as a result of the colonoscopy.",
+    "source_chunk_ids": [
+      "196"
+    ]
+  },
+  {
+    "question": "What is the main goal of investigating IADL problems in relation to dementia diagnosis?",
+    "answer": "The main goal is to determine whether problems in instrumental activities of daily living (IADL) can provide additional predictive value beyond conventional clinical measurements in forecasting a dementia diagnosis at 1- and 2-year follow-up periods.",
+    "source_chunk_ids": [
+      "197"
+    ]
+  },
+  {
+    "question": "What statistical method was used to examine the relationship between IADLs and dementia, and what variables were controlled for in the analysis?",
+    "answer": "Structural equation modeling (SEM) was used to investigate the relationship between IADLs and dementia. The analysis controlled for several variables including age, sex, education, depression, and cognitive measures specifically the Mini-Mental State Examination (MMSE) and verbal memory.",
+    "source_chunk_ids": [
+      "198"
+    ]
+  },
+  {
+    "question": "What was the odds ratio for IADL disability predicting dementia at 1-year follow-up, and what does this suggest about its predictive value?",
+    "answer": "The odds ratio for IADL disability predicting dementia at 1-year follow-up was 2.20 (95% CI = 1.51–3.13). This suggests that individuals with IADL disabilities were approximately twice as likely to develop dementia compared to those without, even after accounting for other measured variables, indicating that IADL disability is a significant independent predictor of dementia conversion.",
+    "source_chunk_ids": [
+      "199"
+    ]
+  },
+  {
+    "question": "What is the main objective of this study regarding ventriculoperitoneal shunt procedures?",
+    "answer": "The main objective of the study is to analyze whether the simultaneous use of an endoscope during ventriculoperitoneal shunt (VPS) procedures increases the associated infection rate, as the relationship between endoscope use and infection in VPS procedures has not been well established.",
+    "source_chunk_ids": [
+      "200"
+    ]
+  },
+  {
+    "question": "What percentage of the 438 VPS procedures in the study involved the use of an endoscope?",
+    "answer": "11.2% of the 438 VPS procedures (49 procedures) involved the use of an endoscope, while the remaining 88.8% (389 procedures) did not use an endoscope.",
+    "source_chunk_ids": [
+      "201"
+    ]
+  },
+  {
+    "question": "Was there a statistically significant difference in infection rates between groups where an endoscope was used versus not used?",
+    "answer": "No, there was no statistically significant difference. The infection rate was 22.4% in groups where an endoscope was used and 18% in groups where it was not used, with a P-value of 0.449, which is well above the conventional significance threshold of 0.05.",
+    "source_chunk_ids": [
+      "202"
+    ]
+  },
+  {
+    "question": "What BMI percentile categories were used to classify children's weight status in this study?",
+    "answer": "The children's BMI percentiles were classified into four categories: underweight (below the 15th percentile), normal (15th to 85th percentile), overweight (85th to 95th percentile), and obese (95th percentile and above).",
+    "source_chunk_ids": [
+      "203"
+    ]
+  },
+  {
+    "question": "Who was most accurate at estimating children's body size — parents, children, or physicians?",
+    "answer": "Physicians were the most accurate, but they still underestimated 33% of patients. Parents underestimated about 44–47% of children's body size, and children underestimated their own body size about 40–43% of the time, making physicians the best estimators among the three groups, though still far from perfect.",
+    "source_chunk_ids": [
+      "204"
+    ]
+  },
+  {
+    "question": "What was the purpose of the specialized training program in this study?",
+    "answer": "The specialized training program was designed to develop phonological awareness in preschool children as a preventive measure against dyslexia.",
+    "source_chunk_ids": [
+      "205"
+    ]
+  },
+  {
+    "question": "Which group of children benefited the most from the specialized training program in terms of reading abilities?",
+    "answer": "Children with a history of hearing loss, actual hearing loss, or pathologic middle ear findings benefited the most from the specialized training program compared to the control group in their reading abilities.",
+    "source_chunk_ids": [
+      "206"
+    ]
+  },
+  {
+    "question": "What is the current state of research on the relationship between streptococcal infections and multiple sclerosis?",
+    "answer": "Research on streptococcal infections as a potential trigger for multiple sclerosis is limited. While some infectious agents have been investigated for their mechanisms of inducing autoimmunity, streptococcal infections specifically have not yet been sufficiently studied in relation to MS.",
+    "source_chunk_ids": [
+      "207"
+    ]
+  },
+  {
+    "question": "What antibodies were measured to study the effect of past group A streptococcal infection on multiple sclerosis?",
+    "answer": "Antistreptolysin O (ASO) and antideoxyribonuclease B (ADNase B) were measured to study the effect of past group A streptococcal infection on MS.",
+    "source_chunk_ids": [
+      "208"
+    ]
+  },
+  {
+    "question": "What was the difference in ADNase B and ASO levels between patients with multiple sclerosis (MS) and healthy controls?",
+    "answer": "Patients with MS had significantly higher ADNase B levels compared to controls (p<0.001), while ASO levels showed no significant difference between the two groups.",
+    "source_chunk_ids": [
+      "209"
+    ]
+  },
+  {
+    "question": "What is the significance of combining 2-methoxyestradiol (2ME) with chemotherapeutic compounds in the context of ovarian cancer treatment?",
+    "answer": "The significance lies in investigating whether combining 2ME with chemotherapeutic compounds produces an additive inhibitory effect on the proliferation of human ovarian cancer cells. Since 2ME is a potent inhibitor of cell growth and a strong anti-angiogenic substance, pairing it with chemotherapy could potentially enhance treatment efficacy beyond what either agent achieves alone.",
+    "source_chunk_ids": [
+      "210"
+    ]
+  },
+  {
+    "question": "What method was used to measure cell proliferation in this study involving ovarian cancer cell lines?",
+    "answer": "Cell proliferation was measured after four days using the ATP-chemosensitivity test.",
+    "source_chunk_ids": [
+      "211"
+    ]
+  },
+  {
+    "question": "What effect does 2ME have when combined with epirubicine and carboplatin in ovary cancer cell lines?",
+    "answer": "2ME produces a significant additive effect when combined with epirubicine and carboplatin in both ovary cancer cell lines, particularly at the lower concentration range of these chemotherapeutic substances.",
+    "source_chunk_ids": [
+      "212"
+    ]
+  },
+  {
+    "question": "Why is using bony landmarks alone considered unreliable for assessing joint lines in knee revision surgery?",
+    "answer": "Using bony landmarks alone is considered unreliable for assessing joint lines because there are large variations in human anatomy, making it difficult to accurately determine the correct joint line position based solely on these landmarks.",
+    "source_chunk_ids": [
+      "213"
+    ]
+  },
+  {
+    "question": "What anatomical landmarks were used to measure distances to the joint line in this study?",
+    "answer": "The distances measured were from four anatomical landmarks to the joint line (JL): the fibular head, the medial epicondyle, the lateral epicondyle, and the adductor tubercle.",
+    "source_chunk_ids": [
+      "214"
+    ]
+  },
+  {
+    "question": "What does the mean difference of 0.0 mm with narrow confidence limits (-1.1 to 1.1) for the fibular head suggest about the study's findings?",
+    "answer": "The mean difference of 0.0 mm with narrow confidence limits ranging from -1.1 to 1.1 suggests that there was no clinically meaningful difference between the treated and control knees in terms of fibular head measurements, indicating high symmetry and reliability between the two sides.",
+    "source_chunk_ids": [
+      "215"
+    ]
+  },
+  {
+    "question": "What factors influence the longevity of unicompartmental knee replacements, and what gap exists in current research?",
+    "answer": "The longevity of unicompartmental knee replacements (UKR) is influenced by factors such as the magnitude of postoperative alignment and the type of material used. However, a gap exists in current research: the effect of component design and material on postoperative alignment has not yet been explored.",
+    "source_chunk_ids": [
+      "216"
+    ]
+  },
+  {
+    "question": "What were the two types of components compared in this robotic-guided UKR study?",
+    "answer": "The study compared two types of components: an all-polyethylene inlay component (Inlay group) and a metal-backed onlay component (Onlay group), with the primary focus on evaluating the magnitude of mechanical alignment correction achieved in each group.",
+    "source_chunk_ids": [
+      "217"
+    ]
+  },
+  {
+    "question": "Which surgical approach resulted in better postoperative mechanical alignment, Onlay or Inlay, and what were the specific alignment values?",
+    "answer": "The Onlay group achieved significantly better (closer to neutral) postoperative mechanical alignment with a mean of 2.8° (95% CI: 2.4°–3.2°), compared to the Inlay group which had a mean of 3.9° (95% CI: 3.4°–4.4°). This difference was statistically significant (P=0.003), after adjusting for gender, BMI, age, side, and preoperative mechanical alignment.",
+    "source_chunk_ids": [
+      "218"
+    ]
+  },
+  {
+    "question": "What is the main purpose of studying VEGF expression in stage pT3 renal cell carcinoma?",
+    "answer": "The main purpose is twofold: to investigate whether there is a relationship between VEGF expression and vascular invasion (specifically renal vein and vena cava invasion), and to assess how VEGF expression impacts patient survival in stage pT3 renal cell carcinoma.",
+    "source_chunk_ids": [
+      "219"
+    ]
+  },
+  {
+    "question": "What variables were analyzed to determine their impact on survival in patients with pT3a or pT3b tumors?",
+    "answer": "The variables analyzed for their impact on survival included age, gender, Fuhrman grade, and immunohistochemical expression of VEGF. These were evaluated using both univariate and multivariate analysis in 78 patients categorized by tumor stage (pT3a, pT3b without vena cava invasion, or pT3b with vena cava invasion).",
+    "source_chunk_ids": [
+      "220"
+    ]
+  },
+  {
+    "question": "What factors were identified as independent predictors of survival in the multivariate analysis?",
+    "answer": "In the multivariate analysis, three independent predictive factors of survival were identified: lymph node involvement, distant metastases, and VEGF expression (with an odds ratio of 6.07 for VEGF expression).",
+    "source_chunk_ids": [
+      "221"
+    ]
+  },
+  {
+    "question": "What is the leading cause of death among young men aged 15-39 in England and Wales?",
+    "answer": "Deaths from injury and poisoning — which include suicide, accidents, undetermined deaths, and homicide — are the major cause of death among young men aged 15-39 years in England and Wales, and this trend has been increasing in recent years.",
+    "source_chunk_ids": [
+      "222"
+    ]
+  },
+  {
+    "question": "What data sources were used to collect information in this study about deaths among young men in Merseyside and Cheshire?",
+    "answer": "The study collected data from two primary sources: Coroner's inquest notes and General Practitioner records.",
+    "source_chunk_ids": [
+      "223"
+    ]
+  },
+  {
+    "question": "What was the most common cause of death mentioned in the passage, and what percentage of cases did it account for?",
+    "answer": "The most common cause of death was poisoning by alcohol and drugs, accounting for 29.1% of cases (n = 78).",
+    "source_chunk_ids": [
+      "224"
+    ]
+  },
+  {
+    "question": "What is the purpose of studying the duration of continuing pregnancy after antenatal corticosteroid (AC) administration?",
+    "answer": "The purpose is twofold: to determine how long a pregnancy continues after antenatal corticosteroid (AC) administration, and to assess whether there is a potential opportunity to administer a \"rescue\" course of AC if the initial treatment's benefits may have diminished over time.",
+    "source_chunk_ids": [
+      "225"
+    ]
+  },
+  {
+    "question": "What factors were associated with an increased likelihood of delivering before 34 weeks' gestation after receiving antenatal corticosteroids (AC)?",
+    "answer": "Women were more likely to deliver before 34 weeks if they received AC for premature preterm rupture of membranes (OR 3.83, 95% CI 2.06–7.17), twin pregnancies (OR 2.90, 95% CI 1.42–5.95), or if AC was administered before 28 weeks' gestation (OR 2.21, 95% CI 1.38–3.52).",
+    "source_chunk_ids": [
+      "226"
+    ]
+  },
+  {
+    "question": "What was the purpose of the earlier work conducted by this research unit regarding autoCPAP devices?",
+    "answer": "The earlier work aimed to use correlations between autoCPAP pressure and both OSA severity and obesity to construct an algorithm that could estimate the fixed CPAP pressure a patient would require for subsequent clinical use.",
+    "source_chunk_ids": [
+      "227"
+    ]
+  },
+  {
+    "question": "What statistical method was used to analyze the relationship between obesity measurements and autoCPAP pressure in this study?",
+    "answer": "Spearman's rank correlation was used to analyze the relationships between measurements of obesity and autoCPAP pressure, as well as between OSA severity and autoCPAP pressure.",
+    "source_chunk_ids": [
+      "228"
+    ]
+  },
+  {
+    "question": "What factors showed a significant correlation with autoCPAP pressure in obese individuals with OSA?",
+    "answer": "AutoCPAP pressure showed a moderate but significant correlation with OSA severity measures — specifically the apnoea-hypopnoea index (AHI, r = 0.34, p = 0.02) and the oxygen desaturation index (ODI, r = 0.48, p < 0.001). Notably, no significant correlation was found between autoCPAP pressure and anthropometric measures such as neck circumference, waist circumference, or BMI.",
+    "source_chunk_ids": [
+      "229"
+    ]
+  },
+  {
+    "question": "What were the three clinical presentations of prior spontaneous preterm birth being compared in this study?",
+    "answer": "The three clinical presentations of prior spontaneous preterm birth (SPTB) being compared were: advanced cervical dilatation (ACD), preterm premature rupture of membranes (PPROM), and preterm labor (PTL).",
+    "source_chunk_ids": [
+      "230"
+    ]
+  },
+  {
+    "question": "What were the three clinical presentations of prior preterm birth used to categorize women in this study?",
+    "answer": "Women were categorized based on whether their prior preterm delivery presented as arrested cervical dilation (ACD), preterm premature rupture of membranes (PPROM), or preterm labor (PTL).",
+    "source_chunk_ids": [
+      "231"
+    ]
+  },
+  {
+    "question": "Which prior pregnancy complication was associated with the highest rate of recurrent preterm birth and the earliest gestational age at delivery?",
+    "answer": "A history of advanced cervical dilation (ACD) was associated with the highest rate of recurrent preterm birth (55.2%) and the lowest mean gestational age at delivery (34.0 weeks), both significantly worse outcomes compared to prior PPROM (27.2% recurrence, 37.2 weeks) and prior PTL (32.2% recurrence, 37.0 weeks).",
+    "source_chunk_ids": [
+      "232"
+    ]
+  },
+  {
+    "question": "Is it definitively recommended that rectal cancer patients travel long distances to high-volume surgical centers?",
+    "answer": "No, it is not definitively recommended. The evidence is unclear as to whether the potential benefits of receiving care at high-volume centers would outweigh the burden of traveling long distances for patients undergoing rectal cancer resection.",
+    "source_chunk_ids": [
+      "233"
+    ]
+  },
+  {
+    "question": "What is the main objective of this study on rectal cancer treatment?",
+    "answer": "The main objective is to determine whether the benefits of high operative volume at distant centers outweigh the advantages of receiving treatment locally at low-volume centers, by comparing patient outcomes across both settings.",
+    "source_chunk_ids": [
+      "234"
+    ]
+  },
+  {
+    "question": "What outcomes were measured in this study?",
+    "answer": "The outcomes measured included surgical margins, lymph node yield, receipt of neoadjuvant chemoradiation, adjuvant chemotherapy, readmission within 30 days, 30-day mortality, 90-day mortality, and 5-year overall survival.",
+    "source_chunk_ids": [
+      "235"
+    ]
+  },
+  {
+    "question": "How did outcomes differ between patients who traveled to high-volume centers versus those who stayed at low-volume centers?",
+    "answer": "Patients at short-distance/low-volume centers had significantly worse outcomes compared to those at long-distance/high-volume centers. Specifically, they had lower odds of receiving adequate lymph node yield ≥12 (OR = 0.51) and neoadjuvant chemoradiation (OR = 0.67), higher 30-day (OR = 3.38) and 90-day mortality (OR = 2.07), and a 34% higher risk of overall mortality at 5 years — even after controlling for patient factors, stage, and hospital factors.",
+    "source_chunk_ids": [
+      "236"
+    ]
+  },
+  {
+    "question": "What potential risk factor for pathological gambling is being investigated in this passage?",
+    "answer": "Aripiprazole, a dopamine agonist, is being investigated as a potential new risk factor for pathological gambling, similar to dopamine replacement therapy (DRT) used in Parkinson's disease treatment.",
+    "source_chunk_ids": [
+      "237"
+    ]
+  },
+  {
+    "question": "What percentage of the pathological gamblers in the cohort were treated with aripiprazole at inclusion?",
+    "answer": "Approximately 4.8% of the pathological gamblers in the cohort were treated with aripiprazole at inclusion (8 out of 166 patients).",
+    "source_chunk_ids": [
+      "238"
+    ]
+  },
+  {
+    "question": "What was the assessed likelihood that aripiprazole caused pathological gambling in the patients studied?",
+    "answer": "Using a causality algorithm, the probability that pathological gambling was due to aripiprazole was rated as \"possible\" in 7 out of 8 cases, and \"doubtful\" in one case.",
+    "source_chunk_ids": [
+      "239"
+    ]
+  },
+  {
+    "question": "How does chloroquine's mechanism of action in preventing GVHD differ from drugs like cyclosporine?",
+    "answer": "Chloroquine works by suppressing MHC class II antigen presentation (as a lysosomotropic amine), whereas cyclosporine and other current immunosuppressant drugs used to control GVHD operate through different mechanisms. This distinction suggests chloroquine may offer an alternative or complementary approach to GVHD prevention.",
+    "source_chunk_ids": [
+      "240"
+    ]
+  },
+  {
+    "question": "What was the purpose of combining cyclosporine with chloroquine or hydroxychloroquine in this study?",
+    "answer": "The purpose was to investigate whether combining cyclosporine with the lysosomotropic amines chloroquine or hydroxychloroquine would produce additive or synergistic immunosuppression on T-cell responses in vitro, specifically against minor histocompatibility complex (MiHC) and major histocompatibility complex (MHC) antigens in mice.",
+    "source_chunk_ids": [
+      "241"
+    ]
+  },
+  {
+    "question": "How does chloroquine affect antigen-presenting cells at lower concentrations, and what specific cellular marker does it influence?",
+    "answer": "At lower concentrations (less than 25 micrograms per milliliter), chloroquine can decrease the ability of antigen-presenting cells to stimulate a T-cell response (specifically C57BL/6 anti-BALB/c) and can inhibit MHC class II expression on antigen-presenting cells after activation with lipopolysaccharide.",
+    "source_chunk_ids": [
+      "242"
+    ]
+  },
+  {
+    "question": "What imaging modalities were used to determine treatment staging for nasopharyngeal carcinoma (NPC) patients in this study?",
+    "answer": "The treatment staging for nasopharyngeal carcinoma (NPC) patients was determined using computerized tomography (CT) and/or magnetic resonance imaging (MRI).",
+    "source_chunk_ids": [
+      "243"
+    ]
+  },
+  {
+    "question": "What percentage of the NPC patients in this study had Stage IV disease?",
+    "answer": "Approximately 83% of the patients had Stage IV disease (101 out of 122 patients).",
+    "source_chunk_ids": [
+      "244"
+    ]
+  },
+  {
+    "question": "How did induction chemotherapy affect overall survival and local control rates in Stage IV patients?",
+    "answer": "Among Stage IV patients, those who received induction chemotherapy had significantly better outcomes than those who did not: overall survival was 68% vs. 56% (p = 0.02), freedom from relapse was 64% vs. 37% (p = 0.01), and local control was 86% vs. 56% (p = 0.009) at 5 years.",
+    "source_chunk_ids": [
+      "245"
+    ]
+  },
+  {
+    "question": "Why do surgeons avoid using an inguinal incision to treat a contralateral hydrocele in cases of neonatal testicular torsion?",
+    "answer": "Surgeons avoid using an inguinal incision to treat the contralateral hydrocele in order to minimize the risk of potential injury to the spermatic cord, which could compromise future fertility or testicular function.",
+    "source_chunk_ids": [
+      "246"
+    ]
+  },
+  {
+    "question": "What types of post-surgical complications were monitored in neonates who underwent treatment for testicular torsion?",
+    "answer": "After initial surgical intervention, patients were followed to determine the likelihood of developing a subsequent hydrocele or hernia.",
+    "source_chunk_ids": [
+      "247"
+    ]
+  },
+  {
+    "question": "What was the outcome for patients who had a contralateral hydrocele at the time of neonatal testicular torsion presentation?",
+    "answer": "None of the 22 patients who presented with a contralateral hydrocele developed a clinical hydrocele or hernia during an average follow-up of 7.5 years (range 4.3–11.2 years). The hydroceles were opened through a scrotal approach at the time of contralateral scrotal fixation, and no inguinal exploration was performed to check for a patent processus vaginalis.",
+    "source_chunk_ids": [
+      "248"
+    ]
+  },
+  {
+    "question": "What is the main objective of this study?",
+    "answer": "The main objective of this study is to measure the accuracy and reliability of normally sighted, visually impaired, and blind pedestrians when making street crossing decisions, using visual and/or auditory information as cues.",
+    "source_chunk_ids": [
+      "249"
+    ]
+  },
+  {
+    "question": "How did the study design account for different levels of visual ability when assessing street crossing safety decisions?",
+    "answer": "The study included three distinct groups based on visual ability—12 normally sighted, 10 visually impaired, and 10 blind subjects—and tested each group under three sensory conditions (visual plus auditory, visual only, and auditory only). This allowed researchers to compare how different combinations of sensory information affected safety ratings and decision-making accuracy across varying levels of visual capability.",
+    "source_chunk_ids": [
+      "250"
+    ]
+  },
+  {
+    "question": "How did blind subjects perform on street crossing decisions compared to normally sighted and visually impaired subjects under the hearing only condition?",
+    "answer": "Blind subjects were the least accurate in street crossing decisions under the hearing only condition, performing significantly worse than both normally sighted subjects (P = 0.018) and visually impaired subjects (P = 0.019). However, like all other groups, they were still reliable (consistent) in their decision-making under this condition.",
+    "source_chunk_ids": [
+      "251"
+    ]
+  },
+  {
+    "question": "What are the potential side effects of Sulfasalazine?",
+    "answer": "Sulfasalazine can cause two categories of side effects: (1) reversible, dose-dependent side effects, which occur in as many as 20% of treated patients, and (2) less frequent but potentially severe systemic reactions, which, while rarer, can be serious.",
+    "source_chunk_ids": [
+      "252"
+    ]
+  },
+  {
+    "question": "What serious complications can occur as a result of a severe systemic reaction to sulfasalazine?",
+    "answer": "A severe systemic reaction to sulfasalazine can cause multiple serious complications, including eosinophilia, granulomatous enteritis, myelotoxicity, cholestatic hepatitis, and seizures, as demonstrated in this case of a 21-year-old female with rheumatoid arthritis.",
+    "source_chunk_ids": [
+      "253"
+    ]
+  },
+  {
+    "question": "What was the purpose of the study conducted in Mahmoodabad and Chanesar Goth, Jamshed Town, Karachi?",
+    "answer": "The purpose of the study was to assess the practices and knowledge of harmful effects related to the use of Chaalia (areca nut) and Pan Masala among students in three schools located in Mahmoodabad and Chanesar Goth, Jamshed Town, Karachi, Pakistan.",
+    "source_chunk_ids": [
+      "254"
+    ]
+  },
+  {
+    "question": "What methodology was used to collect data on Chaalia and Pan Masala use among students in Karachi?",
+    "answer": "A cross-sectional design was used in three government schools in Mahmoodabad and Chanesar Goth, Jamshed Town, Karachi. Data was collected through pre-coded structured questionnaires administered to eligible students of either gender. The questionnaire covered demographic data, frequency of Chaalia and Pan Masala use, habits of friends and family, procurement sources, knowledge of harmful effects, sources of that knowledge, and practices related to that knowledge.",
+    "source_chunk_ids": [
+      "255"
+    ]
+  },
+  {
+    "question": "Despite knowing that Chaalia is harmful, why do most children continue using it?",
+    "answer": "Even though 96% of children considered Chaalia harmful for health, 88.5% cited good taste as the primary reason for continuing the habit, and 57% mentioned use by friends as a contributing factor. This suggests that awareness of health risks alone is insufficient to deter use when social influence and sensory appeal are strong motivators.",
+    "source_chunk_ids": [
+      "256"
+    ]
+  },
+  {
+    "question": "What is cervicogenic somatic tinnitus (CST) and what treatment approach has shown promise for it?",
+    "answer": "Cervicogenic somatic tinnitus (CST) is a form of tinnitus related to the somatosensory system of the cervical spine (neck). Case studies have suggested that cervical spine treatment may have a positive effect on tinnitus complaints in patients with CST. However, as of the time of this passage, no experimental studies were available to confirm these findings beyond case study level evidence.",
+    "source_chunk_ids": [
+      "257"
+    ]
+  },
+  {
+    "question": "What criteria must a patient meet to be classified as having both severe subjective tinnitus and significant neck complaints?",
+    "answer": "A patient must score between 25 and 90 points on the Tinnitus Functional Index (TFI) to qualify as having severe subjective tinnitus, and must score greater than 14 points on the Neck Bournemouth Questionnaire (NBQ) to qualify as having significant neck complaints. Both conditions must be present simultaneously.",
+    "source_chunk_ids": [
+      "258"
+    ]
+  },
+  {
+    "question": "How many total patients participated in the study, and how were they divided between the two groups?",
+    "answer": "There were 38 total patients in the study. They were divided into two equal groups of 19: an immediate-start therapy group and a 6-week delayed-start therapy group.",
+    "source_chunk_ids": [
+      "259"
+    ]
+  },
+  {
+    "question": "At how many time points was the Global Perceived Effect (GPE) measured, and when was it NOT collected?",
+    "answer": "The GPE was measured at three time points: after the wait-and-see period (delayed-start group only), after treatment, and after 6 weeks follow-up. It was NOT collected at baseline.",
+    "source_chunk_ids": [
+      "260"
+    ]
+  },
+  {
+    "question": "What percentage of patients maintained substantial tinnitus improvement at the six-week follow-up compared to immediately after treatment?",
+    "answer": "Immediately after treatment, 53% of patients experienced substantial improvement, but this dropped to 24% at the six-week follow-up, meaning less than half of those who initially improved maintained that improvement over time.",
+    "source_chunk_ids": [
+      "261"
+    ]
+  },
+  {
+    "question": "What is the main purpose of the study described in this passage?",
+    "answer": "The main purpose of the study was to analyze sputum cell counts, blood leukocytes, and systemic inflammatory markers across different asthma inflammatory phenotypes, and to compare these groups with healthy subjects.",
+    "source_chunk_ids": [
+      "262"
+    ]
+  },
+  {
+    "question": "What type of study design was used to compare asthmatics with healthy subjects at the University Asthma Clinic of Liege?",
+    "answer": "The study used a retrospective cross-sectional design, involving 833 asthmatics recruited from the University Asthma Clinic of Liege compared against 194 healthy subjects, with asthmatics further classified into inflammatory phenotypes.",
+    "source_chunk_ids": [
+      "263"
+    ]
+  },
+  {
+    "question": "How do inflammatory markers like CRP and fibrinogen differ between neutrophilic and eosinophilic asthma phenotypes?",
+    "answer": "Neutrophilic asthma showed raised levels of both CRP and fibrinogen compared to healthy subjects, while eosinophilic asthma only showed raised fibrinogen (but not CRP) compared to healthy subjects. This suggests that neutrophilic asthma is associated with a broader systemic inflammatory response than eosinophilic asthma.",
+    "source_chunk_ids": [
+      "264"
+    ]
+  },
+  {
+    "question": "When was the comprehensive HIV/STD Control Program established in Jamaica?",
+    "answer": "The comprehensive HIV/STD Control Program in Jamaica was established since the late 1980s.",
+    "source_chunk_ids": [
+      "265"
+    ]
+  },
+  {
+    "question": "What groups were monitored to track the HIV/AIDS epidemic, and how frequently were knowledge, attitude, and practice surveys conducted?",
+    "answer": "To monitor the HIV/AIDS epidemic, data was collected from AIDS case reports, HIV testing of blood donors, antenatal clinic attenders, food service workers, STD clinic attenders, female prostitutes, homosexuals, and other groups. Additionally, primary and secondary syphilis and congenital syphilis cases were tracked. National KAP (knowledge, attitude, and practice) surveys were conducted five times over roughly a decade: in 1988, 1989, 1992, 1994, and 1996.",
+    "source_chunk_ids": [
+      "266"
+    ]
+  },
+  {
+    "question": "How did condom use among women in Jamaica change between 1988 and 1996?",
+    "answer": "Condom use among women in Jamaica increased significantly over this period. The proportion of women who had ever used condoms rose from 51% in 1988 to 62.5% in 1992, then to 73% in both 1994 and 1996 (P<0.001). Additionally, condom use with a non-regular partner among women increased from 37% in 1992 to 73% in 1996 (P=0.006), representing a near-doubling in less than five years.",
+    "source_chunk_ids": [
+      "267"
+    ]
+  },
+  {
+    "question": "What is the significance of Panton-Valentine leucocidin (PVL) in Staphylococcus aureus infections?",
+    "answer": "PVL is considered a key marker of disease severity in S. aureus infections, as its presence is associated with increased morbidity and mortality. However, its specific role in the pathogenesis of primary bacteraemia (bloodstream infection) caused by S. aureus remains uncertain, which is why researchers have investigated the prevalence of PVL-encoding genes among S. aureus isolates from bacteraemic patients.",
+    "source_chunk_ids": [
+      "268"
+    ]
+  },
+  {
+    "question": "What methods were used to characterize PVL-positive S. aureus isolates in this study?",
+    "answer": "PVL-positive isolates were characterized using toxin gene profiling, pulsed-field gel electrophoresis (PFGE), spa-typing, and minimum inhibitory concentration (MIC) determinations for a range of antimicrobials.",
+    "source_chunk_ids": [
+      "269"
+    ]
+  },
+  {
+    "question": "What percentage of the S. aureus isolates were both PVL-positive and methicillin-susceptible (MSSA)?",
+    "answer": "1.6% of the isolates (4 out of 244) were PVL-positive and methicillin-susceptible (MSSA). Notably, none of the methicillin-resistant (MRSA) isolates were PVL-positive.",
+    "source_chunk_ids": [
+      "270"
+    ]
+  },
+  {
+    "question": "How did preoperative fasting blood glucose levels relate to mortality risk after CABG surgery?",
+    "answer": "Preoperative fasting blood glucose (fB-glu) levels were associated with increased mortality risk after CABG. Patients with impaired fasting glucose (IFG) had a relative risk of 1.7 for 30-day mortality and 2.9 for 1-year mortality compared to those with normal fB-glu. Patients with suspected diabetes (SDM) had a relative risk of 2.8 for 30-day mortality and 1.9 for 1-year mortality. Notably, patients with suspected or impaired fasting glucose had mortality risks comparable to or even exceeding those with clinically diagnosed diabetes (CDM), whose relative risks were 1.8 (30-day) and 1.6 (1-year). The ROC area of 0.65 (P=0.002) confirmed that fB-glu as a continuous variable had statistically significant predictive value for 1-year mortality.",
+    "source_chunk_ids": [
+      "272"
+    ]
+  },
+  {
+    "question": "What is the purpose of this study regarding positron emission tomography (PET) scanning?",
+    "answer": "The purpose of this study is to prospectively assess the impact of positron emission tomography (PET) scanning on the management of primary rectal cancer, since while PET's role in managing recurrent rectal cancer is well established, its role in primary rectal cancer remains uncertain.",
+    "source_chunk_ids": [
+      "273"
+    ]
+  },
+  {
+    "question": "What was the purpose of using PET scanning in this study of rectal cancer patients?",
+    "answer": "The purpose was to evaluate how PET (positron emission tomography) scanning influenced the staging and treatment planning of patients with advanced primary rectal cancer who were being considered for adjuvant preoperative therapy. Specifically, the study compared the stage and proposed treatment plan determined by conventional imaging before PET scanning with the actual stage and management implemented after PET scanning, and assessed whether PET-induced changes in management were appropriate based on clinical follow-up.",
+    "source_chunk_ids": [
+      "274"
+    ]
+  },
+  {
+    "question": "In what percentage of cases did PET scan findings lead to the cancellation of surgery?",
+    "answer": "In 13 percent of cases (6 out of 46 patients), surgery was cancelled as a direct result of PET scan findings.",
+    "source_chunk_ids": [
+      "275"
+    ]
+  },
+  {
+    "question": "What factors affect the accuracy of tidal volume delivery when using manual resuscitators?",
+    "answer": "The accuracy of tidal volume delivery with manual resuscitators is affected by multiple factors, including the squeezing method used, the physical characteristics of the person operating the device, and their education and practice levels.",
+    "source_chunk_ids": [
+      "276"
+    ]
+  },
+  {
+    "question": "What three ventilation procedures were tested in this study involving basic life support-trained individuals?",
+    "answer": "The three procedures tested were: one-handed, two-handed, and two-handed half-compression ventilation techniques using a manual resuscitator connected to a microspirometer.",
+    "source_chunk_ids": [
+      "277"
+    ]
+  },
+  {
+    "question": "Which bag-valve mask ventilation method delivered the highest tidal volume, and was the difference statistically significant?",
+    "answer": "The two-handed method delivered the highest mean tidal volume at 644.24 ml (SD 144.7), compared to 592.84 ml (SD 117.39) for the one-handed method and 458.31 ml (SD 120.91) for the two-handed half-compression method. The difference was statistically significant (p<0.01), with the two-handed method delivering significantly greater tidal volume than the one-handed method (r = 0.398, p<0.01).",
+    "source_chunk_ids": [
+      "278"
+    ]
+  },
+  {
+    "question": "What is the role of the Chinese State Tobacco Monopoly Administration (STMA) in cigarette pricing and taxation in China?",
+    "answer": "The Chinese State Tobacco Monopoly Administration (STMA) plays a central role in China's cigarette pricing mechanism by overseeing and controlling both the pricing and taxation of cigarettes. As a monopoly authority, the STMA regulates the entire tobacco industry, setting prices and managing tax structures to maintain state control over the market, generate government revenue, and influence consumption patterns.",
+    "source_chunk_ids": [
+      "279"
+    ]
+  },
+  {
+    "question": "What data sources are used to analyze the relationship between cigarette industry profits, taxes, and retail prices in China?",
+    "answer": "Published government tobacco tax documentation and statistics published by the Chinese State Tobacco Monopoly Administration (STMA) are used to analyze these interrelations.",
+    "source_chunk_ids": [
+      "280"
+    ]
+  },
+  {
+    "question": "Why didn't the 2009 cigarette excise tax increase in China lead to higher prices for consumers?",
+    "answer": "The Chinese State Tobacco Monopoly Administration (STMA) used its policy authority to prevent retail cigarette prices from rising, so the tax increase was absorbed at the producer and wholesale levels rather than being passed on to consumers.",
+    "source_chunk_ids": [
+      "281"
+    ]
+  },
+  {
+    "question": "What does VLEM stand for and what is its significance in the context of esophageal disease?",
+    "answer": "VLEM stands for \"Vertical Lines in Esophageal Mucosa.\" It is an endoscopic abnormality observed in children with histological esophagitis, and researchers studied its relationship to significant histologic changes in esophageal mucosal biopsies, suggesting it may serve as a visual indicator of underlying esophageal mucosal pathology.",
+    "source_chunk_ids": [
+      "282"
+    ]
+  },
+  {
+    "question": "How many esophageal biopsies were performed by the senior author between January 1, 1992, and August 31, 1994?",
+    "answer": "The senior author (JFF) performed 255 esophageal biopsies during that period.",
+    "source_chunk_ids": [
+      "283"
+    ]
+  },
+  {
+    "question": "What percentage of patients with VLEM as the only mucosal abnormality were diagnosed with eosinophilic esophagitis, and how severe was it?",
+    "answer": "83% of patients in Group 2 (34 of 41) were diagnosed with eosinophilic esophagitis, and of those, 91.2% (31 of 34) had moderate to severe intensity disease.",
+    "source_chunk_ids": [
+      "284"
+    ]
+  },
+  {
+    "question": "What is the significance of the ORIGIN trial in relation to hypoglycaemia and cardiovascular events?",
+    "answer": "The ORIGIN trial is significant because it provides an opportunity to further investigate and assess the relationship between hypoglycaemia caused by glucose-lowering therapy and cardiovascular (CV) events, potentially offering deeper insights into how low blood sugar induced by treatment may contribute to heart-related complications.",
+    "source_chunk_ids": [
+      "285"
+    ]
+  },
+  {
+    "question": "What was the association between severe hypoglycemia and cardiovascular outcomes in this study?",
+    "answer": "Severe hypoglycemia was significantly associated with increased risk for multiple adverse outcomes: the primary composite CV outcome (HR: 1.58; 95% CI: 1.24–2.02, P<0.001), overall mortality (HR: 1.74; 95% CI: 1.39–2.19, P<0.001), CV death (HR: 1.71; 95% CI: 1.27–2.30, P<0.001), and arrhythmic death (HR: 1.77; 95% CI: 1.17–2.67, P=0.007). Notably, non-severe hypoglycemia was not associated with any of these outcomes after adjustment, and the hazard from severe hypoglycemia was paradoxically higher in the standard care group than in the insulin glargine group.",
+    "source_chunk_ids": [
+      "286"
+    ]
+  },
+  {
+    "question": "Why is contrast enema used in Hirschsprung's disease, and what is its known limitation?",
+    "answer": "Contrast enema is used in Hirschsprung's disease to identify the radiographic transition zone, which helps estimate the length of aganglionosis. Its known limitation is that the correlation between the radiographic transition zone seen on contrast enema and the actual total length of aganglionosis is inaccurate, making it unreliable for precise preoperative planning.",
+    "source_chunk_ids": [
+      "287"
+    ]
+  },
+  {
+    "question": "How well did the radiographic transition zone on contrast enemas correlate with the actual length of aganglionosis found in pathology reports for Hirschsprung's disease patients?",
+    "answer": "The correlation between the radiographic transition zone (categorized into four groups: rectal, rectosigmoid, long segment, and absence of transition zone) and the pathological length of aganglionosis was measured using the Kappa coefficient of agreement, which assesses the degree of concordance between the radiologist's findings and the pathological reports.",
+    "source_chunk_ids": [
+      "288"
+    ]
+  },
+  {
+    "question": "What was the overall agreement rate between radiological findings and pathology specimens across all forms of Hirschsprung's disease?",
+    "answer": "The global agreement between radiological findings and pathology specimens was 58.1%, with a kappa (κ) value of 0.39 (CI [0.24; 0.57]), indicating moderate agreement. Agreement varied by form: rectal (42%), rectosigmoid (57%), long-segment (100%), and total colonic (100%).",
+    "source_chunk_ids": [
+      "289"
+    ]
+  },
+  {
+    "question": "What potential advantages does dexamethasone have over prednisone or prednisolone in treating pediatric asthma exacerbations?",
+    "answer": "Dexamethasone offers potential advantages of improved compliance and palatability due to its shorter duration of use (1-2 days) compared to the standard 5-day course of oral prednisone or prednisolone.",
+    "source_chunk_ids": [
+      "290"
+    ]
+  },
+  {
+    "question": "What was the purpose of the meta-analysis described in this passage?",
+    "answer": "The meta-analysis was conducted to compare the effectiveness of dexamethasone versus prednisone in treating asthma exacerbations in children, specifically examining physician revisitation rates and symptomatic return to baseline as outcome measures.",
+    "source_chunk_ids": [
+      "291"
+    ]
+  },
+  {
+    "question": "Is dexamethasone a better treatment than prednisone for mild to moderate asthma exacerbations in children?",
+    "answer": "Based on six pediatric clinical trials, dexamethasone is not superior to prednisone for treating mild to moderate asthma exacerbations in children. The two medications showed homogeneity (similar outcomes) in meta-analysis regarding symptomatic return to baseline and unplanned physician revisits. However, dexamethasone may offer some additional practical benefits, such as improved patient compliance and less vomiting.",
+    "source_chunk_ids": [
+      "292"
+    ]
+  },
+  {
+    "question": "Why was a study conducted on breast cancer screening in Sami-speaking municipalities in northern Norway?",
+    "answer": "The study was conducted because female citizens of Sami municipalities in northern Norway have a low risk of breast cancer, and researchers wanted to describe the attendance rate and outcomes of the Norwegian Breast Cancer Screening Program (NBCSP) in these communities compared to a control group, in order to better understand screening participation and results in this unique population.",
+    "source_chunk_ids": [
+      "293"
+    ]
+  },
+  {
+    "question": "What age group does the Norwegian Breast Cancer Screening Program (NBCSP) target?",
+    "answer": "The NBCSP targets women aged 50-69 years.",
+    "source_chunk_ids": [
+      "294"
+    ]
+  },
+  {
+    "question": "How did the attendance rate in the NBCSP compare between the Sami and non-Sami populations?",
+    "answer": "The attendance rate in the NBCSP was higher in the Sami population (78%) compared to the non-Sami population (75%), and this difference was statistically significant (p<0.01).",
+    "source_chunk_ids": [
+      "295"
+    ]
+  },
+  {
+    "question": "What is the purpose of using electrochemiluminescence (ECL) assays in the context of the TrialNet study?",
+    "answer": "The purpose of using ECL assays in the TrialNet study is to explore whether they can improve the prediction of time to type 1 diabetes onset in individuals who are autoantibody-positive.",
+    "source_chunk_ids": [
+      "296"
+    ]
+  },
+  {
+    "question": "What percentage of TrialNet subjects who were positive for one or more autoantibodies developed diabetes during the follow-up period?",
+    "answer": "Approximately 13.7% of the subjects developed diabetes (177 out of 1,287 subjects) after a median follow-up of 24 months.",
+    "source_chunk_ids": [
+      "297"
+    ]
+  },
+  {
+    "question": "How much does ECL positivity improve diabetes risk prediction compared to ECL-negative status, and what is the overall predictive value when combined with the DPTRS?",
+    "answer": "ECL-positive subjects had a 58% risk of progressing to diabetes within 6 years, compared to only 5% for ECL-negative subjects. When ECL positivity was added to the Diabetes Prevention Trial risk score (DPTRS), it improved the receiver operating characteristic curves with an AUC of 0.83 (P<0.0001), indicating strong overall predictive accuracy.",
+    "source_chunk_ids": [
+      "298"
+    ]
+  },
+  {
+    "question": "Why is it important to study the validity and reliability of expert assessments in antimicrobial prescribing?",
+    "answer": "It is important because these assessments play a significant role in antimicrobial stewardship programs, which aim to optimize the use of antimicrobials to combat resistance and improve patient outcomes. If expert assessments are not valid or reliable, the effectiveness of stewardship efforts could be compromised.",
+    "source_chunk_ids": [
+      "299"
+    ]
+  }
+]

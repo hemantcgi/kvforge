@@ -38,6 +38,7 @@ def _text_hit_to_dict(hit) -> dict:
         "score": round(hit.score, 4),
         "kv_cache": hit.payload.get("kv_cache"),
         "kv_version": hit.payload.get("kv_version"),
+        "kds": hit.payload.get("kds"),
     }
 
 
@@ -147,7 +148,11 @@ def multimodal_answer(query: str, cfg: dict) -> str:
         )
 
     # Default path: text KV or text-in-context; image captions as extra_context.
-    text_mode = decide_inference_mode(text_ch, current_ver)
+    text_mode = decide_inference_mode(
+        text_ch, current_ver,
+        kds_threshold=cfg.get("kds_threshold"),
+        fkds_threshold=cfg.get("fkds_threshold"),
+    )
 
     stale = get_stale_chunk_ids(text_ch, current_ver)
     if stale:

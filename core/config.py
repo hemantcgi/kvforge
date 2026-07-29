@@ -44,9 +44,9 @@ from pydantic import BaseModel, Field
 class KVForgeConfig(BaseModel):
     """Lean core configuration for one KVForge use case.
 
-    Contains only the five fields that are truly universal. Everything else
-    lives inside addon_config, validated lazily by each addon's own schema
-    when the addon is activated.
+    Contains only the universal fields. Everything else lives inside
+    addon_config, validated lazily by each addon's own schema when the
+    addon is activated.
 
     Attributes:
         use_case_name: Human-readable display name for this use case.
@@ -58,6 +58,10 @@ class KVForgeConfig(BaseModel):
         addon_config: Per-addon configuration dicts, keyed by addon name.
             Each dict is validated by the corresponding addon's config_schema
             when get_validated_addon_config() is called.
+        enable_enhanced_tier: When True, hot chunks may be promoted to the
+            enhanced tier (full per-token KV cache) during background KV recompute.
+            Default False: pending empirical validation in Component 6 to prove
+            the extra storage/compute cost is justified.
     """
 
     use_case_name: str
@@ -65,6 +69,77 @@ class KVForgeConfig(BaseModel):
     version_file: str
     addons: list[str] = Field(default_factory=list)
     addon_config: dict[str, dict] = Field(default_factory=dict)
+    enable_enhanced_tier: bool = Field(
+        default=False,
+        description=(
+            "When True, hot chunks may be promoted to the enhanced tier "
+            "(full per-token KV cache) during background KV recompute. "
+            "Default False: pending empirical validation in Component 6 "
+            "to prove the extra storage/compute cost is justified."
+        ),
+    )
+    kds_threshold: float | None = Field(
+        default=None,
+        description=(
+            "Per-chunk Knowledge Differentiation Score (KDS) eligibility "
+            "threshold for KV-injection. Calibrated empirically in Component 6; "
+            "None (or absent) disables KV injection and falls back to text_rag."
+        ),
+    )
+    fkds_threshold: float | None = Field(
+        default=None,
+        description=(
+            "Per-chunk factual KDS (fKDS) eligibility threshold for KV-injection. "
+            "fKDS blends consistency KDS with factual answer accuracy and is preferred "
+            "when set. Calibrated empirically in Component 6; None (or absent) falls "
+            "back to the legacy kds_threshold."
+        ),
+    )
+    recompute_ratio: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "CacheBlend-style partial KV recompute ratio for KV injection. "
+            "0.0 = full KV injection (mean-pool or full-token), 1.0 = recompute the "
+            "entire assembled context (text-RAG equivalent). Intermediate values "
+            "recompute the highest-deviation tokens and blend them back into the "
+            "injected KV cache."
+        ),
+    )
+    confidence_supervision: bool = Field(
+        default=False,
+        description=(
+            "When True, LoRA SFT appends a confidence pseudo-token suffix "
+            "(\\nConfidence: yes/no) to each answer and supervises the token. "
+            "Sprint 2.5 feature; off by default until an adapter is available."
+        ),
+    )
+    use_confidence_token: bool = Field(
+        default=False,
+        description=(
+            "When True, the Phase 2/3 confidence gate and PRS calibration use "
+            "the trained confidence-token probability instead of the entropy+hedging "
+            "heuristic. Sprint 2.5 feature; off by default for A/B comparison."
+        ),
+    )
+    confidence_label_threshold: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Threshold for deriving a yes/no confidence label from a factual "
+            "accuracy score (0.5*token_F1 + 0.5*judge)."
+        ),
+    )
+    kl_to_base_weight: float = Field(
+        default=0.0,
+        ge=0.0,
+        description=(
+            "Optional KL-divergence weight to the base model during distillation "
+            "training. 0.0 disables the regularisation term. Sprint 2 feature."
+        ),
+    )
 
     def has_addon(self, name: str) -> bool:
         """Return True if ``name`` is in the active addons list."""
@@ -97,6 +172,14 @@ class KVForgeConfig(BaseModel):
             "collection": self.collection,
             "version_file": self.version_file,
             "use_case_name": self.use_case_name,
+            "enable_enhanced_tier": self.enable_enhanced_tier,
+            "kds_threshold": self.kds_threshold,
+            "fkds_threshold": self.fkds_threshold,
+            "recompute_ratio": self.recompute_ratio,
+            "confidence_supervision": self.confidence_supervision,
+            "use_confidence_token": self.use_confidence_token,
+            "confidence_label_threshold": self.confidence_label_threshold,
+            "kl_to_base_weight": self.kl_to_base_weight,
         }
         for name in addon_names:
             result.update(self.addon_config.get(name, {}))
