@@ -49,8 +49,10 @@ def mean_pool_kv(past_key_values) -> np.ndarray:
         # k, v: [1, num_kv_heads, seq_len, head_dim]
         k = k.squeeze(0)          # [num_kv_heads, seq_len, head_dim]
         v = v.squeeze(0)          # [num_kv_heads, seq_len, head_dim]
-        k_pooled = k.mean(dim=1)  # mean over seq_len → [num_kv_heads, head_dim]
-        v_pooled = v.mean(dim=1)  # mean over seq_len → [num_kv_heads, head_dim]
+        # Accumulate in double precision to avoid float16 overflow/drift, then
+        # cast back to the original dtype for downstream storage.
+        k_pooled = k.to(torch.float64).mean(dim=1).to(k.dtype)  # [num_kv_heads, head_dim]
+        v_pooled = v.to(torch.float64).mean(dim=1).to(v.dtype)  # [num_kv_heads, head_dim]
         pooled.append(torch.stack([k_pooled, v_pooled]))  # [2, num_kv_heads, head_dim]
     result = torch.stack(pooled)  # [num_layers, 2, num_kv_heads, head_dim]
     return result.cpu().to(torch.float16).numpy()
@@ -105,13 +107,66 @@ def compute_per_token_kv(past_key_values) -> np.ndarray:
     return result.cpu().to(torch.float16).numpy()
 
 
+def rerotate_keys(
+    keys: torch.Tensor,
+    inv_freq: torch.Tensor,
+    delta_positions: torch.Tensor,
+) -> torch.Tensor:
+    """Apply RoPE rotation delta to stored K vectors.
+
+    Stored K vectors carry RoPE rotation for their index-time positions.
+    At query time they sit at different positions. This function applies
+    a rotation by ``delta = new_position - old_position`` to correct them.
+
+    Uses Llama-style ``rotate_half`` where the head_dim is split into two
+    halves and rotated::
+
+        k_new = k * cos(delta) + rotate_half(k) * sin(delta)
+
+    Args:
+        keys: [num_kv_heads, seq_len, head_dim] float — stored K vectors
+        inv_freq: [head_dim / 2] float — RoPE frequencies from model.rotary_emb
+        delta_positions: [seq_len] int — new_position - old_position per token
+
+    Returns:
+        Re-rotated K vectors, same shape and dtype as ``keys``.
+    """
+    device = keys.device
+    dtype = keys.dtype
+    delta = delta_positions.to(device=device)
+
+    # Compute angles in float32 for precision, then cast back to keys dtype
+    inv_freq_32 = inv_freq.to(device=device, dtype=torch.float32)
+    delta_32 = delta.to(dtype=torch.float32)
+
+    # angles: [seq_len, head_dim / 2]
+    angles = delta_32[:, None] * inv_freq_32[None, :]
+
+    cos = torch.cos(angles).to(dtype=dtype)  # [seq_len, head_dim/2]
+    sin = torch.sin(angles).to(dtype=dtype)
+
+    # Duplicate to full head_dim (Llama-style: cos/sin applied to each half)
+    cos = torch.cat([cos, cos], dim=-1)  # [seq_len, head_dim]
+    sin = torch.cat([sin, sin], dim=-1)
+
+    # Add head dimension for broadcasting
+    cos = cos.unsqueeze(0)  # [1, seq_len, head_dim]
+    sin = sin.unsqueeze(0)
+
+    # rotate_half: swap halves, negate the first half
+    half_d = keys.shape[-1] // 2
+    rotate_half = torch.cat([-keys[..., half_d:], keys[..., :half_d]], dim=-1)
+
+    return keys * cos + rotate_half * sin
+
+
 def save_token_kv(arr: np.ndarray, path, tq_config=None) -> None:
     """Save per-token KV array to disk.
 
     Args:
         arr:       [num_layers, 2, num_kv_heads, seq_len, head_dim] float16
         path:      file path (str or Path)
-        tq_config: TurboQuantConfig or None; if provided applies TurboQuant compression
+        tq_config: TurboQuantConfig, dict, or None; if provided applies TurboQuant compression
     """
     import pathlib
     path = pathlib.Path(path)
@@ -120,6 +175,10 @@ def save_token_kv(arr: np.ndarray, path, tq_config=None) -> None:
     if tq_config is None:
         np.savez_compressed(str(path), arr=arr, compressed=np.array(False))
         return
+
+    if isinstance(tq_config, dict):
+        from addons.turboquant.config import TurboQuantConfig
+        tq_config = TurboQuantConfig(**tq_config)
 
     from addons.turboquant.quantizer import TurboQuantKeyCodec, GroupValueCodec
     num_layers, _, num_heads, seq_len, head_dim = arr.shape
@@ -134,6 +193,8 @@ def save_token_kv(arr: np.ndarray, path, tq_config=None) -> None:
         "head_dim":    np.array(head_dim),
         "key_bits":    np.array(tq_config.key_bits),
         "value_bits":  np.array(tq_config.value_bits),
+        "group_size":  np.array(tq_config.group_size),
+        "seed":        np.array(tq_config.seed),
     }
 
     t = torch.from_numpy(arr.astype(np.float32))
@@ -157,17 +218,24 @@ def load_token_kv(path, tq_config=None) -> np.ndarray:
     if not data["compressed"].item():
         return data["arr"]
 
+    if isinstance(tq_config, dict):
+        from addons.turboquant.config import TurboQuantConfig
+        tq_config = TurboQuantConfig(**tq_config)
+
     num_layers = int(data["num_layers"])
     num_heads  = int(data["num_heads"])
     seq_len    = int(data["seq_len"])
     head_dim   = int(data["head_dim"])
     key_bits   = int(data["key_bits"])
     value_bits = int(data["value_bits"])
+    group_size = int(data.get("group_size", 32))
+    # Use the seed stored in the payload so the file remains self-describing
+    # even when tq_config is not supplied.
+    seed = int(data.get("seed", tq_config.seed if tq_config else 42))
 
     from addons.turboquant.quantizer import TurboQuantKeyCodec, GroupValueCodec
-    seed = tq_config.seed if tq_config else 42
     kc = TurboQuantKeyCodec(head_dim, key_bits, seed)
-    vc = GroupValueCodec(value_bits)
+    vc = GroupValueCodec(value_bits, group_size)
 
     result = np.zeros((num_layers, 2, num_heads, seq_len, head_dim), dtype=np.float32)
     for layer_idx in range(num_layers):
