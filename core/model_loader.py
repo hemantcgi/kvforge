@@ -34,13 +34,17 @@ except ImportError:
 _model = None
 _tokenizer = None
 _current_checkpoint: Optional[str] = None
+_current_attn_impl: Optional[str] = None
 _load_lock = threading.Lock()   # prevents concurrent loads from both racing
 
-MODEL_ID = os.getenv("LLM_MODEL", "meta-llama/Llama-3.2-3B-Instruct")
+MODEL_ID = os.getenv("LLM_MODEL", "google/gemma-4-E2B-it")
 # Quantization mode: None | "4bit" | "8bit".  Set via cfg["quantization"].
 # 4-bit (NF4) reduces model weight reads from ~6.4 GB to ~1.6 GB, giving
-# ~2-3× decode speedup for memory-bandwidth-bound single-request inference.
+# 2-3× decode speedup for memory-bandwidth-bound single-request inference.
 QUANTIZATION: Optional[str] = None
+# Attention implementation: None | "sdpa" | "eager" | "flash_attention_2".
+# Eager is required for output_attentions (used by eval_attention_divergence.py).
+ATTN_IMPLEMENTATION: Optional[str] = None
 
 
 def _get_device() -> str:
@@ -65,15 +69,19 @@ def init(cfg: dict) -> None:
             (``"4bit"`` | ``"8bit"`` | omit for fp16) to enable BitsAndBytes
             quantization for faster memory-bandwidth-bound inference.
     """
-    global MODEL_ID, QUANTIZATION
-    MODEL_ID = cfg.get("llm_model", MODEL_ID)
-    QUANTIZATION = cfg.get("quantization", None)
-    token = cfg.get("hf_token")
+    global MODEL_ID, QUANTIZATION, ATTN_IMPLEMENTATION
+    # Support both flat configs and the nested addon_config.inference layout.
+    inference_cfg = cfg.get("addon_config", {}).get("inference", {})
+    effective_cfg = {**cfg, **inference_cfg}
+    MODEL_ID = effective_cfg.get("llm_model", MODEL_ID)
+    QUANTIZATION = effective_cfg.get("quantization", None)
+    ATTN_IMPLEMENTATION = effective_cfg.get("attn_implementation", ATTN_IMPLEMENTATION)
+    token = effective_cfg.get("hf_token")
     if token:
         os.environ["HF_TOKEN"] = token
 
 
-def load(lora_checkpoint: Optional[str] = None) -> tuple:
+def load(lora_checkpoint: Optional[str] = None, attn_implementation: Optional[str] = None) -> tuple:
     """Load (or return the cached) model and tokenizer.
 
     On the first call the base model is downloaded, moved to the correct
@@ -84,6 +92,8 @@ def load(lora_checkpoint: Optional[str] = None) -> tuple:
     Args:
         lora_checkpoint: Path to a PEFT LoRA adapter directory.  If ``None``
             or the path does not exist, the base model is returned.
+        attn_implementation: Optional attention backend override. ``"eager"``
+            is required for ``output_attentions=True`` in generation.
 
     Returns:
         A ``(model, tokenizer)`` tuple where *model* is a HuggingFace
@@ -93,14 +103,15 @@ def load(lora_checkpoint: Optional[str] = None) -> tuple:
     Raises:
         ImportError: If ``torch`` or ``transformers`` are not installed.
     """
-    global _model, _tokenizer, _current_checkpoint
+    global _model, _tokenizer, _current_checkpoint, _current_attn_impl
+    attn_implementation = attn_implementation or ATTN_IMPLEMENTATION
     # Fast path — no lock needed for reads once loaded
-    if _model is not None and lora_checkpoint == _current_checkpoint:
+    if _model is not None and lora_checkpoint == _current_checkpoint and attn_implementation == _current_attn_impl:
         return _model, _tokenizer
 
     with _load_lock:
         # Re-check inside lock in case another thread loaded while we waited
-        if _model is not None and lora_checkpoint == _current_checkpoint:
+        if _model is not None and lora_checkpoint == _current_checkpoint and attn_implementation == _current_attn_impl:
             return _model, _tokenizer
 
         if not _HAS_TORCH:
@@ -135,12 +146,15 @@ def load(lora_checkpoint: Optional[str] = None) -> tuple:
                 except (ImportError, ValueError) as e:
                     print(f"⚠️  bitsandbytes unavailable ({e}) — falling back to fp16")
 
-        _model = AutoModelForCausalLM.from_pretrained(
-            MODEL_ID,
-            dtype=torch.float16,
-            device_map="auto",
-            quantization_config=quant_cfg,
-        )
+        load_kwargs = {
+            "pretrained_model_name_or_path": MODEL_ID,
+            "torch_dtype": torch.float16,
+            "device_map": "auto",
+            "quantization_config": quant_cfg,
+        }
+        if attn_implementation:
+            load_kwargs["attn_implementation"] = attn_implementation
+        _model = AutoModelForCausalLM.from_pretrained(**load_kwargs)
 
         if lora_checkpoint and Path(lora_checkpoint).exists():
             from peft import PeftModel
@@ -153,10 +167,11 @@ def load(lora_checkpoint: Optional[str] = None) -> tuple:
 
         _model.eval()
         _current_checkpoint = lora_checkpoint
+        _current_attn_impl = attn_implementation
         return _model, _tokenizer
 
 
-def reload(lora_checkpoint: Optional[str] = None) -> tuple:
+def reload(lora_checkpoint: Optional[str] = None, attn_implementation: Optional[str] = None) -> tuple:
     """Force a fresh load of the base model, then optionally apply a LoRA adapter.
 
     Clears the module-level singleton so the next ``load()`` call downloads
@@ -166,13 +181,15 @@ def reload(lora_checkpoint: Optional[str] = None) -> tuple:
     Args:
         lora_checkpoint: Path to a PEFT LoRA adapter directory to apply after
             loading the base model.  ``None`` returns the bare base model.
+        attn_implementation: Optional attention backend override. ``"eager"``
+            is required for ``output_attentions=True`` in generation.
 
     Returns:
         A fresh ``(model, tokenizer)`` tuple.
     """
-    global _model, _tokenizer, _current_checkpoint
-    _model = _tokenizer = _current_checkpoint = None
-    return load(lora_checkpoint)
+    global _model, _tokenizer, _current_checkpoint, _current_attn_impl
+    _model = _tokenizer = _current_checkpoint = _current_attn_impl = None
+    return load(lora_checkpoint, attn_implementation=attn_implementation)
 
 
 def _kv_shape_from_hf_config(hf_cfg) -> tuple[int, int, int]:
@@ -231,8 +248,11 @@ def get_kv_shape(cfg: dict) -> tuple[int, int, int]:
         KeyError: If the shape cannot be determined from the config or the
             loaded model and the legacy keys are also absent.
     """
-    model_id = cfg.get("llm_model", MODEL_ID)
-    entry = cfg.get("model_library", {}).get(model_id)
+    # Support both flat configs and nested addon_config.indexing.
+    indexing_cfg = cfg.get("addon_config", {}).get("indexing", {})
+    effective_cfg = {**cfg, **indexing_cfg}
+    model_id = effective_cfg.get("llm_model", MODEL_ID)
+    entry = effective_cfg.get("model_library", {}).get(model_id)
     if entry:
         return entry["kv_num_layers"], entry["kv_num_heads"], entry["kv_head_dim"]
 
@@ -244,4 +264,4 @@ def get_kv_shape(cfg: dict) -> tuple[int, int, int]:
             pass
 
     # Legacy explicit fields
-    return cfg["kv_num_layers"], cfg["kv_num_heads"], cfg["kv_head_dim"]
+    return effective_cfg["kv_num_layers"], effective_cfg["kv_num_heads"], effective_cfg["kv_head_dim"]

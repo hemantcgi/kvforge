@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from tools.measure_baseline_fkds import (
     estimate_judge_cost,
-    summarize_fkds,
+    summarize_factual_accuracy,
     summarize_latency,
 )
 
@@ -31,9 +31,9 @@ def test_summarize_latency():
     assert s["p50"] == 0.3
 
 
-def test_summarize_fkds():
-    fkds = [0.5, 0.6, 0.7, 0.8]
-    s = summarize_fkds(fkds)
+def test_summarize_factual_accuracy():
+    scores = [0.5, 0.6, 0.7, 0.8]
+    s = summarize_factual_accuracy(scores)
     assert s["n"] == 4
     assert abs(s["mean"] - 0.65) < 1e-6
     assert s["sem"] >= 0
