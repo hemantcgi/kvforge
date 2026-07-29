@@ -55,6 +55,17 @@ def test_save_load_roundtrip_with_turboquant(tmp_path):
     assert loaded.shape == arr.shape
     assert loaded.dtype == np.float16
 
+    # Roundtrip should preserve approximate values, not just shape/dtype.
+    def _mean_cos(a, b):
+        a = a.reshape(-1, a.shape[-1]).astype(np.float32)
+        b = b.reshape(-1, b.shape[-1]).astype(np.float32)
+        num = np.sum(a * b, axis=-1)
+        den = np.linalg.norm(a, axis=-1) * np.linalg.norm(b, axis=-1) + 1e-9
+        return float(num.mean() / den.mean())
+
+    assert _mean_cos(arr[:, 0], loaded[:, 0]) > 0.8, "TurboQuant key roundtrip cosine too low"
+    assert _mean_cos(arr[:, 1], loaded[:, 1]) > 0.8, "TurboQuant value roundtrip cosine too low"
+
 
 def test_turboquant_reduces_file_size(tmp_path):
     from core.kv_utils import save_token_kv
