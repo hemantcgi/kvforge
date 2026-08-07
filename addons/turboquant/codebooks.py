@@ -28,7 +28,7 @@ def get_codebook(head_dim: int, num_bits: int):
     centroids:  2^num_bits values scaled for N(0, 1/head_dim)
     boundaries: 2^num_bits - 1 decision boundaries (midpoints between centroids)
     """
-    assert head_dim in {64, 96, 128, 256}, f"Unsupported head_dim {head_dim}"
+    assert head_dim in {64, 96, 128, 256, 512}, f"Unsupported head_dim {head_dim}"
     assert num_bits in {2, 3}, f"Unsupported num_bits {num_bits}"
     sigma = 1.0 / math.sqrt(head_dim)
     centroids  = (_SIGMA_MULTIPLES[num_bits] * sigma).copy()

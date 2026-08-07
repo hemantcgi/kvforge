@@ -45,16 +45,22 @@ def mean_pool_kv(past_key_values) -> np.ndarray:
             (mean-pooled over seq_len dimension — one representative vector per chunk)
     """
     pooled = []
+    max_hd = 0
     for k, v in _iter_kv_layers(past_key_values):
-        # k, v: [1, num_kv_heads, seq_len, head_dim]
-        k = k.squeeze(0)          # [num_kv_heads, seq_len, head_dim]
-        v = v.squeeze(0)          # [num_kv_heads, seq_len, head_dim]
-        # Accumulate in double precision to avoid float16 overflow/drift, then
-        # cast back to the original dtype for downstream storage.
-        k_pooled = k.to(torch.float64).mean(dim=1).to(k.dtype)  # [num_kv_heads, head_dim]
-        v_pooled = v.to(torch.float64).mean(dim=1).to(v.dtype)  # [num_kv_heads, head_dim]
-        pooled.append(torch.stack([k_pooled, v_pooled]))  # [2, num_kv_heads, head_dim]
-    result = torch.stack(pooled)  # [num_layers, 2, num_kv_heads, head_dim]
+        max_hd = max(max_hd, k.size(-1))
+    for k, v in _iter_kv_layers(past_key_values):
+        k = k.squeeze(0)
+        v = v.squeeze(0)
+        hd = k.size(-1)
+        if hd < max_hd:
+            pad = torch.zeros(k.size(0), k.size(1), max_hd - hd,
+                              dtype=k.dtype, device=k.device)
+            k = torch.cat([k, pad], dim=-1)
+            v = torch.cat([v, pad], dim=-1)
+        k_pooled = k.to(torch.float64).mean(dim=1).to(k.dtype)
+        v_pooled = v.to(torch.float64).mean(dim=1).to(v.dtype)
+        pooled.append(torch.stack([k_pooled, v_pooled]))
+    result = torch.stack(pooled)
     return result.cpu().to(torch.float16).numpy()
 
 
@@ -91,18 +97,41 @@ def deserialize_kv(b64: str, shape: tuple) -> np.ndarray:
     return np.frombuffer(raw, dtype=np.float16).copy().reshape(shape)
 
 
+def compute_per_token_kv_as_list(past_key_values) -> list[np.ndarray]:
+    """Like ``compute_per_token_kv`` but returns a list of per-layer numpy
+    arrays instead of stacking into a uniform tensor.  Use this when layers
+    have variable head_dim (e.g. Gemma4 PLE layers)."""
+    result = []
+    for k, v in _iter_kv_layers(past_key_values):
+        k = k.squeeze(0).cpu().to(torch.float16).numpy()
+        v = v.squeeze(0).cpu().to(torch.float16).numpy()
+        result.append(np.stack([k, v]))  # [2, num_kv_heads, seq_len, head_dim]
+    return result
+
+
 def compute_per_token_kv(past_key_values) -> np.ndarray:
     """Preserve full token sequence from HuggingFace past_key_values.
 
     Input:  past_key_values — DynamicCache or legacy tuple.
             Each K/V tensor: [1, num_kv_heads, seq_len, head_dim]
     Output: np.ndarray [num_layers, 2, num_kv_heads, seq_len, head_dim] float16
+
+    For models with variable head_dim (Gemma4), only layers matching the
+    *first* layer's head_dim are kept.  Others (e.g. full_attention layers
+    with 512-dim heads) are dropped because injecting padded tensors into
+    a model expecting the original dimension would crash.
     """
     layers = []
+    normal_hd = None
     for k, v in _iter_kv_layers(past_key_values):
-        k = k.squeeze(0)
-        v = v.squeeze(0)
+        if normal_hd is None:
+            normal_hd = k.size(-1)
+        if k.size(-1) != normal_hd:
+            continue
+        k, v = k.squeeze(0), v.squeeze(0)
         layers.append(torch.stack([k, v]))
+    if not layers:
+        raise ValueError("compute_per_token_kv: no layers matched expected head_dim")
     result = torch.stack(layers)
     return result.cpu().to(torch.float16).numpy()
 
@@ -249,6 +278,119 @@ def load_token_kv(path, tq_config=None) -> np.ndarray:
         result[layer_idx, 1] = values_rec.numpy()
 
     return result.astype(np.float16)
+
+
+# ── Variable-head-dim serialisation (Gemma4 PLE / full_attention layers) ──
+
+
+def save_token_kv_list(kv_list: list[np.ndarray], path, tq_config=None) -> None:
+    """Save per-token KV as a list of per-layer arrays with variable head_dim.
+
+    Args:
+        kv_list: List of 15 arrays, each ``[2, num_kv_heads, seq_len, head_dim]``.
+        path:    File path (str or Path).
+        tq_config: TurboQuantConfig or None.
+    """
+    import pathlib
+    path = pathlib.Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    num_layers = len(kv_list)
+    num_heads = kv_list[0].shape[1]
+    seq_len = kv_list[0].shape[2]
+    head_dims = np.array([a.shape[-1] for a in kv_list], dtype=np.int32)
+
+    if tq_config is None:
+        payload = {"_var_hd": np.array(True), "num_layers": np.array(num_layers),
+                   "num_heads": np.array(num_heads), "seq_len": np.array(seq_len),
+                   "head_dims": head_dims, "_compressed": np.array(False)}
+        for i, arr in enumerate(kv_list):
+            payload[f"L{i}_k"] = arr[0]
+            payload[f"L{i}_v"] = arr[1]
+        np.savez_compressed(str(path), **payload)
+        return
+
+    if isinstance(tq_config, dict):
+        from addons.turboquant.config import TurboQuantConfig
+        tq_config = TurboQuantConfig(**tq_config)
+
+    from addons.turboquant.quantizer import TurboQuantKeyCodec, GroupValueCodec
+    vc = GroupValueCodec(tq_config.value_bits, tq_config.group_size)
+
+    payload = {"_var_hd": np.array(True), "num_layers": np.array(num_layers),
+               "num_heads": np.array(num_heads), "seq_len": np.array(seq_len),
+               "head_dims": head_dims, "_compressed": np.array(True),
+               "key_bits": np.array(tq_config.key_bits),
+               "value_bits": np.array(tq_config.value_bits),
+               "group_size": np.array(tq_config.group_size),
+               "seed": np.array(tq_config.seed)}
+
+    for layer_idx in range(num_layers):
+        hd = int(head_dims[layer_idx])
+        kc = TurboQuantKeyCodec(hd, tq_config.key_bits, tq_config.seed)
+        keys = torch.from_numpy(kv_list[layer_idx][0].astype(np.float32))
+        values = torch.from_numpy(kv_list[layer_idx][1].astype(np.float32))
+        ck = kc.compress(keys.unsqueeze(0))
+        cv = vc.compress(values.unsqueeze(0))
+        for k_name, v_arr in ck.items():
+            payload[f"L{layer_idx}_k_{k_name}"] = v_arr.numpy()
+        for k_name, v_arr in cv.items():
+            payload[f"L{layer_idx}_v_{k_name}"] = v_arr.numpy()
+
+    np.savez_compressed(str(path), **payload)
+
+
+def load_token_kv_list(path) -> list[np.ndarray]:
+    """Load per-token KV saved as a variable-head-dim list.
+
+    Returns:
+        List of arrays, each ``[2, num_kv_heads, seq_len, head_dim]``.
+    """
+    data = np.load(str(path), allow_pickle=False)
+    num_layers = int(data["num_layers"])
+    result = []
+    if data.get("_compressed", np.array(False)).item():
+        from addons.turboquant.quantizer import TurboQuantKeyCodec, GroupValueCodec
+        key_bits = int(data["key_bits"])
+        value_bits = int(data["value_bits"])
+        group_size = int(data.get("group_size", 32))
+        seed = int(data.get("seed", 42))
+        vc = GroupValueCodec(value_bits, group_size)
+        for i in range(num_layers):
+            hd = int(data["head_dims"][i])
+            kc = TurboQuantKeyCodec(hd, key_bits, seed)
+            ck = {k.replace(f"L{i}_k_", ""): torch.from_numpy(data[k])
+                  for k in data.files if k.startswith(f"L{i}_k_")}
+            cv = {k.replace(f"L{i}_v_", ""): torch.from_numpy(data[k])
+                  for k in data.files if k.startswith(f"L{i}_v_")}
+            keys = kc.decompress(ck).squeeze(0).numpy()
+            values = vc.decompress(cv).squeeze(0).numpy()
+            result.append(np.stack([keys.astype(np.float16), values.astype(np.float16)]))
+    else:
+        for i in range(num_layers):
+            k = data[f"L{i}_k"]
+            v = data[f"L{i}_v"]
+            result.append(np.stack([k.astype(np.float16), v.astype(np.float16)]))
+    return result
+
+
+def pad_kv_list_to_uniform(kv_list: list[np.ndarray]) -> np.ndarray:
+    """Convert a variable-head-dim KV list to a uniform 5D array by zero-padding.
+
+    ``kv_list`` is a list of per-layer arrays each ``[2, num_heads, seq_len, hd]``
+    where ``hd`` may vary (e.g. 256 for sliding, 512 for full_attention on Gemma4).
+    Returns a single ``[num_layers, 2, num_heads, seq_len, max_hd]`` float16 array
+    where layers with smaller ``hd`` are zero-padded along the last dimension.
+    """
+    num_layers = len(kv_list)
+    num_heads = kv_list[0].shape[1]
+    seq_len = kv_list[0].shape[2]
+    max_hd = max(a.shape[-1] for a in kv_list)
+    result = np.zeros((num_layers, 2, num_heads, seq_len, max_hd), dtype=np.float16)
+    for i, arr in enumerate(kv_list):
+        hd = arr.shape[-1]
+        result[i, :, :, :, :hd] = arr.astype(np.float16)
+    return result
 
 
 def stack_past_key_values(

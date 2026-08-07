@@ -2,7 +2,6 @@
 
 **Dr. Hemant Joshi**  
 Independent Research  
-hemant@flotorch.ai  
 GitHub: [https://github.com/hemantcgi/kvforge](https://github.com/hemantcgi/kvforge)
 
 ---
@@ -667,6 +666,12 @@ The author thanks the Qdrant, HuggingFace, vLLM, and FastEmbed teams for their o
 
 ---
 
+## Acknowledgements
+
+The authors gratefully acknowledge **Fissionlabs** for their generous support in providing GPU computing resources essential to this research. Their infrastructure enabled the extensive empirical evaluation across multiple model architectures (Llama-3.2-3B, Gemma-4-E2B-it) and corpora that forms the basis of this work.
+
+---
+
 ## References
 
 [1] Lewis, P., Perez, E., Piktus, A., Petroni, F., Karpukhin, V., Goyal, N., ... & Kiela, D. (2020). **Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks.** *NeurIPS 2020.* arXiv:2005.11401
@@ -767,5 +772,4 @@ The author thanks the Qdrant, HuggingFace, vLLM, and FastEmbed teams for their o
 
 ---
 
-**GitHub:** [https://github.com/hemantcgi/kvforge](https://github.com/hemantcgi/kvforge) · **License:** MIT  
-**Author contact:** hemant@flotorch.ai
+**GitHub:** [https://github.com/hemantcgi/kvforge](https://github.com/hemantcgi/kvforge) · **License:** MIT

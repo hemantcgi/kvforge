@@ -140,6 +140,14 @@ class KVForgeConfig(BaseModel):
             "training. 0.0 disables the regularisation term. Sprint 2 feature."
         ),
     )
+    compute_kv: bool = Field(
+        default=True,
+        description=(
+            "When False, skip KV tensor computation during indexing. "
+            "Useful when the LLM has variable head dimensions (e.g. Gemma 4) "
+            "or when only Phase 1 (text RAG) is needed."
+        ),
+    )
 
     def has_addon(self, name: str) -> bool:
         """Return True if ``name`` is in the active addons list."""
@@ -180,6 +188,7 @@ class KVForgeConfig(BaseModel):
             "use_confidence_token": self.use_confidence_token,
             "confidence_label_threshold": self.confidence_label_threshold,
             "kl_to_base_weight": self.kl_to_base_weight,
+            "compute_kv": self.compute_kv,
         }
         for name in addon_names:
             result.update(self.addon_config.get(name, {}))

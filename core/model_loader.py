@@ -81,6 +81,41 @@ def init(cfg: dict) -> None:
         os.environ["HF_TOKEN"] = token
 
 
+def _unwrap_gemma4(model):
+    """Delete vision/audio towers and unwrap ClippableLinear in text attention layers.
+
+    Gemma4's attention projections (q/k/v/o) are ``Gemma4ClippableLinear``
+    wrappers that PEFT cannot inject LoRA into.  Replacing them with their
+    inner ``.linear`` attribute exposes a standard ``nn.Linear`` that PEFT
+    can work with.  Vision/audio towers are deleted to save VRAM and to
+    remove their incompatible modules (32-dim inv_freq, etc.).
+    """
+    import torch.nn as nn
+    unwrapped = 0
+    for name, mod in list(model.named_modules()):
+        parent_path = ".".join(name.split(".")[:-1])
+        attr_name = name.split(".")[-1]
+        # Delete vision/audio tower submodules (skip children of already-deleted parents)
+        if "vision_tower" in name or "audio_tower" in name:
+            try:
+                parent = model.get_submodule(parent_path) if parent_path else model
+                delattr(parent, attr_name)
+            except (AttributeError, TypeError):
+                pass
+            continue
+        # Unwrap ClippableLinear in text layers to nn.Linear
+        if ("language_model" in name and "Gemma4ClippableLinear" in type(mod).__name__
+                and hasattr(mod, "linear") and isinstance(mod.linear, nn.Linear)):
+            try:
+                parent = model.get_submodule(parent_path) if parent_path else model
+                setattr(parent, attr_name, mod.linear)
+                unwrapped += 1
+            except (AttributeError, TypeError):
+                pass
+    print(f"[gemma4] Unwrapped {unwrapped} ClippableLinear modules in text layers, "
+          f"vision/audio towers removed, GPU mem: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
+
+
 def load(lora_checkpoint: Optional[str] = None, attn_implementation: Optional[str] = None) -> tuple:
     """Load (or return the cached) model and tokenizer.
 
@@ -156,6 +191,12 @@ def load(lora_checkpoint: Optional[str] = None, attn_implementation: Optional[st
             load_kwargs["attn_implementation"] = attn_implementation
         _model = AutoModelForCausalLM.from_pretrained(**load_kwargs)
 
+        # Gemma4 post-load: delete vision/audio towers (save VRAM, remove
+        # incompatible modules), then unwrap Gemma4ClippableLinear in text
+        # layers so PEFT can inject LoRA into q_proj/k_proj/v_proj/o_proj.
+        if "gemma-4" in MODEL_ID.lower() or "gemma4" in MODEL_ID.lower():
+            _unwrap_gemma4(_model)
+
         if lora_checkpoint and Path(lora_checkpoint).exists():
             from peft import PeftModel
             print(f"🔌 Applying LoRA adapter from {lora_checkpoint} …")
@@ -206,24 +247,39 @@ def _kv_shape_from_hf_config(hf_cfg) -> tuple[int, int, int]:
 def detect_lora_targets(model, configured_targets: list[str]) -> list[str]:
     """Verify that configured LoRA target module names exist in the model.
 
-    Returns configured_targets if all are found. If none match, issues a warning
-    listing the actual module names so the user can correct their config.
+    Only returns target names where ALL matching modules are compatible PEFT
+    types (``torch.nn.Linear`` subclasses).  This avoids failures on wrapped
+    layers like ``Gemma4ClippableLinear`` which PEFT cannot inject into.
     """
     import warnings
-    module_names = {name.split(".")[-1] for name, _ in model.named_modules()}
-    matched = [t for t in configured_targets if t in module_names]
+    import torch.nn as nn
+    # Group modules by leaf name and check types
+    name_groups: dict[str, list[type]] = {}
+    for name, mod in model.named_modules():
+        leaf = name.split(".")[-1]
+        name_groups.setdefault(leaf, []).append(type(mod))
+
+    matched = []
+    for target in configured_targets:
+        types = name_groups.get(target)
+        if types is None:
+            continue
+        # Only accept target if ALL modules with this name are nn.Linear subclasses
+        if all(issubclass(t, nn.Linear) for t in types):
+            matched.append(target)
+
     if not matched:
-        all_linear = sorted(
-            {name.split(".")[-1] for name, mod in model.named_modules()
-             if hasattr(mod, "weight") and len(getattr(getattr(mod, "weight", None), "shape", []) or []) == 2}
+        all_safe = sorted(
+            leaf for leaf, types in name_groups.items()
+            if all(issubclass(t, nn.Linear) for t in types)
         )
         warnings.warn(
-            f"None of the configured lora_target_modules {configured_targets} were found "
-            f"in the model. Available linear layer names: {all_linear[:10]}. "
+            f"None of the configured lora_target_modules {configured_targets} are safe "
+            f"(all instances are standard nn.Linear). Available safe names: {all_safe[:15]}. "
             f"Check 'lora_target_modules' in your datasource config.",
             UserWarning, stacklevel=2
         )
-        return configured_targets  # return as-is; let peft raise a clear error
+        return configured_targets
     return matched
 
 
@@ -264,4 +320,18 @@ def get_kv_shape(cfg: dict) -> tuple[int, int, int]:
             pass
 
     # Legacy explicit fields
-    return effective_cfg["kv_num_layers"], effective_cfg["kv_num_heads"], effective_cfg["kv_head_dim"]
+    for key in ("kv_num_layers", "kv_num_heads", "kv_head_dim"):
+        if key in effective_cfg:
+            return (effective_cfg.get("kv_num_layers", 35),
+                    effective_cfg.get("kv_num_heads", 1),
+                    effective_cfg.get("kv_head_dim", 256))
+
+    # Defaults for known models when config is sparse (e.g. compute_kv=false)
+    if "gemma-4" in model_id.lower() or "gemma4" in model_id.lower():
+        return 35, 1, 256
+
+    raise KeyError(
+        f"Cannot determine KV shape for model {model_id!r}. "
+        "Set kv_num_layers / kv_num_heads / kv_head_dim in config, "
+        "or add a model_library entry."
+    )

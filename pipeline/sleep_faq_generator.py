@@ -114,7 +114,7 @@ def _augment_with_paraphrases(faqs: list[dict], provider: str, model: str, api_k
             continue
         try:
             prompt = _build_paraphrase_prompt(question, n_per_faq)
-            raw = _call_provider(provider, model, api_key, prompt)
+            raw = _call_provider(provider, model, api_key, prompt, base_url=base_url)
             inter_delay = max(2.0, inter_delay * 0.8)
         except Exception as e:
             if "429" in str(e):
@@ -171,8 +171,14 @@ def _deduplicate(existing: list[dict], new: list[dict]) -> list[dict]:
     return merged
 
 
-def _call_provider(provider: str, model: str, api_key: str, prompt: str) -> str:
-    """Call the specified cloud LLM provider and return the raw text response."""
+def _call_provider(provider: str, model: str, api_key: str, prompt: str,
+                   base_url: str = "") -> str:
+    """Call the specified cloud LLM provider and return the raw text response.
+
+    Args:
+        base_url: Custom base URL for OpenAI-compatible endpoints
+            (Fireworks, vLLM, Together, etc.).  Leave empty for default.
+    """
     if provider == "gemini":
         url = (
             f"https://generativelanguage.googleapis.com/v1beta/models/"
@@ -204,8 +210,10 @@ def _call_provider(provider: str, model: str, api_key: str, prompt: str) -> str:
                        if c.get("type") == "text")
 
     elif provider == "openai":
+        endpoint = base_url.rstrip("/") + "/chat/completions" if base_url \
+            else "https://api.openai.com/v1/chat/completions"
         resp = httpx.post(
-            "https://api.openai.com/v1/chat/completions",
+            endpoint,
             headers={"Authorization": f"Bearer {api_key}",
                      "Content-Type": "application/json"},
             json={"model": model, "max_tokens": 1024, "temperature": 0.4,
@@ -228,20 +236,25 @@ def _load_uc_config(config_path: Path) -> dict:
     return {}
 
 
-def _resolve_provider_config(uc_config: dict) -> tuple[str, str, str]:
-    """Return (provider, model, api_key) from uc_config + env vars + Studio settings."""
+def _resolve_provider_config(uc_config: dict) -> tuple[str, str, str, str]:
+    """Return (provider, model, api_key, base_url) from uc_config + env vars.
+
+    ``base_url`` is used for OpenAI-compatible endpoints (Fireworks, vLLM, etc.).
+    An empty string means use the default ``https://api.openai.com/v1``.
+    """
     llm = uc_config.get("llm", {})
     provider = (llm.get("sleep_faq_provider")
                 or os.environ.get("SLEEP_FAQ_PROVIDER", "gemini"))
     model = (llm.get("sleep_faq_model")
              or os.environ.get("SLEEP_FAQ_MODEL", "gemini-2.5-flash"))
-    key_env = {
+    base_url = llm.get("sleep_faq_base_url", "")
+    key_map = {
         "gemini": "GEMINI_API_KEY",
         "claude": "ANTHROPIC_API_KEY",
         "openai": "OPENAI_API_KEY",
-    }.get(provider, "GEMINI_API_KEY")
-    # Priority: env var → Studio settings DB
-    api_key = os.environ.get(key_env, "")
+    }
+    key_env = key_map.get(provider, "GEMINI_API_KEY")
+    api_key = llm.get("sleep_faq_api_key", "") or os.environ.get(key_env, "")
     if not api_key:
         try:
             from studio.settings_manager import get_setting
@@ -253,7 +266,7 @@ def _resolve_provider_config(uc_config: dict) -> tuple[str, str, str]:
             api_key = get_setting(setting_key) or ""
         except Exception:
             pass
-    return provider, model, api_key
+    return provider, model, api_key, base_url
 
 
 def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
@@ -268,7 +281,7 @@ def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
             set instead of a single-phrasing-per-fact one.
     """
     uc_config = _load_uc_config(config_path)
-    provider, model, api_key = _resolve_provider_config(uc_config)
+    provider, model, api_key, base_url = _resolve_provider_config(uc_config)
 
     if not api_key:
         key_env = {"gemini": "GEMINI_API_KEY", "claude": "ANTHROPIC_API_KEY",
@@ -285,19 +298,27 @@ def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
 
     from vectorstore.registry import get_store
     import time as _time
-    store = get_store(cfg)
-    all_results, _ = store.scroll(cfg["collection"], limit=10000,
-                                  with_payload=True, with_vectors=False)
-    if not all_results:
-        print("[sleep-faq] ERROR: No chunks found. Run indexing first.")
-        sys.exit(1)
-
-    # Split into new (no faq_generated_at) vs already processed
-    new_records = [(r.id, r.payload.get("text", ""))
-                   for r in all_results
-                   if r.payload.get("text") and not r.payload.get("faq_generated_at")]
-    all_count = sum(1 for r in all_results if r.payload.get("text"))
-    print(f"[sleep-faq] {all_count} chunks total, {len(new_records)} without FAQs")
+    chunks_file = cfg.get("chunks_file", "")
+    if chunks_file:
+        # Read from chunks.json directly (bypasses Qdrant)
+        import json as _json
+        all_chunks = _json.load(open(chunks_file))
+        new_records = [(c["chunk_id"], c.get("text", "")) for c in all_chunks]
+        all_count = len(all_chunks)
+        store = None
+        print(f"[sleep-faq] {all_count} chunks from {chunks_file}")
+    else:
+        store = get_store(cfg)
+        all_results, _ = store.scroll(cfg["collection"], limit=10000,
+                                      with_payload=True, with_vectors=False)
+        if not all_results:
+            print("[sleep-faq] ERROR: No chunks found. Run indexing first.")
+            sys.exit(1)
+        new_records = [(r.id, r.payload.get("text", ""))
+                       for r in all_results
+                       if r.payload.get("text") and not r.payload.get("faq_generated_at")]
+        all_count = sum(1 for r in all_results if r.payload.get("text"))
+        print(f"[sleep-faq] {all_count} chunks total, {len(new_records)} without FAQs")
 
     if not new_records:
         print("[sleep-faq] All chunks already have FAQs — nothing to do.")
@@ -315,8 +336,9 @@ def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
 
     new_faqs: list[dict] = []
     chunk_idx = 0
-    # Inter-request delay: start at 2s, back off up to 60s on repeated 429s
-    _inter_delay = 2.0
+    # Inter-request delay: start at 8s, back off up to 120s on repeated errors.
+    # Keeps a steady pace so the API provider doesn't see a burst.
+    _inter_delay = 8.0
     _consecutive_429 = 0
 
     while len(new_faqs) < count and chunk_idx < len(new_records):
@@ -326,9 +348,10 @@ def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
             continue
         try:
             prompt = _build_sleep_prompt(chunk, n_per_chunk=n_per_chunk)
-            raw = _call_provider(provider, model, api_key, prompt)
+            raw = _call_provider(provider, model, api_key, prompt, base_url=base_url)
             _consecutive_429 = 0          # reset on success
-            _inter_delay = max(2.0, _inter_delay * 0.8)  # gradually relax
+            # Keep a steady pace — do not decrease delay
+            _inter_delay = max(8.0, _inter_delay * 0.95) if _inter_delay > 8.0 else 8.0
             chunk_new = []
             for b in _parse_sleep_blocks(raw):
                 if len(new_faqs) >= count:
@@ -337,35 +360,39 @@ def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
                 chunk_new.append(b["question"][:80])
             if chunk_new:
                 print(f"  [chunk {chunk_idx}/{len(new_records)}] +{len(chunk_new)} FAQs")
-            # Mark chunk as processed so re-runs skip it
-            try:
-                store.set_payload(cfg["collection"], point_id,
-                                  {"faq_generated_at": int(_time.time())})
-            except Exception as e:
-                print(f"  [chunk {chunk_idx}] warning: could not mark faq_generated_at: {e}")
+            # Mark chunk as processed so re-runs skip it (skipped when reading from file)
+            if store is not None:
+                try:
+                    store.set_payload(cfg["collection"], point_id,
+                                      {"faq_generated_at": int(_time.time())})
+                except Exception as e:
+                    print(f"  [chunk {chunk_idx}] warning: could not mark faq_generated_at: {e}")
         except Exception as e:
             err_str = str(e)
-            if "429" in err_str:
+            is_retryable = "429" in err_str or "401" in err_str or "503" in err_str or "502" in err_str
+            if is_retryable:
                 _consecutive_429 += 1
                 _inter_delay = min(60.0, _inter_delay * 2)
                 wait = _inter_delay
-                print(f"  [chunk {chunk_idx}] rate-limited (429) — waiting {wait:.0f}s before retry "
+                label = "rate-limited" if "429" in err_str else "auth/transient" 
+                print(f"  [chunk {chunk_idx}] {label} ({err_str[:3]}) — waiting {wait:.0f}s before retry "
                       f"(consecutive: {_consecutive_429})")
-                if _consecutive_429 >= 3:
-                    print(
-                        f"\n[sleep-faq] HINT: Persistent 429 rate-limit from '{provider}/{model}'.\n"
-                        f"  Consider switching to a less-congested model in Studio → Settings:\n"
-                        f"    • Gemini 2.5 Flash   (gemini)\n"
-                        f"    • Anthropic Sonnet 4.6 / Opus 4.7 / Haiku  (claude)\n"
-                        f"    • OpenAI GPT-4o / GPT-4o-mini  (openai)\n"
-                        f"  Update llm.sleep_faq_provider + llm.sleep_faq_model in uc_config.json "
-                        f"or set SLEEP_FAQ_PROVIDER / SLEEP_FAQ_MODEL env vars.\n"
-                    )
+                if _consecutive_429 >= 5:
+                    print(f"\n[sleep-faq] Persistent errors from '{provider}/{model}' after 5 retries. "
+                          f"Consider a different model or API key.\n")
+                    _time.sleep(wait)
+                    chunk_idx -= 1
+                    continue
                 _time.sleep(wait)
                 chunk_idx -= 1  # retry this chunk
                 continue
             else:
                 print(f"  [chunk {chunk_idx}] error: {e}")
+        # Save incrementally every 50 chunks to avoid losing progress
+        if len(new_faqs) > 0 and len(new_faqs) % 50 == 0:
+            merged = _deduplicate(existing, new_faqs)
+            output_path.write_text(json.dumps(merged, indent=2, ensure_ascii=False))
+            print(f"  [checkpoint] Saved {len(merged)} FAQs ({len(new_faqs)} new)")
         _time.sleep(_inter_delay)
 
     if paraphrases_per_faq > 0 and new_faqs:
@@ -453,10 +480,14 @@ def main() -> None:
                         "facts and few phrasings each — a controlled experiment found this is "
                         "what lets chat-SFT training generalize to unseen phrasings; simply "
                         "repeating the same question does not.")
+    p.add_argument("--chunks-file", default=None,
+                   help="Path to chunks.json (bypasses Qdrant scroll).")
     args = p.parse_args()
 
     config_path = Path(args.config)
     cfg = json.loads(config_path.read_text())
+    if args.chunks_file:
+        cfg["chunks_file"] = args.chunks_file
     output_path = Path(args.output) if args.output else config_path.parent / "faqs.json"
     generate(cfg, config_path, args.count, output_path, args.n_per_chunk, args.paraphrases_per_faq)
 

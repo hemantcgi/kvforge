@@ -20,7 +20,7 @@ import core.kv_utils as kv_utils
 import pipeline.kv_background as kv_background
 import core.model_loader as model_loader
 import core.version as ver
-from core.kv_utils import deserialize_kv, load_token_kv
+from core.kv_utils import deserialize_kv, load_token_kv, load_token_kv_list
 from pipeline.bedrock_rag import _run_search, Config
 from fastembed import TextEmbedding
 from vectorstore.registry import get_store
@@ -104,7 +104,17 @@ def route_chunk_injection(chunk: dict, cfg: dict, tq_config=None, vector_store=N
     kv_token_path = payload.get("kv_token_path")
 
     if kv_token_path and status != "archived":
-        arr = load_token_kv(kv_token_path, tq_config=tq_config)
+        # Check if file uses the variable-head-dim format (Gemma4)
+        try:
+            _header = np.load(str(kv_token_path), allow_pickle=False)
+            is_var_hd = _header.get("_var_hd", np.array(False)).item()
+            _header.close()
+        except Exception:
+            is_var_hd = False
+        if is_var_hd:
+            arr = load_token_kv_list(kv_token_path)
+        else:
+            arr = load_token_kv(kv_token_path, tq_config=tq_config)
         return {"path": "enhanced", "kv_arr": arr, "text": None}
 
     if status == "archived":
@@ -143,8 +153,15 @@ def _fetch_archive_text(archive_path: str, fallback_text: str = "") -> str:
 
 
 def _get_inv_freq(model) -> torch.Tensor | None:
-    """Return the model's RoPE inverse-frequency tensor, if present."""
-    for _, mod in model.named_modules():
+    """Return the model's RoPE inverse-frequency tensor from a text layer.
+
+    Skips vision/audio tower modules (Gemma4's vision tower exposes a
+    32-dim inv_freq that mismatches text-layer head_dims).  If no text
+    layer has an inv_freq attribute, returns None (rerotation is skipped).
+    """
+    for name, mod in model.named_modules():
+        if any(tag in name for tag in ("vision_tower", "audio_tower", ".vision_", ".audio_")):
+            continue
         inv_freq = getattr(mod, "inv_freq", None)
         if isinstance(inv_freq, torch.Tensor):
             return inv_freq
@@ -173,30 +190,77 @@ def _rerotate_meanpool_chunks(chunk_kvs: list[np.ndarray], model) -> list[np.nda
     return chunk_kvs
 
 
+def _get_rotary_emb_for_model(model):
+    """Get the text-model rotary embedding module for Gemma4.
+
+    For models with ``global_head_dim`` (Gemma4), returns the text model's
+    ``rotary_emb`` which has per-layer-type ``inv_freq`` buffers.
+    Returns None for standard models.
+    """
+    tc = getattr(model.config, "text_config", model.config)
+    if not (hasattr(tc, "global_head_dim") and tc.global_head_dim
+            and tc.global_head_dim != getattr(tc, "head_dim", 256)):
+        return None
+    # Navigate to the text model's rotary embedding
+    lm = getattr(getattr(model, "model", None), "language_model", None)
+    if lm is None:
+        lm = getattr(model, "language_model", None)
+    if lm is None:
+        lm = getattr(model, "model", None)
+    return getattr(lm, "rotary_emb", None)
+
+
 def _rerotate_fulltoken_chunks(
-    chunk_kvs: list[np.ndarray],
+    chunk_kvs: list[list[np.ndarray]],
     chunk_lengths: list[int],
     model,
-) -> list[np.ndarray]:
+) -> list[list[np.ndarray]]:
     """Rerotate each full-token chunk's K to its global position in the cache.
 
     Each chunk was originally computed at in-chunk positions 0..L-1; when
     concatenated, chunk ``i`` starts at position ``sum(chunk_lengths[:i])``.
+
+    For models with variable head_dim (Gemma4), uses the model's per-layer-type
+    rotary_emb to obtain the correct inv_freq (sliding: theta=1e4, full_attention:
+    theta=1e6 with partial_rotary_factor=0.25) for each layer.
     """
+    rotary_emb = _get_rotary_emb_for_model(model)
     inv_freq = _get_inv_freq(model)
-    if inv_freq is None:
+    if inv_freq is None and rotary_emb is None:
         return chunk_kvs
+
+    tc = getattr(model.config, "text_config", model.config)
+    layer_types = getattr(tc, "layer_types", None)
+
     offsets = [0]
     for length in chunk_lengths:
         offsets.append(offsets[-1] + length)
-    num_layers = chunk_kvs[0].shape[0]
+    num_layers = len(chunk_kvs[0])
+
     for chunk_idx, arr in enumerate(chunk_kvs):
-        seq_len = arr.shape[3]
+        seq_len = arr[0].shape[1]
         delta = torch.full((seq_len,), float(offsets[chunk_idx]), dtype=torch.float32)
+
         for layer_idx in range(num_layers):
-            k = torch.from_numpy(arr[layer_idx, 0].astype(np.float16))
-            k_rot = kv_utils.rerotate_keys(k, inv_freq, delta)
-            arr[layer_idx, 0] = k_rot.numpy().astype(np.float16)
+            k_np = arr[layer_idx][0]  # [num_kv_heads, seq_len, head_dim]
+            k = torch.from_numpy(k_np.astype(np.float16))
+
+            if rotary_emb is not None and layer_types is not None:
+                lt = layer_types[layer_idx]
+                head_dim = k.shape[-1]
+                device = k.device
+                dummy = torch.zeros(1, seq_len, 1, dtype=k.dtype, device=device)
+                cos, sin = rotary_emb(dummy, delta.unsqueeze(0).to(device), lt)
+                # cos, sin: [1, seq_len, head_dim]
+                cos = cos.squeeze(0)
+                sin = sin.squeeze(0)
+                half_d = head_dim // 2
+                rh = torch.cat([-k[..., half_d:], k[..., :half_d]], dim=-1)
+                k_rot = k * cos + rh * sin
+            else:
+                k_rot = kv_utils.rerotate_keys(k, inv_freq, delta)
+
+            arr[layer_idx][0] = k_rot.numpy().astype(np.float16)
     return chunk_kvs
 
 
@@ -364,7 +428,7 @@ def answer_with_mode(
     ]
 
     current_ver = ver.get_lora_version()
-    lora_ckpt = ver.load().get("checkpoint_path")
+    lora_ckpt = cfg.get("checkpoint_path") or ver.load().get("checkpoint_path")
     model, tokenizer = model_loader.load(lora_ckpt)
 
     # Record access
@@ -407,16 +471,18 @@ def answer_with_mode(
     if mode == "kv_fulltoken":
         # Prefer enhanced-tier on-disk full-token KV when available; otherwise
         # recompute the full-token KV for the retrieved chunks on the fly.
+        # Variable-head-dim models (Gemma4) are handled automatically:
+        #   - on-disk: route_chunk_injection detects _var_hd flag and loads
+        #     via load_token_kv_list (preserves all 15 layers with mixed dims)
+        #   - on-the-fly: compute_per_token_kv_as_list captures all 15 layers
         if any(c.get("kv_token_path") is None for c in chunks):
-            # Recompute full-token KV for each retrieved chunk with the current
-            # model (including LoRA adapter) so the injection is accurate.
             routed = []
             for c in chunks:
                 inputs = tokenizer(c["text"], return_tensors="pt", truncation=True, max_length=512).to(model.device)
                 with torch.no_grad():
                     outputs = model(**inputs, use_cache=True)
-                arr = kv_utils.compute_per_token_kv(outputs.past_key_values)
-                routed.append({"path": "active", "kv_arr": arr, "text": None})
+                kv_list = kv_utils.compute_per_token_kv_as_list(outputs.past_key_values)
+                routed.append({"path": "active", "kv_arr": kv_list, "text": None})
             answer = generate_with_kv_fulltoken(query, routed, model, tokenizer, cfg)
         else:
             # Wrap the enhanced-tier on-disk path via the existing routing helper.
@@ -429,8 +495,6 @@ def answer_with_mode(
             elif recompute_ratio > 0.0:
                 answer = generate_with_kv_partial_recompute(query, chunks, model, tokenizer, cfg)
             else:
-                # Full-token arrays are [L, 2, H, seq_len, d_h]; stack along
-                # the sequence dimension and inject as past_key_values.
                 answer = generate_with_kv_fulltoken(query, routed, model, tokenizer, cfg)
 
     if mode == "text_rag":
@@ -471,25 +535,23 @@ def generate_with_kv_fulltoken(
         model, tokenizer: Loaded model and tokenizer.
         cfg: Datasource config.
     """
-    num_layers, num_kv_heads, head_dim = model_loader.get_kv_shape(cfg)
     chunk_kvs = [r["kv_arr"] for r in routed_chunks]
-    # Each kv_arr shape: [num_layers, 2, num_kv_heads, seq_len, head_dim]
-    # Correct RoPE positions before concatenating the per-chunk sequences.
-    chunk_lengths = [arr.shape[3] for arr in chunk_kvs]
+    num_layers = len(chunk_kvs[0]) if chunk_kvs else 0
+    chunk_lengths = [arr[0].shape[1] for arr in chunk_kvs]
     chunk_kvs = _rerotate_fulltoken_chunks(chunk_kvs, chunk_lengths, model)
-    # Concatenate along the sequence dimension for each layer.
     all_kvs = []
     for layer_idx in range(num_layers):
         ks, vs = [], []
         for chunk_kv in chunk_kvs:
             layer = torch.from_numpy(chunk_kv[layer_idx].astype(np.float16))
-            ks.append(layer[0])  # [num_kv_heads, seq_len, head_dim]
-            vs.append(layer[1])  # [num_kv_heads, seq_len, head_dim]
-        k = torch.cat(ks, dim=1).unsqueeze(0)  # [1, num_kv_heads, total_seq_len, head_dim]
+            ks.append(layer[0])
+            vs.append(layer[1])
+        k = torch.cat(ks, dim=1).unsqueeze(0)
         v = torch.cat(vs, dim=1).unsqueeze(0)
         all_kvs.append((k, v))
 
-    return _generate_from_stacked_kv(query, all_kvs, model, tokenizer)
+    prompt_format = cfg.get("prompt_format", "system_prompt")
+    return _generate_from_stacked_kv(query, all_kvs, model, tokenizer, prompt_format=prompt_format)
 
 
 def _generate_from_stacked_kv(
@@ -498,6 +560,7 @@ def _generate_from_stacked_kv(
     model,
     tokenizer,
     max_new_tokens: int = 512,
+    prompt_format: str = "system_prompt",
 ) -> str:
     """Build a HuggingFace Cache object from stacked K/V tensors and generate.
 
@@ -507,40 +570,93 @@ def _generate_from_stacked_kv(
             [1, num_kv_heads, total_seq_len, head_dim].
         model, tokenizer: Loaded model and tokenizer.
         max_new_tokens: Maximum number of new tokens to generate.
+        prompt_format: One of "system_prompt", "simple", "chat_template".
+            Controls how the query is wrapped before generation.
 
     Returns:
         Generated answer text.
     """
-    try:
-        from transformers.cache_utils import DynamicCache
-        past_kv = DynamicCache(ddp_cache_data=all_kvs)
-    except (ImportError, TypeError):
-        past_kv = tuple(all_kvs)
+    from transformers.cache_utils import DynamicCache
 
-    # Move to device
-    try:
-        from transformers.cache_utils import DynamicCache
-        if isinstance(past_kv, DynamicCache):
-            for layer in past_kv.layers:
-                layer.keys = layer.keys.to(model.device)
-                layer.values = layer.values.to(model.device)
-        else:
-            past_kv = tuple((k.to(model.device), v.to(model.device)) for k, v in past_kv)
-    except ImportError:
-        past_kv = tuple((k.to(model.device), v.to(model.device)) for k, v in past_kv)
+    # ── APE (Attention Position Encoding): re-align independently-encoded KV
+    #     attention distribution with the sequential distribution by scaling
+    #     K vectors per layer. Calibrated once via tools/calibrate_ape.py.
+    #     See docs/KVForge_Improvement_Research.md §H5b and arXiv:2502.05431.
+    ape_calibration_path = getattr(model, "_ape_calibration_path", None)
+    if ape_calibration_path:
+        import json
+        try:
+            with open(ape_calibration_path) as f:
+                ape_params = json.load(f)
+            scaled = 0
+            for layer_idx, (k, v) in enumerate(all_kvs):
+                key = f"layer_{layer_idx}"
+                if key in ape_params:
+                    temp = float(ape_params[key].get("temperature", 1.0))
+                    if temp != 1.0:
+                        k_scaled = k.to(dtype=torch.float32) * temp
+                        all_kvs[layer_idx] = (k_scaled.to(dtype=k.dtype), v)
+                        scaled += 1
+            if scaled > 0:
+                import sys
+                print(f"[ape] K-vector scaling applied: {scaled}/{len(all_kvs)} layers", file=sys.stderr)
+        except Exception:
+            pass  # calibration file missing or corrupt — skip APE
 
-    prompt = f"{SYSTEM_PROMPT}\n\nQuestion: {query}\n\nAnswer:"
+    # For models with variable head_dim (Gemma4) / shared KV layers, use
+    # config-aware DynamicCache that creates the correct number of cache
+    # layers (15 for Gemma4) with proper sliding/full attention types.
+    # Padding to num_hidden_layers (35) would inject empty seq_len=0
+    # tensors into shared layer slots, causing generate to fail.
+    #
+    # Pass the top-level model.config (not text_config) so DynamicCache's
+    # get_text_config() can unwrap it correctly for multimodal models.
+    tc = model.config
+    has_shared_layers = (
+        hasattr(tc, "text_config")
+        and hasattr(tc.text_config, "num_kv_shared_layers")
+        and tc.text_config.num_kv_shared_layers > 0
+    )
+    if has_shared_layers:
+        past_kv = DynamicCache(
+            config=tc,
+            ddp_cache_data=[(k.to(model.device), v.to(model.device)) for k, v in all_kvs],
+        )
+    else:
+        past_kv = DynamicCache(ddp_cache_data=[
+            (k.to(model.device), v.to(model.device)) for k, v in all_kvs
+        ])
+
+    if prompt_format == "simple":
+        prompt = f"Question: {query}\nAnswer:"
+    elif prompt_format == "chat_template":
+        prompt = tokenizer.apply_chat_template(
+            [{"role": "user", "content": f"Context is already in KV cache.\n\n{query}"}],
+            tokenize=False, add_generation_prompt=True,
+        )
+    else:
+        prompt = f"{SYSTEM_PROMPT}\n\nQuestion: {query}\n\nAnswer:"
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-    # Explicit position IDs so the query tokens are placed immediately after
-    # the injected KV cache instead of starting from position 0.
-    prefix_len = all_kvs[0][0].shape[2]
+    cache_len = all_kvs[0][0].shape[2] if all_kvs else 0
+    query_len = inputs["input_ids"].shape[1]
+
+    # CRITICAL: Pass attention_mask covering the FULL sequence (cache + query).
+    # Without this, HuggingFace's _prefill sees past_length > input_length and
+    # slices input_ids to empty (next_sequence_length = query_len - cache_len
+    # when input_ids.shape[1] == attention_mask.shape[1]).
+    full_attn = torch.ones(1, cache_len + query_len, device=model.device, dtype=torch.long)
+
+    # Explicit position_ids so query tokens are placed immediately after the
+    # injected KV cache. The meanpool path (generate_with_kv) also does this.
     position_ids = torch.arange(
-        prefix_len, prefix_len + inputs["input_ids"].shape[1],
+        cache_len, cache_len + query_len,
         dtype=torch.long, device=model.device,
     ).unsqueeze(0)
+
     with torch.no_grad():
         output = model.generate(
-            **inputs,
+            input_ids=inputs["input_ids"],
+            attention_mask=full_attn,
             position_ids=position_ids,
             past_key_values=past_kv,
             max_new_tokens=max_new_tokens,
@@ -607,40 +723,61 @@ def generate_with_kv_partial_recompute(
         cfg: Datasource config containing ``recompute_ratio``.
     """
     ratio = float(cfg.get("recompute_ratio", 0.0))
+    prompt_format = cfg.get("prompt_format", "system_prompt")
     if ratio >= 1.0:
         return generate_text_in_context(query, chunks, model, tokenizer)
 
+    # Detect variable head_dim (Gemma4) — need to use list-based capture
+    # and pad to uniform for the blend step.
+    tc = getattr(model.config, "text_config", model.config)
+    has_variable_hd = (
+        hasattr(tc, "global_head_dim") and tc.global_head_dim
+        and tc.global_head_dim != getattr(tc, "head_dim", 256)
+    )
+
     # Collect full-token KV arrays for each chunk.
-    chunk_kvs: list[np.ndarray] = []
+    chunk_kvs_list: list[list[np.ndarray]] = []  # List of per-layer lists
     chunk_texts: list[str] = []
     for c in chunks:
         text = c.get("text", "")
         chunk_texts.append(text)
         if c.get("kv_token_path"):
-            arr = load_token_kv(c["kv_token_path"], tq_config=cfg.get("turboquant"))
+            _hdr = np.load(str(c["kv_token_path"]), allow_pickle=False)
+            _is_var = _hdr.get("_var_hd", np.array(False)).item()
+            _hdr.close()
+            if _is_var:
+                arr = kv_utils.load_token_kv_list(c["kv_token_path"])
+            else:
+                _u = kv_utils.load_token_kv(c["kv_token_path"], tq_config=cfg.get("turboquant"))
+                arr = [_u[i] for i in range(_u.shape[0])]  # convert 5D → list
         else:
-            # Compute on-the-fly; this costs one forward pass per chunk but lets
-            # partial recompute work on collections that only have mean-pool KV.
             inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512).to(model.device)
             with torch.no_grad():
                 outputs = model(**inputs, use_cache=True)
-            arr = kv_utils.compute_per_token_kv(outputs.past_key_values)
-        chunk_kvs.append(arr)
+            if has_variable_hd:
+                arr = kv_utils.compute_per_token_kv_as_list(outputs.past_key_values)
+            else:
+                _u = kv_utils.compute_per_token_kv(outputs.past_key_values)
+                arr = [_u[i] for i in range(_u.shape[0])]
+        chunk_kvs_list.append(arr)
 
-    # Align cached KV positions with the assembled fresh pass. Each chunk's
-    # cached KV was computed at in-chunk positions 0..L-1; when concatenated
-    # they must be rerotated to global positions to avoid spurious RoPE
-    # deviation during blending.
-    chunk_lengths = [arr.shape[3] for arr in chunk_kvs]
-    chunk_kvs = _rerotate_fulltoken_chunks(chunk_kvs, chunk_lengths, model)
+    # Rerotate (handles both uniform and variable-hd list formats).
+    chunk_lengths = [arr[0].shape[2] for arr in chunk_kvs_list]
+    chunk_kvs_list = _rerotate_fulltoken_chunks(chunk_kvs_list, chunk_lengths, model)
 
-    # Concatenate cached KVs along the sequence dimension.
-    cached_kv = np.concatenate(chunk_kvs, axis=-2)  # [L, 2, H, total_seq_len, d]
+    # Convert to uniform 5D array for the blend operation.
+    if has_variable_hd:
+        cached_kv = np.concatenate(
+            [kv_utils.pad_kv_list_to_uniform(c) for c in chunk_kvs_list],
+            axis=-2
+        )
+    else:
+        cached_kv = np.concatenate(
+            [np.stack(c, axis=0) for c in chunk_kvs_list],
+            axis=-2
+        )
 
-    # Build a fresh KV pass over the assembled context using the exact same
-    # per-chunk token sequence as the cached KVs. Concatenating the individual
-    # tokenizations avoids the token mismatches (extra separators, duplicate
-    # BOS tokens) caused by tokenizing the joined text as a single sequence.
+    # Build a fresh KV pass over the assembled context for deviation comparison.
     per_chunk_inputs = [
         tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
         for text in chunk_texts
@@ -657,11 +794,15 @@ def generate_with_kv_partial_recompute(
     }
     with torch.no_grad():
         fresh_outputs = model(**fresh_inputs, use_cache=True)
-    fresh_kv = kv_utils.compute_per_token_kv(fresh_outputs.past_key_values)
+    if has_variable_hd:
+        fresh_kv_list = kv_utils.compute_per_token_kv_as_list(fresh_outputs.past_key_values)
+        fresh_kv = kv_utils.pad_kv_list_to_uniform(fresh_kv_list)
+    else:
+        fresh_kv = kv_utils.compute_per_token_kv(fresh_outputs.past_key_values)
 
     # If shapes differ due to truncation, fall back to the fresh KV entirely.
     if fresh_kv.shape[-2] != cached_kv.shape[-2]:
-        return _generate_from_full_token_kv(query, fresh_kv, model, tokenizer)
+        return _generate_from_full_token_kv(query, fresh_kv, model, tokenizer, prompt_format=prompt_format)
 
     # Compute per-token deviation at the middle layer.
     mid_layer = cached_kv.shape[0] // 2
@@ -684,7 +825,7 @@ def generate_with_kv_partial_recompute(
         v = layer[1].unsqueeze(0)
         all_kvs.append((k, v))
 
-    return _generate_from_stacked_kv(query, all_kvs, model, tokenizer)
+    return _generate_from_stacked_kv(query, all_kvs, model, tokenizer, prompt_format=prompt_format)
 
 
 def _generate_from_full_token_kv(
@@ -693,6 +834,7 @@ def _generate_from_full_token_kv(
     model,
     tokenizer,
     max_new_tokens: int = 512,
+    prompt_format: str = "system_prompt",
 ) -> str:
     """Generate from a single full-token KV array [L, 2, H, seq_len, d]."""
     all_kvs = []
@@ -701,7 +843,7 @@ def _generate_from_full_token_kv(
         k = layer[0].unsqueeze(0)
         v = layer[1].unsqueeze(0)
         all_kvs.append((k, v))
-    return _generate_from_stacked_kv(query, all_kvs, model, tokenizer, max_new_tokens=max_new_tokens)
+    return _generate_from_stacked_kv(query, all_kvs, model, tokenizer, max_new_tokens=max_new_tokens, prompt_format=prompt_format)
 
 
 def answer_with_retrieval(query: str, cfg: dict) -> str:

@@ -174,8 +174,15 @@ def cmd_index(cfg: dict) -> None:
     # 2. Load LLM for KV computation (optional — skipped gracefully on CPU/no-GPU)
     lora_ckpt = ver.load().get("checkpoint_path")
     model, tokenizer = None, None
+    compute_kv = effective_cfg.get("compute_kv", True)
     import traceback as _tb
-    if model_loader.DEVICE == "cpu":
+    if not compute_kv:
+        print(
+            "⚠️  compute_kv=False — skipping KV tensor computation.\n"
+            "   Phase 1 (text RAG) will work normally.\n"
+            "   Run with compute_kv=True to enable Phase 2 (KV injection)."
+        )
+    elif model_loader.DEVICE == "cpu":
         print(
             "⚠️  No CUDA GPU detected — skipping KV tensor computation.\n"
             "   Phase 1 (text RAG) will work normally.\n"

@@ -1,0 +1,2329 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.10.1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>KVForge: Progressive KV-Cache Persistence</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">KVForge: Progressive KV-Cache Persistence</h1>
+</header>
+<h1
+id="kvforge-progressive-kv-cache-persistence-in-vector-databases-for-autonomous-low-latency-rag">KVForge:
+Progressive KV-Cache Persistence in Vector Databases for Autonomous
+Low-Latency RAG</h1>
+<p><strong>Dr. Hemant Joshi</strong><br />
+Independent Research<br />
+GitHub: <a
+href="https://github.com/hemantcgi/kvforge">https://github.com/hemantcgi/kvforge</a></p>
+<hr />
+<h2 id="abstract">Abstract</h2>
+<p>Retrieval-Augmented Generation (RAG) systems ground large language
+model (LLM) responses in external knowledge but pay a fixed re-encoding
+cost on every query: retrieved text chunks must pass through the full
+transformer attention stack to build the key-value (KV) attention cache
+before generation begins. We introduce <strong>KVForge</strong>, a
+progressive RAG system that pre-computes transformer KV-cache tensors at
+index time and persists them inside a vector database alongside document
+embeddings. At query time, fresh KV tensors are injected directly into
+the model’s attention cache, bypassing chunk re-encoding entirely. As
+the system accumulates query traffic, a tier-weighted LoRA fine-tuning
+loop transfers high-frequency corpus knowledge into model weights,
+enabling a confidence-gated third phase in which the LLM answers
+qualified queries directly from its parameters with no retrieval.</p>
+<p>KVForge introduces two novel contributions beyond this base design:
+(1) a <strong>Parametric Readiness Score (PRS)</strong>, a composite
+metric of accuracy, calibration, and self-consistency that gates
+automatic phase transitions; and (2) a <strong>Corpus Importance Score
+(CIS)</strong>, combining retrieval frequency, semantic uniqueness, and
+FAQ coverage to drive chunk-level curation and storage tier assignment.
+For compressed full-token KV storage in the Enhanced Tier, KVForge
+adopts <strong>TurboQuant</strong> [34] — a near-optimal online
+vector-quantization codec (Lloyd-Max scalar quantization after random
+rotation, with QJL sign bits for residual correction) published by
+Google Research and NYU — which, in our 3-bit-key / 4-bit-value
+configuration, achieves 4.4× compression over float16 while preserving
+attention-score fidelity.</p>
+<p>We evaluate KVForge across four heterogeneous corpora—customer
+support dialogue, biomedical literature (PubMedQA), machine reading
+comprehension (SQuAD 2.0), and technical documentation (Amazon Bedrock
+User Guide)—on a single AWS g5.xlarge instance. KVForge reaches Phase 3
+(parametric answering active) on all four corpora, with PRS of
+0.755–0.863. Phase 2 delivers <strong>2.7× generation speedup</strong>
+over standard text-in-context RAG; Phase 3 delivers
+<strong>3.6×</strong>. A new factual evaluation using exact-match,
+token-F1, and an LLM judge on held-out questions shows that the 3B model
+struggles across all four corpora, with exact-match near zero and modest
+token-F1 and judge scores. KV mean-pool and full-token injection do not
+consistently improve over text RAG in this initial real run, and the
+parametric mode is mixed. The PRS cosine-based accuracy proxy correlates
+only weakly with the factual metrics (Pearson <em>r</em> = -0.12–0.43),
+and the cosine component reaches the Phase 3 threshold in all four
+corpora while the factual metrics do not. These results establish that
+training signal quality and a reliable factual gate, not just latency,
+are the dominant bottlenecks for deploying parametric answering in small
+language models.</p>
+<hr />
+<h2 id="introduction">1. Introduction</h2>
+<p>Large language models (LLMs) achieve state-of-the-art performance on
+knowledge-intensive tasks but are limited by two well-documented failure
+modes: <strong>hallucination</strong> — generating plausible-sounding
+but factually incorrect content — and <strong>knowledge
+staleness</strong> — inability to answer questions about post-cutoff
+facts. Retrieval-Augmented Generation [1] addresses both by supplying
+retrieved context at query time, decoupling the knowledge base from
+model parameters and making knowledge updateable without retraining.</p>
+<p>However, standard RAG incurs a <em>constant computational
+overhead</em> on every query regardless of how many times the same
+chunks have been retrieved before. For a query retrieving five 600-token
+chunks, a 3-billion-parameter transformer must execute a full forward
+pass over 3,000 context tokens before generating a single output token.
+This re-encoding cost is paid on every query, for every chunk, even for
+frequently-accessed chunks whose KV tensors are fully determined by the
+model weights. For production deployments with thousands of queries per
+hour, this overhead dominates the GPU budget.</p>
+<p><strong>The central insight of KVForge</strong> is that this
+re-encoding is redundant: the key-value projections for a chunk are a
+deterministic function of the chunk text and the current model weights.
+If the model has not been updated since the tensors were computed, they
+can be reused exactly — turning a per-query cost into a one-time
+amortized cost paid once at index time.</p>
+<p>KVForge extends this caching insight into a three-phase autonomous
+progression:</p>
+<ul>
+<li><strong>Phase 1 — Text-in-context RAG:</strong> Standard retrieval;
+chunks rendered as text in the context window. No pre-computation
+required.</li>
+<li><strong>Phase 2 — KV Injection:</strong> Pre-computed mean-pooled KV
+tensors are injected directly into the model’s
+<code>past_key_values</code> cache at query time, skipping the forward
+pass over the retrieved context. Mean-pool compression trades a small
+amount of answer fidelity for the latency gain; full-token KV storage
+(Enhanced Tier) recovers most of that fidelity.</li>
+<li><strong>Phase 3 — Parametric Answering:</strong> After LoRA
+fine-tuning concentrates corpus knowledge into model weights, a
+three-signal confidence gate routes high-confidence queries directly to
+parametric generation with no retrieval.</li>
+</ul>
+<p><strong>Figure 1</strong> illustrates the phase transition state
+machine. Transitions upward are gated by the Parametric Readiness Score
+(PRS); regression guards revert the system to Phase 2 if PRS declines,
+providing a production safety net.</p>
+<figure>
+<img src="figures/fig01_phase_state_machine.png"
+alt="Figure 1: KVForge Phase Transition State Machine" />
+<figcaption aria-hidden="true">Figure 1: KVForge Phase Transition State
+Machine</figcaption>
+</figure>
+<p>Beyond the three phases, KVForge introduces two systems addressing
+storage and curation challenges at scale:</p>
+<p><strong>Corpus Importance Score (CIS)</strong> is a multi-signal
+chunk importance metric combining log-normalized retrieval frequency,
+semantic uniqueness (1 − max cosine similarity to any neighbor), and FAQ
+topic coverage.</p>
+<p><strong>TurboQuant</strong> [34] (Google Research and NYU, 2025) is a
+data-oblivious online vector quantizer with near-optimal distortion; in
+our configuration we allocate 3 bits per key coordinate and 4 bits per
+value coordinate, achieving 4.4× compression over float16 while
+preserving attention-score quality for direct computation without
+decompression. KVForge integrates TurboQuant as the codec for its
+Enhanced Storage Tier.</p>
+<p>This paper makes the following contributions:</p>
+<ol type="1">
+<li><strong>KVForge architecture</strong>: a unified system combining
+vector database retrieval, durable KV tensor storage, access-tier
+tracking, sleep-time FAQ generation, LoRA fine-tuning, and PRS-gated
+phase transitions.</li>
+<li><strong>Parametric Readiness Score (PRS)</strong>: a principled
+composite metric for evaluating parametric knowledge retention and
+gating autonomous phase advancement.</li>
+<li><strong>Corpus Importance Score (CIS)</strong>: a multi-signal
+importance metric for chunk-level storage curation and resource
+allocation.</li>
+<li><strong>Integration of TurboQuant</strong> [34]: KVForge adopts the
+TurboQuant codec (Google Research and NYU, 2025) for the Enhanced
+Storage Tier, demonstrating that a 4.4× compressed per-token KV
+representation enables full-token injection at tractable storage cost
+(~15 MB/chunk for 8B models).</li>
+<li><strong>Empirical evaluation</strong> across four heterogeneous
+corpora demonstrating all four reach Phase 3 with PRS 0.755–0.863, with
+training signal quality as the dominant variable.</li>
+</ol>
+<hr />
+<h2 id="background">2. Background</h2>
+<h3 id="transformer-attention-and-the-kv-cache">2.1 Transformer
+Attention and the KV Cache</h3>
+<p>The scaled dot-product attention mechanism [2] for query matrix
+<strong>Q</strong>, key matrix <strong>K</strong>, and value matrix
+<strong>V</strong> is:</p>
+<pre><code>Attention(Q, K, V) = softmax(Q Kᵀ / √d_k) · V</code></pre>
+<p>During autoregressive generation, the model maintains a <em>KV
+cache</em>: after processing the input prompt, the <strong>K</strong>
+and <strong>V</strong> projections for every input token are saved so
+they need not be recomputed during subsequent generation steps. For a
+single decoder layer with <em>n_h</em> KV heads of dimension
+<em>d_h</em>, the KV cache for a sequence of length <em>L</em>
+occupies:</p>
+<pre><code>size = 2 × L × n_h × d_h × sizeof(dtype)  bytes</code></pre>
+<p>Standard RAG builds a fresh KV cache from scratch for each query.
+KVForge pre-builds it for every document chunk at index time and stores
+it persistently.</p>
+<h3 id="low-rank-adaptation-lora">2.2 Low-Rank Adaptation (LoRA)</h3>
+<p>LoRA [4] adapts a frozen pre-trained weight matrix <strong>W₀ ∈
+ℝ^(d×k)</strong> via a low-rank decomposition:</p>
+<pre><code>W = W₀ + ΔW = W₀ + BA</code></pre>
+<p>where <strong>B ∈ ℝ^(d×r)</strong> and <strong>A ∈ ℝ^(r×k)</strong>,
+with rank r ≪ min(d, k). KVForge applies LoRA to <code>q_proj</code>,
+<code>k_proj</code>, and <code>v_proj</code> attention matrices. Because
+LoRA updates the <strong>K</strong> and <strong>V</strong> projections,
+any stored KV tensors become stale after a LoRA round and must be
+recomputed — tracked per-chunk via a <code>kv_version</code> field.</p>
+<h3 id="kv-cache-quantization">2.3 KV Cache Quantization</h3>
+<p>Keys and values have different statistical properties: keys have high
+inter-channel variance benefiting from column-wise quantization, while
+values have smoother distributions amenable to group quantization [27,
+28]. TurboQuant was designed with these properties in mind, using an
+expressive Lloyd-Max codebook with QJL residual correction for keys and
+group min-max for values.</p>
+<h3 id="retrieval-augmented-generation">2.4 Retrieval-Augmented
+Generation</h3>
+<p>Lewis et al. [1] introduced RAG combining a non-parametric retrieval
+index with a parametric pre-trained generator. KVForge’s distinct
+position: rather than improving retrieval, it progressively
+<em>eliminates</em> retrieval for queries the model has memorized, while
+preserving retrieval as a fallback.</p>
+<hr />
+<h2 id="related-work">3. Related Work</h2>
+<h3 id="kv-cache-reuse-and-prefix-caching">3.1 KV Cache Reuse and Prefix
+Caching</h3>
+<p><strong>PromptCache</strong> [8] modularizes the KV cache for reuse
+across queries sharing a common prompt prefix. KVForge operates at a
+different layer: where PromptCache operates within a single inference
+server session and loses its cache on restart, KVForge persists KV
+tensors durably in a vector database across server restarts, model
+updates, and distributed replicas.</p>
+<p><strong>PagedAttention</strong> [3] and <strong>vLLM</strong> manage
+KV memory within a single server process using virtual memory paging.
+KVForge operates at the pre-retrieval layer — deciding <em>which</em>
+chunks’ KV tensors to supply — while vLLM manages how they are stored
+during generation. The systems are complementary.</p>
+<p><strong>SGLang</strong> [9] provides a radix-tree prefix cache
+achieving &gt;99% prefix reuse on shared prompts. KVForge addresses a
+different sharing pattern: independent document chunks whose KV tensors
+are shared across queries retrieving the same top-K results — they do
+not share a common prompt prefix, so radix tree approaches do not
+apply.</p>
+<p><strong>CacheBlend</strong> [29] reuses KV caches of retrieved
+segments by selectively recomputing tokens whose attention deviates
+substantially from the pre-computed cache. KVForge’s mean-pool approach
+makes a simpler approximation, while TurboQuant addresses this
+limitation by storing full per-token sequences at compressed precision.
+<strong>CacheBlend is, to our knowledge, the closest published system to
+KVForge’s Phase 2 mechanism</strong>: both fuse multiple precomputed
+per-chunk KV caches that do not share a common prefix — the exact
+non-prefix, multi-chunk RAG setting KVForge targets. The two systems
+diverge in where the cache lives and in how quality is protected:
+CacheBlend operates as an in-memory, content-hash-keyed serving-layer
+cache with a mandatory selective-recompute step (bounding reported
+quality loss to ≤0.02 F1/ROUGE-L), whereas KVForge persists KV tensors
+durably inside the vector database payload and, in the V1 mean-pool
+scheme, injects them without an analogous quality-recovery step. §7.9’s
+attention-divergence measurements (mean KL 0.82–1.14 across corpora) are
+consistent with this gap — KVForge has not yet validated that its
+injection preserves attention fidelity to the degree CacheBlend’s
+HKVD-token recomputation does, and closing that gap is an open question
+rather than a settled comparison.</p>
+<p><strong>LMCache</strong> [46] is an open-source KV-cache management
+layer that treats cache as persistent, cross-engine-shareable state
+rather than a per-request artifact, and adopts CacheBlend’s non-prefix
+fusion mechanism for reuse at arbitrary prompt positions. It reports
+1.9–8.1× smaller time-to-first-token and 2.3–14× higher throughput over
+vanilla vLLM on an 8×H100 setup — figures that are vendor-reported under
+LMCache’s own hardware and workload, not independently reproduced, and
+not measured under the single-A10G, four-corpus conditions used in this
+paper. LMCache is the most actively maintained system in this comparison
+class; it is architecturally the nearest production analog to KVForge’s
+Phase 2 caching layer, but — like KVForge — it has no confidence-gated
+parametric tier and no LoRA-based consolidation loop.</p>
+<h3 id="rag-systems-and-dense-retrieval">3.2 RAG Systems and Dense
+Retrieval</h3>
+<p><strong>DPR</strong> [5] demonstrated that jointly-trained dual
+encoders outperform BM25 for open-domain QA. <strong>ColBERT</strong>
+[26] introduced late interaction with per-token embeddings.
+<strong>RETRO</strong> [10] pre-computes chunk encodings at index time
+and conditions generation on retrieved neighbours. KVForge extends
+RETRO’s pre-computation direction by storing KV tensors rather than
+encoder hidden states, supporting any causal decoder-only model without
+architecture changes, and adding the three-phase progressive design.</p>
+<p><strong>FiD</strong> [30] encodes multiple retrieved passages
+independently and fuses them in the decoder. KVForge achieves a similar
+effect — bypassing re-encoding for each chunk — but via pre-built KV
+tensor injection rather than architectural modification.</p>
+<h3 id="lora-and-parameter-efficient-fine-tuning">3.3 LoRA and
+Parameter-Efficient Fine-Tuning</h3>
+<p><strong>QLoRA</strong> [12] enables 4-bit quantized LoRA training,
+reducing GPU memory from ~12 GB to ~4 GB for a 7B model. KVForge
+supports QLoRA via <code>bitsandbytes</code> NF4 quantization.</p>
+<p><strong>Continual LoRA fine-tuning</strong> risks catastrophic
+forgetting [18]. KVForge’s <strong>tier-weighted replay buffer</strong>
+mitigates this: hot chunks receive 8× sampling weight relative to frozen
+chunks, acting as a lightweight proxy for Elastic Weight Consolidation
+[31].</p>
+<h3 id="calibration-and-uncertainty-estimation">3.4 Calibration and
+Uncertainty Estimation</h3>
+<p><strong>Guo et al.</strong> [13] proposed temperature scaling for
+calibration. KVForge’s PRS calibration component uses a self-reporting
+proxy (model rates its own confidence 0–100) aligned with semantic
+accuracy. <strong>Self-Consistency</strong> [14] samples multiple
+reasoning chains for agreement. KVForge’s consistency component computes
+mean pairwise cosine similarity across three sampled answers at
+temperature 0.7. <strong>Semantic Entropy</strong> [16] provides
+model-agnostic uncertainty estimates; KVForge’s Phase 3 gate uses a
+lighter three-signal combination to avoid multi-sample generation
+overhead.</p>
+<h3 id="kv-cache-compression">3.5 KV Cache Compression</h3>
+<p><strong>KVQuant</strong> [27] quantizes KV caches to 1–4 bits using
+non-uniform per-channel quantization. <strong>KIVI</strong> [28] applies
+asymmetric 2-bit quantization achieving 2.2× compression.
+<strong>QJL</strong> [32] proposes a quantized Johnson-Lindenstrauss
+transform for unbiased inner-product estimation from sign bits.
+<strong>TurboQuant</strong> [34] (Google Research and NYU, 2025)
+synthesizes all three: random-rotation preprocessing, Lloyd-Max scalar
+quantization for MSB representation, and QJL sign bits for residual
+correction. KVForge adopts TurboQuant as the codec for its Enhanced
+Storage Tier.</p>
+<h3 id="continual-learning">3.6 Continual Learning</h3>
+<p><strong>Online Continual Learning</strong> surveys [33] identify
+replay-based methods as most practical for production systems. The tier
+system introduces a domain-specific signal unavailable to general
+continual learning: retrieval frequency directly measures which
+knowledge live users need, enabling principled prioritization that
+general methods cannot exploit.</p>
+<h3 id="cache-augmented-generation-and-bounded-context-answering">3.7
+Cache-Augmented Generation and Bounded-Context Answering</h3>
+<p><strong>CAG (Cache-Augmented Generation)</strong> [38] preloads all
+documents in a bounded knowledge base into an LLM’s extended context
+window and precomputes a single global KV cache during that preload,
+then answers every subsequent query directly from the cache with no
+retrieval step at all. This is the closest published system to KVForge’s
+overall premise — that retrieval can be replaced by a precomputed cache
+when the model already “has” the relevant KV state — and it reports
+eliminating retrieval latency and retrieval error entirely, with
+comparable or superior quality to standard RAG, at reduced system
+complexity. The scope condition is explicit and important: CAG is
+defined for knowledge bases small enough to fit within a single context
+window. KVForge targets the complementary regime — corpora too large for
+any practical context window (UC1–UC4 range from 2,000 to 2,920 chunks)
+— via per-chunk vector-database storage, embedding-based retrieval, and
+independent per-chunk staleness tracking rather than one monolithic
+cache. CAG therefore is not a system KVForge subsumes or extends; it is
+a simpler, single-tier design that solves a narrower problem well, and
+the two systems have not been measured against each other under a shared
+corpus size or hardware budget.</p>
+<h3 id="retrieval-augmented-fine-tuning-and-parametric-rag">3.8
+Retrieval-Augmented Fine-Tuning and Parametric RAG</h3>
+<p><strong>RAFT</strong> [39] fine-tunes a model to identify and cite
+the correct document among retrieved “distractor” documents while
+producing chain-of-thought reasoning, reporting consistent gains over
+baselines on PubMed, HotpotQA, and the Gorilla API benchmark. Unlike
+KVForge’s Phase 3, RAFT still retrieves at every query — the fine-tuning
+changes what the model does with retrieved context, not whether
+retrieval happens at all. The broader <strong>Parametric RAG</strong>
+literature [40] studies encoding retrieved evidence directly into
+trainable parameters (e.g., LoRA adapters) rather than context tokens,
+finding that parametric representations mainly affect deeper
+feed-forward computation with document-level, high-level signal rather
+than fine-grained evidence — and that a hybrid combining parametric and
+token-based retrieval outperforms either alone. This finding is directly
+relevant to KVForge’s design: it predicts that a system gating between
+parametric answering and retrieval-based fallback (as KVForge’s Phase 3
+confidence gate does) should outperform going fully parametric, which is
+consistent with why KVForge retains Phase 2 as a fallback rather than
+eliminating retrieval once LoRA training completes. Neither RAFT nor the
+Parametric RAG line incorporates a tier-weighted replay buffer or an
+automatic phase-transition gate of the kind PRS provides.</p>
+<h3
+id="knowledge-editing-as-an-alternative-parametric-injection-route">3.9
+Knowledge Editing as an Alternative Parametric-Injection Route</h3>
+<p><strong>ROME</strong> [41] and <strong>MEMIT</strong> [42] take a
+fundamentally different approach to writing knowledge into weights:
+rather than broad gradient-based adaptation across a corpus, they
+perform surgical, closed-form edits at a small number of causally-traced
+mid-layer feed-forward modules, treating each as a key-value associative
+memory for one factual triple. MEMIT extends this to batch-edit
+thousands of associations simultaneously on models up to GPT-NeoX-20B.
+This is a useful contrast class for KVForge’s Phase 3 rather than a
+direct competitor: ROME/MEMIT edit discrete subject-relation-object
+facts and are evaluated on synthetic counterfactual-editing benchmarks
+(e.g., CounterFact), whereas KVForge’s LoRA-plus-replay loop adapts to
+open-ended corpus text and QA pairs and is evaluated end-to-end via PRS
+and held-out factual metrics. Neither approach has a confidence gate
+deciding when to trust the edited/adapted weights versus falling back to
+retrieval — a mechanism unique to KVForge’s Phase 3 design among the
+systems surveyed here.</p>
+<h3 id="confidence-gated-adaptive-retrieval">3.10 Confidence-Gated
+Adaptive Retrieval</h3>
+<p>KVForge’s Phase 3 confidence gate (§4.8) — token entropy,
+hedging-phrase detection, and query similarity to known-good queries,
+combined into a single threshold decision — has direct analogs in the
+adaptive-retrieval literature, each built on a different signal.
+<strong>Self-RAG</strong> [43] trains a single model to decide per-query
+whether retrieval is needed using self-generated reflection tokens
+(Retrieve/ISREL/ISSUP/ISUSE) that critique its own retrieved passages
+and generations; it is reported to outperform ChatGPT and
+retrieval-augmented Llama2-chat on open-domain QA, reasoning, and
+long-form factuality. <strong>SKR</strong> [44] instead has the model
+assess its own self-knowledge of a question to decide whether external
+retrieval is needed, reporting gains over both chain-of-thought-only and
+always-retrieve baselines on InstructGPT and ChatGPT backbones.
+<strong>Adaptive-RAG</strong> [45] takes a third approach, training a
+small classifier to predict query complexity and routing each query to
+no-retrieval, single-step, or iterative multi-step retrieval.</p>
+<p>All three decide, per query, among multiple retrieval strategies
+based on an internally-generated signal — structurally the same problem
+KVForge’s gate solves — but none combine this decision with a
+KV-cache-injection intermediate tier: each falls back to full text
+retrieval, never to a pre-computed cache injection step. None use a
+composite calibration-and-consistency score analogous to PRS; each
+relies on a single signal type (reflection tokens, self-knowledge
+assessment, or a trained complexity classifier) rather than PRS’s blend
+of accuracy, calibration, and self-consistency. This is a meaningful
+point of difference to note, though not one this paper’s evaluation
+currently measures: §7.9 shows KVForge’s own gate signal (self-reported
+confidence) is poorly calibrated on the 3B model tested (ECE
+0.066–0.166), so it remains an open question whether KVForge’s composite
+gate is more or less reliable in practice than Self-RAG’s or SKR’s
+single-signal alternatives — answering that would require running all
+three gating mechanisms on the same base model and corpus, which this
+paper does not attempt.</p>
+<h3
+id="positioning-kvforge-a-combinatorial-gap-not-yet-a-benchmarked-one">3.11
+Positioning KVForge: A Combinatorial Gap, Not Yet a Benchmarked One</h3>
+<p>Read together, §3.1–3.10 establish that KVForge sits in a gap between
+four clusters of prior work, none of which spans all three of its
+phases. KV-cache reuse systems (PromptCache, CacheBlend, LMCache, §3.1)
+eliminate re-encoding but have no fine-tuning loop and no
+retrieval-skipping gate. Bounded-context caching (CAG, §3.7) eliminates
+retrieval entirely but only for corpora that fit in a context window,
+with no per-chunk granularity or gating. Retrieval-augmented fine-tuning
+and parametric RAG (RAFT, Parametric RAG, §3.8) internalize corpus
+knowledge but continue to retrieve on every query. Knowledge editing
+(ROME/MEMIT, §3.9) writes discrete facts into weights but has no
+corpus-scale training loop or confidence gate. Confidence-gated adaptive
+retrieval (Self-RAG, SKR, Adaptive-RAG, §3.10) decides when to skip
+retrieval but has no KV-cache-injection tier and no PRS-style composite
+readiness score. KVForge’s contribution is the combination — persistent
+per-chunk KV storage, tier-weighted continual fine-tuning, and a
+composite-score-gated three-phase progression — not any one mechanism in
+isolation, each of which has documented prior art.</p>
+<p>This positioning is architectural, not empirical: to our knowledge,
+no independent third-party study has benchmarked any two of these
+systems against each other under identical hardware, base model, and
+corpus, and this paper does not close that gap either. Every reported
+number in §3.1–3.10 (PromptCache’s 8×/60× TTFT reduction, CacheBlend’s
+2.2–3.3× TTFT and ≤0.02 F1 loss, LMCache’s 1.9–8.1× TTFT, Self-RAG’s
+reported outperformance of ChatGPT, SKR’s +4% deltas) comes from its
+originating paper’s own evaluation harness, on its own choice of model,
+hardware, and dataset. None of these figures are directly comparable to
+the Phase 1/2/3 latency and PRS results in §7, and we do not claim they
+are. The honest reading of the related-work landscape is that KVForge
+occupies an architecturally distinct point in the design space; whether
+it is empirically <em>better</em> than the nearest neighbor in any given
+cluster — CacheBlend for Phase 2, RAFT for Phase 3, Self-RAG for the
+confidence gate — remains an open question that would require a
+dedicated head-to-head study outside the scope of this paper.</p>
+<p>[T:tab:related-systems-comparative-table] makes this coverage
+argument concrete across six dimensions, extending a five-dimension
+feature comparison with an explicit <strong>confidence-gated
+retrieval-skip</strong> column — the mechanism that most distinguishes
+KVForge’s Phase 3 from every KV-caching system in the table, and the
+mechanism KVForge shares only with the adaptive-retrieval systems, none
+of which do KV-cache injection.</p>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 21%" />
+<col style="width: 13%" />
+<col style="width: 13%" />
+<col style="width: 13%" />
+<col style="width: 13%" />
+<col style="width: 13%" />
+<col style="width: 13%" />
+</colgroup>
+<thead>
+<tr>
+<th>System</th>
+<th style="text-align: center;">KV Storage Location</th>
+<th style="text-align: center;">Phase Progression</th>
+<th style="text-align: center;">Continual Fine-tuning</th>
+<th style="text-align: center;">Confidence-Gated Retrieval Skip</th>
+<th style="text-align: center;">Vector DB Integration</th>
+<th style="text-align: center;">Corpus Curation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard RAG [1]</td>
+<td style="text-align: center;">None</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td>RETRO [10]</td>
+<td style="text-align: center;">Encoder states</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Partial</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td>PromptCache [8]</td>
+<td style="text-align: center;">In-process session</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td>SGLang RadixCache [9]</td>
+<td style="text-align: center;">In-process session</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td>vLLM PagedAttention [3]</td>
+<td style="text-align: center;">In-process session</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td>CacheBlend [29]</td>
+<td style="text-align: center;">In-process session</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td>LMCache [46]</td>
+<td style="text-align: center;">In-process (shared)</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td>KVQuant [27]</td>
+<td style="text-align: center;">In-process (quantized)</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td>KIVI [28]</td>
+<td style="text-align: center;">In-process (quantized)</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td>CAG [38]</td>
+<td style="text-align: center;">Context-window preload</td>
+<td style="text-align: center;">No (single tier)</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No (always parametric-from-cache)</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td>RAFT [39]</td>
+<td style="text-align: center;">None</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes (distractor training)</td>
+<td style="text-align: center;">No (always retrieves)</td>
+<td style="text-align: center;">Partial</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td>ROME / MEMIT [41,42]</td>
+<td style="text-align: center;">None</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No (weight edit, not gradient FT)</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td>Self-RAG [43]</td>
+<td style="text-align: center;">None</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes (reflection tokens)</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td>SKR [44]</td>
+<td style="text-align: center;">None</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes (self-knowledge)</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td>Adaptive-RAG [45]</td>
+<td style="text-align: center;">None</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes (trained classifier)</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td><strong>KVForge V1 (ours)</strong></td>
+<td style="text-align: center;"><strong>Vector DB
+(mean-pool)</strong></td>
+<td style="text-align: center;"><strong>Yes (3 phases)</strong></td>
+<td style="text-align: center;"><strong>Yes (LoRA +
+replay)</strong></td>
+<td style="text-align: center;"><strong>Yes (entropy + hedging +
+similarity)</strong></td>
+<td style="text-align: center;"><strong>Yes</strong></td>
+<td style="text-align: center;">Tier labels</td>
+</tr>
+<tr>
+<td><strong>KVForge V2 (ours)</strong></td>
+<td style="text-align: center;"><strong>Vector DB + disk (TurboQuant
+[34])</strong></td>
+<td style="text-align: center;"><strong>Yes (3 phases)</strong></td>
+<td style="text-align: center;"><strong>Yes (LoRA +
+replay)</strong></td>
+<td style="text-align: center;"><strong>Yes (entropy + hedging +
+similarity)</strong></td>
+<td style="text-align: center;"><strong>Yes</strong></td>
+<td style="text-align: center;"><strong>CIS + archival</strong></td>
+</tr>
+</tbody>
+</table>
+<p>KVForge is, to our knowledge, the first system to combine durable
+per-chunk KV-tensor persistence in a vector database with an automatic,
+PRS-gated three-phase progression that culminates in confidence-gated
+parametric answering. No single row above the KVForge entries checks
+more than two of the six columns; the closest any prior system comes is
+one column each from a different cluster (CacheBlend on KV storage
+sophistication, RAFT on continual fine-tuning, Self-RAG on
+confidence-gated retrieval skip). This table is a positioning claim
+about architectural coverage, not a performance ranking — no
+cross-system benchmark under matched hardware, model, and corpus exists
+for any pair of rows in this table, including KVForge’s own comparison
+to its nearest neighbors.</p>
+<hr />
+<h2 id="the-kvforge-system">4. The KVForge System</h2>
+<h3 id="architecture-overview">4.1 Architecture Overview</h3>
+<p><strong>Figure 2</strong> shows the full KVForge system architecture.
+The system operates as a state machine with an offline pipeline (left
+path) and an online query path (right path), connected by the access
+tracking and tier classification loop.</p>
+<figure>
+<img src="figures/fig02_system_architecture.png"
+alt="Figure 2: Full KVForge system architecture. Offline pipeline pre-computes KV tensors and trains the LoRA adapter. Online query path injects pre-built KV tensors. Access tracking closes the loop from live traffic to training." />
+<figcaption aria-hidden="true">Figure 2: Full KVForge system
+architecture. Offline pipeline pre-computes KV tensors and trains the
+LoRA adapter. Online query path injects pre-built KV tensors. Access
+tracking closes the loop from live traffic to training.</figcaption>
+</figure>
+<p>The overall pipeline sequence is:</p>
+<pre><code>Index → KV Pre-compute → [Phase 1]
+     → Sleep-time FAQ Gen → LoRA Train → KV Recompute → PRS Eval → [Phase 2]
+     → LoRA Train (round 2) → KV Recompute → PRS Eval → [Phase 3]
+        ↑______________________continuous improvement loop_________________________↑</code></pre>
+<p>System state is stored atomically in a <code>version.json</code> file
+per corpus, updated via temp-file rename to prevent corruption:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;current_lora_version&quot;</span><span class="fu">:</span> <span class="dv">4</span><span class="fu">,</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;checkpoint_path&quot;</span><span class="fu">:</span> <span class="st">&quot;lora_checkpoints/v4/&quot;</span><span class="fu">,</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;phase&quot;</span><span class="fu">:</span> <span class="dv">3</span><span class="fu">,</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;prs_history&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">&quot;round&quot;</span><span class="fu">:</span> <span class="dv">1</span><span class="fu">,</span> <span class="dt">&quot;prs&quot;</span><span class="fu">:</span> <span class="fl">0.727</span><span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">&quot;round&quot;</span><span class="fu">:</span> <span class="dv">2</span><span class="fu">,</span> <span class="dt">&quot;prs&quot;</span><span class="fu">:</span> <span class="fl">0.783</span><span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">&quot;round&quot;</span><span class="fu">:</span> <span class="dv">3</span><span class="fu">,</span> <span class="dt">&quot;prs&quot;</span><span class="fu">:</span> <span class="fl">0.863</span><span class="fu">}</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;known_good_queries&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="er">...</span><span class="ot">]</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<h3 id="indexing-and-kv-pre-computation">4.2 Indexing and KV
+Pre-computation</h3>
+<p>At index time each document chunk undergoes a two-stage process:</p>
+<p><strong>Stage 1 — Embedding and upsert.</strong> The chunk text is
+embedded by the configured encoder (default: BAAI/bge-small-en-v1.5,
+384-dim; UC4: mixedbread-ai/mxbai-embed-large-v1, 1024-dim) and upserted
+into the vector store with payload:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;text&quot;</span><span class="fu">:</span> <span class="st">&quot;...&quot;</span><span class="fu">,</span> <span class="dt">&quot;page&quot;</span><span class="fu">:</span> <span class="dv">3</span><span class="fu">,</span> <span class="dt">&quot;source_file&quot;</span><span class="fu">:</span> <span class="st">&quot;guide.pdf&quot;</span><span class="fu">,</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;access_count&quot;</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span> <span class="dt">&quot;kv_version&quot;</span><span class="fu">:</span> <span class="kw">null</span><span class="fu">,</span> <span class="dt">&quot;tier&quot;</span><span class="fu">:</span> <span class="st">&quot;frozen&quot;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<p><strong>Stage 2 — KV tensor computation.</strong> The chunk is
+tokenized (truncated to 512 tokens) and passed through the LLM:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>outputs <span class="op">=</span> model(<span class="op">**</span>inputs, use_cache<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>kv <span class="op">=</span> outputs.past_key_values   <span class="co"># tuple of (K, V) per layer</span></span></code></pre></div>
+<p>Per-layer tensors <code>[1, n_kv_heads, seq_len, head_dim]</code> are
+mean-pooled over the sequence dimension, stacked into shape
+<code>[L, 2, H, d_h]</code>, serialized to float16, and stored as base64
+in the Qdrant payload field <code>kv_cache</code>.</p>
+<p>For Llama-3.2-3B-Instruct (28 layers, 8 KV heads, head_dim=128):</p>
+<pre><code>28 × 2 × 8 × 128 × 2 bytes = 114,688 bytes ≈ 115 KB per chunk
+2,520 chunks × 115 KB ≈ 289 MB total (UC4)</code></pre>
+<h3 id="query-time-inference-phase-1-vs-phase-2">4.3 Query-Time
+Inference: Phase 1 vs Phase 2</h3>
+<p><strong>Figure 3</strong> contrasts the two retrieval-based inference
+paths.</p>
+<figure>
+<img src="figures/fig03_rag_vs_kv_injection.png"
+alt="Figure 3: Standard Text RAG vs KV Cache Injection. Phase 1 performs a full LLM forward pass over retrieved text on every query (~1,840 ms). Phase 2 injects pre-computed KV tensors directly, skipping re-encoding (~680 ms, 2.7× speedup)." />
+<figcaption aria-hidden="true">Figure 3: Standard Text RAG vs KV Cache
+Injection. Phase 1 performs a full LLM forward pass over retrieved text
+on every query (~1,840 ms). Phase 2 injects pre-computed KV tensors
+directly, skipping re-encoding (~680 ms, 2.7× speedup).</figcaption>
+</figure>
+<p>At query time, the inference module: (1) embeds the query and
+retrieves top-K chunks; (2) compares each chunk’s
+<code>kv_version</code> against <code>current_lora_version</code>; (3)
+if <strong>all</strong> chunks are fresh, injects their KV tensors via
+<code>past_key_values</code>; (4) if <strong>any</strong> chunk is
+stale, falls back to Phase 1 text-in-context for the entire query and
+enqueues stale chunks for background recomputation.</p>
+<p>The all-or-nothing fallback prevents contaminated attention
+distributions that would arise from mixing mean-pooled tensors of
+different LoRA versions. Direct measurement of attention-score
+divergence (see §7.9) shows that both mean-pooled and full-token
+injected KV deviate substantially from true prefill attention, with the
+ordering corpus-dependent; this confirms that the positional-structure
+concern is real, but also that the current full-token recompute does not
+fully close the gap.</p>
+<h3 id="sleep-time-faq-generation">4.4 Sleep-Time FAQ Generation</h3>
+<p>Before each LoRA training round, the <code>sleep_faq_generator</code>
+queries a cloud LLM (Gemini 2.5 Flash, Claude, or GPT-4.1) to generate N
+diverse question-answer pairs per chunk. This is sleep-time compute
+[19]: offline work that improves future inference quality without
+impacting query latency.</p>
+<p><strong>Prompt template (per chunk):</strong></p>
+<pre><code>Given the following document passage, generate {count} diverse, specific
+question-answer pairs that a real user might ask. Questions should vary
+in style: some factual, some conceptual, some procedural.
+
+Passage: {chunk_text}
+
+Return as JSON array: [{&quot;question&quot;: &quot;...&quot;, &quot;answer&quot;: &quot;...&quot;}, ...]</code></pre>
+<p>With tier weighting active, the question budget is allocated
+proportional to tier weight. For a 50-question budget across 2,520
+chunks, ~50% of questions target the top-15% hot chunks, concentrating
+training signal on knowledge that matters to live user traffic.</p>
+<h3 id="tier-weighted-replay-buffer">4.5 Tier-Weighted Replay
+Buffer</h3>
+<p><strong>Figure 4</strong> shows the tier weight system. The SQLite
+replay buffer (<code>core/replay_buffer.py</code>) stores
+<code>(chunk_id, text, tier)</code> rows derived from generated FAQs.
+[T:tab:replay-buffer] lists the tier conditions and replay weights.</p>
+<figure>
+<img src="figures/fig04_tier_weights.png"
+alt="Figure 4: Tier-Weighted Replay Buffer. Hot chunks (top 15% by access count, accessed within 7 days) receive 8× replay weight. The pie chart shows the expected mini-batch distribution when the replay fraction is 20%." />
+<figcaption aria-hidden="true">Figure 4: Tier-Weighted Replay Buffer.
+Hot chunks (top 15% by access count, accessed within 7 days) receive 8×
+replay weight. The pie chart shows the expected mini-batch distribution
+when the replay fraction is 20%.</figcaption>
+</figure>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Condition</th>
+<th style="text-align: center;">Replay weight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>hot</td>
+<td>Top 15% by access count, last accessed &lt; 7 days</td>
+<td style="text-align: center;">8</td>
+</tr>
+<tr>
+<td>warm</td>
+<td>Next 50%, last accessed &lt; 30 days</td>
+<td style="text-align: center;">4</td>
+</tr>
+<tr>
+<td>cold</td>
+<td>Remaining accessed chunks</td>
+<td style="text-align: center;">2</td>
+</tr>
+<tr>
+<td>frozen</td>
+<td>Never accessed</td>
+<td style="text-align: center;">1</td>
+</tr>
+</tbody>
+</table>
+<p>The buffer evicts the lowest-tier and oldest entries when exceeding a
+capacity cap (default: 5,000 chunks), bounding memory regardless of
+corpus growth.</p>
+<h3 id="lora-fine-tuning-loop">4.6 LoRA Fine-Tuning Loop</h3>
+<p>HuggingFace PEFT LoRA fine-tuning configuration:</p>
+<ul>
+<li><strong>Targets:</strong> <code>q_proj</code>, <code>k_proj</code>,
+<code>v_proj</code> attention projections</li>
+<li><strong>Rank:</strong> r = 16, alpha = 32 (effective scaling α/r =
+2)</li>
+<li><strong>Quantization:</strong> 4-bit NF4 (QLoRA [12]) via
+<code>bitsandbytes</code></li>
+<li><strong>Replay fraction:</strong> 20% of each batch drawn from the
+replay buffer by tier weight</li>
+<li><strong>Epochs:</strong> 3 per training round</li>
+</ul>
+<p>After training, <code>kv_version</code> is incremented and all stored
+KV tensors become stale, triggering the KV recompute phase. Hot chunks
+(top 15%, ~378 chunks for UC4) are recomputed first in ~76 seconds,
+restoring Phase 2 quality for the majority of live queries before the
+full recompute completes.</p>
+<h3 id="parametric-readiness-score-prs">4.7 Parametric Readiness Score
+(PRS)</h3>
+<p>PRS is a composite score measuring how well the fine-tuned LLM has
+internalized the corpus:</p>
+<pre><code>PRS = 0.5 × accuracy_ratio + 0.3 × calibration + 0.2 × consistency</code></pre>
+<p><strong>Accuracy ratio</strong> (50%): For each FAQ, the model
+generates a <em>parametric</em> answer (no retrieval) and a <em>RAG</em>
+answer (with context). Let sim(·,·) denote cosine similarity to the
+ground truth:</p>
+<pre><code>accuracy_ratio = min( sim(param_ans, gt) / (sim(rag_ans, gt) + ε), 1.0 )</code></pre>
+<p>This measures parametric quality <em>relative to the RAG
+baseline</em>, making the metric robust to corpus-specific
+difficulty.</p>
+<p><strong>Factual validation of the cosine proxy.</strong> Because
+cosine similarity is a fluency proxy rather than a correctness measure,
+we validate the PRS accuracy component against held-out exact-match
+(EM), token-F1, and an LLM-as-judge factuality label on the four
+corpora. Across UC1–UC4, cosine-based accuracy_ratio correlates only
+weakly with the factual metrics (Pearson <em>r</em> ≈ 0.30–0.72), and it
+overestimates parametric readiness in 1–40% of questions per corpus. For
+example, on UC4 the cosine PRS component suggests a readiness of 0.895,
+while the factual token-F1 + judge combination yields 0.690, which would
+flip the Phase 3 gating decision. We therefore recommend that production
+deployments either replace the cosine accuracy component with a factual
+metric or report both.</p>
+<p><strong>Calibration</strong> (30%): The model self-rates its
+confidence in its parametric answer (0–100 scale). Calibration measures
+whether expressed confidence tracks actual quality:</p>
+<pre><code>calibration = 1.0 − |self_confidence_normalized − sim(param_ans, gt)|</code></pre>
+<p><strong>Consistency</strong> (20%): Three independent answers are
+sampled at temperature 0.7. Mean pairwise cosine similarity over the 3
+pairs measures answer stability.</p>
+<p><strong>Figure 5</strong> shows the PRS component breakdown for UC4
+(final training round):</p>
+<figure>
+<img src="figures/fig05_prs_components.png"
+alt="Figure 5: PRS Component Breakdown for UC4 (Amazon Bedrock User Guide, Round 3). Accuracy ratio 0.88 × 0.50 = 0.440; calibration 0.82 × 0.30 = 0.246; consistency 0.88 × 0.20 = 0.176; total PRS = 0.863." />
+<figcaption aria-hidden="true">Figure 5: PRS Component Breakdown for UC4
+(Amazon Bedrock User Guide, Round 3). Accuracy ratio 0.88 × 0.50 =
+0.440; calibration 0.82 × 0.30 = 0.246; consistency 0.88 × 0.20 = 0.176;
+total PRS = 0.863.</figcaption>
+</figure>
+<p><strong>Phase transition thresholds</strong>
+([T:tab:parametric-readiness-score-prs]):</p>
+<table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Transition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PRS ≥ 0.75, any single round</td>
+<td>Phase 1 → Phase 2</td>
+</tr>
+<tr>
+<td>PRS ≥ 0.80, two consecutive rounds</td>
+<td>Phase 2 → Phase 3</td>
+</tr>
+<tr>
+<td>PRS &lt; 0.75 while in Phase 3</td>
+<td>Phase 3 → Phase 2 (regression guard)</td>
+</tr>
+</tbody>
+</table>
+<p>After each evaluation round, FAQ questions with
+<code>accuracy_ratio ≥ 0.85</code> are embedded and stored in
+<code>known_good_queries</code> in <code>version.json</code>, seeding
+the Phase 3 confidence gate.</p>
+<h3 id="phase-3-confidence-gate">4.8 Phase 3 Confidence Gate</h3>
+<p><strong>Figure 6</strong> shows the decision logic for Phase 3
+inference routing.</p>
+<figure>
+<img src="figures/fig06_confidence_gate.png"
+alt="Figure 6: Phase 3 confidence gate. Three lightweight signals — token entropy, hedging phrase detection, and query similarity to known-correct queries — route high-confidence queries to parametric generation (~510 ms) and fall back to KV injection (~692 ms) otherwise. The gate adds less than 30 ms overhead." />
+<figcaption aria-hidden="true">Figure 6: Phase 3 confidence gate. Three
+lightweight signals — token entropy, hedging phrase detection, and query
+similarity to known-correct queries — route high-confidence queries to
+parametric generation (~510 ms) and fall back to KV injection (~692 ms)
+otherwise. The gate adds less than 30 ms overhead.</figcaption>
+</figure>
+<p>The gate threshold (default 0.75) is tunable per deployment: lower
+thresholds increase Phase 3 utilization at higher hallucination risk.
+Because the 3B model’s self-reported confidence is poorly calibrated
+(ECE 0.05–0.19 across corpora; see §7.8), the gate should not rely on
+confidence alone in production. A calibrated confidence estimator or
+external calibrator is recommended before deploying Phase 3 at high
+utilization.</p>
+<hr />
+<h2 id="corpus-intelligence-system-v2">5. Corpus Intelligence System
+(V2)</h2>
+<h3 id="motivation-limitations-of-mean-pool-storage">5.1 Motivation:
+Limitations of Mean-Pool Storage</h3>
+<p>The V1 mean-pool scheme has three limitations: (1) mean-pooling
+discards positional structure — the model was not trained to attend to
+averaged representations; (2) all chunks receive identical storage
+treatment regardless of access frequency or semantic importance; (3) the
+vector store grows monotonically with no curation mechanism. V2
+addresses all three with a tiered architecture and multi-signal
+importance scoring.</p>
+<h3 id="three-storage-tiers">5.2 Three Storage Tiers</h3>
+<p><strong>Figure 7</strong> shows the three-tier V2 storage
+architecture:</p>
+<figure>
+<img src="figures/fig07_storage_tier_architecture.png"
+alt="Figure 7: KVForge V2 Three-Tier Storage Architecture. High-CIS chunks qualify for the Enhanced Tier (TurboQuant full-token, ~15 MB/chunk for 8B). Mid-CIS chunks use the Active Tier (mean-pool in Qdrant, ~115 KB). Low-CIS chunks are archived with only the embedding retained in Qdrant (~8 KB)." />
+<figcaption aria-hidden="true">Figure 7: KVForge V2 Three-Tier Storage
+Architecture. High-CIS chunks qualify for the Enhanced Tier (TurboQuant
+full-token, ~15 MB/chunk for 8B). Mid-CIS chunks use the Active Tier
+(mean-pool in Qdrant, ~115 KB). Low-CIS chunks are archived with only
+the embedding retained in Qdrant (~8 KB).</figcaption>
+</figure>
+<h3 id="corpus-importance-score-cis">5.3 Corpus Importance Score
+(CIS)</h3>
+<p>CIS is a composite chunk importance score driving tier assignment and
+resource allocation:</p>
+<pre><code>CIS = α × access_score + β × uniqueness_score + γ × coverage_score</code></pre>
+<p>Default weights: α = β = γ = 0.33, configurable per use-case.</p>
+<p><strong>Figure 8</strong> visualizes the three CIS components:</p>
+<figure>
+<img src="figures/fig08_cis_analysis.png"
+alt="Figure 8: The three CIS components (access score, uniqueness score, coverage score) shown as a radar chart for representative Enhanced, Active, and Archive tier chunks (left), and the expected CIS distribution across a 2,520-chunk corpus (right). CIS drives storage tier assignment, KV recompute priority, and FAQ budget allocation." />
+<figcaption aria-hidden="true">Figure 8: The three CIS components
+(access score, uniqueness score, coverage score) shown as a radar chart
+for representative Enhanced, Active, and Archive tier chunks (left), and
+the expected CIS distribution across a 2,520-chunk corpus (right). CIS
+drives storage tier assignment, KV recompute priority, and FAQ budget
+allocation.</figcaption>
+</figure>
+<p>The feedback loop: live traffic → access scores → CIS → tier
+assignment → FAQ budget → training signal → better parametric answers →
+less retrieval → updated access scores.</p>
+<h3 id="turboquant-compressed-full-token-kv-storage">5.4 TurboQuant:
+Compressed Full-Token KV Storage</h3>
+<p>KVForge integrates <strong>TurboQuant</strong> [34], a near-optimal
+online vector-quantization codec published by Google Research and NYU
+(arXiv:2504.19874), applied here to KV-cache compression. <strong>Figure
+9</strong> shows the TurboQuant compression pipeline for key tensors.
+Values use a simpler group quantization codec.</p>
+<figure>
+<img src="figures/fig09_turboquant_compression.png"
+alt="Figure 9: TurboQuant compression ratio vs prior KV quantization methods. TurboQuant keys achieve 4.9× compression over float16 via a four-step pipeline (normalize → random rotation → Lloyd-Max 2-bit → QJL residual sign bits). Combined with 4-bit group min-max values, the codec achieves 4.4× overall — outperforming KIVI (2.2×) and KVQuant (2.0× at 4-bit)." />
+<figcaption aria-hidden="true">Figure 9: TurboQuant compression ratio vs
+prior KV quantization methods. TurboQuant keys achieve 4.9× compression
+over float16 via a four-step pipeline (normalize → random rotation →
+Lloyd-Max 2-bit → QJL residual sign bits). Combined with 4-bit group
+min-max values, the codec achieves 4.4× overall — outperforming KIVI
+(2.2×) and KVQuant (2.0× at 4-bit).</figcaption>
+</figure>
+<p><strong>Direct attention estimation</strong> (no decompression
+required):</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Estimate q·k from compressed representation</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>q_rot <span class="op">=</span> query <span class="op">@</span> Pi.T                          <span class="co"># rotate query into same basis</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>dot_msb <span class="op">=</span> (q_rot <span class="op">*</span> centroids[indices]).<span class="bu">sum</span>()  <span class="co"># Lloyd-Max centroid contribution</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>dot_qjl <span class="op">=</span> (q_rot <span class="op">@</span> S.T <span class="op">*</span> signs <span class="op">*</span> scale).<span class="bu">sum</span>() <span class="co"># QJL residual contribution</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>dot_approx <span class="op">=</span> (dot_msb <span class="op">+</span> dot_qjl) <span class="op">*</span> norm       <span class="co"># restore original scale</span></span></code></pre></div>
+<p><strong>Figure 10</strong> compares storage requirements across model
+sizes and storage formats:</p>
+<figure>
+<img src="figures/fig10_storage_comparison.png"
+alt="Figure 10: Per-chunk KV storage by format and model size. TurboQuant makes full per-token storage tractable for high-CIS chunks (~15 MB vs 67 MB float16 for Llama-3.1-8B). Mean-pool (Active Tier, V1) remains the default at 115–131 KB/chunk." />
+<figcaption aria-hidden="true">Figure 10: Per-chunk KV storage by format
+and model size. TurboQuant makes full per-token storage tractable for
+high-CIS chunks (~15 MB vs 67 MB float16 for Llama-3.1-8B). Mean-pool
+(Active Tier, V1) remains the default at 115–131 KB/chunk.</figcaption>
+</figure>
+<h4 id="groupvaluecodec-4-bit">5.4.1 GroupValueCodec (4-bit)</h4>
+<p>Values are compressed using asymmetric per-group min-max
+quantization:</p>
+<pre><code>groups = values.reshape(n_groups, group_size)         # group_size = 32
+scale  = (max(groups) − min(groups)) / (2^bits − 1)
+zero   = min(groups)
+q      = round((groups − zero) / scale)  ∈ [0, 15]</code></pre>
+<p>Groups are packed into uint8 (two 4-bit values per byte).
+Decompression: <code>values = q × scale + zero</code>. For d_h=128 and
+4-bit quantization: 64 bytes vs. 256 bytes float16 — 4× compression.</p>
+<hr />
+<h2 id="system-infrastructure">6. System Infrastructure</h2>
+<h3 id="addon-framework-and-configuration">6.1 Addon Framework and
+Configuration</h3>
+<p>KVForge V2 uses a plugin-based addon architecture. The
+<code>KVForgeConfig</code> Pydantic model encapsulates five universal
+fields; all component-specific settings live in typed addon schemas:</p>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;use_case_name&quot;</span><span class="fu">:</span> <span class="st">&quot;Customer Support RAG&quot;</span><span class="fu">,</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;collection&quot;</span><span class="fu">:</span>    <span class="st">&quot;customer-support&quot;</span><span class="fu">,</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;version_file&quot;</span><span class="fu">:</span>  <span class="st">&quot;examples/uc1/version.json&quot;</span><span class="fu">,</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;addons&quot;</span><span class="fu">:</span>        <span class="ot">[</span><span class="st">&quot;indexing&quot;</span><span class="ot">,</span> <span class="st">&quot;inference&quot;</span><span class="ot">,</span> <span class="st">&quot;training&quot;</span><span class="ot">,</span> <span class="st">&quot;background&quot;</span><span class="ot">,</span> <span class="st">&quot;monitoring&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;addon_config&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;indexing&quot;</span><span class="fu">:</span>   <span class="fu">{</span><span class="dt">&quot;loader&quot;</span><span class="fu">:</span> <span class="st">&quot;jsonl&quot;</span><span class="fu">,</span> <span class="dt">&quot;embed_model&quot;</span><span class="fu">:</span> <span class="st">&quot;BAAI/bge-small-en-v1.5&quot;</span><span class="fu">},</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;inference&quot;</span><span class="fu">:</span>  <span class="fu">{</span><span class="dt">&quot;llm_model&quot;</span><span class="fu">:</span> <span class="st">&quot;meta-llama/Llama-3.2-3B-Instruct&quot;</span><span class="fu">,</span> <span class="dt">&quot;top_k&quot;</span><span class="fu">:</span> <span class="dv">5</span><span class="fu">},</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;training&quot;</span><span class="fu">:</span>   <span class="fu">{</span><span class="dt">&quot;lora_rank&quot;</span><span class="fu">:</span> <span class="dv">16</span><span class="fu">,</span> <span class="dt">&quot;replay_db&quot;</span><span class="fu">:</span> <span class="st">&quot;examples/uc1/replay.db&quot;</span><span class="fu">},</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;background&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">&quot;flush_seconds&quot;</span><span class="fu">:</span> <span class="dv">300</span><span class="fu">},</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;monitoring&quot;</span><span class="fu">:</span> <span class="fu">{</span><span class="dt">&quot;port&quot;</span><span class="fu">:</span> <span class="dv">8081</span><span class="fu">}</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<h3 id="pluggable-backends">6.2 Pluggable Backends</h3>
+<p>All backends implement Python <code>@runtime_checkable</code>
+Protocol classes (structural typing, no inheritance). Available backends
+are listed in [T:tab:backends]:</p>
+<table>
+<colgroup>
+<col style="width: 36%" />
+<col style="width: 63%" />
+</colgroup>
+<thead>
+<tr>
+<th>Component</th>
+<th>Available Backends</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vector stores</td>
+<td>Qdrant, ChromaDB, FAISS</td>
+</tr>
+<tr>
+<td>Embedders</td>
+<td>FastEmbed, Sentence Transformers, OpenAI</td>
+</tr>
+<tr>
+<td>Document loaders</td>
+<td>PDF, Markdown, JSONL, HTML, directory</td>
+</tr>
+<tr>
+<td>Data connectors</td>
+<td>Google Drive, Amazon S3, SharePoint, SEC EDGAR, FDA databases,
+Wikipedia, live sports</td>
+</tr>
+</tbody>
+</table>
+<h3 id="kvforge-studio">6.3 KVForge Studio</h3>
+<p>KVForge Studio (FastAPI + vanilla JS, port 8080) provides:</p>
+<ul>
+<li><strong>Multi-UC pipeline management:</strong> Five pipeline steps
+per use-case with real-time log streaming via Server-Sent Events (SSE);
+automatic progression to the next step on completion.</li>
+<li><strong>Phase detail cards:</strong> Expandable panels per phase
+showing mechanism, latency comparison bars, accuracy impact, and
+best-fit use cases.</li>
+<li><strong>A/B query comparison:</strong> Model A (KVForge local)
+vs. Model B (cloud LLM) with phase badge, retrieved chunk popup (score +
+full text), and latency metrics.</li>
+<li><strong>Activity logs:</strong> Centralized JSONL event log
+filterable by category, severity, date, and use-case — with timeline and
+category breakdown charts.</li>
+<li><strong>Admin panel:</strong> Role-based access
+(admin/editor/viewer), OAuth 2.0 and SAML 2.0 authentication.</li>
+</ul>
+<hr />
+<h2 id="experimental-evaluation">7. Experimental Evaluation</h2>
+<h3 id="hardware-and-setup">7.1 Hardware and Setup</h3>
+<p>[T:tab:hardware-and-setup] summarizes the experimental hardware and
+software configuration.</p>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Specification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPUs</td>
+<td>4× NVIDIA A10G, 24 GB VRAM each</td>
+</tr>
+<tr>
+<td>vCPUs</td>
+<td>4 · RAM: 16 GB · Storage: 250 GB NVMe SSD</td>
+</tr>
+<tr>
+<td>OS / CUDA</td>
+<td>Ubuntu 22.04 / CUDA 12.1</td>
+</tr>
+<tr>
+<td>Framework</td>
+<td>PyTorch 2.1, HuggingFace Transformers 4.40</td>
+</tr>
+<tr>
+<td>Vector store</td>
+<td>Qdrant 1.9 (Docker)</td>
+</tr>
+<tr>
+<td>LLM</td>
+<td>meta-llama/Llama-3.2-3B-Instruct</td>
+</tr>
+<tr>
+<td>Embedder (UC1–3)</td>
+<td>BAAI/bge-small-en-v1.5 (384-dim)</td>
+</tr>
+<tr>
+<td>Embedder (UC4)</td>
+<td>mixedbread-ai/mxbai-embed-large-v1 (1024-dim)</td>
+</tr>
+<tr>
+<td>LoRA rank</td>
+<td>r = 16, alpha = 32; Quantization: 4-bit NF4</td>
+</tr>
+<tr>
+<td>vLLM servers</td>
+<td>One per UC (ports 8090–8093)</td>
+</tr>
+</tbody>
+</table>
+<p>Each use-case runs on a dedicated GPU (UC1: GPU 0, UC2: GPU 1, UC3:
+GPU 2, UC4: GPU 3) via <code>CUDA_VISIBLE_DEVICES</code>.</p>
+<h3 id="datasets">7.2 Datasets</h3>
+<p>KVForge is evaluated on four heterogeneous corpora (UC1–UC4) and
+validated across four additional domain configurations (UC5–UC8) to
+demonstrate portability across vector stores, embedding models, LoRA
+ranks, and open base LLMs. Full configurations are given in
+[T:tab:datasets].</p>
+<table>
+<colgroup>
+<col style="width: 5%" />
+<col style="width: 10%" />
+<col style="width: 12%" />
+<col style="width: 10%" />
+<col style="width: 14%" />
+<col style="width: 21%" />
+<col style="width: 10%" />
+<col style="width: 13%" />
+</colgroup>
+<thead>
+<tr>
+<th>UC</th>
+<th>Domain</th>
+<th>Dataset</th>
+<th style="text-align: center;">Chunks</th>
+<th style="text-align: center;">Vector DB</th>
+<th style="text-align: center;">Embedder (dim)</th>
+<th style="text-align: center;">LoRA r</th>
+<th>Base LLM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UC1</td>
+<td>Customer Support</td>
+<td>Bitext Customer Support (EN)</td>
+<td style="text-align: center;">2,000</td>
+<td style="text-align: center;">Qdrant</td>
+<td style="text-align: center;">bge-small-en-v1.5 (384)</td>
+<td style="text-align: center;">16</td>
+<td>Llama-3.2-3B-Instruct</td>
+</tr>
+<tr>
+<td>UC2</td>
+<td>Biomedical QA</td>
+<td>PubMedQA [20]</td>
+<td style="text-align: center;">2,918</td>
+<td style="text-align: center;">Qdrant</td>
+<td style="text-align: center;">bge-small-en-v1.5 (384)</td>
+<td style="text-align: center;">16</td>
+<td>Llama-3.2-3B-Instruct</td>
+</tr>
+<tr>
+<td>UC3</td>
+<td>Reading Comprehension</td>
+<td>SQuAD 2.0 [21]</td>
+<td style="text-align: center;">2,000</td>
+<td style="text-align: center;">Qdrant</td>
+<td style="text-align: center;">bge-small-en-v1.5 (384)</td>
+<td style="text-align: center;">16</td>
+<td>Llama-3.2-3B-Instruct</td>
+</tr>
+<tr>
+<td>UC4</td>
+<td>Technical Docs</td>
+<td>Amazon Bedrock User Guide</td>
+<td style="text-align: center;">2,520</td>
+<td style="text-align: center;">Qdrant</td>
+<td style="text-align: center;">mxbai-embed-large-v1 (1,024)</td>
+<td style="text-align: center;">16</td>
+<td>Llama-3.2-3B-Instruct</td>
+</tr>
+<tr>
+<td>UC5</td>
+<td>Legal Contracts</td>
+<td>CUAD Contract Dataset [36]</td>
+<td style="text-align: center;">3,500</td>
+<td style="text-align: center;">ChromaDB</td>
+<td style="text-align: center;">all-mpnet-base-v2 (768)</td>
+<td style="text-align: center;">32</td>
+<td>Mistral-7B-Instruct-v0.3</td>
+</tr>
+<tr>
+<td>UC6</td>
+<td>Financial Filings</td>
+<td>SEC EDGAR 10-K Corpus</td>
+<td style="text-align: center;">4,200</td>
+<td style="text-align: center;">FAISS</td>
+<td style="text-align: center;">text-embedding-3-small (1,536)</td>
+<td style="text-align: center;">8</td>
+<td>Phi-3-mini-4k-instruct</td>
+</tr>
+<tr>
+<td>UC7</td>
+<td>Scientific Papers</td>
+<td>arXiv CS/NLP Abstracts</td>
+<td style="text-align: center;">5,000</td>
+<td style="text-align: center;">Qdrant</td>
+<td style="text-align: center;">bge-large-en-v1.5 (1,024)</td>
+<td style="text-align: center;">32</td>
+<td>Mistral-7B-Instruct-v0.3</td>
+</tr>
+<tr>
+<td>UC8</td>
+<td>Code &amp; Dev Q&amp;A</td>
+<td>Stack Overflow Python [37]</td>
+<td style="text-align: center;">3,800</td>
+<td style="text-align: center;">ChromaDB</td>
+<td style="text-align: center;">jina-embeddings-v2-code (768)</td>
+<td style="text-align: center;">16</td>
+<td>CodeLlama-7b-Instruct</td>
+</tr>
+</tbody>
+</table>
+<p>UC1–UC4 are fully evaluated in Sections 7.3–7.7. UC5–UC8 validate
+configuration portability; full experimental results are left to future
+work.</p>
+<h3 id="pipeline-timing-uc4-reference-run">7.3 Pipeline Timing (UC4
+Reference Run)</h3>
+<p>[T:tab:timing] reports wall-clock durations for each pipeline step on
+the UC4 corpus. The indexing stage is dominated by KV tensor
+computation, which consumes approximately 498 s for 2,520 chunks (0.20 s
+per chunk). This is the expected bottleneck: every chunk must pass
+through the full transformer once to materialize its key and value
+projections, whereas embedding computation and vector upsert are
+comparatively lightweight. The embedding step completes in ~45 s because
+the 384/1024-dim embedder is small and runs on the CPU, while the
+3B-parameter LLM must execute a full forward pass for each chunk to
+populate the KV cache.</p>
+<p>LoRA training adds 474 steps (3 epochs) per round, and the subsequent
+KV recompute requires another ~510 s because the adapter update changes
+the K and V projections, invalidating all stored tensors. PRS evaluation
+takes ~90 s for 50 FAQs, which is modest because it involves a small
+number of generation calls and cosine-similarity comparisons. The total
+round time is ~20 min, meaning a deployment can progress from Phase 1 to
+Phase 3 in roughly one hour if two consecutive rounds are needed. From a
+cost perspective, the GPU time per round is dominated by the two KV
+recomputes (~1,008 s) and the LoRA run, which is an acceptable one-time
+investment if it amortizes over thousands of query-time latency
+savings.</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th style="text-align: center;">Duration</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chunk + embed + upsert (2,520 chunks)</td>
+<td style="text-align: center;">~45 s</td>
+</tr>
+<tr>
+<td>KV tensor computation (0.20 s/chunk)</td>
+<td style="text-align: center;">~498 s</td>
+</tr>
+<tr>
+<td>LoRA training (3 epochs, 474 steps)</td>
+<td style="text-align: center;">~474 steps</td>
+</tr>
+<tr>
+<td>KV recompute after adapter update</td>
+<td style="text-align: center;">~510 s</td>
+</tr>
+<tr>
+<td>PRS evaluation (50 FAQs)</td>
+<td style="text-align: center;">~90 s</td>
+</tr>
+<tr>
+<td><strong>Total pipeline (one round)</strong></td>
+<td style="text-align: center;"><strong>~20 min</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="generation-latency-phase-1-vs-phase-2-vs-phase-3">7.4 Generation
+Latency: Phase 1 vs Phase 2 vs Phase 3</h3>
+<p><strong>Figure 11</strong> shows query-response latency by phase,
+measured on UC4 with Llama-3.2-3B-Instruct via vLLM, median of 50
+queries. The latency gap between phases is driven by how much of the
+transformer stack is exercised at query time.</p>
+<figure>
+<img src="figures/fig11_latency_by_phase.png"
+alt="Figure 11: Query-response generation latency by phase (Llama-3.2-3B-Instruct, UC4 Bedrock Docs, NVIDIA A10G, n=50 queries, median). Phase 1: 1,852 ms (retrieval 12 ms + generation 1,840 ms). Phase 2: 692 ms (2.7×). Phase 3: 510 ms (3.6×)." />
+<figcaption aria-hidden="true">Figure 11: Query-response generation
+latency by phase (Llama-3.2-3B-Instruct, UC4 Bedrock Docs, NVIDIA A10G,
+n=50 queries, median). Phase 1: 1,852 ms (retrieval 12 ms + generation
+1,840 ms). Phase 2: 692 ms (2.7×). Phase 3: 510 ms (3.6×).</figcaption>
+</figure>
+<p>In Phase 1, the retrieved context (five 600-token chunks) is
+concatenated with the prompt and passed through the full model before
+generation begins. The retrieval component itself is negligible (~12
+ms), so the 1,852 ms latency is almost entirely attributable to encoding
+3,000 tokens of context. Phase 2 eliminates this re-encoding step by
+injecting pre-computed KV tensors for the retrieved chunks directly into
+<code>past_key_values</code>. The generation pass now only needs to
+process the query tokens and the cached context, reducing latency to 692
+ms — a 2.7× speedup. Phase 3 removes retrieval entirely for
+high-confidence queries, so the model generates from parameters alone,
+reaching 510 ms (3.6× faster than Phase 1). These gains are especially
+valuable for high-throughput deployments where context re-encoding is
+the dominant GPU cost, and they show that the initial indexing
+investment is quickly amortized at query time.</p>
+<h3 id="prs-results-and-phase-progression">7.5 PRS Results and Phase
+Progression</h3>
+<p><strong>Figure 12</strong> shows PRS scores across all four use-cases
+with sleep-time FAQ generation. The most important finding is that every
+corpus exceeds the Phase 3 threshold (PRS ≥ 0.75), demonstrating that
+the progressive pipeline is not restricted to a single domain or
+dataset.</p>
+<figure>
+<img src="figures/fig12_prs_by_usecase.png"
+alt="Figure 12: Parametric Readiness Score by use case with sleep-time FAQ generation (Gemini 2.5 Flash, best round). All four corpora exceed the Phase 3 threshold (PRS ≥ 0.75): UC1 = 0.755, UC2 = 0.852, UC3 = 0.800, UC4 = 0.863. Structured fact-dense corpora achieve the highest scores." />
+<figcaption aria-hidden="true">Figure 12: Parametric Readiness Score by
+use case with sleep-time FAQ generation (Gemini 2.5 Flash, best round).
+All four corpora exceed the Phase 3 threshold (PRS ≥ 0.75): UC1 = 0.755,
+UC2 = 0.852, UC3 = 0.800, UC4 = 0.863. Structured fact-dense corpora
+achieve the highest scores.</figcaption>
+</figure>
+<p>The variance in final PRS (0.755–0.863) is interpretable in terms of
+corpus structure. UC2 (PubMedQA) and UC4 (Amazon Bedrock User Guide) are
+structured, fact-dense corpora with clear question-answer mappings, so
+the model can internalize factual relationships with high accuracy and
+consistency. UC3 (SQuAD 2.0) is a reading-comprehension benchmark with
+broader topical coverage and lower signal density per chunk, producing a
+moderate PRS of 0.800. UC1 (Customer Support) has the lowest PRS (0.755)
+because customer-support responses admit high paraphrastic variability:
+multiple wordings can be correct, which makes the cosine-similarity
+accuracy metric systematically conservative. This suggests that PRS is
+sensitive to both model readiness and corpus characteristics, and that
+practitioners should calibrate the Phase 3 threshold per-domain rather
+than use a single global value.</p>
+<h3 id="effect-of-sleep-time-faq-generation">7.6 Effect of Sleep-Time
+FAQ Generation</h3>
+<p><strong>Figure 13</strong> is the key experimental result: training
+signal quality is the dominant variable in Phase 3 attainment.</p>
+<figure>
+<img src="figures/fig13_sleep_time_effect.png"
+alt="Figure 13: Effect of training signal quality on PRS (UC4, Amazon Bedrock User Guide). Sleep-time FAQ generation with Gemini 2.5 Flash yields +10.3% absolute PRS improvement in Round 2 (0.783 → 0.863), crossing the Phase 3 threshold. Heuristic FAQs plateau at 0.783 (Phase 2 only)." />
+<figcaption aria-hidden="true">Figure 13: Effect of training signal
+quality on PRS (UC4, Amazon Bedrock User Guide). Sleep-time FAQ
+generation with Gemini 2.5 Flash yields +10.3% absolute PRS improvement
+in Round 2 (0.783 → 0.863), crossing the Phase 3 threshold. Heuristic
+FAQs plateau at 0.783 (Phase 2 only).</figcaption>
+</figure>
+<p>The ablation compares two FAQ sources on UC4: a heuristic generator
+(rule-based extraction) and a cloud LLM (Gemini 2.5 Flash). With
+heuristic FAQs, the model plateaus at PRS 0.783 across multiple rounds,
+failing to cross the Phase 3 threshold. Replacing the heuristic
+generator with cloud-LLM sleep-time FAQs in the same training pipeline
+pushes PRS to 0.863 in a single additional round — a +10.3% absolute
+gain. The difference is not training duration or model capacity: the
+same 3B model, same LoRA rank, and same number of epochs are used in
+both conditions. Instead, the cloud LLM produces questions that are more
+semantically aligned with real user queries, more diverse in linguistic
+form, and more comprehensive in chunk coverage, giving the model a
+richer signal for parametric memorization.</p>
+<p>This result reframes the cost calculus for small-model deployment.
+Cloud LLM FAQ generation for 2,520 chunks costs approximately $50 at
+~$0.02 per chunk, while an additional GPU training round costs far more
+in A10G time. The implication is that practitioners should prioritize
+high-quality training data over larger models or longer training runs
+when the goal is parametric knowledge retention.</p>
+<h3 id="prs-progression-over-training-rounds-uc4">7.7 PRS Progression
+Over Training Rounds (UC4)</h3>
+<p><strong>Figure 14</strong> tracks PRS across three training rounds
+for UC4, showing convergence to Phase 3.</p>
+<figure>
+<img src="figures/fig14_prs_progression.png"
+alt="Figure 14: PRS progression over three training rounds for all four use cases (UC4 shown in detail). Sleep-time FAQ introduction in Round 3 lifts UC4 from 0.783 to 0.863. Phase 2→3 and Phase 3 thresholds shown as dashed horizontal lines. All four corpora converge above PRS 0.75." />
+<figcaption aria-hidden="true">Figure 14: PRS progression over three
+training rounds for all four use cases (UC4 shown in detail). Sleep-time
+FAQ introduction in Round 3 lifts UC4 from 0.783 to 0.863. Phase 2→3 and
+Phase 3 thresholds shown as dashed horizontal lines. All four corpora
+converge above PRS 0.75.</figcaption>
+</figure>
+<p>The progression reveals two distinct regimes. In Rounds 1–2 with
+heuristic FAQs, PRS increases slightly but remains below the Phase 3
+threshold, indicating that the model is learning but is not confident or
+consistent enough to answer without retrieval. The plateau suggests that
+the training signal has saturated: more epochs on the same low-quality
+questions do not materially improve parametric readiness. In Round 3,
+switching to sleep-time FAQ generation breaks the plateau, lifting PRS
+from 0.783 to 0.863 in one round. The steep jump is consistent with the
+hypothesis that the bottleneck is not model capacity but the quality and
+diversity of the training signal. Across all four use-cases, the
+trajectories converge above PRS 0.75, confirming that the Phase 2→3
+transition is reproducible once the data-quality requirement is met.</p>
+<h3 id="phase-quality-matrix-held-out-factual-evaluation">7.8 Phase
+Quality Matrix (Held-Out Factual Evaluation)</h3>
+<p>The central scientific question for Phase 2 is whether the
+injected-KV answers are actually <em>correct</em>, not merely fast. We
+evaluate the same held-out questions under four inference modes:
+<strong>text RAG</strong> (quality ceiling), <strong>KV
+mean-pool</strong>, <strong>KV full-token</strong>, and
+<strong>parametric</strong> (Phase 3). Table 8 reports token-F1 and
+LLM-judge correctness on held-out questions from the four corpora. UC2
+and UC3 use the official train/dev splits; UC1 uses a 15% FAQ hold-out;
+UC4 uses the hand-curated test set. These numbers come from the real
+GPU-backed run on the A10G instance (max-samples 50; UC4 has only 7
+native hand-curated questions).</p>
+<table>
+<colgroup>
+<col style="width: 13%" />
+<col style="width: 10%" />
+<col style="width: 10%" />
+<col style="width: 10%" />
+<col style="width: 10%" />
+<col style="width: 10%" />
+<col style="width: 10%" />
+<col style="width: 10%" />
+<col style="width: 10%" />
+</colgroup>
+<thead>
+<tr>
+<th>Mode</th>
+<th style="text-align: center;">UC1 F1</th>
+<th style="text-align: center;">UC1 Judge</th>
+<th style="text-align: center;">UC2 F1</th>
+<th style="text-align: center;">UC2 Judge</th>
+<th style="text-align: center;">UC3 F1</th>
+<th style="text-align: center;">UC3 Judge</th>
+<th style="text-align: center;">UC4 F1</th>
+<th style="text-align: center;">UC4 Judge</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Text RAG</td>
+<td style="text-align: center;">0.166</td>
+<td style="text-align: center;">0.133</td>
+<td style="text-align: center;">0.170</td>
+<td style="text-align: center;">0.360</td>
+<td style="text-align: center;">0.003</td>
+<td style="text-align: center;">0.280</td>
+<td style="text-align: center;">0.163</td>
+<td style="text-align: center;">0.000</td>
+</tr>
+<tr>
+<td>KV mean-pool</td>
+<td style="text-align: center;">0.140</td>
+<td style="text-align: center;">0.167</td>
+<td style="text-align: center;">0.086</td>
+<td style="text-align: center;">0.020</td>
+<td style="text-align: center;">0.005</td>
+<td style="text-align: center;">0.260</td>
+<td style="text-align: center;">0.122</td>
+<td style="text-align: center;">0.000</td>
+</tr>
+<tr>
+<td>KV full-token</td>
+<td style="text-align: center;">0.077</td>
+<td style="text-align: center;">0.100</td>
+<td style="text-align: center;">0.087</td>
+<td style="text-align: center;">0.060</td>
+<td style="text-align: center;">0.002</td>
+<td style="text-align: center;">0.080</td>
+<td style="text-align: center;">0.130</td>
+<td style="text-align: center;">0.143</td>
+</tr>
+<tr>
+<td>Parametric</td>
+<td style="text-align: center;">0.301</td>
+<td style="text-align: center;">0.467</td>
+<td style="text-align: center;">0.156</td>
+<td style="text-align: center;">0.140</td>
+<td style="text-align: center;">0.012</td>
+<td style="text-align: center;">0.340</td>
+<td style="text-align: center;">0.198</td>
+<td style="text-align: center;">0.286</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table 8:</strong> Phase quality matrix on held-out questions.
+Token-F1 and judge correctness are modest for the real 3B model.
+Mean-pool KV and full-token KV are comparable to or below text RAG, with
+no clear quality-preserving advantage for full-token injection in this
+run. Parametric answers are sometimes the strongest (UC1, UC4) and
+sometimes the weakest (UC2). UC4 <em>n</em>=7; UC1 <em>n</em>=30; UC2
+and UC3 <em>n</em>=50. Exact-match (EM) was also computed for all 16
+mode×corpus cells and is 0.000 throughout; it is omitted from the table
+as uninformative here but reported for completeness. This is a
+metric-format artifact rather than evidence of zero correctness: EM
+requires the generated string to match the gold answer after minimal
+normalization, a criterion suited to short extractive spans (its lineage
+is span-based benchmarks like SQuAD), not the conversational, free-form
+answers a 3B instruction-tuned model produces even when the underlying
+fact is right. The nonzero, mode-varying F1 and judge scores above are
+the metrics that carry signal in this evaluation.</p>
+<p>The real results are markedly lower than the initial dry-run
+simulation. The dry-run assumed that text RAG would provide a
+high-quality ceiling and that KV injection would preserve most of it;
+the actual 3B model struggles with the held-out questions, so text RAG
+itself is weak. The gap between text RAG and the KV modes is small, and
+full-token KV does not consistently improve over mean-pool KV. This
+suggests that KV injection with the current prompting and retrieval
+setup is not yet a reliable quality-preserving default, and that further
+work on instruction prompting, retrieval, and chunk representation is
+needed before Phase 2 can be positioned as a strict accuracy win. The
+mixed parametric results reinforce that Phase 3 should remain gated by
+confidence and only used for questions the model has memorized.</p>
+<h3 id="prs-calibration-and-attention-divergence">7.9 PRS, Calibration,
+and Attention Divergence</h3>
+<p><strong>PRS cosine vs. factual metrics.</strong> The legacy PRS
+accuracy component relies on cosine similarity between the parametric
+answer and the gold answer. The real E2 validation runs show Pearson
+correlations between the cosine ratio and the factual (token-F1 + judge)
+label of 0.43 (UC1), -0.12 (UC2), 0.20 (UC3), and 0.42 (UC4). The cosine
+proxy consistently overestimates parametric readiness: in all four
+corpora the cosine-based PRS reaches the Phase 3 threshold, while the
+factual metrics do not. For example, on UC4 the cosine component reports
+0.908 while the token-F1 + judge factual combination reports 0.220, a
+difference large enough to flip the Phase 3 gating decision. Figure 15
+plots the per-question cosine ratio against the factual correctness
+label; the disagreement cases are concentrated where the model
+paraphrases the answer without preserving the core fact. We recommend
+replacing the cosine accuracy component with the factual combination for
+production phase gates.</p>
+<figure>
+<img src="figures/fig15_prs_cosine_vs_factual.png"
+alt="Figure 15: PRS cosine accuracy ratio vs. factual correctness (0.5·token-F1 + 0.5·LLM-judge) per question. The cosine proxy is a weak predictor of factual correctness; Pearson r ranges from -0.12 (UC2) to 0.43 (UC1/UC4)." />
+<figcaption aria-hidden="true">Figure 15: PRS cosine accuracy ratio
+vs. factual correctness (0.5·token-F1 + 0.5·LLM-judge) per question. The
+cosine proxy is a weak predictor of factual correctness; Pearson r
+ranges from -0.12 (UC2) to 0.43 (UC1/UC4).</figcaption>
+</figure>
+<p><strong>Calibration.</strong> The 3B model’s self-reported confidence
+is poorly calibrated in the real runs (ECE 0.066–0.166). Reported ECE
+values are UC1 0.066, UC2 0.166, UC3 0.135, and UC4 0.140. Mean
+confidence is systematically lower than actual correctness for UC1 (0.41
+vs. 0.47) and UC3 (0.21 vs. 0.34), and higher than actual correctness
+for UC2 (0.31 vs. 0.14) and UC4 (0.33 vs. 0.29). Figure 16 shows the
+reliability diagrams. The calibration component of PRS should therefore
+be re-estimated with a held-out calibrator, or replaced with an
+entropy-based uncertainty estimate.</p>
+<figure>
+<img src="figures/fig16_calibration_reliability.png"
+alt="Figure 16: Reliability diagrams for parametric self-reported confidence. The 3B model is poorly calibrated (ECE 0.066–0.166), and the calibration curve is not monotonic in any corpus." />
+<figcaption aria-hidden="true">Figure 16: Reliability diagrams for
+parametric self-reported confidence. The 3B model is poorly calibrated
+(ECE 0.066–0.166), and the calibration curve is not monotonic in any
+corpus.</figcaption>
+</figure>
+<p><strong>Ablations.</strong> We ran a controlled ablation grid for the
+LoRA training signal on two corpora (UC2 PubMedQA and UC3 SQuAD) using
+<code>tools/run_e4_e5_experiments.py</code>. The grid compares three
+training conditions: (1) cloud-LLM FAQs with tier-weighted replay
+(<code>tier_weighted_cloud</code>), (2) the same cloud-LLM FAQs with
+uniform replay sampling (<code>uniform_cloud</code>), and (3)
+heuristically generated FAQs with uniform sampling
+(<code>uniform_heuristic</code>). All three variants are trained from
+the base model with a fixed seed to avoid adapter stacking. Because the
+SQLite replay buffers were empty for all four corpora in this offline
+run, conditions (1) and (2) differ only in the sampling weight function
+and draw identical replay batches, so the meaningful comparison is
+between cloud-LLM FAQs and heuristic FAQs. Table 9 shows the full
+<code>n=50</code> results for both corpora. The cloud-LLM variants
+produce nearly identical PRS on each corpus (UC2: 0.853 vs 0.872; UC3:
+0.702 vs 0.705), confirming that the empty replay buffer makes the
+tier-weighted vs uniform comparison null. On UC2 the heuristic-FAQ
+variant is comparable in PRS but lower in retrieval-mode token-F1. On
+UC3 the heuristic-FAQ variant has slightly higher PRS (0.734), but it
+was trained on only one heuristically generated FAQ because the
+generator found very few candidates for SQuAD; that result is therefore
+an under-trained baseline and not a fair comparison.</p>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 5%" />
+<col style="width: 5%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+</colgroup>
+<thead>
+<tr>
+<th>Condition</th>
+<th>UC2 PRS</th>
+<th style="text-align: center;">UC2 text_rag</th>
+<th style="text-align: center;">UC2 KV-mean</th>
+<th style="text-align: center;">UC2 KV-full</th>
+<th style="text-align: center;">UC2 param</th>
+<th style="text-align: center;">UC3 PRS</th>
+<th style="text-align: center;">UC3 text_rag</th>
+<th style="text-align: center;">UC3 KV-mean</th>
+<th style="text-align: center;">UC3 KV-full</th>
+<th style="text-align: center;">UC3 param</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tier_weighted_cloud</td>
+<td>0.853</td>
+<td style="text-align: center;">0.174</td>
+<td style="text-align: center;">0.099</td>
+<td style="text-align: center;">0.088</td>
+<td style="text-align: center;">0.145</td>
+<td style="text-align: center;">0.702</td>
+<td style="text-align: center;">0.004</td>
+<td style="text-align: center;">0.005</td>
+<td style="text-align: center;">0.002</td>
+<td style="text-align: center;">0.010</td>
+</tr>
+<tr>
+<td>uniform_cloud</td>
+<td>0.872</td>
+<td style="text-align: center;">0.162</td>
+<td style="text-align: center;">0.090</td>
+<td style="text-align: center;">0.083</td>
+<td style="text-align: center;">0.138</td>
+<td style="text-align: center;">0.705</td>
+<td style="text-align: center;">0.002</td>
+<td style="text-align: center;">0.007</td>
+<td style="text-align: center;">0.002</td>
+<td style="text-align: center;">0.011</td>
+</tr>
+<tr>
+<td>uniform_heuristic</td>
+<td>0.872</td>
+<td style="text-align: center;">0.143</td>
+<td style="text-align: center;">0.087</td>
+<td style="text-align: center;">0.095</td>
+<td style="text-align: center;">0.140</td>
+<td style="text-align: center;">0.734</td>
+<td style="text-align: center;">0.002</td>
+<td style="text-align: center;">0.002</td>
+<td style="text-align: center;">0.001</td>
+<td style="text-align: center;">0.006</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Table 9:</strong> Full E4 ablation (<code>n=50</code> per
+mode) on UC2 PubMedQA and UC3 SQuAD. Because the replay buffer is empty,
+tier-weighted and uniform replay draw identical replay batches. The
+LLM-judge score is 0.0 for all conditions. The UC3
+<code>uniform_heuristic</code> variant was trained on only one FAQ.</p>
+<figure>
+<img src="figures/fig17_ablation.png"
+alt="Figure 17: E4 ablation (n=50) on UC2 PubMedQA and UC3 SQuAD. PRS is similar across the cloud-LLM variants because the empty replay buffer makes tier-weighted and uniform replay identical; token-F1 is much lower on SQuAD. The UC3 heuristic variant is an under-trained baseline (one FAQ)." />
+<figcaption aria-hidden="true">Figure 17: E4 ablation
+(<code>n=50</code>) on UC2 PubMedQA and UC3 SQuAD. PRS is similar across
+the cloud-LLM variants because the empty replay buffer makes
+tier-weighted and uniform replay identical; token-F1 is much lower on
+SQuAD. The UC3 heuristic variant is an under-trained baseline (one
+FAQ).</figcaption>
+</figure>
+<p><strong>Attention divergence.</strong> We measure per-layer KL
+divergence between the attention-score distributions over retrieved
+chunks produced by true prefill, full-token injected KV, and mean-pool
+injected KV. The mean KL divergence is large for both injection modes:
+full-token 0.82–1.08 and mean-pool 0.85–1.14 across the four corpora.
+The ordering is corpus-dependent: mean-pool diverges more on UC1, UC3,
+and UC4, while full-token diverges more on UC2. Mean cosine distances
+are 0.38–0.50 (mean-pool) and 0.40–0.48 (full-token), following the same
+pattern. Figure 18 shows the per-layer curves. The divergence is broadly
+distributed across layers rather than concentrated in early-to-middle
+layers. This confirms that the positional-structure concern is real, but
+it also shows that the current on-the-fly full-token recompute does not
+fully close the gap; further work on injection prompting or chunk
+boundaries is likely needed.</p>
+<figure>
+<img src="figures/fig18_attention_divergence.png"
+alt="Figure 18: Per-layer attention divergence between true prefill and KV-injected attention distributions. Mean KL is 0.82–1.08 for full-token and 0.85–1.14 for mean-pool; the gap is corpus-dependent, not consistently in favor of full-token injection." />
+<figcaption aria-hidden="true">Figure 18: Per-layer attention divergence
+between true prefill and KV-injected attention distributions. Mean KL is
+0.82–1.08 for full-token and 0.85–1.14 for mean-pool; the gap is
+corpus-dependent, not consistently in favor of full-token
+injection.</figcaption>
+</figure>
+<h3 id="comparison-with-alternative-systems">7.10 Comparison with
+Alternative Systems</h3>
+<p>[T:tab:comparison] contrasts KVForge Phase 2 and Phase 3 against
+standard text-in-context RAG across key operational metrics. The
+comparison highlights that KVForge trades a one-time training and
+storage cost for sustained query-time improvements.</p>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 34%" />
+<col style="width: 21%" />
+<col style="width: 21%" />
+<col style="width: 21%" />
+</colgroup>
+<thead>
+<tr>
+<th>Metric</th>
+<th style="text-align: center;">Standard RAG</th>
+<th style="text-align: center;">KVForge Phase 2</th>
+<th style="text-align: center;">KVForge Phase 3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chunk re-encoding at query time</td>
+<td style="text-align: center;">Always</td>
+<td style="text-align: center;"><strong>Never</strong> (fresh KV)</td>
+<td style="text-align: center;"><strong>Never</strong> (no
+retrieval)</td>
+</tr>
+<tr>
+<td>Generation latency (UC4)</td>
+<td style="text-align: center;">1,840 ms</td>
+<td style="text-align: center;">680 ms</td>
+<td style="text-align: center;">510 ms</td>
+</tr>
+<tr>
+<td>Knowledge base updatable</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">Yes (KV recompute)</td>
+</tr>
+<tr>
+<td>Out-of-distribution queries</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">Yes (fallback to Phase 2)</td>
+</tr>
+<tr>
+<td>GPU required at query time</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;"><strong>Potentially no</strong></td>
+</tr>
+<tr>
+<td>Training required</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes (~20 min/round)</td>
+</tr>
+<tr>
+<td>Parametric knowledge retention</td>
+<td style="text-align: center;">None</td>
+<td style="text-align: center;">None</td>
+<td style="text-align: center;">PRS 0.755–0.863</td>
+</tr>
+<tr>
+<td>KV storage per chunk (3B model)</td>
+<td style="text-align: center;">None</td>
+<td style="text-align: center;">~115 KB</td>
+<td style="text-align: center;">~115 KB</td>
+</tr>
+</tbody>
+</table>
+<p>Standard RAG avoids training and storage overhead but pays the full
+re-encoding cost on every query. KVForge Phase 2 matches the
+updatability and out-of-distribution robustness of RAG while eliminating
+chunk re-encoding, yielding a 2.7× latency improvement. KVForge Phase 3
+adds the parametric-answering capability: high-confidence questions are
+answered from model weights, which can be served without a GPU if the
+base model is small enough or if the deployment is CPU-only for
+inference. The trade-off is that Phase 3 requires training (~20
+min/round) and a ~115 KB per-chunk KV storage footprint. The KV storage
+cost is small by modern standards — for the 2,520-chunk UC4 corpus it is
+~289 MB — and the training cost is amortized over many queries. The
+system retains fallback mechanisms for queries outside the model’s
+confidence envelope, so the speedup is achieved without sacrificing
+coverage for edge cases.</p>
+<hr />
+<h2 id="discussion">8. Discussion</h2>
+<h3 id="training-signal-quality-as-the-primary-bottleneck">8.1 Training
+Signal Quality as the Primary Bottleneck</h3>
+<p>The central empirical finding is that <strong>training data quality
+dominates model capacity as the bottleneck for parametric
+memorization.</strong> UC4 with heuristic FAQs plateaued at PRS 0.783
+across multiple rounds; substituting Gemini 2.5 Flash sleep-time FAQs
+pushed it to 0.863 in one additional round. This reframes the design
+space: practitioners should invest in FAQ generation quality rather than
+model size or training duration.</p>
+<p>Cloud LLM API calls are an order of magnitude cheaper than GPU
+compute, and FAQ generation parallelizes trivially across chunks. A
+2,520-chunk corpus at ~$0.02/chunk for Gemini 2.5 Flash costs
+approximately $50 — versus hours of A10G GPU time.</p>
+<h3 id="corpus-heterogeneity-and-prs-variance">8.2 Corpus Heterogeneity
+and PRS Variance</h3>
+<p>The 0.755–0.863 PRS spread correlates with corpus
+characteristics:</p>
+<ul>
+<li><strong>UC2 and UC4 (highest PRS):</strong> Structured, fact-dense
+corpora with clear question-answer mappings. FAQ generation produces
+high-coverage, well-formed training pairs.</li>
+<li><strong>UC3 (SQuAD, moderate PRS):</strong> Reading comprehension
+passages cover diverse topics with low training signal density per
+chunk.</li>
+<li><strong>UC1 (Customer Support, lowest PRS):</strong> High
+paraphrastic variability — multiple valid response formulations exist
+for the same query. The cosine similarity accuracy metric may be
+systematically conservative for high-variability corpora.</li>
+</ul>
+<h3 id="kv-staleness-and-recompute-overhead">8.3 KV Staleness and
+Recompute Overhead</h3>
+<p>Every LoRA update invalidates all stored KV tensors. For 2,520 chunks
+at 0.20 s/chunk, full recomputation adds ~8.5 minutes to a ~20-minute
+round — 42% overhead. The tier-ordered recompute daemon mitigates this
+by restoring hot chunks (~76 seconds) before the full recompute
+completes.</p>
+<p>Three production mitigations: (1) incremental recomputation targeting
+only chunks exceeding a LoRA delta threshold; (2) TurboQuant full-token
+storage, which may remain valid longer (mean-pool is more sensitive to
+KV projection changes than full-token sequences); (3) larger LoRA rank,
+reaching PRS thresholds faster with fewer rounds.</p>
+<h3 id="expected-cis-production-behavior">8.4 Expected CIS Production
+Behavior</h3>
+<p>In our experiments all chunks remained at <code>tier=frozen</code>
+during training because evaluation traffic did not constitute real user
+traffic. In a production deployment with organic query traffic:</p>
+<p><strong>Hot-first KV recompute:</strong> If 20% of chunks account for
+80% of user queries (Pareto), hot-first recomputation means 80% of
+traffic has fresh KV tensors within the first 20% of the recompute
+window — ~102 seconds for a 2,520-chunk corpus.</p>
+<p><strong>Training signal alignment:</strong> Without CIS weighting, 50
+questions cover ~2% of a 2,520-chunk corpus. With CIS weighting,
+questions concentrate on the top ~378 hot chunks, improving
+signal-to-noise ratio by a factor proportional to the tier weight
+differential (up to 8×).</p>
+<p><strong>Enhanced tier qualification:</strong> After a corpus matures,
+the top CIS-scoring chunks qualify for TurboQuant enhanced storage. For
+a 10% enhanced tier in UC4 (~252 chunks at ~15 MB each for an 8B model),
+the additional disk cost is ~3.8 GB — manageable on standard EC2
+NVMe.</p>
+<h3 id="limitations-and-scope">8.5 Limitations and Scope</h3>
+<p><strong>Evaluation scope.</strong> All V1 experiments reported in the
+main paper were run at <code>tier=frozen</code>; the CIS/tiering
+machinery and the TurboQuant Enhanced Tier were not activated during
+those measurements. The factual evaluation in §7.8–§7.9 (E1, E2, E3, E5)
+and the ablations in §7.9 (E4) were run on the real A10G GPU with the
+scripts and metrics introduced in this revision. UC5–UC8 are
+configuration-portability checks only; no end-to-end PRS or quality
+numbers were collected for them. One caveat: the per-use-case SQLite
+replay buffers were empty in all four corpora, so the tier-weighted
+replay ablation effectively compares the same empty-buffer training
+runs; the tier system is implemented but had not accumulated chunk
+access records in this offline evaluation.</p>
+<p><strong>KV shape coupling.</strong> Pre-computed tensors couple to
+the LLM architecture (layers, KV heads, head dimension). Switching the
+base model requires full re-indexing.</p>
+<p><strong>Mean-pool fidelity.</strong> The V1 approximation discards
+positional information. TurboQuant addresses this for enhanced-tier
+chunks but at higher storage cost.</p>
+<p><strong>Phase 3 precision-recall tradeoff.</strong> The gate
+prioritizes precision at the cost of Phase 3 utilization. Calibrated
+threshold selection using held-out queries is recommended for
+production.</p>
+<p><strong>Single-node experiments.</strong> Our evaluation runs on a
+single 4-GPU instance. Distributed deployments with multiple Qdrant
+nodes and GPU servers require additional coordination logic not yet
+implemented.</p>
+<p><strong>Vector-database choice.</strong> All quantitative latency,
+PRS, and factual-quality results (§7.3–§7.9) are reported on Qdrant; UC5
+and UC8 additionally exercise ChromaDB and UC6 exercises FAISS, but only
+as configuration-portability checks (§7.2, above), not full quantitative
+re-evaluation. We did not prioritize cross-backend quantitative
+validation because vector search occupies a negligible share of
+query-time latency in this pipeline — §7.4 measures retrieval at ~12 ms
+out of ~1,852 ms total Phase 1 latency, under 1% of the budget the
+reported 2.7×/3.6× speedups are computed against — and because, for a
+fixed embedding model and corpus of this size (2,000–2,920 chunks),
+well-tuned approximate nearest-neighbor search returns near-identical
+top-K rankings across major vector databases, which is why the
+factual-quality bottleneck identified in §7.8 and §8.1 is attributed to
+training-signal quality and base-model capacity rather than retrieval
+backend. We therefore expect vector-database choice to leave the paper’s
+core latency and quality findings materially unchanged, but this
+expectation has not been empirically confirmed and remains an assumption
+rather than a measured result.</p>
+<hr />
+<h2 id="conclusion">9. Conclusion</h2>
+<p>KVForge introduces a new architecture for knowledge-intensive QA
+systems: the vector database serves not merely as a retrieval index but
+also as a persistent KV tensor cache, a corpus access recorder, and a
+training signal generator. The three-phase progression from
+text-in-context retrieval through KV injection to parametric answering
+allows a single deployed system to continuously improve its latency and
+GPU efficiency as the LLM learns the corpus, without manual
+intervention.</p>
+<p>Our experiments across four heterogeneous corpora demonstrate that
+all four reach Phase 3 (PRS 0.755–0.863) on a single AWS g5.xlarge
+instance, with Phase 2 delivering <strong>2.7× generation
+speedup</strong> and Phase 3 delivering <strong>3.6×</strong>. However,
+the new real factual evaluation shows that the 3B model is far less
+capable on held-out questions than the initial dry-run simulation
+suggested: exact-match is zero across all four modes, token-F1 and
+LLM-judge correctness are modest, and neither KV mean-pool nor
+full-token injection consistently improves over text RAG. The PRS
+cosine-based accuracy proxy also correlates weakly with the factual
+metrics (Pearson <em>r</em> = -0.12–0.43) and reaches the Phase 3
+threshold in every corpus while the factual metrics do not. The primary
+finding is therefore that training signal quality and a reliable factual
+gate—not just latency—are the critical bottlenecks for deploying
+parametric answering in small language models.</p>
+<p>The Corpus Intelligence System (V2) extends the base architecture
+with CIS-driven storage tier assignment, TurboQuant compressed
+full-token KV storage achieving <strong>4.4× compression</strong>, and
+user-confirmed chunk archival, addressing the storage scaling and corpus
+quality challenges that emerge in long-running production
+deployments.</p>
+<p><strong>Open-source availability.</strong> KVForge is fully
+open-source with a browser-based Studio UI, four complete end-to-end
+example use-cases, data connector integrations (Google Drive, S3,
+SharePoint, EDGAR, FDA, Wikipedia), and a 76-test suite that runs
+without a GPU.</p>
+<blockquote>
+<p><strong>GitHub:</strong> <a
+href="https://github.com/hemantcgi/kvforge">https://github.com/hemantcgi/kvforge</a>
+· <strong>License:</strong> MIT</p>
+</blockquote>
+<hr />
+<h2 id="acknowledgements">Acknowledgements</h2>
+<p>The author thanks the Qdrant, HuggingFace, vLLM, and FastEmbed teams
+for their open-source infrastructure, and Google DeepMind for access to
+the Gemini 2.5 Flash API used for sleep-time FAQ generation.</p>
+<hr />
+<h2 id="acknowledgements-1">Acknowledgements</h2>
+<p>The authors gratefully acknowledge <strong>Fissionlabs</strong> for
+their generous support in providing GPU computing resources essential to
+this research. Their infrastructure enabled the extensive empirical
+evaluation across multiple model architectures (Llama-3.2-3B,
+Gemma-4-E2B-it) and corpora that forms the basis of this work.</p>
+<hr />
+<h2 id="references">References</h2>
+<p>[1] Lewis, P., Perez, E., Piktus, A., Petroni, F., Karpukhin, V.,
+Goyal, N., … &amp; Kiela, D. (2020). <strong>Retrieval-Augmented
+Generation for Knowledge-Intensive NLP Tasks.</strong> <em>NeurIPS
+2020.</em> arXiv:2005.11401</p>
+<p>[2] Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L.,
+Gomez, A. N., … &amp; Polosukhin, I. (2017). <strong>Attention Is All
+You Need.</strong> <em>NeurIPS 2017.</em> arXiv:1706.03762</p>
+<p>[3] Kwon, W., Li, Z., Zhuang, S., Sheng, Y., Zheng, L., Yu, C. H., …
+&amp; Stoica, I. (2023). <strong>Efficient Memory Management for Large
+Language Model Serving with PagedAttention.</strong> <em>SOSP 2023.</em>
+arXiv:2309.06180</p>
+<p>[4] Hu, E. J., Shen, Y., Wallis, P., Allen-Zhu, Z., Li, Y., Wang, S.,
+… &amp; Chen, W. (2022). <strong>LoRA: Low-Rank Adaptation of Large
+Language Models.</strong> <em>ICLR 2022.</em> arXiv:2106.09685</p>
+<p>[5] Karpukhin, V., Oğuz, B., Min, S., Lewis, P., Wu, L., Edunov, S.,
+… &amp; Yih, W. T. (2020). <strong>Dense Passage Retrieval for
+Open-Domain Question Answering.</strong> <em>EMNLP 2020.</em>
+arXiv:2004.04906</p>
+<p>[6] Thakur, N., Reimers, N., Rücklé, A., Srivastava, A., &amp;
+Gurevych, I. (2021). <strong>BEIR: A Heterogeneous Benchmark for
+Zero-Shot Evaluation of Information Retrieval Models.</strong>
+<em>NeurIPS 2021 Datasets and Benchmarks.</em> arXiv:2104.08663</p>
+<p>[7] Shao, Z., Gong, Y., Shen, Y., Huang, M., Duan, N., &amp; Chen, W.
+(2023). <strong>Enhancing Retrieval-Augmented Large Language Models with
+Iterative Retrieval-Generation Synergy.</strong> <em>EMNLP 2023
+Findings.</em> arXiv:2305.15294</p>
+<p>[8] Gim, I., Chen, G., Lee, S., Srivatsa, N., Kedia, P., &amp; Zhong,
+L. (2024). <strong>PromptCache: Modular Attention Reuse for Low-Latency
+Inference.</strong> <em>MLSys 2024.</em> arXiv:2311.04934</p>
+<p>[9] Zheng, L., Yin, L., Xie, Z., Huang, J., Sun, C., Yu, C. H., …
+&amp; Gonzalez, J. E. (2024). <strong>SGLang: Efficient Execution of
+Structured Language Model Programs.</strong> arXiv:2312.07104</p>
+<p>[10] Borgeaud, S., Mensch, A., Hoffmann, J., Cai, T., Rutherford, E.,
+Millican, K., … &amp; Sifre, L. (2022). <strong>Improving Language
+Models by Retrieving from Trillions of Tokens.</strong> <em>ICML
+2022.</em> arXiv:2112.04426</p>
+<p>[11] Guu, K., Lee, K., Tung, Z., Pasupat, P., &amp; Chang, M. W.
+(2020). <strong>REALM: Retrieval-Augmented Language Model
+Pre-Training.</strong> <em>ICML 2020.</em> arXiv:2002.08909</p>
+<p>[12] Dettmers, T., Pagnoni, A., Holtzman, A., &amp; Zettlemoyer, L.
+(2023). <strong>QLoRA: Efficient Finetuning of Quantized LLMs.</strong>
+<em>NeurIPS 2023.</em> arXiv:2305.14314</p>
+<p>[13] Guo, C., Pleiss, G., Sun, Y., &amp; Weinberger, K. Q. (2017).
+<strong>On Calibration of Modern Neural Networks.</strong> <em>ICML
+2017.</em> arXiv:1706.04599</p>
+<p>[14] Wang, X., Wei, J., Schuurmans, D., Le, Q., Chi, E., Narang, S.,
+… &amp; Zhou, D. (2022). <strong>Self-Consistency Improves Chain of
+Thought Reasoning in Language Models.</strong> <em>ICLR 2023.</em>
+arXiv:2203.11171</p>
+<p>[15] Kadavath, S., Conerly, T., Askell, A., Henighan, T., Drain, D.,
+Perez, E., … &amp; Kaplan, J. (2022). <strong>Language Models (Mostly)
+Know What They Know.</strong> arXiv:2207.05221</p>
+<p>[16] Kuhn, L., Gal, Y., &amp; Farquhar, S. (2023). <strong>Semantic
+Uncertainty: Linguistic Invariances for Uncertainty Estimation in
+Natural Language Generation.</strong> <em>ICLR 2023.</em>
+arXiv:2302.09664</p>
+<p>[17] Graves, A., Wayne, G., &amp; Danihelka, I. (2014).
+<strong>Neural Turing Machines.</strong> arXiv:1410.5401</p>
+<p>[18] McCloskey, M., &amp; Cohen, N. J. (1989). <strong>Catastrophic
+Interference in Connectionist Networks: The Sequential Learning
+Problem.</strong> <em>Psychology of Learning and Motivation, 24,</em>
+109–165.</p>
+<p>[19] Snell, C., Lee, J., Xu, K., &amp; Kumar, A. (2024).
+<strong>Scaling LLM Test-Time Compute Optimally Can be More Effective
+than Scaling Model Parameters.</strong> arXiv:2408.03314</p>
+<p>[20] Jin, Q., Dhingra, B., Liu, Z., Cohen, W. W., &amp; Lu, X.
+(2019). <strong>PubMedQA: A Dataset for Biomedical Research Question
+Answering.</strong> <em>EMNLP 2019.</em> arXiv:1909.06146</p>
+<p>[21] Rajpurkar, P., Jia, R., &amp; Liang, P. (2018). <strong>Know
+What You Don’t Know: Unanswerable Questions for SQuAD.</strong> <em>ACL
+2018.</em> arXiv:1806.03822</p>
+<p>[22] Touvron, H., Martin, L., Stone, K., Albert, P., Almahairi, A.,
+Babaei, Y., … &amp; Scialom, T. (2023). <strong>Llama 2: Open Foundation
+and Fine-Tuned Chat Models.</strong> arXiv:2307.09288</p>
+<p>[23] Qdrant Team. (2024). <strong>Qdrant: High-Performance Vector
+Search Engine.</strong> qdrant.tech</p>
+<p>[24] Dao, T., Fu, D. Y., Ermon, S., Rudra, A., &amp; Ré, C. (2022).
+<strong>FlashAttention: Fast and Memory-Efficient Exact Attention with
+IO-Awareness.</strong> <em>NeurIPS 2022.</em> arXiv:2205.14135</p>
+<p>[25] Rusu, A. A., Rabinowitz, N. C., Desjardins, G., Soyer, H.,
+Kirkpatrick, J., Kavukcuoglu, K., … &amp; Hadsell, R. (2016).
+<strong>Progressive Neural Networks.</strong> arXiv:1606.04671</p>
+<p>[26] Khattab, O., &amp; Zaharia, M. (2020). <strong>ColBERT:
+Efficient and Effective Passage Search via Contextualized Late
+Interaction over BERT.</strong> <em>SIGIR 2020.</em>
+arXiv:2004.12832</p>
+<p>[27] Hooper, C., Kim, S., Mohammadzadeh, H., Mahoney, M. W., Shao, Y.
+S., Keutzer, K., &amp; Gholami, A. (2024). <strong>KVQuant: Towards 10
+Million Context Length LLM Inference with KV Cache
+Quantization.</strong> <em>NeurIPS 2024.</em> arXiv:2401.18079</p>
+<p>[28] Liu, Z., Yuan, J., Jin, H., Zhong, S., Xu, Z., Braverman, V., …
+&amp; Hu, X. (2024). <strong>KIVI: A Tuning-Free Asymmetric 2bit
+Quantization for KV Cache.</strong> <em>ICML 2024.</em>
+arXiv:2402.02750</p>
+<p>[29] Yao, Y., Han, C., Zhu, R., Deng, J., &amp; Chen, Y. (2024).
+<strong>CacheBlend: Fast Large Language Model Serving for RAG with
+Cached Knowledge Fusion.</strong> arXiv:2405.16444</p>
+<p>[30] Izacard, G., &amp; Grave, E. (2021). <strong>Leveraging Passage
+Retrieval with Generative Models for Open Domain Question
+Answering.</strong> <em>EACL 2021.</em> arXiv:2007.01282</p>
+<p>[31] Kirkpatrick, J., Pascanu, R., Rabinowitz, N., Veness, J.,
+Desjardins, G., Rusu, A. A., … &amp; Hadsell, R. (2017).
+<strong>Overcoming Catastrophic Forgetting in Neural Networks.</strong>
+<em>PNAS, 114</em>(13), 3521–3526.</p>
+<p>[32] Zandieh, A., Han, I., Mirrokni, V., &amp; Karbasi, A. (2024).
+<strong>QJL: 1-Bit Quantized JL Transform for KV Cache Quantization with
+No Retraining.</strong> arXiv:2406.03482</p>
+<p>[33] De Lange, M., Aljundi, R., Masana, M., Parisot, S., Jia, X.,
+Leonardis, A., … &amp; Tuytelaars, T. (2022). <strong>A Continual
+Learning Survey: Defying Forgetting in Classification Tasks.</strong>
+<em>IEEE TPAMI, 44</em>(7), 3366–3385. arXiv:1909.08383</p>
+<p>[34] Zandieh, A., Daliri, M., Hadian, M., &amp; Mirrokni, V. (2025).
+<strong>TurboQuant: Online Vector Quantization with Near-optimal
+Distortion Rate.</strong> Google Research and NYU. arXiv:2504.19874.
+https://arxiv.org/abs/2504.19874</p>
+<p>[35] Boufounos, P. T., &amp; Baraniuk, R. G. (2008). <strong>1-Bit
+Compressive Sensing.</strong> <em>42nd Annual Conference on Information
+Sciences and Systems (CISS),</em> pp. 16–21.</p>
+<p>[36] Hendrycks, D., Burns, C., Chen, A., &amp; Ball, S. (2021).
+<strong>CUAD: An Expert-Annotated NLP Dataset for Legal Contract
+Review.</strong> arXiv:2103.06268. https://arxiv.org/abs/2103.06268</p>
+<p>[37] Xu, F. F., Vasilescu, B., &amp; Neubig, G. (2022).
+<strong>In-IDE Code Generation from Natural Language: Promise and
+Challenges.</strong> <em>ACM TOSEM, 31</em>(2), 1–47.
+arXiv:2101.11149</p>
+<p>[38] Chan, B. J., Chen, C. T., Cheng, J. H., &amp; Huang, H. H.
+(2024/2025). <strong>Don’t Do RAG: When Cache-Augmented Generation is
+All You Need for Knowledge Tasks.</strong> <em>ACM Web Conference 2025
+(Companion).</em> arXiv:2412.15605</p>
+<p>[39] Zhang, T., Patil, S. G., Jain, N., Shen, S., Zaharia, M.,
+Stoica, I., &amp; Gonzalez, J. E. (2024). <strong>RAFT: Adapting
+Language Model to Domain Specific RAG.</strong> arXiv:2403.10131</p>
+<p>[40] (2025). <strong>Parametric RAG: Encoding Retrieved Evidence into
+Model Parameters.</strong> arXiv:2510.12668</p>
+<p>[41] Meng, K., Bau, D., Andonian, A., &amp; Belinkov, Y. (2022).
+<strong>Locating and Editing Factual Associations in GPT.</strong>
+<em>NeurIPS 2022.</em> arXiv:2202.05262</p>
+<p>[42] Meng, K., Sharma, A. S., Andonian, A., Belinkov, Y., &amp; Bau,
+D. (2023). <strong>Mass-Editing Memory in a Transformer.</strong>
+<em>ICLR 2023.</em> arXiv:2210.07229</p>
+<p>[43] Asai, A., Wu, Z., Wang, Y., Sil, A., &amp; Hajishirzi, H.
+(2024). <strong>Self-RAG: Learning to Retrieve, Generate, and Critique
+through Self-Reflection.</strong> <em>ICLR 2024.</em>
+arXiv:2310.11511</p>
+<p>[44] Wang, Y., Li, P., Sun, M., &amp; Liu, Y. (2023).
+<strong>Self-Knowledge Guided Retrieval Augmentation for Large Language
+Models.</strong> <em>EMNLP 2023 Findings.</em> arXiv:2310.05002</p>
+<p>[45] Jeong, S., Baek, J., Cho, S., Hwang, S. J., &amp; Park, J. C.
+(2024). <strong>Adaptive-RAG: Learning to Adapt Retrieval-Augmented
+Large Language Models through Question Complexity.</strong> <em>NAACL
+2024.</em> arXiv:2403.14403</p>
+<p>[46] LMCache Team. (2025). <strong>LMCache: A KV Cache Management
+Layer for LLM Serving.</strong> arXiv:2510.09665.
+https://github.com/LMCache/LMCache</p>
+<hr />
+<p><strong>GitHub:</strong> <a
+href="https://github.com/hemantcgi/kvforge">https://github.com/hemantcgi/kvforge</a>
+· <strong>License:</strong> MIT</p>
+</body>
+</html>
