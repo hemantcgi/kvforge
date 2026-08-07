@@ -35,7 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import core.kv_utils as kv_utils
 import core.model_loader as model_loader
 import core.version as ver
-from core.kv_utils import compute_per_token_kv, save_token_kv
+from core.kv_utils import compute_per_token_kv, compute_per_token_kv_as_list, save_token_kv, save_token_kv_list
 from vectorstore.registry import get_store
 
 _kv_queue: queue.Queue = queue.Queue()
@@ -387,17 +387,28 @@ def promote_chunk_to_enhanced_tier(
     if existing_kv_token_path:
         return None
 
+    # Detect variable head_dim (Gemma4 full_attention layers use global_head_dim)
+    tc = getattr(model.config, "text_config", model.config)
+    has_variable_hd = (
+        hasattr(tc, "global_head_dim") and tc.global_head_dim
+        and tc.global_head_dim != getattr(tc, "head_dim", 256)
+    )
+
     inputs = tokenizer(chunk_text, return_tensors="pt", truncation=True,
                        max_length=cfg.get("chunk_size", 512))
     with torch.no_grad():
         out = model(**inputs, use_cache=True)
 
-    arr = compute_per_token_kv(out.past_key_values)
-
     kv_dir = Path(cfg["per_token_kv_dir"])
     kv_dir.mkdir(parents=True, exist_ok=True)
     path = kv_dir / f"{chunk_id}.npz"
-    save_token_kv(arr, path, tq_config=tq_config)
+
+    if has_variable_hd:
+        kv_list = compute_per_token_kv_as_list(out.past_key_values)
+        save_token_kv_list(kv_list, path, tq_config=tq_config)
+    else:
+        arr = compute_per_token_kv(out.past_key_values)
+        save_token_kv(arr, path, tq_config=tq_config)
 
     vector_store.set_payload(
         cfg["collection"],

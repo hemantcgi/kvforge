@@ -120,14 +120,19 @@ def run_mode(
     ver.init(cfg)
     model_loader.init(cfg)
 
+    # Load tokenizer early to compute adaptive max_new_tokens from answer lengths.
+    from transformers import AutoTokenizer
+    _tok = AutoTokenizer.from_pretrained(cfg.get("llm_model", model_loader.MODEL_ID))
+    answer_tok_lens = [len(_tok.encode(item.get("answer", ""))) for item in eval_items]
+    import numpy as _np
+    _adaptive_max = min(256, max(16, int(_np.percentile(answer_tok_lens, 95)) + 8))
+    cfg["max_new_tokens"] = _adaptive_max
+    del _tok
+
     # Model load for parametric/Path B.
     if mode == "parametric":
-        lora_ckpt = ver.load().get("checkpoint_path")
+        lora_ckpt = cfg.get("checkpoint_path") or ver.load().get("checkpoint_path")
         model, tokenizer = model_loader.load(lora_ckpt)
-        from transformers import pipeline as hf_pipeline
-
-        pipe = hf_pipeline("text-generation", model=model, tokenizer=tokenizer,
-                           max_new_tokens=256, do_sample=False, return_full_text=False)
     else:
         model, tokenizer = None, None
 
@@ -140,7 +145,7 @@ def run_mode(
         print(f"   [{idx+1}/{len(eval_items)}] {mode}: {q[:80]}...", flush=True)
         t0 = time.perf_counter()
         if mode == "parametric":
-            ans = _generate_parametric(q, pipe, tokenizer, sft_format="chat")
+            ans = _generate_parametric(q, model, tokenizer, sft_format="chat")
         else:
             ans, used_mode = answer_with_mode(q, cfg, force_mode=mode)
             if not ans:
@@ -193,12 +198,18 @@ def main() -> None:
     p.add_argument("--judge-provider", default="openai",
                    help="openai, anthropic, or gemini")
     p.add_argument("--judge-api-key", default="")
+    p.add_argument("--judge-base-url", default="",
+                   help="Base URL for OpenAI-compatible judge endpoints (Fireworks, vLLM, etc.)")
+    p.add_argument("--checkpoint", default=None,
+                   help="Explicit LoRA checkpoint path (overrides version.json)")
     p.add_argument("--recompute-ratio", type=float, default=None,
                    help="Override recompute_ratio in config for partial KV recompute sweeps.")
     args = p.parse_args()
 
     with open(args.config) as f:
         cfg = json.load(f)
+    if args.checkpoint:
+        cfg["checkpoint_path"] = args.checkpoint
     if args.recompute_ratio is not None:
         cfg["recompute_ratio"] = args.recompute_ratio
     with open(args.eval_set) as f:
@@ -216,12 +227,14 @@ def main() -> None:
     if api_key:
         if args.judge_provider == "openai":
             import openai
-            judge_client = openai.OpenAI(api_key=api_key)
+            kwargs = {"api_key": api_key}
+            if args.judge_base_url:
+                kwargs["base_url"] = args.judge_base_url.rstrip("/") + "/"
+            judge_client = openai.OpenAI(**kwargs)
         elif args.judge_provider == "anthropic":
             import anthropic
             judge_client = anthropic.Anthropic(api_key=api_key)
         elif args.judge_provider == "gemini":
-            # Gemini client uses a different API shape; llm_judge handles it via messages fallback.
             judge_client = None
         else:
             raise ValueError(f"Unknown judge provider: {args.judge_provider}")

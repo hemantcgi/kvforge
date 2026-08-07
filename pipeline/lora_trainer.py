@@ -363,15 +363,39 @@ def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
 
     # Required for 4-bit/8-bit quantized models: sets requires_grad on LoRA
     # layers and casts layer norms to float32 for stable training.
+    # SKIPPED for Gemma4 — kbit training corrupts its variable-head-dim attention.
     if effective_cfg.get("quantization") in ("4bit", "8bit"):
         from peft import prepare_model_for_kbit_training
-        model = prepare_model_for_kbit_training(
-            model, use_gradient_checkpointing=True
-        )
+        model_id = cfg.get("llm_model", "").lower()
+        if "gemma-4" in model_id or "gemma4" in model_id:
+            model.gradient_checkpointing_enable()
+        else:
+            model = prepare_model_for_kbit_training(
+                model, use_gradient_checkpointing=True
+            )
 
-    import core.model_loader as _ml
-    lora_target_modules = effective_cfg.get("lora_target_modules", ["q_proj", "k_proj", "v_proj"])
-    lora_target_modules = _ml.detect_lora_targets(model, lora_target_modules)
+    import torch.nn as _nn
+    configured = effective_cfg.get("lora_target_modules", ["q_proj", "k_proj", "v_proj"])
+    # Only use module names where ALL instances are standard nn.Linear
+    # (skips Gemma4ClippableLinear which PEFT cannot inject into)
+    _name_types: dict[str, set[type]] = {}
+    for _n, _m in model.named_modules():
+        _leaf = _n.split(".")[-1]
+        _name_types.setdefault(_leaf, set()).add(type(_m))
+    lora_target_modules = [t for t in configured
+                           if t in _name_types
+                           and all(issubclass(tt, _nn.Linear) for tt in _name_types[t])]
+    if not lora_target_modules:
+        _safe = sorted(k for k, v in _name_types.items()
+                        if all(issubclass(tt, _nn.Linear) for tt in v))
+        import warnings
+        warnings.warn(
+            f"None of {configured} are safe (all nn.Linear). "
+            f"Falling back to per_layer_projection. "
+            f"Available safe names: {_safe[:10]}",
+            UserWarning, stacklevel=2
+        )
+        lora_target_modules = ["per_layer_projection"]
 
     lora_cfg = LoraConfig(
         r=effective_cfg.get("lora_rank", 16),
@@ -389,8 +413,18 @@ def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
     sft_format = cfg.get("addon_config", {}).get("training", {}).get("sft_format", "chat")
     use_chat_sft = bool(qa_texts) and sft_format == "chat" and faqs is not None
 
-    # Use dynamic max_length: 128 for short Q&A pairs, 512 for raw chunks
-    _max_len = 128 if qa_texts else 512
+    # Compute adaptive max_length from actual answer token counts.
+    # Prevents mismatch where model generates 128 tokens for 4-token answers (2WikiMQA).
+    if qa_texts and faqs:
+        answer_lens = []
+        for f in faqs[:1000]:  # sample to avoid scanning 500+ FAQs multiple times
+            tok = tokenizer(f.get("answer", ""), truncation=False)["input_ids"]
+            answer_lens.append(len(tok))
+        import numpy as _np
+        _p95 = int(_np.percentile(answer_lens, 95)) if answer_lens else 64
+        _max_len = max(16, _p95 + 8)  # minimum 16 tokens, some headroom
+    else:
+        _max_len = 512
     def tokenize(example):
         return tokenizer(example["text"], truncation=True, max_length=_max_len,
                          padding="max_length")
@@ -402,23 +436,33 @@ def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
     if use_chat_sft:
         # Chat-format SFT: answer-masked Q&A examples + bare-LM replay chunks
         # for regularisation, collated with dynamic padding.
-        _sft_max_len = 256
+        # Adaptive length capped at 95th percentile of answer token count + margin.
+        answer_toks = []
+        for f in faqs[:2000]:
+            tok = tokenizer(f.get("answer", ""), truncation=False)["input_ids"]
+            answer_toks.append(len(tok))
+        import numpy as _np
+        _sft_max_len = max(32, int(_np.percentile(answer_toks, 95)) + 16) if answer_toks else 128
         if confidence_supervision:
             # Sprint 2.5: append a supervised confidence pseudo-token suffix.
-            examples = [
-                build_confidence_sft_example(
-                    tokenizer, f["question"], f["answer"],
-                    _faq_confidence_label(f), _sft_max_len,
-                )
-                for f in faqs
-            ]
+            examples = [ex for f in faqs
+                        if (ex := build_confidence_sft_example(
+                            tokenizer, f["question"], f["answer"],
+                            _faq_confidence_label(f), _sft_max_len,
+                        ))
+                        if len(ex.get("input_ids", [])) > 0]
             sft_mode_label = "confidence-supervised"
         else:
-            examples = [build_sft_example(tokenizer, f["question"], f["answer"], _sft_max_len)
-                        for f in faqs]
+            examples = [ex for f in faqs
+                        if (ex := build_sft_example(tokenizer, f["question"], f["answer"],
+                                                     _sft_max_len))
+                        if len(ex.get("input_ids", [])) > 0]
             sft_mode_label = "answer-masked"
         for c in replay_chunks:
-            ids = tokenizer(c["text"], truncation=True, max_length=_sft_max_len)["input_ids"]
+            txt = c.get("text", "").strip()
+            if not txt:
+                continue
+            ids = tokenizer(txt, truncation=True, max_length=_sft_max_len)["input_ids"]
             examples.append({"input_ids": ids, "labels": list(ids),
                              "attention_mask": [1] * len(ids)})
         from datasets import Dataset as _DS
@@ -691,7 +735,11 @@ def train_distillation(
 
     if effective_cfg.get("quantization") in ("4bit", "8bit"):
         from peft import prepare_model_for_kbit_training
-        model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True)
+        model_id = cfg.get("llm_model", "").lower()
+        if "gemma-4" in model_id or "gemma4" in model_id:
+            model.gradient_checkpointing_enable()
+        else:
+            model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True)
 
     import core.model_loader as _ml
     lora_target_modules = effective_cfg.get("lora_target_modules", ["q_proj", "k_proj", "v_proj"])

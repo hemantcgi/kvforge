@@ -122,13 +122,19 @@ def _generate_parametric(query: str, pipe, tokenizer=None, sft_format: str = "ba
         The generated answer text (prompt prefix stripped).
     """
     prompt = _format_query(query, tokenizer, sft_format)
-    # Chat-template strings already contain a literal <|begin_of_text|> BOS;
-    # suppress the pipeline's own BOS insertion so eval tokenization matches
-    # the single-BOS tokenization used by chat-SFT training. Bare mode has no
-    # BOS in the raw string, so the pipeline's default add-BOS is kept.
-    out = pipe(prompt, add_special_tokens=(sft_format != "chat"))
-    generated = out[0]["generated_text"][len(prompt):].strip()
-    # Sprint 2.5: strip any emitted confidence pseudo-token suffix before scoring.
+    if hasattr(pipe, "generate"):
+        # pipe is actually a model — use direct generate (avoids pipeline
+        # text-stripping bugs with Gemma4 chat-template tokens)
+        import torch
+        inputs = tokenizer(prompt, return_tensors="pt").to(pipe.device)
+        with torch.no_grad():
+            outputs = pipe.generate(**inputs, max_new_tokens=256, do_sample=False)
+        generated = tokenizer.decode(
+            outputs[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True
+        ).strip()
+    else:
+        out = pipe(prompt, add_special_tokens=(sft_format != "chat"))
+        generated = out[0]["generated_text"][len(prompt):].strip()
     from pipeline.confidence_token import strip_confidence_suffix
     return strip_confidence_suffix(generated)
 
