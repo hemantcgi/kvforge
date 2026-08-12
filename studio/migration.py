@@ -41,7 +41,7 @@ def _config_to_uc_config(uc_id: str, cfg: dict) -> dict:
             "index_type":      "hnsw",
         },
         "llm": {
-            "local_model":          cfg.get("llm_model", "meta-llama/Llama-3.2-3B-Instruct"),
+            "local_model":          cfg.get("llm_model", "google/gemma-4-E2B-it"),
             "quantization":         cfg.get("quantization", "4bit"),
             "vllm_url":             cfg.get("vllm_url", ""),
             "comparison_provider":  "gemini",
