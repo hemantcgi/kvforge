@@ -1,28 +1,56 @@
 # KVForge
 
-**KVForge** is a progressive RAG (Retrieval-Augmented Generation) system that pre-computes and stores LLM KV-cache tensors directly in a vector database. Instead of re-encoding retrieved documents at query time, KVForge injects pre-computed key-value tensors into the LLM's attention layers — making inference faster as the system learns which knowledge it can answer from its own weights.
+**KVForge** is a progressive system that transitions deployed question-answering systems from Retrieval-Augmented Generation (RAG) to **fully parametric answering** — where a fine-tuned small language model answers directly from its weights with no retrieval at all.
 
-It works with **any dataset, any embedding model, any small language model, and any vector database.**
+The key result: a **2B-parameter Gemma 4** model, LoRA-fine-tuned on cloud-generated QA pairs, **matches or exceeds text-in-context RAG on factual accuracy across three of four enterprise corpora**, eliminating per-query retrieval costs.
 
-> **Research Paper:** [KVForge: Progressive RAG with KV-Cache Injection and Parametric Consolidation](docs/KVForge_Research_Paper.pdf)
+> **Research Paper:** [KVForge: Autonomous Phase-Adaptive Question Answering with Progressive Parametric Absorption](docs/KVForge_Research_Paper.pdf)
 
 ---
 
-## System Architecture
+## Why KVForge
 
-![KVForge System Architecture](docs/KVForge_Architecture_Diagram.png)
+Standard RAG pays a fixed cost on every query — retrieved documents must be re-encoded through the full transformer stack — and, more fundamentally, *never eliminates the retrieval dependency*. Even knowledge the model has seen hundreds of times is fetched from the vector store on every query.
+
+KVForge's central insight is that this dependency can be progressively removed. A three-phase progression transfers corpus knowledge into model weights over time:
+
+| Phase | Mode | Retrieval? | Re-encoding? |
+|-------|------|:----------:|:------------:|
+| **1** | Text-in-context RAG | Always | Always |
+| **2** | KV-cache injection | Always | Never |
+| **3** | Parametric answering | Never | Never |
+
+Phase transitions are gated by the **Parametric Readiness Score (PRS)** — a composite of accuracy, calibration, and self-consistency — so the system only advances when the model has *proven* it can answer from memory.
+
+---
+
+## Results: Gemma 4 Crossover Across Four Datasets
+
+KVForge was evaluated on four heterogeneous corpora using **Google Gemma-4-E2B-it** (2B parameters, 4-bit quantized), LoRA-fine-tuned on cloud-LLM-generated QA pairs. Factual Accuracy (FA) is a composite of token-F1 and LLM-judge correctness.
+
+| Dataset | Corpus | Parametric FA | Text-RAG FA | Gain |
+|---------|--------|:-------------:|:-----------:|:----:|
+| UC1 Customer Support | Bitext (2,000 chunks) | **0.36** | 0.21 | **+71%** |
+| UC2 PubMedQA | Biomedical QA (2,918 chunks) | **0.23** | 0.14 | **+64%**\* |
+| UC3 SQuAD 2.0 | Reading comprehension | **0.22** | 0.16 | **+38%** |
+| UC4 Bedrock | Technical docs (2,520 chunks) | **0.23** | 0.16 | **+44%** |
+
+\* PubMedQA required extended training (4,707 FAQ pairs, r=4, 15 epochs) to cross over; at sparse coverage parametric reverts below RAG. See the [consolidated crossover figure](docs/figures/gemma4_crossover_consolidated.png).
+
+![Gemma 4 crossover across four datasets](docs/figures/gemma4_crossover_consolidated.png)
+
+**What this means for enterprises:** a 2B-parameter model, fine-tuned on cloud-generated QA pairs at a one-time cost of ~$50 per corpus, can match or exceed retrieval quality while eliminating per-query retrieval — all on a single commodity GPU.
 
 ---
 
 ## Core Idea
 
-Standard RAG re-encodes retrieved chunks on every query. KVForge amortizes that cost:
+1. **Index** — chunk documents, embed them, and (optionally) pre-compute KV tensors
+2. **Generate** — a cloud LLM produces diverse QA pairs from indexed chunks ("sleep-time" compute)
+3. **Train** — LoRA-fine-tune the model on those QA pairs, baking corpus knowledge into weights
+4. **Gate** — a confidence gate routes high-confidence queries to parametric answering, low-confidence queries back to retrieval
 
-1. **Index** — chunk your documents, embed them, and compute KV tensors (one LLM forward pass per chunk)
-2. **Store** — save KV tensors alongside vectors in the database as base64-encoded payloads
-3. **Serve** — at query time, retrieve top-K chunks and inject their pre-computed KV tensors as `past_key_values` — the LLM skips re-encoding and generates directly
-
-Over time, LoRA fine-tuning on your corpus bakes knowledge into the model weights. A confidence gate then decides per-query whether retrieval is even needed.
+The result is a *progressive absorption loop*: as the model learns the corpus, more queries are answered from weights, and per-query retrieval costs decline toward zero.
 
 ---
 
@@ -44,13 +72,11 @@ python kvforge_portal.py --port 8080
 | 1 | Index | Chunk, embed, and upsert documents into the vector store |
 | 2 | LLM Config | Configure the local model, quantization, and vLLM endpoint |
 | 3 | Sleep-time FAQ Gen | Pre-compute Q&A pairs from indexed chunks using a cloud LLM |
-| 4 | Training | LoRA fine-tuning with tier-weighted replay buffer |
+| 4 | Training | LoRA fine-tuning on the generated QA pairs |
 | 5 | KV Recompute | Refresh KV tensors with the updated LoRA adapter |
 | 6 | PRS Eval | Evaluate Parametric Readiness Score and advance phase if threshold is met |
 
 Per-UC configuration (model, GPU assignment, FAQ count) lives in `uc_config.json` alongside each use-case directory. Job logs stream to the browser via SSE. GPU steps include a free-GPU check before they run.
-
-> **Screenshot placeholder** — `docs/images/studio_screenshot.png`
 
 ---
 
@@ -62,7 +88,6 @@ stateDiagram-v2
 
     Phase1 : Phase 1 — Standard RAG
     Phase1 : text-in-context only
-    Phase1 : no GPU required for queries
 
     Phase2 : Phase 2 — KV Injection
     Phase2 : pre-computed KV tensors injected
@@ -73,9 +98,9 @@ stateDiagram-v2
     Phase3 : high-confidence → answer from weights
     Phase3 : low-confidence → KV inject or fallback
 
-    Phase1 --> Phase2 : LoRA training complete\nPRS ≥ threshold
-    Phase2 --> Phase3 : PRS ≥ threshold\nfor 2 consecutive rounds
-    Phase3 --> Phase2 : PRS drops below threshold\n(regression guard)
+    Phase1 --> Phase2 : LoRA training complete\nPRS ≥ 0.75
+    Phase2 --> Phase3 : PRS ≥ 0.80\nfor 2 consecutive rounds
+    Phase3 --> Phase2 : PRS drops below 0.75\n(regression guard)
 ```
 
 ### Query-Time Decision Flow
@@ -93,7 +118,6 @@ flowchart TD
     G -- no --> F{All KV tensors\nfresh?}
     F -- yes --> KV([KV injection\nfast path])
     F -- no --> TX([Text-in-context\nfallback])
-    TX --> HQ[Enqueue stale chunks\nfor background heal]
 ```
 
 ---
@@ -161,46 +185,18 @@ kvforge/
 ├── tools/                  # Utility scripts
 ├── scripts/                # Shell wrappers for all pipeline tools
 ├── examples/               # End-to-end use-case examples
-│   ├── usecase1_customer_support/   # Qdrant + Bitext dataset
-│   ├── usecase2_pubmedqa/           # ChromaDB + PubMedQA dataset
-│   ├── usecase3_squad/              # FAISS + SQuAD v2 dataset
-│   └── usecase4_bedrock_userguide/  # Qdrant + Amazon Bedrock User Guide
+│   ├── usecase1_customer_support/   # UC1: Bitext customer support
+│   ├── usecase2_pubmedqa/           # UC2: PubMedQA biomedical
+│   ├── usecase3_squad/              # UC3: SQuAD 2.0
+│   └── usecase4_bedrock_userguide/  # UC4: Amazon Bedrock User Guide
 ├── tests/                  # KVForge test suite
-│   └── qdrant_internal/    # Upstream Qdrant tests (not KVForge)
 └── docs/                   # Documentation
     ├── faq/                # FAQ topic pages
     ├── guides/             # Quickstart, architecture, troubleshooting
     └── api/                # API reference
 ```
 
-## Scripts
-
-Shell wrappers for every pipeline tool are in `scripts/`. See [`scripts/README.md`](scripts/README.md) for the full catalog.
-
-**Most common commands:**
-
-```bash
-# Index documents
-./scripts/index.sh datasource_my-corpus.json ./my-docs/
-
-# Ask a question
-./scripts/ask.sh datasource_my-corpus.json "What is the return policy?"
-
-# Full Phase 1→2→3 pipeline (GPU required)
-./scripts/run_pipeline.sh datasource_my-corpus.json ./my-docs/ my-corpus_faqs.json
-```
-
-## Documentation
-
-| Resource | Description |
-|----------|-------------|
-| [`docs/guides/quickstart.md`](docs/guides/quickstart.md) | Get started in 5 minutes |
-| [`docs/guides/architecture.md`](docs/guides/architecture.md) | 3-phase pipeline deep-dive |
-| [`docs/guides/adding-backends.md`](docs/guides/adding-backends.md) | Add a new vector store, embedder, or loader |
-| [`docs/guides/troubleshooting.md`](docs/guides/troubleshooting.md) | Common errors and fixes |
-| [`docs/api/index.md`](docs/api/index.md) | API reference index |
-| [`docs/api/config.md`](docs/api/config.md) | All `DatasourceConfig` fields |
-| [`FAQ.md`](FAQ.md) | How-to answers by topic |
+---
 
 ## Getting Started
 
@@ -242,13 +238,13 @@ docker run -d -p 6333:6333 -p 6334:6334 \
 # PDF corpus, default FastEmbed embedder, Qdrant vector store
 python kvforge.py init --name my-corpus
 
-# Markdown corpus, custom embedding model
+# Markdown corpus, custom embedding model, explicit Gemma 4
 python kvforge.py init \
   --name docs-corpus \
   --loader markdown \
   --embed-model BAAI/bge-base-en-v1.5 \
   --vector-dim 768 \
-  --llm-model meta-llama/Llama-3.2-3B-Instruct
+  --llm-model google/gemma-4-E2B-it
 ```
 
 This creates `datasource_my-corpus.json` and `lora_checkpoints/my-corpus/`.
@@ -285,12 +281,7 @@ python -m pipeline.sleep_faq_generator \
   --config datasource_my-corpus.json \
   --output my-corpus_faqs.json \
   --count 50
-
-# Heuristic generator (no API key required)
-python tools/generate_faqs.py \
-  --config datasource_my-corpus.json \
-  --output my-corpus_faqs.json \
-  --n 50
+  --n-per-chunk 5
 ```
 
 The sleep-time generator is configured via the `llm` block in `uc_config.json`:
@@ -318,7 +309,7 @@ python pipeline/index_and_train.py my_document.pdf \
 This runs in sequence:
 1. Chunk + embed + upsert to vector store
 2. Compute KV tensors (one LLM forward pass per chunk)
-3. LoRA fine-tuning with tier-weighted replay buffer
+3. LoRA fine-tuning on the generated QA pairs
 4. Recompute KV tensors with updated LoRA weights
 5. PRS evaluation (accuracy + calibration + self-consistency)
 6. Activate Phase 2 if `prs_threshold` is met
@@ -353,21 +344,8 @@ The dashboard shows:
 | Tier distribution | Hot / warm / cold / frozen counts |
 | Top 10 chunks | Most-accessed chunks — click any preview to see full text |
 | PRS history | Per-round scores with progress bars |
-| FAQ Coverage Heatmap | Which chunks each FAQ maps to (cosine similarity); cells colored by score; threshold slider (0.60–1.00) to filter low-confidence matches; click any cell for full chunk text popup |
-| A/B query panel | Compare KVForge (local vLLM or HF) against Gemini, Claude, or OpenAI in one request |
-
-Configure Model B at startup or switch it live in the UI:
-
-```bash
-# Gemini
-python -m pipeline.monitoring_dashboard --config cfg.json --gemini-key $KEY
-
-# OpenAI
-python -m pipeline.monitoring_dashboard --config cfg.json --openai-key $KEY --openai-model gpt-4.1
-
-# Claude
-python -m pipeline.monitoring_dashboard --config cfg.json --claude-key $KEY --claude-model claude-sonnet-4-6
-```
+| FAQ Coverage Heatmap | Which chunks each FAQ maps to (cosine similarity) |
+| A/B query panel | Compare KVForge against Gemini, Claude, or OpenAI in one request |
 
 ---
 
@@ -385,7 +363,7 @@ python -m pipeline.monitoring_dashboard --config cfg.json --claude-key $KEY --cl
   "embed_model":       "BAAI/bge-small-en-v1.5",
   "embedder_backend":  "fastembed",
   "vector_dim":        384,
-  "llm_model":         "meta-llama/Llama-3.2-3B-Instruct",
+  "llm_model":         "google/gemma-4-E2B-it",
   "chunk_size":        600,
   "chunk_overlap":     60,
   "prs_threshold":     0.75,
@@ -421,43 +399,22 @@ Supported values:
 | `confidence_gate.py` | Phase 3: entropy + hedging + query-similarity gate |
 | `access_tracker.py` | Thread-safe hit counter; tier classification |
 | `version.py` | Atomic `version.json` I/O; phase transitions |
-| `replay_buffer.py` | SQLite-backed tier-weighted chunk sampler |
+| `replay_buffer.py` | SQLite-backed weighted chunk sampler |
 | `config.py` | Pydantic `DatasourceConfig` — validated config model |
 | `pipeline/kv_indexer.py` | Extended indexer: chunk + embed + KV compute + upsert |
 | `pipeline/kv_inference.py` | Query-time: KV inject or text fallback + stale-chunk healing |
 | `pipeline/kv_background.py` | Daemon threads: KV recompute queue + access tracker flush |
-| `pipeline/lora_trainer.py` | LoRA fine-tuning with tier-weighted replay buffer |
+| `pipeline/lora_trainer.py` | LoRA fine-tuning with replay buffer |
 | `pipeline/prs_evaluator.py` | Parametric Readiness Score: accuracy + calibration + consistency |
 | `pipeline/monitoring_dashboard.py` | FastAPI monitoring dashboard: tier stats, top-10 chunks, PRS history, FAQ coverage heatmap, A/B query comparison |
 | `pipeline/index_and_train.py` | Orchestrator: index → train → KV refresh → PRS → phase advance |
 | `pipeline/sleep_faq_generator.py` | Offline FAQ pre-computation from indexed chunks via cloud LLM (Gemini / Claude / OpenAI) |
-| `studio/pipeline_runner.py` | SSE subprocess runner — spawns pipeline steps, streams logs to browser, handles GPU checks and per-UC env isolation |
+| `studio/pipeline_runner.py` | SSE subprocess runner — spawns pipeline steps, streams logs to browser |
 | `studio/kvforge_portal.py` | KVForge Studio: browser UI for the 6-step pipeline with SSE log streaming |
 | `ingestion/` | DocumentLoader protocol + PDF/Markdown/JSONL/HTML/Directory backends |
 | `embeddings/` | Embedder protocol + FastEmbed/SentenceTransformers/OpenAI backends |
 | `vectorstore/` | VectorStore protocol + QdrantStore/ChromaStore backends |
 | `tools/generate_faqs.py` | Heuristic FAQ generator (no API key required) |
-
----
-
-## Tier System
-
-Chunks are classified by access frequency and recency. Tiers control LoRA training sample weight — hot chunks appear more often, preventing catastrophic forgetting of frequently-used knowledge.
-
-```mermaid
-graph LR
-    A[access_count = 0] --> FZ[frozen  weight 1]
-    B[top 15%, last accessed ≤ 7d] --> HT[hot  weight 8]
-    C[next 50%, last accessed ≤ 30d] --> WM[warm  weight 4]
-    D[all remaining] --> CD[cold  weight 2]
-```
-
-| Tier | Condition | Replay weight |
-|------|-----------|:-------------:|
-| hot | Top 15% by access count, last accessed < 7 days | 8 |
-| warm | Next 50%, last accessed < 30 days | 4 |
-| cold | Remaining accessed chunks | 2 |
-| frozen | Never accessed | 1 |
 
 ---
 
@@ -469,13 +426,11 @@ $$\text{PRS} = 0.5 \times \text{accuracy} + 0.3 \times \text{calibration} + 0.2 
 
 | Component | How measured |
 |-----------|-------------|
-| **Accuracy** | Does the model's answer contain the ground-truth answer string? |
+| **Accuracy** | Does the parametric answer match the ground-truth answer? |
 | **Calibration** | Does stated confidence (0–100%) correlate with actual accuracy? |
-| **Consistency** | Do two independent samples of the same question agree? |
+| **Consistency** | Do independent samples of the same question agree? |
 
 Weights are fully configurable via `prs_weights` in the datasource config.
-
-Inspired by calibration evaluation methodology from Guo et al. (2017) [4] and self-consistency prompting from Wang et al. (2022) [5].
 
 ---
 
@@ -491,26 +446,6 @@ When Phase 3 is active, each query is scored on three signals before deciding wh
 
 If `P(no_retrieval) >= gate_threshold` (default `0.75`), the model answers directly from weights. Otherwise it falls back to KV injection or text-in-context retrieval.
 
-Entropy-based confidence gating is related to approaches in Kadavath et al. (2022) [6] and Kuhn et al. (2023) [7].
-
----
-
-## KV Tensor Storage Schema
-
-When indexing, KVForge writes these fields to each point's payload:
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `kv_cache` | string (base64) | Mean-pooled KV tensor, shape `[L, 2, H, D]` float16 |
-| `kv_version` | int | LoRA version used to compute the cache |
-| `access_count` | int | Total query hit count |
-| `last_accessed_ts` | int | Unix timestamp of last retrieval |
-| `avg_retrieval_rank` | float | Mean rank position when retrieved |
-| `parametric_hit_count` | int | Times answered from weights (Phase 3) |
-| `tier` | string | `hot` / `warm` / `cold` / `frozen` |
-
-KV tensor shape `[num_layers, 2, num_kv_heads, head_dim]` is auto-discovered from the HuggingFace model config — no manual configuration needed.
-
 ---
 
 ## Running Tests
@@ -520,24 +455,6 @@ KV tensor shape `[num_layers, 2, num_kv_heads, head_dim]` is auto-discovered fro
 ```bash
 python -m pytest tests/ -v --override-ini="addopts="
 ```
-
-Individual test files:
-
-| Test file | What it covers |
-|-----------|----------------|
-| `test_embeddings.py` | Embedder protocol, FastEmbed, dim validation |
-| `test_ingestion.py` | All loader backends + registry wiring |
-| `test_vectorstore.py` | VectorStore protocol, QdrantStore, registry |
-| `test_model_loader.py` | KV shape auto-discovery, LoRA target detection |
-| `test_prs_evaluator.py` | PRS weights, FAQ schema flexibility |
-| `test_config.py` | Pydantic config validation |
-| `test_generate_faqs.py` | FAQ Q/A parsing |
-| `test_kvforge.py` | CLI init / index / search |
-| `test_kv_*.py` | KV tensor ops, inference modes, stale-chunk handling |
-| `test_confidence_gate.py` | Entropy + hedging signal logic |
-| `test_access_tracker.py` | Tier classification, thread-safe counters |
-| `test_dashboard.py` | FastAPI health/stats endpoints |
-| `test_integration_smoke.py` | End-to-end pipeline logic without GPU |
 
 ---
 
@@ -555,91 +472,23 @@ Tested on AWS g5.xlarge (4× NVIDIA A10G, 24 GB VRAM each).
 | UC4 — Bedrock User Guide | GPU 3 | 8090 | 8084 |
 | KVForge Studio | — | — | **8080** |
 
-```bash
-# Pull latest code
-ssh -i your-key.pem ubuntu@<ec2-ip>
-cd ~/qdrant
-git pull origin main
-source venv/bin/activate
-
-# Run tests to verify deployment
-python -m pytest tests/ -v --override-ini="addopts="
-
-# Start KVForge Studio (manages all UCs from one UI)
-python kvforge_portal.py --port 8080
-
-# Or run a single use-case pipeline directly
-python pipeline/index_and_train.py my_document.pdf \
-  --config datasource_my-corpus.json \
-  --faqs my-corpus_faqs.json
-
-# Start per-UC monitoring dashboard in background
-nohup python pipeline/monitoring_dashboard.py \
-  --config datasource_my-corpus.json &
-```
-
-**Benchmark on Amazon Bedrock User Guide (2,520 chunks, Llama 3.2 3B):**
-
-| Step | Time |
-|------|------|
-| Embed + upsert | ~45s |
-| KV tensor computation | ~498s |
-| LoRA training (3 epochs) | ~474 steps |
-| PRS evaluation | ~90s |
-| **Final PRS** | **0.8512** → Phase 2 activated |
-
----
-
-## Per-Datasource Isolation
-
-Each datasource is fully independent:
-
-| Config key | Purpose |
-|------------|---------|
-| `version_file` | Phase, PRS history, known-good queries |
-| `replay_db` | SQLite replay buffer |
-| `checkpoint_dir` | LoRA adapter checkpoints |
-
-Multiple document collections can share one Qdrant instance.
-
 ---
 
 ## References
 
-[1] Vaswani, A. et al. **"Attention Is All You Need."** NeurIPS 2017.
-[`arXiv:1706.03762`](https://arxiv.org/abs/1706.03762)
-— Foundation of the transformer KV-cache mechanism exploited by KVForge.
+[1] Lewis, P., et al. **"Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks."** NeurIPS 2020. [arXiv:2005.11401](https://arxiv.org/abs/2005.11401)
 
-[2] Lewis, P. et al. **"Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks."** NeurIPS 2020.
-[`arXiv:2005.11401`](https://arxiv.org/abs/2005.11401)
-— Original RAG paper; KVForge extends this with KV injection and parametric answering.
+[2] Vaswani, A., et al. **"Attention Is All You Need."** NeurIPS 2017. [arXiv:1706.03762](https://arxiv.org/abs/1706.03762)
 
-[3] Hu, E. et al. **"LoRA: Low-Rank Adaptation of Large Language Models."** ICLR 2022.
-[`arXiv:2106.09685`](https://arxiv.org/abs/2106.09685)
-— LoRA fine-tuning used to bake corpus knowledge into model weights.
+[3] Hu, E. J., et al. **"LoRA: Low-Rank Adaptation of Large Language Models."** ICLR 2022. [arXiv:2106.09685](https://arxiv.org/abs/2106.09685)
 
-[4] Guo, C. et al. **"On Calibration of Modern Neural Networks."** ICML 2017.
-[`arXiv:1706.04599`](https://arxiv.org/abs/1706.04599)
-— Calibration component of PRS scoring.
+[4] Guo, C., et al. **"On Calibration of Modern Neural Networks."** ICML 2017. [arXiv:1706.04599](https://arxiv.org/abs/1706.04599)
 
-[5] Wang, X. et al. **"Self-Consistency Improves Chain of Thought Reasoning in Language Models."** ICLR 2023.
-[`arXiv:2203.11171`](https://arxiv.org/abs/2203.11171)
-— Self-consistency component of PRS scoring.
+[5] Wang, X., et al. **"Self-Consistency Improves Chain of Thought Reasoning in Language Models."** ICLR 2023. [arXiv:2203.11171](https://arxiv.org/abs/2203.11171)
 
-[6] Kadavath, S. et al. **"Language Models (Mostly) Know What They Know."** 2022.
-[`arXiv:2207.05221`](https://arxiv.org/abs/2207.05221)
-— Informs the confidence gate design for Phase 3.
+[6] Kadavath, S., et al. **"Language Models (Mostly) Know What They Know."** 2022. [arXiv:2207.05221](https://arxiv.org/abs/2207.05221)
 
-[7] Kuhn, L. et al. **"Semantic Uncertainty: Linguistic Invariances for Uncertainty Estimation in Natural Language Generation."** ICLR 2023.
-[`arXiv:2302.09664`](https://arxiv.org/abs/2302.09664)
-— Entropy-based uncertainty estimation used in the confidence gate.
-
-[8] Gim, I. et al. **"PromptCache: Modular Attention Reuse for Low-Latency Inference."** MLSys 2024.
-[`arXiv:2311.04934`](https://arxiv.org/abs/2311.04934)
-— Closest prior work to KVForge's KV-tensor storage and reuse approach.
-
-[9] **Qdrant vector database.** [`qdrant.tech`](https://qdrant.tech)
-— Vector store used for embedding search and KV payload storage.
+[7] Kuhn, L., et al. **"Semantic Uncertainty."** ICLR 2023. [arXiv:2302.09664](https://arxiv.org/abs/2302.09664)
 
 ---
 
