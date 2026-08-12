@@ -65,7 +65,7 @@ def _ensure_config_json(uc_id: str) -> None:
     }
     loader = loader_map.get(source_type, "jsonl")
 
-    local_model = llm.get("local_model", "meta-llama/Llama-3.2-3B-Instruct")
+    local_model = llm.get("local_model", "google/gemma-4-E2B-it")
     collection = uc_id.replace("_", "-")
 
     cfg = {

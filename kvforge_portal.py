@@ -48,7 +48,7 @@ USE_CASES = [
         "vectordb": "Qdrant",
         "vectordb_url": "qdrant",
         "embed_model": "BAAI/bge-small-en-v1.5",
-        "llm_model": "meta-llama/Llama-3.2-3B-Instruct",
+        "llm_model": "google/gemma-4-E2B-it",
         "ab_eval_dir": "examples/usecase1_customer_support",
     },
     {
@@ -61,7 +61,7 @@ USE_CASES = [
         "vectordb": "ChromaDB",
         "vectordb_url": "https://www.trychroma.com",
         "embed_model": "BAAI/bge-small-en-v1.5",
-        "llm_model": "meta-llama/Llama-3.2-3B-Instruct",
+        "llm_model": "google/gemma-4-E2B-it",
         "ab_eval_dir": "examples/usecase2_pubmedqa",
     },
     {
@@ -74,7 +74,7 @@ USE_CASES = [
         "vectordb": "FAISS",
         "vectordb_url": "https://faiss.ai",
         "embed_model": "BAAI/bge-small-en-v1.5",
-        "llm_model": "meta-llama/Llama-3.2-3B-Instruct",
+        "llm_model": "google/gemma-4-E2B-it",
         "ab_eval_dir": "examples/usecase3_squad",
     },
     {
@@ -87,7 +87,7 @@ USE_CASES = [
         "vectordb": "Qdrant",
         "vectordb_url": "qdrant",
         "embed_model": "mixedbread-ai/mxbai-embed-large-v1",
-        "llm_model": "meta-llama/Llama-3.2-3B-Instruct",
+        "llm_model": "google/gemma-4-E2B-it",
         "ab_eval_dir": "examples/usecase4_bedrock_userguide",
     },
 ]
