@@ -21,78 +21,103 @@ def _make_ver_file(tmp_path, phase, prs_history):
     return ver
 
 
-def test_phase3_downgrades_to_2_after_stability_window_bad_rounds(tmp_path):
-    ver = _make_ver_file(tmp_path, phase=3, prs_history=[0.80, 0.55, 0.54])
-    ver.append_prs(4, 0.53, regression_threshold=0.60, stability_window=3)
-    data = ver.load()
-    assert data["phase"] == 2
+def _hist(*prs_vals):
+    return [{"round": i + 1, "prs": p} for i, p in enumerate(prs_vals)]
 
 
-def test_phase2_downgrades_to_1_after_stability_window_bad_rounds(tmp_path):
-    ver = _make_ver_file(tmp_path, phase=2, prs_history=[0.80, 0.55, 0.54])
-    ver.append_prs(4, 0.53, regression_threshold=0.60, stability_window=3)
-    data = ver.load()
-    assert data["phase"] == 1
+def test_decide_advances_1_to_2_at_phase2_threshold():
+    from core.version import decide_phase_transition
+    new = decide_phase_transition(_hist(0.35), 1, phase2_advance=0.30,
+                                  phase3_advance=0.55, regression_threshold=0.25,
+                                  stability_window=3)
+    assert new == 2
 
 
-def test_no_downgrade_if_window_not_full(tmp_path):
-    """Only 2 bad rounds with window=3 — should NOT downgrade."""
-    ver = _make_ver_file(tmp_path, phase=3, prs_history=[0.80, 0.55])
-    ver.append_prs(3, 0.54, regression_threshold=0.60, stability_window=3)
-    data = ver.load()
-    assert data["phase"] == 3
+def test_decide_does_not_advance_1_to_2_below_phase2_threshold():
+    from core.version import decide_phase_transition
+    new = decide_phase_transition(_hist(0.28), 1, phase2_advance=0.30,
+                                  phase3_advance=0.55, regression_threshold=0.25,
+                                  stability_window=3)
+    assert new == 1
 
 
-def test_no_downgrade_in_coast_zone(tmp_path):
-    """PRS between regression_threshold (0.60) and advance_threshold (0.75) — stay put."""
-    ver = _make_ver_file(tmp_path, phase=3, prs_history=[0.80, 0.65, 0.66])
-    ver.append_prs(4, 0.67, regression_threshold=0.60, stability_window=3)
-    data = ver.load()
-    assert data["phase"] == 3
+def test_decide_advances_2_to_3_only_on_two_consecutive_high_rounds():
+    from core.version import decide_phase_transition
+    one = decide_phase_transition(_hist(0.40, 0.60), 2, phase2_advance=0.30,
+                                  phase3_advance=0.55, regression_threshold=0.25,
+                                  stability_window=3)
+    assert one == 2  # only the last round clears phase3_advance
+    two = decide_phase_transition(_hist(0.60, 0.60), 2, phase2_advance=0.30,
+                                  phase3_advance=0.55, regression_threshold=0.25,
+                                  stability_window=3)
+    assert two == 3
 
 
-def test_no_double_downgrade_per_call(tmp_path):
-    """Phase 3 with 3 bad rounds drops to 2, not 1, in a single call."""
-    ver = _make_ver_file(tmp_path, phase=3, prs_history=[0.80, 0.55, 0.54])
-    ver.append_prs(4, 0.53, regression_threshold=0.60, stability_window=3)
-    data = ver.load()
-    assert data["phase"] == 2  # not 1
+def test_decide_regresses_after_stability_window_below_regression():
+    from core.version import decide_phase_transition
+    new = decide_phase_transition(_hist(0.60, 0.20, 0.20, 0.20), 3,
+                                  phase2_advance=0.30, phase3_advance=0.55,
+                                  regression_threshold=0.25, stability_window=3)
+    assert new == 2
 
 
-def test_advance_still_works_with_new_params(tmp_path):
-    """Existing advance logic must still fire with the new keyword args present."""
-    ver = _make_ver_file(tmp_path, phase=2, prs_history=[0.80])
-    ver.append_prs(2, 0.80, regression_threshold=0.60, stability_window=3)
-    data = ver.load()
-    assert data["phase"] == 3
+def test_decide_never_double_regresses():
+    from core.version import decide_phase_transition
+    new = decide_phase_transition(_hist(0.60, 0.20, 0.20, 0.20), 3,
+                                  phase2_advance=0.30, phase3_advance=0.55,
+                                  regression_threshold=0.25, stability_window=3)
+    assert new == 2  # 3 -> 2, not 3 -> 1
 
 
-def test_existing_callers_unaffected_no_new_args(tmp_path):
-    """append_prs called with just (round_num, prs) must not crash."""
+def test_decide_phase1_is_floor():
+    from core.version import decide_phase_transition
+    new = decide_phase_transition(_hist(0.10, 0.10, 0.10), 1,
+                                  phase2_advance=0.30, phase3_advance=0.55,
+                                  regression_threshold=0.25, stability_window=3)
+    assert new == 1
+
+
+def test_invariant_clamps_flapping_config():
+    from core.version import _enforce_threshold_invariant
+    # Old flapping pair: advance 0.50 < regression 0.60.
+    p2, p3, reg = _enforce_threshold_invariant(0.50, 0.50, 0.60)
+    assert p3 >= p2 >= reg
+
+
+def test_no_flapping_under_clamped_thresholds():
+    from core.version import decide_phase_transition, _enforce_threshold_invariant
+    # A steady mediocre PRS must NOT oscillate. Use the clamped thresholds.
+    p2, p3, reg = _enforce_threshold_invariant(0.50, 0.50, 0.60)
+    phase = 2
+    seq = []
+    for _ in range(6):
+        phase = decide_phase_transition(_hist(0.55, 0.55, 0.55), phase,
+                                        phase2_advance=p2, phase3_advance=p3,
+                                        regression_threshold=reg, stability_window=3)
+        seq.append(phase)
+    assert len(set(seq)) == 1  # settled, no 2,3,2,3 oscillation
+
+
+def test_append_advances_phase2_at_default(tmp_path):
     ver = _make_ver_file(tmp_path, phase=1, prs_history=[])
-    ver.append_prs(1, 0.50)  # no extra kwargs — must not raise
-    data = ver.load()
-    assert data["phase"] == 1
+    ver.append_prs(1, 0.35)  # >= default phase2_advance 0.30
+    assert ver.load()["phase"] == 2
 
 
-def test_phase1_does_not_regress_below_1(tmp_path):
-    """Phase 1 is the floor — bad rounds must not push it to 0."""
-    ver = _make_ver_file(tmp_path, phase=1, prs_history=[0.40, 0.41])
-    ver.append_prs(3, 0.42, regression_threshold=0.60, stability_window=3)
-    data = ver.load()
-    assert data["phase"] == 1
+def test_append_does_not_advance_phase2_below_default(tmp_path):
+    ver = _make_ver_file(tmp_path, phase=1, prs_history=[])
+    ver.append_prs(1, 0.20)
+    assert ver.load()["phase"] == 1
 
 
-def test_no_regress_when_advance_fires_same_call(tmp_path):
-    """When advance fires, regression must not also fire in the same call.
+def test_append_regression_3_to_2(tmp_path):
+    ver = _make_ver_file(tmp_path, phase=3, prs_history=[0.60, 0.20, 0.20])
+    ver.append_prs(4, 0.20, regression_threshold=0.25, stability_window=3,
+                   phase2_advance_threshold=0.30, phase3_advance_threshold=0.55)
+    assert ver.load()["phase"] == 2
 
-    With a pathological config (regression_threshold > advance threshold),
-    a PRS of 0.76 would advance phase 1→2 and then the regression window
-    check could immediately revert it. Guard ensures this never happens.
-    """
-    ver = _make_ver_file(tmp_path, phase=1, prs_history=[0.80, 0.80])
-    # regression_threshold=0.90 means 0.76 is below it, but advance fires first
-    ver.append_prs(3, 0.76, regression_threshold=0.90, stability_window=3)
-    data = ver.load()
-    # advance should have fired (prs >= 0.75 and two consecutive rounds >= 0.75)
-    assert data["phase"] == 3  # not regressed back
+
+def test_append_no_new_kwargs_uses_defaults(tmp_path):
+    ver = _make_ver_file(tmp_path, phase=1, prs_history=[])
+    ver.append_prs(1, 0.10)  # below all thresholds -> stays phase 1
+    assert ver.load()["phase"] == 1

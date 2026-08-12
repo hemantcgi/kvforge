@@ -55,6 +55,83 @@ def _build_sleep_prompt(chunk: str, n_per_chunk: int = 3) -> str:
     return SLEEP_PROMPT_TEMPLATE.format(chunk=chunk[:1500], n=n_per_chunk)
 
 
+# Paraphrase augmentation: a controlled GPU experiment (before_after_eval on
+# usecase4_bedrock_userguide, see docs/superpowers specs) found that training
+# on diverse paraphrases of each question — not repeated/duplicated copies —
+# is what lets the LoRA generalize to unseen phrasings of a trained fact
+# (held-out judge accuracy 0.06 -> 0.40 with 10 diverse paraphrases per
+# question; 10 identical duplicates gave no improvement at all). This
+# generator produces the diverse paraphrases; lora_trainer.py's chat-SFT
+# path (sft_format="chat") does the rest.
+PARAPHRASE_PROMPT_TEMPLATE = """Rewrite this question in {n} different ways. Keep the exact same meaning but vary the wording, phrasing, and sentence structure — the way different users would naturally ask about the same thing.
+
+Question: {question}
+
+Output ONLY the {n} rewritten questions, one per line, no numbering or bullets."""
+
+
+def _build_paraphrase_prompt(question: str, n: int = 5) -> str:
+    """Build the paraphrase-generation prompt for a single question."""
+    return PARAPHRASE_PROMPT_TEMPLATE.format(question=question, n=n)
+
+
+def _parse_paraphrase_lines(text: str) -> list[str]:
+    """Parse one paraphrase per line from LLM output.
+
+    Strips leading numbering/bullets (e.g. "1. ", "- ") and drops lines that
+    don't end in "?" — this rejects preamble the model prepends despite being
+    told "output ONLY the questions" (e.g. "Here are 5 ways to ask that:"),
+    which would otherwise be admitted as paraphrase #1 and displace a real one.
+    """
+    results = []
+    for line in text.splitlines():
+        line = re.sub(r"^\s*[\d\-\.\)\*]+\s*", "", line).strip().strip('"')
+        if line.endswith("?"):
+            results.append(line)
+    return results
+
+
+def _augment_with_paraphrases(faqs: list[dict], provider: str, model: str, api_key: str,
+                               n_per_faq: int, q_key: str = "question",
+                               a_key: str = "answer") -> list[dict]:
+    """Generate diverse paraphrases of each FAQ's question, pairing each with
+    the original answer. Returns only the new paraphrase FAQs (does not
+    include the originals) — callers merge with `_deduplicate`.
+    """
+    import time as _time
+
+    augmented: list[dict] = []
+    # Same inter-request backoff as the main generation loop (2s -> 60s on
+    # repeated 429s) — this loop makes one call per FAQ with no other pacing.
+    inter_delay = 2.0
+    idx = 0
+    while idx < len(faqs):
+        faq = faqs[idx]
+        question = faq.get(q_key, "")
+        answer = faq.get(a_key, "")
+        if not question or not answer:
+            idx += 1
+            continue
+        try:
+            prompt = _build_paraphrase_prompt(question, n_per_faq)
+            raw = _call_provider(provider, model, api_key, prompt)
+            inter_delay = max(2.0, inter_delay * 0.8)
+        except Exception as e:
+            if "429" in str(e):
+                inter_delay = min(60.0, inter_delay * 2)
+                print(f"  [paraphrase] rate-limited (429) — waiting {inter_delay:.0f}s before retry")
+                _time.sleep(inter_delay)
+                continue  # retry this faq, idx unchanged
+            print(f"  [paraphrase] warning: could not paraphrase {question[:60]!r}: {e}")
+            idx += 1
+            continue
+        for p in _parse_paraphrase_lines(raw)[:n_per_faq]:
+            augmented.append({q_key: p, a_key: answer})
+        idx += 1
+        _time.sleep(inter_delay)
+    return augmented
+
+
 def _parse_sleep_blocks(text: str) -> list[dict]:
     """Parse one or more Q/A/INFERENCE blocks from LLM output.
 
@@ -180,8 +257,16 @@ def _resolve_provider_config(uc_config: dict) -> tuple[str, str, str]:
 
 
 def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
-             n_per_chunk: int = 3) -> None:
-    """Run sleep-time FAQ generation and save to output_path."""
+             n_per_chunk: int = 3, paraphrases_per_faq: int = 0) -> None:
+    """Run sleep-time FAQ generation and save to output_path.
+
+    Args:
+        paraphrases_per_faq: If > 0, generate this many diverse paraphrases
+            of each newly-generated question (same answer), and append them
+            alongside the originals. See `_augment_with_paraphrases` — this
+            is what makes the resulting faqs.json a good chat-SFT training
+            set instead of a single-phrasing-per-fact one.
+    """
     uc_config = _load_uc_config(config_path)
     provider, model, api_key = _resolve_provider_config(uc_config)
 
@@ -199,15 +284,24 @@ def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
     print(f"[sleep-faq] provider={provider} model={model} target={count} FAQs")
 
     from vectorstore.registry import get_store
+    import time as _time
     store = get_store(cfg)
-    results, _ = store.scroll(cfg["collection"], limit=500,
-                              with_payload=True, with_vectors=False)
-    chunks = [r.payload.get("text", "") for r in results if r.payload.get("text")]
-    if not chunks:
+    all_results, _ = store.scroll(cfg["collection"], limit=10000,
+                                  with_payload=True, with_vectors=False)
+    if not all_results:
         print("[sleep-faq] ERROR: No chunks found. Run indexing first.")
         sys.exit(1)
 
-    print(f"[sleep-faq] {len(chunks)} chunks in '{cfg['collection']}'")
+    # Split into new (no faq_generated_at) vs already processed
+    new_records = [(r.id, r.payload.get("text", ""))
+                   for r in all_results
+                   if r.payload.get("text") and not r.payload.get("faq_generated_at")]
+    all_count = sum(1 for r in all_results if r.payload.get("text"))
+    print(f"[sleep-faq] {all_count} chunks total, {len(new_records)} without FAQs")
+
+    if not new_records:
+        print("[sleep-faq] All chunks already have FAQs — nothing to do.")
+        sys.exit(0)
 
     existing: list[dict] = []
     q_key = cfg.get("faq_question_key", "question")
@@ -215,32 +309,76 @@ def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
     if output_path.exists():
         try:
             existing = json.loads(output_path.read_text())
-            print(f"[sleep-faq] Merging with {len(existing)} existing FAQs")
+            print(f"[sleep-faq] Appending to {len(existing)} existing FAQs")
         except Exception:
             pass
 
     new_faqs: list[dict] = []
     chunk_idx = 0
+    # Inter-request delay: start at 2s, back off up to 60s on repeated 429s
+    _inter_delay = 2.0
+    _consecutive_429 = 0
 
-    while len(new_faqs) < count and chunk_idx < len(chunks):
-        chunk = chunks[chunk_idx]
+    while len(new_faqs) < count and chunk_idx < len(new_records):
+        point_id, chunk = new_records[chunk_idx]
         chunk_idx += 1
         if not chunk.strip():
             continue
         try:
             prompt = _build_sleep_prompt(chunk, n_per_chunk=n_per_chunk)
             raw = _call_provider(provider, model, api_key, prompt)
+            _consecutive_429 = 0          # reset on success
+            _inter_delay = max(2.0, _inter_delay * 0.8)  # gradually relax
+            chunk_new = []
             for b in _parse_sleep_blocks(raw):
                 if len(new_faqs) >= count:
                     break
                 new_faqs.append({q_key: b["question"], a_key: b["answer"]})
-                print(f"  [{len(new_faqs)}/{count}] Q: {b['question'][:80]}")
+                chunk_new.append(b["question"][:80])
+            if chunk_new:
+                print(f"  [chunk {chunk_idx}/{len(new_records)}] +{len(chunk_new)} FAQs")
+            # Mark chunk as processed so re-runs skip it
+            try:
+                store.set_payload(cfg["collection"], point_id,
+                                  {"faq_generated_at": int(_time.time())})
+            except Exception as e:
+                print(f"  [chunk {chunk_idx}] warning: could not mark faq_generated_at: {e}")
         except Exception as e:
-            print(f"  [chunk {chunk_idx}] error: {e}")
+            err_str = str(e)
+            if "429" in err_str:
+                _consecutive_429 += 1
+                _inter_delay = min(60.0, _inter_delay * 2)
+                wait = _inter_delay
+                print(f"  [chunk {chunk_idx}] rate-limited (429) — waiting {wait:.0f}s before retry "
+                      f"(consecutive: {_consecutive_429})")
+                if _consecutive_429 >= 3:
+                    print(
+                        f"\n[sleep-faq] HINT: Persistent 429 rate-limit from '{provider}/{model}'.\n"
+                        f"  Consider switching to a less-congested model in Studio → Settings:\n"
+                        f"    • Gemini 2.5 Flash   (gemini)\n"
+                        f"    • Anthropic Sonnet 4.6 / Opus 4.7 / Haiku  (claude)\n"
+                        f"    • OpenAI GPT-4o / GPT-4o-mini  (openai)\n"
+                        f"  Update llm.sleep_faq_provider + llm.sleep_faq_model in uc_config.json "
+                        f"or set SLEEP_FAQ_PROVIDER / SLEEP_FAQ_MODEL env vars.\n"
+                    )
+                _time.sleep(wait)
+                chunk_idx -= 1  # retry this chunk
+                continue
+            else:
+                print(f"  [chunk {chunk_idx}] error: {e}")
+        _time.sleep(_inter_delay)
+
+    if paraphrases_per_faq > 0 and new_faqs:
+        print(f"[sleep-faq] Generating {paraphrases_per_faq} paraphrases per FAQ "
+              f"for {len(new_faqs)} newly-generated questions...")
+        paraphrased = _augment_with_paraphrases(
+            new_faqs, provider, model, api_key, paraphrases_per_faq, q_key=q_key, a_key=a_key)
+        print(f"[sleep-faq] +{len(paraphrased)} paraphrase FAQs")
+        new_faqs = new_faqs + paraphrased
 
     merged = _deduplicate(existing, new_faqs)
     output_path.write_text(json.dumps(merged, indent=2, ensure_ascii=False))
-    print(f"\n[sleep-faq] Saved {len(merged)} FAQs ({len(new_faqs)} new, {len(existing)} existing)")
+    print(f"\n[sleep-faq] Saved {len(merged)} FAQs ({len(new_faqs)} appended from {chunk_idx} new chunks, {len(existing)} pre-existing)")
 
     # Pre-seed known_good_queries with embedded FAQ questions
     questions = [item[q_key] for item in merged if item.get(q_key)]
@@ -309,12 +447,18 @@ def main() -> None:
                    help="Output faqs.json path (default: same dir as config)")
     p.add_argument("--n-per-chunk", type=int, default=3,
                    help="Q&A pairs to request per chunk (default: 3)")
+    p.add_argument("--paraphrases-per-faq", type=int, default=0,
+                   help="Diverse paraphrases to generate per newly-generated FAQ question "
+                        "(default: 0, disabled). Recommended for corpora with many distinct "
+                        "facts and few phrasings each — a controlled experiment found this is "
+                        "what lets chat-SFT training generalize to unseen phrasings; simply "
+                        "repeating the same question does not.")
     args = p.parse_args()
 
     config_path = Path(args.config)
     cfg = json.loads(config_path.read_text())
     output_path = Path(args.output) if args.output else config_path.parent / "faqs.json"
-    generate(cfg, config_path, args.count, output_path, args.n_per_chunk)
+    generate(cfg, config_path, args.count, output_path, args.n_per_chunk, args.paraphrases_per_faq)
 
 
 if __name__ == "__main__":

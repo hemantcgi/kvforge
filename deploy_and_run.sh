@@ -3,7 +3,7 @@ set -euo pipefail
 
 # ─── Config ───────────────────────────────────────────────────────────────────
 EC2_USER="${EC2_USER:-ubuntu}"
-EC2_HOST="${EC2_HOST:-13.221.47.200}"
+EC2_HOST="${EC2_HOST:-13.217.195.243}"
 EC2_PEM="${EC2_PEM:-/Users/hemant/Downloads/RoPE/g5.x.pem}"
 LOCAL_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REMOTE_REPO="~/kvforge"

@@ -461,9 +461,14 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
             vllm_model = cfg.get("vllm_model", cfg.get("llm_model", "default"))
 
             # ── Per-query PRS gate ────────────────────────────────────────────
-            # Embed the query and find max cosine similarity to known-good
-            # query embeddings stored by prs_evaluator.  If ≥ 0.75 the model
-            # has "mastered" this question → bypass retrieval entirely.
+            # Phase-2 selective-parametric eligibility check (Component 3 of the
+            # PRS gate rework): embed the query and find max cosine similarity to
+            # known-good query embeddings stored by prs_evaluator. This is the
+            # same HARD gate as core.confidence_gate.is_eligible_for_parametric —
+            # only queries genuinely close to a proven-good query bypass retrieval.
+            # Threshold is configurable (default 0.85), read from
+            # addon_config.inference.parametric_eligibility_threshold or the flat
+            # top-level key, matching the merge pattern used elsewhere for cfg reads.
             per_query_prs = 0.0
             use_parametric = (phase >= 3)
 
@@ -477,6 +482,11 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
             if not use_parametric and phase >= 2:
                 known_good = version_data.get("known_good_queries", [])
                 if known_good:
+                    import core.confidence_gate as _cg
+                    eligibility = cfg.get("addon_config", {}).get("inference", {}).get(
+                        "parametric_eligibility_threshold",
+                        cfg.get("parametric_eligibility_threshold", 0.85),
+                    )
                     _q_emb = list(_get_embedder(cfg).embed([query]))[0]
                     _nq = float(_np.linalg.norm(_q_emb))
                     if _nq > 1e-9:
@@ -486,9 +496,9 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
                             for kg in known_good
                         ]
                         per_query_prs = max(sims)
-                        if per_query_prs >= 0.75:
+                        if _cg.is_eligible_for_parametric(per_query_prs, eligibility):
                             use_parametric = True
-                            _log(tag, f"per-query PRS={per_query_prs:.3f} ≥ 0.75 → parametric override (no retrieval)")
+                            _log(tag, f"per-query sim={per_query_prs:.3f} >= {eligibility} -> parametric override (no retrieval)")
 
             if use_parametric:
                 mode = "parametric"
@@ -562,10 +572,11 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
             model, tokenizer = _model_loader.load(lora_ckpt)
             # model is already in the correct dtype (fp16 or quantized)
 
-            # ── Phase 3: answer directly from fine-tuned weights, no retrieval ─
+            # ── Phase 3: corpus-wide parametric answering — answer directly
+            # from fine-tuned weights, no retrieval ─
             if phase >= 3:
                 mode = "parametric"
-                _log(tag, "Phase 3 — answering from fine-tuned weights (no retrieval)…")
+                _log(tag, "Phase 3 — corpus-wide parametric answering from fine-tuned weights (no retrieval)…")
                 t_gen = time.time()
                 messages = [{"role": "user", "content": query}]
                 prompt = tokenizer.apply_chat_template(
@@ -1140,33 +1151,33 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
     <p><b>Formula:</b></p>
     <pre style="background:#111;padding:8px;border-radius:4px;font-size:0.85em">
-PRS = 0.5 × Accuracy
-    + 0.3 × Calibration
-    + 0.2 × Self-Consistency</pre>
+PRS = 0.7 × Accuracy
+    + 0.15 × Calibration
+    + 0.15 × Self-Consistency</pre>
 
     <table>
       <tr><th>Component</th><th>What it measures</th><th>Weight</th></tr>
       <tr><td><b>Accuracy</b></td>
           <td>Fraction of FAQ answers that match the LLM's direct answer
               (no retrieval, cosine similarity ≥ threshold)</td>
-          <td>50%</td></tr>
+          <td>70%</td></tr>
       <tr><td><b>Calibration</b></td>
           <td>Whether the model's confidence token probabilities
               match its actual accuracy (low entropy on correct answers)</td>
-          <td>30%</td></tr>
+          <td>15%</td></tr>
       <tr><td><b>Self-Consistency</b></td>
           <td>Mean pairwise cosine similarity of 3 answers sampled
               at temperature 0.7 — measures how stable the knowledge is</td>
-          <td>20%</td></tr>
+          <td>15%</td></tr>
     </table>
 
     <p><b>Phase thresholds:</b></p>
     <table>
       <tr><th>Phase</th><th>Condition</th><th>Behaviour</th></tr>
       <tr><td>1</td><td>—</td><td>Standard RAG — text-in-context only</td></tr>
-      <tr><td>2</td><td>PRS ≥ 0.75 (one round)</td><td>KV injection enabled</td></tr>
-      <tr><td>3</td><td>PRS ≥ 0.80 (two consecutive rounds)</td>
-          <td>Confidence gate — high-confidence queries answered from weights directly</td></tr>
+      <tr><td>2</td><td>PRS ≥ 0.30 (one round)</td><td>KV injection + selective parametric — queries that clear the known-good similarity eligibility gate are answered from weights</td></tr>
+      <tr><td>3</td><td>PRS ≥ 0.55 (two consecutive rounds)</td>
+          <td>Corpus-wide confidence gate — runs for every query, not just eligible ones</td></tr>
     </table>
 
     <div id="prs-live"></div>

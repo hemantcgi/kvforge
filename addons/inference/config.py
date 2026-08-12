@@ -14,6 +14,7 @@ class InferenceConfig(BaseModel):
     vllm_model: str = ""
     max_new_tokens: int = 256
     gate_threshold: float = 0.75
+    parametric_eligibility_threshold: float = 0.85  # Phase-2 hard gate: min similarity-to-known-good
     model_library: dict = Field(default_factory=dict)
     query_log_db: str = "query_log.db"
 
