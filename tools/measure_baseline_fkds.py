@@ -82,9 +82,15 @@ def summarize_latency(latencies: list[float]) -> dict[str, float]:
     }
 
 
-def summarize_fkds(fkds: list[float]) -> dict[str, float]:
-    """Return mean and SEM of fKDS scores."""
-    arr = np.array(fkds)
+def summarize_factual_accuracy(scores: list[float]) -> dict[str, float]:
+    """Return mean and SEM of raw factual-accuracy scores.
+
+    These scores are 0.5 * token-F1 + 0.5 * LLM-judge correctness, not the
+    corpus-level fKDS blend that also incorporates consistency KDS. The name is
+    intentionally ``factual_accuracy`` to avoid conflating raw factual scores
+    with the fKDS metric used by the KV-injection gate.
+    """
+    arr = np.array(scores)
     sem = float(np.std(arr, ddof=1) / np.sqrt(len(arr))) if len(arr) > 1 else 0.0
     return {
         "mean": round(float(np.mean(arr)), 4),
@@ -126,10 +132,12 @@ def run_mode(
         model, tokenizer = None, None
 
     records = []
-    for item in eval_items:
+    print(f"   Starting loop over {len(eval_items)} items for mode={mode}", flush=True)
+    for idx, item in enumerate(eval_items):
         q = item["question"]
         gt = item["answer"]
 
+        print(f"   [{idx+1}/{len(eval_items)}] {mode}: {q[:80]}...", flush=True)
         t0 = time.perf_counter()
         if mode == "parametric":
             ans = _generate_parametric(q, pipe, tokenizer, sft_format="chat")
@@ -138,10 +146,14 @@ def run_mode(
             if not ans:
                 ans = ""
         latency = time.perf_counter() - t0
+        print(f"       generated in {latency:.2f}s", flush=True)
 
+        t1 = time.perf_counter()
         f1 = eval_metrics.token_f1(ans, gt)
         judge = eval_metrics.llm_judge(q, ans, gt, client=judge_client, model=judge_model)
-        fkds = 0.5 * f1 + 0.5 * float(judge["factually_correct"])
+        judge_latency = time.perf_counter() - t1
+        factual_accuracy = 0.5 * f1 + 0.5 * float(judge["factually_correct"])
+        print(f"       judge={int(judge['factually_correct'])} f1={f1:.3f} factual_accuracy={factual_accuracy:.3f} ({judge_latency:.2f}s)", flush=True)
 
         cost = estimate_judge_cost(q, ans, gt, judge_model) + estimate_embedding_cost(ans)
 
@@ -150,7 +162,7 @@ def run_mode(
             "ground_truth": gt,
             "answer": ans,
             "mode": mode,
-            "fkds": round(fkds, 4),
+            "factual_accuracy": round(factual_accuracy, 4),
             "f1": round(f1, 4),
             "judge_correct": int(judge["factually_correct"]),
             "judge_rationale": judge.get("rationale", ""),
@@ -158,13 +170,13 @@ def run_mode(
             "cost_usd": round(cost, 6),
         })
 
-    fkds_list = [r["fkds"] for r in records]
+    fa_list = [r["factual_accuracy"] for r in records]
     latency_list = [r["latency_sec"] for r in records]
     cost_total = sum(r["cost_usd"] for r in records)
 
     return {
         "mode": mode,
-        "fkds": summarize_fkds(fkds_list),
+        "factual_accuracy": summarize_factual_accuracy(fa_list),
         "latency": summarize_latency(latency_list),
         "cost_usd_total": round(cost_total, 4),
         "records": records,
@@ -181,10 +193,14 @@ def main() -> None:
     p.add_argument("--judge-provider", default="openai",
                    help="openai, anthropic, or gemini")
     p.add_argument("--judge-api-key", default="")
+    p.add_argument("--recompute-ratio", type=float, default=None,
+                   help="Override recompute_ratio in config for partial KV recompute sweeps.")
     args = p.parse_args()
 
     with open(args.config) as f:
         cfg = json.load(f)
+    if args.recompute_ratio is not None:
+        cfg["recompute_ratio"] = args.recompute_ratio
     with open(args.eval_set) as f:
         eval_data = json.load(f)
     eval_items = eval_data.get("items", eval_data)
@@ -224,13 +240,13 @@ def main() -> None:
         print(f"\n🔬 Running mode: {mode}")
         result = run_mode(mode, eval_items, cfg, args.judge_model, judge_client)
         report["modes"][mode] = {
-            "fkds": result["fkds"],
+            "factual_accuracy": result["factual_accuracy"],
             "latency": result["latency"],
             "cost_usd_total": result["cost_usd_total"],
         }
         with open(out_dir / f"{mode}_records.json", "w") as f:
             json.dump(result["records"], f, indent=2)
-        print(f"   fKDS={result['fkds']['mean']:.3f} ± {result['fkds']['sem']:.3f}")
+        print(f"   factual_accuracy={result['factual_accuracy']['mean']:.3f} ± {result['factual_accuracy']['sem']:.3f}")
         print(f"   p50 latency={result['latency']['p50']:.3f}s")
         print(f"   total cost=${result['cost_usd_total']:.4f}")
 

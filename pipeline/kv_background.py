@@ -116,6 +116,83 @@ def record_parametric_hit(chunk_ids: list[int]) -> None:
             _access_buffer[cid]["parametric_hits"] += 1
 
 
+def _is_hot_chunk(chunk_id, chunk_payload: dict, vector_store, collection: str) -> bool:
+    """Return True if chunk is in the top 15% by access_count among accessed chunks.
+
+    This is the same hot-tier definition used by the training replay buffer
+    (CLAUDE.md: hot = top 15% by access), evaluated against the current global
+    access distribution in the vector store.
+    """
+    access_count = chunk_payload.get("access_count", 0) or 0
+    if not access_count:
+        return False
+
+    counts = []
+    offset = None
+    while True:
+        results, offset = vector_store.scroll(
+            collection, limit=1000, with_payload=True, offset=offset
+        )
+        for r in results:
+            count = r.payload.get("access_count", 0) or 0
+            if count > 0:
+                counts.append(count)
+        if offset is None:
+            break
+
+    if not counts:
+        return False
+
+    counts.sort(reverse=True)
+    hot_cutoff = max(1, int(len(counts) * 0.15))
+    hot_threshold = counts[hot_cutoff - 1]
+    return access_count >= hot_threshold
+
+
+def _maybe_promote_chunk_to_enhanced_tier(
+    cfg: dict,
+    chunk_id,
+    chunk_payload: dict,
+    model,
+    tokenizer,
+    vector_store,
+) -> None:
+    """Promote a hot chunk to the enhanced tier if enabled and qualified.
+
+    Qualification:
+      * cfg["enable_enhanced_tier"] is True
+      * chunk is in the hot tier (top 15% by access_count)
+      * chunk does not already have kv_token_path set
+
+    Any failure is logged and swallowed so the background worker keeps running.
+    """
+    if not cfg.get("enable_enhanced_tier", False):
+        return
+
+    if chunk_payload.get("kv_token_path"):
+        return
+
+    if not _is_hot_chunk(chunk_id, chunk_payload, vector_store, cfg["collection"]):
+        return
+
+    try:
+        promote_chunk_to_enhanced_tier(
+            chunk_id=str(chunk_id),
+            chunk_text=chunk_payload.get("text", ""),
+            cfg=cfg,
+            model=model,
+            tokenizer=tokenizer,
+            vector_store=vector_store,
+            tq_config=cfg.get("turboquant"),
+            existing_kv_token_path=None,
+        )
+    except Exception as e:
+        print(
+            f"[kv_background] Enhanced-tier promotion failed for chunk {chunk_id}: {e}",
+            flush=True,
+        )
+
+
 # ── KV recompute worker ───────────────────────────────────────────────────
 
 def _kv_worker(cfg: dict) -> None:
@@ -128,6 +205,10 @@ def _kv_worker(cfg: dict) -> None:
     Args:
         cfg: Datasource configuration dict.
     """
+    # Support both flat configs and nested addon_config.
+    indexing_cfg = cfg.get("addon_config", {}).get("indexing", {})
+    effective_cfg = {**cfg, **indexing_cfg}
+
     client = get_store(cfg)
     num_layers, num_kv_heads, head_dim = model_loader.get_kv_shape(cfg)
 
@@ -146,24 +227,44 @@ def _kv_worker(cfg: dict) -> None:
                 model, tokenizer = model_loader.reload(lora_ckpt)
                 _cached_lora_version = current_ver
 
-            results, _ = client.scroll(
-                cfg["collection"],
-                limit=1,
-                with_payload=True,
-            )
-            # Filter for the specific chunk_id
-            results = [r for r in results if r.id == chunk_id]
+            # Retrieve the specific chunk by ID rather than scrolling with
+            # limit=1, which would return only the first point in the
+            # collection and fail to find the target chunk when there are
+            # multiple records.
+            if hasattr(client, "native_client"):
+                retrieved = client.native_client.retrieve(
+                    collection_name=effective_cfg["collection"],
+                    ids=[chunk_id],
+                    with_payload=True,
+                )
+                results = retrieved
+            else:
+                results, _ = client.scroll(
+                    effective_cfg["collection"],
+                    limit=1000,
+                    with_payload=True,
+                )
+                results = [r for r in results if r.id == chunk_id]
             if not results:
                 continue
-            text = results[0].payload.get("text", "")
+            chunk_payload = results[0].payload
+            text = chunk_payload.get("text", "")
             from pipeline.kv_indexer import compute_kv_for_chunk
             kv_arr = compute_kv_for_chunk(
                 text, model, tokenizer, num_layers, num_kv_heads, head_dim
             )
             client.set_payload(
-                cfg["collection"],
+                effective_cfg["collection"],
                 chunk_id,
                 {"kv_cache": kv_utils.serialize_kv(kv_arr), "kv_version": current_ver},
+            )
+            _maybe_promote_chunk_to_enhanced_tier(
+                cfg=effective_cfg,
+                chunk_id=chunk_id,
+                chunk_payload=chunk_payload,
+                model=model,
+                tokenizer=tokenizer,
+                vector_store=client,
             )
         except Exception as e:
             print(f"[kv_background] KV recompute error for chunk {chunk_id}: {e}",
@@ -298,10 +399,10 @@ def promote_chunk_to_enhanced_tier(
     path = kv_dir / f"{chunk_id}.npz"
     save_token_kv(arr, path, tq_config=tq_config)
 
-    vector_store.update_payload(
-        collection=cfg["collection"],
-        point_id=chunk_id,
-        payload={"kv_token_path": str(path)},
+    vector_store.set_payload(
+        cfg["collection"],
+        chunk_id,
+        {"kv_token_path": str(path)},
     )
     return str(path)
 
