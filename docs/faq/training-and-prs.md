@@ -104,7 +104,7 @@ You will need to re-index if you change chunk sizes (existing chunks in the vect
 
 #### 6. Use a larger base model
 
-Smaller models have less memorization capacity. If you are using TinyLlama-1.1B on a large corpus, the model may not have the capacity to achieve high PRS regardless of training duration. Try Llama-3.2-3B or Mistral-7B.
+Smaller models have less memorization capacity. If you are using TinyLlama-1.1B on a large corpus, the model may not have the capacity to achieve high PRS regardless of training duration. Try Gemma-4-E2B-it (2B) or Mistral-7B.
 
 #### 7. Check for catastrophic forgetting
 

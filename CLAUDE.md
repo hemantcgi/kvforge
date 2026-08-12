@@ -4,11 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Project Is
 
-**KVForge** is a progressive RAG (Retrieval-Augmented Generation) system that advances through three phases of increasing autonomy:
+**KVForge** is a progressive system that transitions deployed question-answering systems from Retrieval-Augmented Generation (RAG) to **fully parametric answering** — a fine-tuned small language model answering directly from its weights with no retrieval. The central empirical result: a **2B-parameter Gemma-4-E2B-it**, LoRA-fine-tuned on cloud-LLM-generated QA pairs, **matches or exceeds text-in-context RAG on factual accuracy across three of four enterprise corpora** (Customer Support +71%, SQuAD +38%, Bedrock +44%, PubMedQA +64% with extended training).
+
+Three phases of increasing autonomy:
 
 - **Phase 1:** Standard text-in-context RAG
-- **Phase 2:** KV cache injection — pre-computed KV tensors stored in the vector store are injected at query time, bypassing the text encoder for matched chunks
-- **Phase 3:** Confidence-gated parametric answering — after LoRA fine-tuning, the model answers from weights when confident enough (entropy + hedging + query similarity ≥ 0.75)
+- **Phase 2:** KV cache injection — pre-computed KV tensors are injected at query time, bypassing chunk re-encoding (a latency optimization, not a quality win)
+- **Phase 3:** Corpus-wide confidence-gated parametric answering — the confidence gate (entropy + hedging + query similarity) runs for every query
+
+The four evaluation datasets are UC1 (Bitext customer support), UC2 (PubMedQA), UC3 (SQuAD 2.0), and UC4 (Amazon Bedrock User Guide).
 
 Despite the repo folder being named `qdrant`, this is a **pure Python project** (no Rust, no Cargo).
 
@@ -109,6 +113,16 @@ Pluggable backends (Protocol-based, no ABC/inheritance):
 - **warm:** next 50%, accessed < 30 days → weight 4
 - **cold:** remaining accessed chunks → weight 2
 - **frozen:** never accessed → weight 1
+
+**Enhanced Tier (full per-token KV cache):**
+- Controlled by `enable_enhanced_tier` in `core/config.py` / datasource config.
+- When `true`, hot chunks may be promoted to full per-token KV storage during background KV recompute.
+- Default is `false` pending Component 6 empirical validation to prove the extra storage/compute cost is justified.
+
+**KDS/fKDS-driven KV-injection eligibility:**
+- `kds_threshold` (float or `None`) gates whether retrieved chunks are eligible for KV-injection using the legacy consistency-only KDS.
+- `fkds_threshold` (float or `None`) gates eligibility using factual KDS (fKDS), a blend of consistency KDS and factual answer accuracy against FAQ ground truth. fKDS is preferred when both thresholds are configured; it was added because Component 6 validation found consistency-only KDS does not correlate with KV-injection quality.
+- Either threshold is calibrated empirically in Component 6; a value of `None` (or absent key) for the active threshold disables KV injection and keeps the pipeline in `text_rag`-only mode (fail-closed).
 
 **Subprocess Orchestration:** `index_and_train.py` and `studio/pipeline_runner.py` spawn pipeline steps as subprocesses. Studio streams stdout/stderr to the browser via SSE.
 
