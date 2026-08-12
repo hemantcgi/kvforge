@@ -36,7 +36,7 @@ _tokenizer = None
 _current_checkpoint: Optional[str] = None
 _load_lock = threading.Lock()   # prevents concurrent loads from both racing
 
-MODEL_ID = os.getenv("LLM_MODEL", "meta-llama/Llama-3.2-3B-Instruct")
+MODEL_ID = os.getenv("LLM_MODEL", "google/gemma-4-E2B-it")
 # Quantization mode: None | "4bit" | "8bit".  Set via cfg["quantization"].
 # 4-bit (NF4) reduces model weight reads from ~6.4 GB to ~1.6 GB, giving
 # ~2-3× decode speedup for memory-bandwidth-bound single-request inference.

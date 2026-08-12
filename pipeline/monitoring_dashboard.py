@@ -252,7 +252,7 @@ def get_stats():
 def get_config():
     """Return display-safe config fields for the dashboard settings panel."""
     cfg = _load_cfg()
-    llm_model = cfg.get("llm_model", "meta-llama/Llama-3.2-3B-Instruct")
+    llm_model = cfg.get("llm_model", "google/gemma-4-E2B-it")
     embed_model = cfg.get("embed_model", "BAAI/bge-small-en-v1.5")
     hf_base = "https://huggingface.co/"
     return {

@@ -176,7 +176,7 @@ def create_new_uc(req: NewUCRequest):
                     "chunk_overlap": 64,
                     "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
                     "index_type": "hnsw"},
-        "llm":     {"local_model": "meta-llama/Llama-3.2-3B-Instruct",
+        "llm":     {"local_model": "google/gemma-4-E2B-it",
                     "quantization": "4bit", "vllm_url": "",
                     "comparison_provider": "gemini", "comparison_model": "gemini-2.5-flash",
                     "sleep_faq_provider": "gemini", "sleep_faq_model": "gemini-2.5-flash",
@@ -1058,6 +1058,7 @@ async def ab_query_endpoint(uc_id: str, request: Request):
 _KNOWN_PARAMS_B: dict[str, float] = {
     "meta-llama/Llama-3.2-3B": 3.2,
     "meta-llama/Llama-3.2-3B-Instruct": 3.2,
+    "google/gemma-4-E2B-it": 2.0,
     "meta-llama/Llama-3.1-8B": 8.0,
     "meta-llama/Llama-3.1-8B-Instruct": 8.0,
     "google/gemma-2-2b": 2.0,
