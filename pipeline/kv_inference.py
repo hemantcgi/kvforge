@@ -372,6 +372,7 @@ def answer_with_mode(
     query: str,
     cfg: dict,
     force_mode: str | None = None,
+    use_lora: bool = True,
 ) -> tuple[str, str]:
     """
     Full inference path with an optional mode override for scientific evaluation.
@@ -382,6 +383,9 @@ def answer_with_mode(
         force_mode: One of ``text_rag``, ``kv_meanpool``, ``kv_fulltoken``,
             ``parametric``, or ``None``.  ``None`` uses the normal dynamic
             decision (fresh KV → KV injection, else text fallback).
+        use_lora: If False, load the base model without LoRA.  Use this
+            for ``text_rag`` and ``kv_meanpool`` evaluation to measure
+            retrieval + reading independently of LoRA training.
 
     Returns:
         Tuple of (answer_text, mode_used).
@@ -429,7 +433,7 @@ def answer_with_mode(
 
     current_ver = ver.get_lora_version()
     lora_ckpt = cfg.get("checkpoint_path") or ver.load().get("checkpoint_path")
-    model, tokenizer = model_loader.load(lora_ckpt)
+    model, tokenizer = model_loader.load(lora_ckpt if use_lora else None)
 
     # Record access
     for rank, chunk in enumerate(chunks, start=1):
@@ -550,8 +554,7 @@ def generate_with_kv_fulltoken(
         v = torch.cat(vs, dim=1).unsqueeze(0)
         all_kvs.append((k, v))
 
-    prompt_format = cfg.get("prompt_format", "system_prompt")
-    return _generate_from_stacked_kv(query, all_kvs, model, tokenizer, prompt_format=prompt_format)
+    return _generate_from_stacked_kv(query, all_kvs, model, tokenizer)
 
 
 def _generate_from_stacked_kv(
@@ -560,7 +563,6 @@ def _generate_from_stacked_kv(
     model,
     tokenizer,
     max_new_tokens: int = 512,
-    prompt_format: str = "system_prompt",
 ) -> str:
     """Build a HuggingFace Cache object from stacked K/V tensors and generate.
 
@@ -570,38 +572,11 @@ def _generate_from_stacked_kv(
             [1, num_kv_heads, total_seq_len, head_dim].
         model, tokenizer: Loaded model and tokenizer.
         max_new_tokens: Maximum number of new tokens to generate.
-        prompt_format: One of "system_prompt", "simple", "chat_template".
-            Controls how the query is wrapped before generation.
 
     Returns:
         Generated answer text.
     """
     from transformers.cache_utils import DynamicCache
-
-    # ── APE (Attention Position Encoding): re-align independently-encoded KV
-    #     attention distribution with the sequential distribution by scaling
-    #     K vectors per layer. Calibrated once via tools/calibrate_ape.py.
-    #     See docs/KVForge_Improvement_Research.md §H5b and arXiv:2502.05431.
-    ape_calibration_path = getattr(model, "_ape_calibration_path", None)
-    if ape_calibration_path:
-        import json
-        try:
-            with open(ape_calibration_path) as f:
-                ape_params = json.load(f)
-            scaled = 0
-            for layer_idx, (k, v) in enumerate(all_kvs):
-                key = f"layer_{layer_idx}"
-                if key in ape_params:
-                    temp = float(ape_params[key].get("temperature", 1.0))
-                    if temp != 1.0:
-                        k_scaled = k.to(dtype=torch.float32) * temp
-                        all_kvs[layer_idx] = (k_scaled.to(dtype=k.dtype), v)
-                        scaled += 1
-            if scaled > 0:
-                import sys
-                print(f"[ape] K-vector scaling applied: {scaled}/{len(all_kvs)} layers", file=sys.stderr)
-        except Exception:
-            pass  # calibration file missing or corrupt — skip APE
 
     # For models with variable head_dim (Gemma4) / shared KV layers, use
     # config-aware DynamicCache that creates the correct number of cache
@@ -627,15 +602,7 @@ def _generate_from_stacked_kv(
             (k.to(model.device), v.to(model.device)) for k, v in all_kvs
         ])
 
-    if prompt_format == "simple":
-        prompt = f"Question: {query}\nAnswer:"
-    elif prompt_format == "chat_template":
-        prompt = tokenizer.apply_chat_template(
-            [{"role": "user", "content": f"Context is already in KV cache.\n\n{query}"}],
-            tokenize=False, add_generation_prompt=True,
-        )
-    else:
-        prompt = f"{SYSTEM_PROMPT}\n\nQuestion: {query}\n\nAnswer:"
+    prompt = f"{SYSTEM_PROMPT}\n\nQuestion: {query}\n\nAnswer:"
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
     cache_len = all_kvs[0][0].shape[2] if all_kvs else 0
     query_len = inputs["input_ids"].shape[1]
@@ -723,61 +690,40 @@ def generate_with_kv_partial_recompute(
         cfg: Datasource config containing ``recompute_ratio``.
     """
     ratio = float(cfg.get("recompute_ratio", 0.0))
-    prompt_format = cfg.get("prompt_format", "system_prompt")
     if ratio >= 1.0:
         return generate_text_in_context(query, chunks, model, tokenizer)
 
-    # Detect variable head_dim (Gemma4) — need to use list-based capture
-    # and pad to uniform for the blend step.
-    tc = getattr(model.config, "text_config", model.config)
-    has_variable_hd = (
-        hasattr(tc, "global_head_dim") and tc.global_head_dim
-        and tc.global_head_dim != getattr(tc, "head_dim", 256)
-    )
-
     # Collect full-token KV arrays for each chunk.
-    chunk_kvs_list: list[list[np.ndarray]] = []  # List of per-layer lists
+    chunk_kvs: list[np.ndarray] = []
     chunk_texts: list[str] = []
     for c in chunks:
         text = c.get("text", "")
         chunk_texts.append(text)
         if c.get("kv_token_path"):
-            _hdr = np.load(str(c["kv_token_path"]), allow_pickle=False)
-            _is_var = _hdr.get("_var_hd", np.array(False)).item()
-            _hdr.close()
-            if _is_var:
-                arr = kv_utils.load_token_kv_list(c["kv_token_path"])
-            else:
-                _u = kv_utils.load_token_kv(c["kv_token_path"], tq_config=cfg.get("turboquant"))
-                arr = [_u[i] for i in range(_u.shape[0])]  # convert 5D → list
+            arr = load_token_kv(c["kv_token_path"], tq_config=cfg.get("turboquant"))
         else:
+            # Compute on-the-fly; this costs one forward pass per chunk but lets
+            # partial recompute work on collections that only have mean-pool KV.
             inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512).to(model.device)
             with torch.no_grad():
                 outputs = model(**inputs, use_cache=True)
-            if has_variable_hd:
-                arr = kv_utils.compute_per_token_kv_as_list(outputs.past_key_values)
-            else:
-                _u = kv_utils.compute_per_token_kv(outputs.past_key_values)
-                arr = [_u[i] for i in range(_u.shape[0])]
-        chunk_kvs_list.append(arr)
+            arr = kv_utils.compute_per_token_kv(outputs.past_key_values)
+        chunk_kvs.append(arr)
 
-    # Rerotate (handles both uniform and variable-hd list formats).
-    chunk_lengths = [arr[0].shape[2] for arr in chunk_kvs_list]
-    chunk_kvs_list = _rerotate_fulltoken_chunks(chunk_kvs_list, chunk_lengths, model)
+    # Align cached KV positions with the assembled fresh pass. Each chunk's
+    # cached KV was computed at in-chunk positions 0..L-1; when concatenated
+    # they must be rerotated to global positions to avoid spurious RoPE
+    # deviation during blending.
+    chunk_lengths = [arr.shape[3] for arr in chunk_kvs]
+    chunk_kvs = _rerotate_fulltoken_chunks(chunk_kvs, chunk_lengths, model)
 
-    # Convert to uniform 5D array for the blend operation.
-    if has_variable_hd:
-        cached_kv = np.concatenate(
-            [kv_utils.pad_kv_list_to_uniform(c) for c in chunk_kvs_list],
-            axis=-2
-        )
-    else:
-        cached_kv = np.concatenate(
-            [np.stack(c, axis=0) for c in chunk_kvs_list],
-            axis=-2
-        )
+    # Concatenate cached KVs along the sequence dimension.
+    cached_kv = np.concatenate(chunk_kvs, axis=-2)  # [L, 2, H, total_seq_len, d]
 
-    # Build a fresh KV pass over the assembled context for deviation comparison.
+    # Build a fresh KV pass over the assembled context using the exact same
+    # per-chunk token sequence as the cached KVs. Concatenating the individual
+    # tokenizations avoids the token mismatches (extra separators, duplicate
+    # BOS tokens) caused by tokenizing the joined text as a single sequence.
     per_chunk_inputs = [
         tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
         for text in chunk_texts
@@ -794,15 +740,11 @@ def generate_with_kv_partial_recompute(
     }
     with torch.no_grad():
         fresh_outputs = model(**fresh_inputs, use_cache=True)
-    if has_variable_hd:
-        fresh_kv_list = kv_utils.compute_per_token_kv_as_list(fresh_outputs.past_key_values)
-        fresh_kv = kv_utils.pad_kv_list_to_uniform(fresh_kv_list)
-    else:
-        fresh_kv = kv_utils.compute_per_token_kv(fresh_outputs.past_key_values)
+    fresh_kv = kv_utils.compute_per_token_kv(fresh_outputs.past_key_values)
 
     # If shapes differ due to truncation, fall back to the fresh KV entirely.
     if fresh_kv.shape[-2] != cached_kv.shape[-2]:
-        return _generate_from_full_token_kv(query, fresh_kv, model, tokenizer, prompt_format=prompt_format)
+        return _generate_from_full_token_kv(query, fresh_kv, model, tokenizer)
 
     # Compute per-token deviation at the middle layer.
     mid_layer = cached_kv.shape[0] // 2
@@ -825,7 +767,7 @@ def generate_with_kv_partial_recompute(
         v = layer[1].unsqueeze(0)
         all_kvs.append((k, v))
 
-    return _generate_from_stacked_kv(query, all_kvs, model, tokenizer, prompt_format=prompt_format)
+    return _generate_from_stacked_kv(query, all_kvs, model, tokenizer)
 
 
 def _generate_from_full_token_kv(
@@ -834,7 +776,6 @@ def _generate_from_full_token_kv(
     model,
     tokenizer,
     max_new_tokens: int = 512,
-    prompt_format: str = "system_prompt",
 ) -> str:
     """Generate from a single full-token KV array [L, 2, H, seq_len, d]."""
     all_kvs = []
@@ -843,7 +784,7 @@ def _generate_from_full_token_kv(
         k = layer[0].unsqueeze(0)
         v = layer[1].unsqueeze(0)
         all_kvs.append((k, v))
-    return _generate_from_stacked_kv(query, all_kvs, model, tokenizer, max_new_tokens=max_new_tokens, prompt_format=prompt_format)
+    return _generate_from_stacked_kv(query, all_kvs, model, tokenizer, max_new_tokens=max_new_tokens)
 
 
 def answer_with_retrieval(query: str, cfg: dict) -> str:

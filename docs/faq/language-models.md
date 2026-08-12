@@ -19,12 +19,15 @@ KVForge uses HuggingFace `AutoModelForCausalLM` for KV computation and LoRA trai
 Other tested models:
 
 ```json
+{ "llm_model": "google/gemma-4-E2B-it" }
 { "llm_model": "google/gemma-2-2b-it" }
 { "llm_model": "Qwen/Qwen2.5-3B-Instruct" }
 { "llm_model": "microsoft/phi-3-mini-4k-instruct" }
+{ "llm_model": "mistralai/Mistral-7B-Instruct-v0.3" }
 { "llm_model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0" }
-{ "llm_model": "mistralai/Mixtral-8x7B-Instruct-v0.1" }
 ```
+
+`google/gemma-4-E2B-it` is the reference model for KVForge's crossover evaluation — a 2B-parameter model that, when LoRA-fine-tuned on cloud-generated QA pairs, matches or exceeds text-in-context RAG on three of four enterprise corpora.
 
 #### Step 2 — Verify KV shape auto-discovery
 
@@ -202,8 +205,8 @@ If you want the best of both worlds:
 ```
 Retrieval:   OpenAI text-embedding-3-small  (high-quality embeddings, no GPU)
 Answer:      OpenAI gpt-4o-mini             (Phase 1, no GPU)
-KV compute:  local Llama 3.2 3B             (Phase 2+, GPU required)
-LoRA train:  local Llama 3.2 3B             (Phase 2+, GPU required)
+KV compute:  local Gemma 4 2B               (Phase 2+, GPU required)
+LoRA train:  local Gemma 4 2B               (Phase 2+, GPU required)
 ```
 
 Use OpenAI embeddings for the highest retrieval quality, and the local small model only for the KV/LoRA work that requires tensor access.

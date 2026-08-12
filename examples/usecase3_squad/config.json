@@ -1,66 +1,72 @@
 {
-  "_comment": "Use Case 3 — SQuAD Reading Comprehension | Qdrant + Llama-3.2-3B-Instruct",
-
-  "use_case_name": "SQuAD Reading Comprehension",
-  "collection":    "squad",
-  "version_file":  "examples/usecase3_squad/version.json",
-
-  "addons": ["indexing", "inference", "training", "background", "sync", "monitoring"],
-
+  "use_case_name": "SQuAD Reading Comp",
+  "collection": "squad",
+  "version_file": "examples/usecase3_squad/version.json",
+  "llm_model": "google/gemma-4-E2B-it",
+  "quantization": "4bit",
+  "addons": [
+    "indexing",
+    "inference",
+    "training",
+    "background"
+  ],
   "addon_config": {
     "indexing": {
-      "loader":           "jsonl",
-      "jsonl_text_key":   "text",
-      "chunk_size":       600,
-      "chunk_overlap":    60,
-      "embed_batch":      64,
-      "upsert_batch":     128,
-      "embed_model":      "BAAI/bge-small-en-v1.5",
-      "embedder_backend": "fastembed",
-      "vector_dim":       384,
-      "vector_store":     "qdrant",
-      "qdrant_host":      "localhost",
-      "qdrant_port":      6333,
-      "model_library": {
-        "meta-llama/Llama-3.2-3B-Instruct": {
-          "kv_num_layers": 28, "kv_num_heads": 8, "kv_head_dim": 128
-        }
-      }
+      "loader": "jsonl",
+      "embed_model": "BAAI/bge-small-en-v1.5",
+      "vector_dim": 384,
+      "vector_store": "qdrant",
+      "qdrant_host": "localhost",
+      "qdrant_port": 6333,
+      "embed_batch": 64,
+      "upsert_batch": 50,
+      "checkpoint_dir": "examples/usecase3_squad/lora_checkpoints/"
     },
     "inference": {
-      "top_k":          5,
-      "llm_model":      "meta-llama/Llama-3.2-3B-Instruct",
-      "quantization":   "4bit",
-      "vllm_url":       "http://localhost:8093",
-      "vllm_model":     "uc3",
-      "max_new_tokens": 256,
-      "gate_threshold": 0.75
+      "llm_model": "google/gemma-4-E2B-it",
+      "top_k": 5,
+      "max_new_tokens": 128
     },
     "training": {
-      "lora_rank":            16,
-      "lora_alpha":           32,
-      "lora_target_modules":  ["q_proj", "k_proj", "v_proj"],
-      "lora_dropout":         0.05,
-      "lora_epochs":          3,
-      "lora_lr":              0.0002,
-      "checkpoint_dir":       "examples/usecase3_squad/lora_checkpoints/",
-      "replay_db":            "examples/usecase3_squad/replay.db",
-      "prs_weights":          {"accuracy": 0.7, "calibration": 0.15, "consistency": 0.15},
-      "prs_advancement_threshold": 0.72,
-      "prs_regression_threshold":  0.25,
-      "phase2_advance_threshold":  0.30,
-      "phase3_advance_threshold":  0.55,
-      "faq_question_key":    "question",
-      "faq_answer_key":      "answer"
+      "lora_rank": 16,
+      "lora_alpha": 32,
+      "lora_lr": 0.0002,
+      "lora_epochs": 1,
+      "checkpoint_dir": "examples/usecase3_squad/lora_checkpoints/",
+      "replay_db": "examples/usecase3_squad/replay.db",
+      "sft_format": "chat",
+      "replay_buffer_sample_size": 0
     },
-    "background": {"flush_seconds": 300, "flush_queries": 50},
-    "sync": {
-      "interval_minutes": 60,
-      "hitl_mode": "auto",
-      "sync_regression_mode": "pct",
-      "sync_regression_pct_threshold": 0.10,
-      "sync_regression_tier_threshold": 0.15
-    },
-    "monitoring": {"port": 8083}
-  }
+    "background": {
+      "flush_seconds": 300,
+      "flush_queries": 50
+    }
+  },
+  "model_library": {
+    "google/gemma-4-E2B-it": {
+      "kv_num_layers": 35,
+      "kv_num_heads": 1,
+      "kv_head_dim": 256
+    }
+  },
+  "kv_num_layers": 35,
+  "kv_num_heads": 1,
+  "kv_head_dim": 256,
+  "embed_batch": 64,
+  "upsert_batch": 50,
+  "vector_dim": 384,
+  "embed_model": "BAAI/bge-small-en-v1.5",
+  "checkpoint_dir": "examples/usecase3_squad/lora_checkpoints/",
+  "cluster_k_range": [
+    3,
+    20
+  ],
+  "compute_kv": false,
+  "judge_mode": "partial",
+  "judge_model": "accounts/fireworks/models/deepseek-v4-flash",
+  "judge_provider": "openai",
+  "judge_api_key": null,
+  "judge_base_url": "https://api.fireworks.ai/inference/v1/",
+  "faq_generator_provider": "claude",
+  "faq_generator_model": "claude-sonnet-4-20250514"
 }

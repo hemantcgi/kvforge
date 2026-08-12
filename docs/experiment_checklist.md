@@ -61,22 +61,9 @@
 ## GPU ALLOCATION — CURRENT
 | Instance | GPU | Running | Queued |
 |----------|-----|---------|--------|
-| EC2-A GPU0 | A10G | 🔄 UC1 training seed44 | UC1 eval seeds 45,46 |
-| EC2-B GPU0 | RTX PRO 4500 | 🔄 Prompt format ablation (3.2e) | Phase 3.2 full comparison |
-| EC2-B GPU1 | RTX PRO 4500 | 🔄 Phase 3.2 full 4-mode comparison | — |
-
-## RECENT RESULTS (Aug 6, 2026)
-| Experiment | Tier | Factual Accuracy | Notes |
-|---|---|---|---|
-| kv_fulltoken sweep | N500 | 0.0447 | SYSTEM_PROMPT format (low) |
-| kv_fulltoken sweep | N1000 | 0.0447 | SYSTEM_PROMPT format |
-| kv_fulltoken sweep | N2000 | 0.0447 | SYSTEM_PROMPT format |
-| kv_fulltoken sweep | N4000 | 0.0391 | SYSTEM_PROMPT format |
-| kv_fulltoken sweep | N6000 | 0.0504 | SYSTEM_PROMPT format |
-| CacheBlend sweep | ratio 0.0-1.0 | ~0.0447 all | May need prompt format fix |
-| Rerotation (2 ch) | rerot | PASS | "330 meters" ✓ |
-| Enhanced Tier | save/load | PASS | 15 layers, bit-exact, TurboQuant ✓ |
-| Rep penalty | 1.0-1.5 | PASS | All produce correct answers |
+| EC2-A GPU0 | A10G | HotpotQA (6/9) | SQuAD text_rag → UC1 |
+| EC2-B GPU0 | RTX PRO 4500 | (free) | Phase 3.2a,b — kv_fulltoken sweep |
+| EC2-B GPU1 | RTX PRO 4500 | (free) | Phase 3.2c,d — rerotation + Enhanced Tier |
 
 ## ANALYSIS & PAPER
 [⬜] A1 Crossover plots (delta vs N per dataset)

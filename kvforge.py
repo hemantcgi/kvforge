@@ -214,7 +214,7 @@ def main() -> None:
                          default="BAAI/bge-small-en-v1.5")
     p_init.add_argument("--vector-dim", dest="vector_dim", type=int, default=384)
     p_init.add_argument("--llm-model", dest="llm_model",
-                         default="meta-llama/Llama-3.2-3B-Instruct")
+                         default="google/gemma-4-E2B-it")
     p_init.add_argument("--force", action="store_true")
 
     # start

@@ -122,16 +122,45 @@ def _generate_parametric(query: str, pipe, tokenizer=None, sft_format: str = "ba
         The generated answer text (prompt prefix stripped).
     """
     prompt = _format_query(query, tokenizer, sft_format)
-    # Chat-template strings already contain a literal <|begin_of_text|> BOS;
-    # suppress the pipeline's own BOS insertion so eval tokenization matches
-    # the single-BOS tokenization used by chat-SFT training. Bare mode has no
-    # BOS in the raw string, so the pipeline's default add-BOS is kept.
-    out = pipe(prompt, add_special_tokens=(sft_format != "chat"))
-    return out[0]["generated_text"][len(prompt):].strip()
+    if hasattr(pipe, "generate"):
+        # pipe is actually a model — use direct generate (avoids pipeline
+        # text-stripping bugs with Gemma4 chat-template tokens)
+        import torch
+        inputs = tokenizer(prompt, return_tensors="pt").to(pipe.device)
+        with torch.no_grad():
+            outputs = pipe.generate(**inputs, max_new_tokens=256, do_sample=False)
+        generated = tokenizer.decode(
+            outputs[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True
+        ).strip()
+    else:
+        out = pipe(prompt, add_special_tokens=(sft_format != "chat"))
+        generated = out[0]["generated_text"][len(prompt):].strip()
+    from pipeline.confidence_token import strip_confidence_suffix
+    return strip_confidence_suffix(generated)
 
 
-def _extract_confidence(answer: str, pipe_short) -> float:
-    """Ask model to self-rate confidence; return value in [0, 1]."""
+def _extract_confidence(
+    answer: str,
+    pipe_short,
+    model,
+    tokenizer,
+    use_confidence_token: bool = False,
+) -> float:
+    """Return a self-reported confidence value in [0, 1].
+
+    Two modes:
+
+    * ``use_confidence_token=False`` (legacy): append a 0-100 integer prompt and
+      parse the model's sampled integer.
+    * ``use_confidence_token=True`` (Sprint 2.5): force-append ``\\nConfidence:``,
+      run one forward pass, and read the restricted two-token softmax over
+      ``" yes"`` and ``" no"``.
+    """
+    if use_confidence_token:
+        from pipeline.confidence_token import extract_confidence_probability
+        return extract_confidence_probability(answer, model, tokenizer)
+
+    # Legacy integer prompt path.
     prompt = answer + CONFIDENCE_PROMPT_SUFFIX
     out = pipe_short(prompt)
     tail = out[0]["generated_text"][len(prompt):].strip()
@@ -157,9 +186,13 @@ def _self_consistency(query: str, pipe_sample, embedder, tokenizer=None,
     # suppress the pipeline's own BOS insertion so eval tokenization matches
     # the single-BOS tokenization used by chat-SFT training. Bare mode has no
     # BOS in the raw string, so the pipeline's default add-BOS is kept.
-    answers = [pipe_sample(prompt, add_special_tokens=(sft_format != "chat"))[0]
-               ["generated_text"][len(prompt):].strip()
-               for _ in range(n)]
+    answers = [
+        _strip_confidence_suffix(
+            pipe_sample(prompt, add_special_tokens=(sft_format != "chat"))[0]
+            ["generated_text"][len(prompt):].strip()
+        )
+        for _ in range(n)
+    ]
     embs = np.array(list(embedder.embed(answers)))
     sims = []
     for i in range(n):
@@ -169,6 +202,12 @@ def _self_consistency(query: str, pipe_sample, embedder, tokenizer=None,
     if return_embeddings:
         return score, embs
     return score
+
+
+def _strip_confidence_suffix(text: str) -> str:
+    """Convenience alias for the Sprint 2.5 confidence suffix stripper."""
+    from pipeline.confidence_token import strip_confidence_suffix
+    return strip_confidence_suffix(text)
 
 
 # Provisional weights (data-derived, 4-corpus backtest — see
@@ -379,6 +418,222 @@ def compute_kds(
     return mean_kds, kds_by_chunk
 
 
+def compute_fkds(
+    faqs: list[dict],
+    cfg: dict,
+    lora_checkpoint: str | None = None,
+    sample_cap: int = 300,
+    n: int = 3,
+    factual_weight: float = 0.1,
+    judge_model: str = "claude-sonnet-4-6",
+) -> tuple[float, float, dict]:
+    """Compute factual KDS (fKDS) and persist it alongside the existing KDS.
+
+    fKDS blends the existing consistency-based KDS with a factual-accuracy
+    component scored against FAQ ground truth. This addresses the validation
+    finding that plain consistency KDS does not correlate with KV-injection
+    quality.
+
+    For each chunk, N parametric answers are generated per FAQ question, then:
+      - consistency_KDS uses the answer-embedding variance-ratio (same as KDS).
+      - factual_accuracy uses 0.5 * token_F1 + 0.5 * LLM-judge correctness.
+      - fKDS = factual_weight * consistency_KDS + (1 - factual_weight) * factual_accuracy.
+
+    Args:
+        faqs: List of FAQ dicts, each with question/answer keys and source_chunk_ids.
+        cfg: Datasource configuration dict.
+        lora_checkpoint: Path to a LoRA adapter directory; None uses the base model.
+        sample_cap: Maximum number of chunks to sample this round.
+        n: Number of parametric answers to sample per FAQ question.
+        factual_weight: Weight on the consistency component; 0.1 means 90% factual.
+        judge_model: Judge model name for the factual-accuracy LLM judge.
+
+    Returns:
+        ``(mean_kds, mean_fkds, fkds_by_chunk)`` where ``fkds_by_chunk`` maps
+        chunk id to a dict with keys ``kds``, ``factual_accuracy``, and ``fkds``.
+    """
+    from eval import metrics as eval_metrics
+
+    indexing_cfg = cfg.get("addon_config", {}).get("indexing", {})
+    training_cfg = cfg.get("addon_config", {}).get("training", {})
+    effective_cfg = {**cfg, **indexing_cfg, **training_cfg}
+    sft_format = effective_cfg.get("sft_format", "chat")
+    q_key = effective_cfg.get("faq_question_key", "question")
+    a_key = effective_cfg.get("faq_answer_key", "answer")
+
+    ver.init(cfg)
+    model_loader.init(cfg)
+
+    round_num = ver.get_lora_version()
+    fkds_by_chunk: dict[str, dict] = {}
+    mean_kds = 0.0
+    mean_fkds = 0.0
+    measured_chunks = 0
+
+    # Group FAQs by source chunk id.
+    faq_by_chunk: dict[str, list[dict]] = {}
+    for faq in faqs:
+        for cid in faq.get("source_chunk_ids", []):
+            faq_by_chunk.setdefault(str(cid), []).append(faq)
+
+    if faq_by_chunk:
+        store = get_store(cfg)
+        collection = effective_cfg.get("collection")
+        if collection:
+            all_points: list = []
+            offset = None
+            while True:
+                page, offset = store.scroll(
+                    collection,
+                    limit=1000,
+                    with_payload=True,
+                    offset=offset,
+                )
+                all_points.extend(page)
+                if offset is None:
+                    break
+
+            chunk_meta: dict[str, tuple[Any, dict]] = {}
+            for p in all_points:
+                cid = str(p.id)
+                chunk_meta[cid] = (p.id, p.payload or {})
+
+            # Rotating coverage: never-measured first, then oldest last_kds_round.
+            def _sort_key(cid: str):
+                payload = chunk_meta[cid][1]
+                last = payload.get("last_kds_round")
+                if last is None:
+                    return (0, 0)
+                return (1, last)
+
+            eligible = [cid for cid in chunk_meta if cid in faq_by_chunk]
+            eligible.sort(key=_sort_key)
+            selected = eligible[:sample_cap]
+
+            if selected:
+                model, tokenizer = model_loader.load(lora_checkpoint)
+                embed_model = effective_cfg.get("embed_model", "BAAI/bge-small-en-v1.5")
+                from transformers import pipeline as hf_pipeline
+
+                pipe_sample = hf_pipeline(
+                    "text-generation",
+                    model=model,
+                    tokenizer=tokenizer,
+                    max_new_tokens=128,
+                    do_sample=True,
+                    temperature=0.7,
+                )
+                embedder = TextEmbedding(model_name=embed_model, show_download_progress=False)
+
+                # Judge client
+                judge_client = None
+                if judge_model.startswith("claude"):
+                    try:
+                        import anthropic
+                        judge_client = anthropic.Anthropic()
+                    except Exception as e:
+                        print(f"⚠️ Could not create Anthropic judge client: {e}", flush=True)
+
+                # Strip variant suffix for chat mode
+                _strip = None
+                if sft_format == "chat":
+                    from pipeline.lora_trainer import _strip_variant_suffix
+                    _strip = _strip_variant_suffix
+
+                chunk_means: dict[str, np.ndarray] = {}
+                per_chunk_embeddings: dict[str, np.ndarray] = {}
+                all_embeddings: list[np.ndarray] = []
+                per_chunk_factual: dict[str, list[float]] = {}
+
+                for cid in selected:
+                    questions = []
+                    for faq in faq_by_chunk[cid]:
+                        q = faq.get(q_key, "")
+                        if _strip:
+                            q = _strip(q)
+                        if q:
+                            questions.append((q, faq))
+
+                    if not questions:
+                        continue
+
+                    pooled_embs: list[np.ndarray] = []
+                    factual_scores: list[float] = []
+
+                    for q, faq in questions:
+                        answers = []
+                        for _ in range(n):
+                            answers.append(_generate_parametric(q, pipe_sample, tokenizer, sft_format))
+                        embs = np.array(list(embedder.embed(answers)))
+                        pooled_embs.append(embs)
+
+                        gt = faq.get(a_key, "")
+                        for ans in answers:
+                            f1 = eval_metrics.token_f1(ans, gt)
+                            judge = eval_metrics.llm_judge(
+                                q, ans, gt, client=judge_client, model=judge_model
+                            )
+                            factual_scores.append(0.5 * f1 + 0.5 * float(judge["factually_correct"]))
+
+                    if not pooled_embs:
+                        continue
+
+                    chunk_embs = np.vstack(pooled_embs)
+                    chunk_means[cid] = chunk_embs.mean(axis=0)
+                    per_chunk_embeddings[cid] = chunk_embs
+                    all_embeddings.append(chunk_embs)
+                    per_chunk_factual[cid] = factual_scores
+
+                if chunk_means:
+                    all_embeddings_arr = np.vstack(all_embeddings)
+                    grand_mean = all_embeddings_arr.mean(axis=0)
+
+                    kds_sum = 0.0
+                    fkds_sum = 0.0
+                    for cid, mu_i in chunk_means.items():
+                        embs = per_chunk_embeddings[cid]
+                        W_i = float(np.mean(np.sum((embs - mu_i) ** 2, axis=1)))
+                        B_i = float(np.sum((mu_i - grand_mean) ** 2))
+                        denom = B_i + W_i
+                        kds = (B_i / denom) if denom > 0 else 0.0
+                        kds = float(np.clip(kds, 0.0, 1.0))
+
+                        factual_scores = per_chunk_factual[cid]
+                        mean_factual = sum(factual_scores) / len(factual_scores) if factual_scores else 0.0
+
+                        fkds = factual_weight * kds + (1.0 - factual_weight) * mean_factual
+                        fkds = float(np.clip(fkds, 0.0, 1.0))
+
+                        fkds_by_chunk[cid] = {
+                            "kds": kds,
+                            "factual_accuracy": mean_factual,
+                            "fkds": fkds,
+                        }
+
+                        original_id, _ = chunk_meta[cid]
+                        store.set_payload(
+                            collection,
+                            original_id,
+                            {
+                                "kds": kds,
+                                "fkds": fkds,
+                                "factual_accuracy": mean_factual,
+                                "last_kds_round": round_num,
+                            },
+                        )
+                        kds_sum += kds
+                        fkds_sum += fkds
+
+                    n_chunks = len(chunk_means)
+                    mean_kds = kds_sum / n_chunks
+                    mean_fkds = fkds_sum / n_chunks
+                    measured_chunks = n_chunks
+
+    ver.append_kds(round_num, mean_kds, measured_chunks)
+    ver.append_fkds(round_num, mean_fkds, measured_chunks)
+    return mean_kds, mean_fkds, fkds_by_chunk
+
+
 def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) -> float:
     """Compute the Parametric Readiness Score on a sample of FAQs.
 
@@ -408,6 +663,7 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
     training_cfg = cfg.get("addon_config", {}).get("training", {})
     effective_cfg = {**cfg, **indexing_cfg, **training_cfg}
     sft_format = effective_cfg.get("sft_format", "chat")
+    use_confidence_token = effective_cfg.get("use_confidence_token", False)
 
     model, tokenizer = model_loader.load(lora_checkpoint)
     embed_model = effective_cfg.get("embed_model", "BAAI/bge-small-en-v1.5")
@@ -441,14 +697,17 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
         print(f"⏳ Evaluating FAQ {idx}/{total}: {q[:60]}…", flush=True)
         param_ans = _generate_parametric(q, pipe_gen, tokenizer, sft_format)
         if has_sp3:
-            rag_ans = answer_with_retrieval(q, cfg)
+            rag_ans = _strip_confidence_suffix(answer_with_retrieval(q, cfg))
         else:
             rag_ans = gt
         embs = np.array(list(embedder.embed([param_ans, rag_ans, gt])))
         param_sim = _cosine_sim(embs[0], embs[2])
         rag_sim   = _cosine_sim(embs[1], embs[2])
         cosine_accuracy_ratio = min(param_sim / (rag_sim + 1e-9), 1.0)  # diagnostic only, not scored
-        self_conf = _extract_confidence(param_ans, pipe_conf)
+        self_conf = _extract_confidence(
+            param_ans, pipe_conf, model, tokenizer,
+            use_confidence_token=use_confidence_token,
+        )
         consistencies.append(_self_consistency(q, pipe_sample, embedder, tokenizer, sft_format))
 
         # Factual metrics — now the actual scoring signal, not diagnostic-only.
