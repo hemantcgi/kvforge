@@ -265,10 +265,10 @@ The KVForge system operates as a state machine with an offline pipeline and an o
 
 
 \begin{lstlisting}
-Index → KV Pre-compute → [Phase 1]
-     → Sleep-time FAQ Gen → LoRA Train → KV Recompute → PRS Eval → [Phase 2]
-     → LoRA Train (round 2) → KV Recompute → PRS Eval → [Phase 3]
-        ↑______________________continuous improvement loop_________________________↑
+Index -> KV Pre-compute -> [Phase 1]
+     -> Sleep-time FAQ Gen -> LoRA Train -> KV Recompute -> PRS Eval -> [Phase 2]
+     -> LoRA Train (round 2) -> KV Recompute -> PRS Eval -> [Phase 3]
+        ^_________________continuous improvement loop_________________^
 \end{lstlisting}
 
 System state is stored atomically in a \texttt{version.json} file per corpus, updated via temp-file rename to prevent corruption:
@@ -634,7 +634,7 @@ The author thanks \textbf{Fissionlabs Inc.} for their generous support with comp
   \bibitem{ref2} Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., ... \& Polosukhin, I. (2017). Attention Is All You Need. *NeurIPS 2017.* arXiv:1706.03762
   \bibitem{ref3} Kwon, W., Li, Z., Zhuang, S., Sheng, Y., Zheng, L., Yu, C. H., ... \& Stoica, I. (2023). Efficient Memory Management for Large Language Model Serving with PagedAttention. *SOSP 2023.* arXiv:2309.06180
   \bibitem{ref4} Hu, E. J., Shen, Y., Wallis, P., Allen-Zhu, Z., Li, Y., Wang, S., ... \& Chen, W. (2022). LoRA: Low-Rank Adaptation of Large Language Models. *ICLR 2022.* arXiv:2106.09685
-  \bibitem{ref5} Karpukhin, V., Oğuz, B., Min, S., Lewis, P., Wu, L., Edunov, S., ... \& Yih, W. T. (2020). Dense Passage Retrieval for Open-Domain Question Answering. *EMNLP 2020.* arXiv:2004.04906
+  \bibitem{ref5} Karpukhin, V., O\u{g}uz, B., Min, S., Lewis, P., Wu, L., Edunov, S., ... \& Yih, W. T. (2020). Dense Passage Retrieval for Open-Domain Question Answering. *EMNLP 2020.* arXiv:2004.04906
   \bibitem{ref6} Thakur, N., Reimers, N., Rücklé, A., Srivastava, A., \& Gurevych, I. (2021). BEIR: A Heterogeneous Benchmark for Zero-Shot Evaluation of Information Retrieval Models. *NeurIPS 2021 Datasets and Benchmarks.* arXiv:2104.08663
   \bibitem{ref7} Shao, Z., Gong, Y., Shen, Y., Huang, M., Duan, N., \& Chen, W. (2023). Enhancing Retrieval-Augmented Large Language Models with Iterative Retrieval-Generation Synergy. *EMNLP 2023 Findings.* arXiv:2305.15294
   \bibitem{ref8} Gim, I., Chen, G., Lee, S., Srivatsa, N., Kedia, P., \& Zhong, L. (2024). PromptCache: Modular Attention Reuse for Low-Latency Inference. *MLSys 2024.* arXiv:2311.04934
