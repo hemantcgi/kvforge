@@ -43,6 +43,7 @@ def test_inference_config_defaults():
     assert cfg.top_k == 5
     assert cfg.quantization == "4bit"
     assert cfg.gate_threshold == 0.75
+    assert cfg.parametric_eligibility_threshold == 0.85
     assert cfg.max_new_tokens == 256
     assert cfg.query_log_db == "query_log.db"
 
@@ -65,10 +66,13 @@ def test_training_config_defaults():
     assert cfg.lora_dropout == 0.05
     assert cfg.lora_epochs == 3
     assert cfg.lora_lr == 0.0002
-    assert cfg.prs_threshold == 0.75
-    assert cfg.prs_weights == {"accuracy": 0.5, "calibration": 0.3, "consistency": 0.2}
+    assert cfg.sft_format == "chat"
+    assert cfg.prs_threshold == 0.50
+    assert cfg.phase2_advance_threshold == 0.30
+    assert cfg.phase3_advance_threshold == 0.55
+    assert cfg.prs_weights == {"accuracy": 0.7, "calibration": 0.15, "consistency": 0.15}
     assert cfg.prs_advancement_threshold == 0.72
-    assert cfg.prs_regression_threshold == 0.60
+    assert cfg.prs_regression_threshold == 0.25
     assert cfg.faq_question_key == "question"
     assert cfg.faq_answer_key == "answer"
 

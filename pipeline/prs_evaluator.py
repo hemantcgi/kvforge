@@ -58,18 +58,75 @@ def _cosine_sim(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.dot(a, b))
 
 
-def _generate_parametric(query: str, pipe) -> str:
+def _format_query(query: str, tokenizer, sft_format: str) -> str:
+    """Format a query for parametric generation.
+
+    With ``sft_format == "chat"`` the query is wrapped in the model's chat template with an
+    assistant generation prompt, so eval matches how the model was trained (chat SFT). The
+    chat branch also strips the ``(variant N)`` augmentation suffix, matching
+    ``lora_trainer.build_sft_example`` so eval content matches chat-SFT training. With
+    ``"bare"`` the raw query is returned unchanged (legacy behavior) — bare mode does not
+    strip at train time either, so eval stays consistent with it unstripped.
+    """
+    if sft_format == "chat":
+        from pipeline.lora_trainer import _strip_variant_suffix
+        q = _strip_variant_suffix(query)
+        return tokenizer.apply_chat_template(
+            [{"role": "user", "content": q}],
+            add_generation_prompt=True,
+            tokenize=False,
+        )
+    return query
+
+
+def _factual_accuracy(f1: float, judge_correct: bool) -> float:
+    """Combine token-F1 and LLM-judge correctness into a single accuracy score.
+
+    Replaces the legacy cosine-similarity accuracy_ratio, which the paper's
+    own validation (pipeline/eval_prs_validation.py) found correlates only
+    weakly with real factual correctness. This is the same formula that
+    validation script used to simulate a factual PRS variant.
+    """
+    return 0.5 * f1 + 0.5 * float(judge_correct)
+
+
+def _fixed_calibration(self_conf: float, factual_acc: float) -> float:
+    """How well self-reported confidence matches factual accuracy.
+
+    Replaces comparing confidence against cosine similarity (param_sim),
+    which measured confidence against the wrong scale once accuracy_ratio
+    itself moved to factual_acc.
+    """
+    return 1.0 - abs(self_conf - factual_acc)
+
+
+def _coverage_ratio(scores: list[float], threshold: float) -> float:
+    """Fraction of scores at or above threshold. Returns 0.0 for an empty list."""
+    if not scores:
+        return 0.0
+    return sum(1 for s in scores if s >= threshold) / len(scores)
+
+
+def _generate_parametric(query: str, pipe, tokenizer=None, sft_format: str = "bare") -> str:
     """Generate an answer to *query* from model weights with no retrieved context.
 
     Args:
         query: The question string.
         pipe: A HuggingFace ``text-generation`` pipeline.
+        tokenizer: The model's tokenizer, used to apply the chat template when
+            ``sft_format == "chat"``.
+        sft_format: ``"chat"`` or ``"bare"`` — see ``_format_query``.
 
     Returns:
         The generated answer text (prompt prefix stripped).
     """
-    out = pipe(query)
-    return out[0]["generated_text"][len(query):].strip()
+    prompt = _format_query(query, tokenizer, sft_format)
+    # Chat-template strings already contain a literal <|begin_of_text|> BOS;
+    # suppress the pipeline's own BOS insertion so eval tokenization matches
+    # the single-BOS tokenization used by chat-SFT training. Bare mode has no
+    # BOS in the raw string, so the pipeline's default add-BOS is kept.
+    out = pipe(prompt, add_special_tokens=(sft_format != "chat"))
+    return out[0]["generated_text"][len(prompt):].strip()
 
 
 def _extract_confidence(answer: str, pipe_short) -> float:
@@ -84,9 +141,16 @@ def _extract_confidence(answer: str, pipe_short) -> float:
         return 0.5
 
 
-def _self_consistency(query: str, pipe_sample, embedder, n: int = 3) -> float:
+def _self_consistency(query: str, pipe_sample, embedder, tokenizer=None,
+                       sft_format: str = "bare", n: int = 3) -> float:
     """Generate n answers at temperature 0.7; return mean pairwise cosine sim."""
-    answers = [pipe_sample(query)[0]["generated_text"][len(query):].strip()
+    prompt = _format_query(query, tokenizer, sft_format)
+    # Chat-template strings already contain a literal <|begin_of_text|> BOS;
+    # suppress the pipeline's own BOS insertion so eval tokenization matches
+    # the single-BOS tokenization used by chat-SFT training. Bare mode has no
+    # BOS in the raw string, so the pipeline's default add-BOS is kept.
+    answers = [pipe_sample(prompt, add_special_tokens=(sft_format != "chat"))[0]
+               ["generated_text"][len(prompt):].strip()
                for _ in range(n)]
     embs = np.array(list(embedder.embed(answers)))
     sims = []
@@ -96,7 +160,10 @@ def _self_consistency(query: str, pipe_sample, embedder, n: int = 3) -> float:
     return float(np.mean(sims)) if sims else 1.0
 
 
-_DEFAULT_PRS_WEIGHTS = {"accuracy": 0.5, "calibration": 0.3, "consistency": 0.2}
+# Provisional weights (data-derived, 4-corpus backtest — see
+# docs/superpowers/specs/2026-07-12-prs-gate-rework-design.md): accuracy-dominant so PRS
+# ranks corpora by real quality rather than by confident-but-wrong self-consistency.
+_DEFAULT_PRS_WEIGHTS = {"accuracy": 0.7, "calibration": 0.15, "consistency": 0.15}
 
 
 def _compute_prs(accuracy_ratios: list, calibrations: list, consistencies: list,
@@ -112,7 +179,7 @@ def _compute_prs(accuracy_ratios: list, calibrations: list, consistencies: list,
             [0, 1]).
         weights: Dict with keys ``'accuracy'``, ``'calibration'``,
             ``'consistency'`` mapping to floats that sum to 1.0.
-            Defaults to ``{accuracy: 0.5, calibration: 0.3, consistency: 0.2}``.
+            Defaults to ``{accuracy: 0.7, calibration: 0.15, consistency: 0.15}``.
 
     Returns:
         PRS score clipped to ``[0.0, 1.0]``.
@@ -137,8 +204,9 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
     2. Embed both answers and the ground-truth answer.
     3. Compute ``accuracy_ratio``, ``calibration``, and ``self_consistency``.
 
-    After evaluation, queries where ``accuracy_ratio >= 0.85`` are recorded as
-    "known-good" in ``version.json`` for use by the confidence gate.
+    After evaluation, queries whose factual accuracy clears
+    ``known_good_accuracy_threshold`` are recorded as "known-good" in
+    ``version.json`` for use by the Phase 2/3 confidence gate.
 
     Args:
         faqs: List of FAQ dicts.  Each must have the keys specified by
@@ -150,6 +218,12 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
     Returns:
         PRS score in ``[0.0, 1.0]``.
     """
+    # Support both flat configs and nested addon_config.
+    indexing_cfg = cfg.get("addon_config", {}).get("indexing", {})
+    training_cfg = cfg.get("addon_config", {}).get("training", {})
+    effective_cfg = {**cfg, **indexing_cfg, **training_cfg}
+    sft_format = effective_cfg.get("sft_format", "chat")
+
     model, tokenizer = model_loader.load(lora_checkpoint)
     embed_model = cfg.get("embed_model", "BAAI/bge-small-en-v1.5")
 
@@ -171,6 +245,7 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
     embedder = TextEmbedding(model_name=embed_model, show_download_progress=False)
 
     accuracy_ratios, calibrations, consistencies = [], [], []
+    factual_accs = []  # consumed by Task 3's known_good_queries selection
 
     q_key = cfg.get("faq_question_key", "question")
     a_key = cfg.get("faq_answer_key", "answer")
@@ -179,7 +254,7 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
     for idx, faq in enumerate(faqs, 1):
         q, gt = _extract_qa(faq, q_key=q_key, a_key=a_key)
         print(f"⏳ Evaluating FAQ {idx}/{total}: {q[:60]}…", flush=True)
-        param_ans = _generate_parametric(q, pipe_gen)
+        param_ans = _generate_parametric(q, pipe_gen, tokenizer, sft_format)
         if has_sp3:
             rag_ans = answer_with_retrieval(q, cfg)
         else:
@@ -187,20 +262,33 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
         embs = np.array(list(embedder.embed([param_ans, rag_ans, gt])))
         param_sim = _cosine_sim(embs[0], embs[2])
         rag_sim   = _cosine_sim(embs[1], embs[2])
-        accuracy_ratio = min(param_sim / (rag_sim + 1e-9), 1.0)
-        accuracy_ratios.append(accuracy_ratio)
+        cosine_accuracy_ratio = min(param_sim / (rag_sim + 1e-9), 1.0)  # diagnostic only, not scored
         self_conf = _extract_confidence(param_ans, pipe_conf)
-        calibrations.append(1.0 - abs(self_conf - param_sim))
-        consistencies.append(_self_consistency(q, pipe_sample, embedder))
-        print(f"   acc={accuracy_ratio:.3f} conf={calibrations[-1]:.3f} cons={consistencies[-1]:.3f}", flush=True)
+        consistencies.append(_self_consistency(q, pipe_sample, embedder, tokenizer, sft_format))
+
+        # Factual metrics — now the actual scoring signal, not diagnostic-only.
+        from eval import metrics as _eval_metrics
+        em = _eval_metrics.exact_match(param_ans, gt)
+        f1 = _eval_metrics.token_f1(param_ans, gt)
+        judge = _eval_metrics.llm_judge(q, param_ans, gt)
+        factual_acc = _factual_accuracy(f1, judge["factually_correct"])
+        factual_accs.append(factual_acc)
+        accuracy_ratios.append(factual_acc)
+        calibrations.append(_fixed_calibration(self_conf, factual_acc))
+
+        print(f"   acc={factual_acc:.3f} (cosine={cosine_accuracy_ratio:.3f}) "
+              f"conf={calibrations[-1]:.3f} cons={consistencies[-1]:.3f} "
+              f"EM={em} F1={f1:.3f} judge={int(judge['factually_correct'])}", flush=True)
 
     weights = cfg.get("prs_weights", None)
     prs = _compute_prs(accuracy_ratios, calibrations, consistencies, weights)
 
-    # Populate known_good_queries: queries where accuracy_ratio >= 0.85
-    # Stored as pre-computed embeddings for use by confidence_gate._query_similarity
+    # Populate known_good_queries: queries where factual accuracy clears the
+    # known-good threshold. Stored as pre-computed embeddings for use by
+    # confidence_gate._query_similarity.
+    known_good_threshold = effective_cfg.get("known_good_accuracy_threshold", 0.5)
     good_queries = [faqs[i].get(q_key, faqs[i].get("question", ""))
-                    for i, r in enumerate(accuracy_ratios) if r >= 0.85]
+                    for i, r in enumerate(factual_accs) if r >= known_good_threshold]
     if good_queries:
         good_embs = [e.astype(float).tolist() for e in embedder.embed(good_queries)]
         data = ver.load()
@@ -219,7 +307,7 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
             from core.cluster_manager import load_clusters
             cluster_data = load_clusters(str(cluster_file))
             k = cluster_data["k"]
-            faq_coverage = sum(1 for r in accuracy_ratios if r >= 0.85) / max(len(accuracy_ratios), 1)
+            faq_coverage = _coverage_ratio(factual_accs, known_good_threshold)
             vdb_coverage = min(len(faqs) / max(cfg.get("scout_initial_faq_count", 20), 1), 1.0)
             for cid_int in range(k):
                 cid = str(cid_int)
@@ -269,11 +357,19 @@ def main() -> None:
     v = ver.load()
     prs = evaluate(faqs, cfg, v.get("checkpoint_path"))
     round_num = v["current_lora_version"]
+    # PRS thresholds commonly live under addon_config.training in real
+    # config files, not at cfg's top level — flatten before reading them
+    # so configured values are actually honored instead of silently
+    # falling back to the Python-level defaults every time.
+    training_cfg = cfg.get("addon_config", {}).get("training", {})
+    threshold_cfg = {**cfg, **training_cfg}
     ver.append_prs(
         round_num,
         prs,
-        regression_threshold=cfg.get("prs_regression_threshold", 0.60),
-        stability_window=cfg.get("prs_stability_window", 3),
+        regression_threshold=threshold_cfg.get("prs_regression_threshold", 0.25),
+        stability_window=threshold_cfg.get("prs_stability_window", 3),
+        phase2_advance_threshold=threshold_cfg.get("phase2_advance_threshold", 0.30),
+        phase3_advance_threshold=threshold_cfg.get("phase3_advance_threshold", 0.55),
     )
     print(f"📊 PRS after round {round_num}: {prs:.4f}")
     print(f"   Phase: {ver.get_phase()}")
