@@ -4,11 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Project Is
 
-**KVForge** is a progressive RAG (Retrieval-Augmented Generation) system that advances through three phases of increasing autonomy:
+**KVForge** is a progressive system that transitions deployed question-answering systems from Retrieval-Augmented Generation (RAG) to **fully parametric answering** — a fine-tuned small language model answering directly from its weights with no retrieval. The central empirical result: a **2B-parameter Gemma-4-E2B-it**, LoRA-fine-tuned on cloud-LLM-generated QA pairs, **matches or exceeds text-in-context RAG on factual accuracy across three of four enterprise corpora** (Customer Support +71%, SQuAD +38%, Bedrock +44%, PubMedQA +64% with extended training).
+
+Three phases of increasing autonomy:
 
 - **Phase 1:** Standard text-in-context RAG
-- **Phase 2:** KV cache injection + *selective* parametric answering — pre-computed KV tensors are injected at query time (bypassing the text encoder for matched chunks), and queries that clear a hard similarity-to-known-good eligibility gate are answered directly from weights
-- **Phase 3:** Corpus-wide confidence-gated parametric answering — after enough of the corpus is proven, the confidence gate (entropy + hedging + query similarity) runs for every query, not just eligible ones
+- **Phase 2:** KV cache injection — pre-computed KV tensors are injected at query time, bypassing chunk re-encoding (a latency optimization, not a quality win)
+- **Phase 3:** Corpus-wide confidence-gated parametric answering — the confidence gate (entropy + hedging + query similarity) runs for every query
+
+The four evaluation datasets are UC1 (Bitext customer support), UC2 (PubMedQA), UC3 (SQuAD 2.0), and UC4 (Amazon Bedrock User Guide).
 
 Despite the repo folder being named `qdrant`, this is a **pure Python project** (no Rust, no Cargo).
 

@@ -57,6 +57,74 @@ def token_f1(prediction: str, ground_truth: str) -> float:
     return 2 * precision * recall / (precision + recall)
 
 
+# Partial-credit judge constants.
+PARTIAL_SCORE = 0.5  # score assigned when judge says PARTIAL
+PARTIAL_SYSTEM_PROMPT = (
+    "You are a strict factual correctness judge for question answering.\n\n"
+    "A prediction is CORRECT only if it contains all the key facts. "
+    "It is PARTIAL if it contains some correct information but is missing a critical fact. "
+    "It is INCORRECT if it is completely wrong, contradictory, or empty.\n\n"
+    "Minor wording differences and omissions of extra detail are acceptable.\n\n"
+    "Reply with EXACTLY one of the following three lines:\n"
+    "CORRECT: <rationale>\n"
+    "PARTIAL: <rationale>\n"
+    "INCORRECT: <rationale>"
+)
+
+BINARY_SYSTEM_PROMPT = (
+    "You are a strict factual correctness judge for question answering.\n\n"
+    "A prediction is CORRECT only if it contains all the key facts in the "
+    "ground-truth answer and does not contradict it. Minor wording differences, "
+    "omissions of extra detail, and differences in article or phrasing are acceptable. "
+    "A prediction that is partially correct but missing a critical fact, or that adds a "
+    "contradictory fact, is INCORRECT.\n\n"
+    "Reply with EXACTLY one of the following two lines, followed by a one-sentence rationale:\n"
+    "CORRECT: <rationale>\n"
+    "INCORRECT: <rationale>"
+)
+
+_JUDGE_PROMPTS = {"binary": BINARY_SYSTEM_PROMPT, "partial": PARTIAL_SYSTEM_PROMPT}
+
+
+def _parse_judge_response(raw: str, judge_mode: str) -> tuple[float, str]:
+    """Parse judge raw response into a numeric score and rationale.
+
+    Returns:
+        Tuple of (score in [0.0, 0.5, 1.0], rationale string).
+    """
+    upper = raw.upper()
+
+    if judge_mode == "partial":
+        # Option C: CORRECT / PARTIAL / INCORRECT
+        for line in upper.split("\n"):
+            line = line.strip()
+            if line.startswith("CORRECT:"):
+                score = 1.0
+                break
+            if line.startswith("PARTIAL:"):
+                score = PARTIAL_SCORE
+                break
+            if line.startswith("INCORRECT:"):
+                score = 0.0
+                break
+        else:
+            # Fallback: search anywhere in response
+            if "PARTIAL" in upper:
+                score = PARTIAL_SCORE
+            elif "CORRECT" in upper and "PARTIAL" not in upper and "INCORRECT" not in upper:
+                score = 1.0
+            elif "INCORRECT" in upper:
+                score = 0.0
+            else:
+                score = 0.0
+    else:
+        # Binary: CORRECT / INCORRECT
+        score = 1.0 if upper.startswith("CORRECT") else 0.0
+
+    rationale = raw.split(":", 1)[1].strip() if ":" in raw else raw
+    return score, rationale
+
+
 def llm_judge(
     question: str,
     prediction: str,
@@ -65,8 +133,9 @@ def llm_judge(
     client: Any | None = None,
     model: str = "gpt-4o-mini",
     temperature: float = 0.0,
+    judge_mode: str = "binary",
 ) -> dict[str, Any]:
-    """LLM-as-judge: binary factual correctness + short rationale.
+    """LLM-as-judge: factual correctness scoring with optional partial credit.
 
     Args:
         question: The original question.
@@ -80,25 +149,23 @@ def llm_judge(
         model: Judge model name when a client is provided.
         temperature: Sampling temperature for the judge (default 0 for
             determinism).
+        judge_mode: One of "binary" (CORRECT/INCORRECT, default) or
+            "partial" (CORRECT/PARTIAL/INCORRECT with PARTIAL=0.5).
 
     Returns:
-        Dict with keys ``factually_correct`` (bool), ``rationale`` (str), and
-        ``raw_response`` (str).
+        Dict with keys ``factually_correct`` (bool, binary only),
+        ``judge_score`` (float, 0.0/0.5/1.0), ``rationale`` (str), and
+        ``raw_response`` (str).  In binary mode ``judge_score`` equals
+        ``float(factually_correct)``.
     """
-    if client is None:
-        return _heuristic_judge(question, prediction, ground_truth, context)
+    system_prompt = _JUDGE_PROMPTS.get(judge_mode, BINARY_SYSTEM_PROMPT)
 
-    system_prompt = (
-        "You are a strict factual correctness judge for question answering.\n\n"
-        "A prediction is CORRECT only if it contains all the key facts in the "
-        "ground-truth answer and does not contradict it. Minor wording differences, "
-        "omissions of extra detail, and differences in article or phrasing are acceptable. "
-        "A prediction that is partially correct but missing a critical fact, or that adds a "
-        "contradictory fact, is INCORRECT.\n\n"
-        "Reply with EXACTLY one of the following two lines, followed by a one-sentence rationale:\n"
-        "CORRECT: <rationale>\n"
-        "INCORRECT: <rationale>"
-    )
+    if client is None:
+        result = _heuristic_judge(question, prediction, ground_truth, context)
+        result["judge_mode"] = judge_mode
+        result["judge_score"] = float(result["factually_correct"])
+        return result
+
     user_text = (
         f"Question: {question}\n\n"
         f"Ground-truth answer: {ground_truth}\n\n"
@@ -109,7 +176,6 @@ def llm_judge(
 
     try:
         if hasattr(client, "messages"):
-            # Anthropic client path: translate messages to Anthropic format.
             messages = [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_text},
@@ -123,7 +189,7 @@ def llm_judge(
                     anthropic_messages.append({"role": m["role"], "content": m["content"]})
             response = client.messages.create(
                 model=model,
-                max_tokens=1024,
+                max_tokens=256,
                 system=system,
                 messages=anthropic_messages,
             )
@@ -133,21 +199,23 @@ def llm_judge(
             response = client.chat.completions.create(
                 model=model,
                 temperature=temperature,
+                max_tokens=256,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_text},
                 ],
             )
             raw = response.choices[0].message.content.strip()
-        correct = raw.upper().startswith("CORRECT")
-        rationale = raw.split(":", 1)[1].strip() if ":" in raw else raw
+        judge_score, rationale = _parse_judge_response(raw, judge_mode)
     except Exception as exc:
         raw = f"judge-error: {exc}"
-        correct = False
+        judge_score = 0.0
         rationale = raw
 
     return {
-        "factually_correct": correct,
+        "factually_correct": bool(judge_score >= 1.0),
+        "judge_score": judge_score,
+        "judge_mode": judge_mode,
         "rationale": rationale,
         "raw_response": raw,
     }

@@ -374,25 +374,6 @@ def load_token_kv_list(path) -> list[np.ndarray]:
     return result
 
 
-def pad_kv_list_to_uniform(kv_list: list[np.ndarray]) -> np.ndarray:
-    """Convert a variable-head-dim KV list to a uniform 5D array by zero-padding.
-
-    ``kv_list`` is a list of per-layer arrays each ``[2, num_heads, seq_len, hd]``
-    where ``hd`` may vary (e.g. 256 for sliding, 512 for full_attention on Gemma4).
-    Returns a single ``[num_layers, 2, num_heads, seq_len, max_hd]`` float16 array
-    where layers with smaller ``hd`` are zero-padded along the last dimension.
-    """
-    num_layers = len(kv_list)
-    num_heads = kv_list[0].shape[1]
-    seq_len = kv_list[0].shape[2]
-    max_hd = max(a.shape[-1] for a in kv_list)
-    result = np.zeros((num_layers, 2, num_heads, seq_len, max_hd), dtype=np.float16)
-    for i, arr in enumerate(kv_list):
-        hd = arr.shape[-1]
-        result[i, :, :, :, :hd] = arr.astype(np.float16)
-    return result
-
-
 def stack_past_key_values(
     chunks_kv: list,
     num_layers: int,

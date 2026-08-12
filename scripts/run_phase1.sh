@@ -54,7 +54,7 @@ echo '{"current_lora_version":0,"checkpoint_path":null,"phase":1,"prs_history":[
 log "Config updated."
 
 # ─── Step 2: Check chunks.json exists ─────────────────────────────────
-if [ ! -f "$DATA_DIR/chunks.json" ]; then
+QDRANT_EXTRACT=0; if [ "$QDRANT_EXTRACT" = "1" ] && [ ! -f "$DATA_DIR/chunks.json" ]; then
     log "Step 2: Extracting chunks from Qdrant..."
     $VENV -c "
 import json, numpy as np

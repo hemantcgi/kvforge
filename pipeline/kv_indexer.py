@@ -153,6 +153,8 @@ def cmd_index(cfg: dict) -> None:
 
     store = get_store(cfg)
     num_layers, num_kv_heads, head_dim = model_loader.get_kv_shape(cfg)
+    print(f"[debug] llm_model={cfg.get('llm_model')} model_library={cfg.get('model_library')} kv_num_layers={cfg.get('kv_num_layers')} kv_num_heads={cfg.get('kv_num_heads')}", file=sys.stderr)
+    print(f"[debug] get_kv_shape: layers={num_layers} heads={num_kv_heads} hd={head_dim}", file=sys.stderr)
 
     # Resolve source path
     source_path = effective_cfg.get("_source_path", "")

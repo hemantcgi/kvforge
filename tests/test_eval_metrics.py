@@ -40,13 +40,15 @@ def test_heuristic_judge_incorrect():
 
 def test_judge_prompt_contains_key_facts_requirement():
     """The judge prompt must require key facts and not just style."""
-    # We can't call the API in a unit test, but we can inspect the prompt text.
-    import inspect
-
-    source = inspect.getsource(eval_metrics.llm_judge)
-    assert "key facts" in source
-    assert "CORRECT:" in source
-    assert "INCORRECT:" in source
+    # Check the prompt constants directly (prompts moved outside function).
+    assert "key facts" in eval_metrics.BINARY_SYSTEM_PROMPT
+    assert "CORRECT:" in eval_metrics.BINARY_SYSTEM_PROMPT
+    assert "INCORRECT:" in eval_metrics.BINARY_SYSTEM_PROMPT
+    # Partial mode prompt must also require key facts.
+    assert "key facts" in eval_metrics.PARTIAL_SYSTEM_PROMPT
+    assert "CORRECT:" in eval_metrics.PARTIAL_SYSTEM_PROMPT
+    assert "PARTIAL:" in eval_metrics.PARTIAL_SYSTEM_PROMPT
+    assert "INCORRECT:" in eval_metrics.PARTIAL_SYSTEM_PROMPT
 
 
 def test_bootstrap_ci_empty():

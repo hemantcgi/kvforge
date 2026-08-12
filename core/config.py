@@ -20,7 +20,7 @@ Example JSON format::
           "qdrant_port": 6333
         },
         "inference": {
-          "llm_model": "meta-llama/Llama-3.2-3B-Instruct",
+          "llm_model": "google/gemma-4-E2B-it",
           "top_k": 5,
           "gate_threshold": 0.75
         },
@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import json
 from pydantic import BaseModel, Field
+from typing import Optional
 
 
 class KVForgeConfig(BaseModel):
@@ -140,6 +141,30 @@ class KVForgeConfig(BaseModel):
             "training. 0.0 disables the regularisation term. Sprint 2 feature."
         ),
     )
+    judge_mode: str = Field(
+        default="binary",
+        description=(
+            "Judge mode for factual accuracy evaluation. "
+            "'binary' uses CORRECT/INCORRECT (original). "
+            "'partial' uses CORRECT/PARTIAL/INCORRECT with PARTIAL=0.5."
+        ),
+    )
+    judge_model: str = Field(
+        default="gpt-4o-mini",
+        description="LLM judge model name (e.g. gpt-4o-mini, accounts/fireworks/models/deepseek-v4-flash).",
+    )
+    judge_provider: str = Field(
+        default="openai",
+        description="Judge API provider: openai, anthropic, or gemini.",
+    )
+    judge_api_key: Optional[str] = Field(
+        default=None,
+        description="API key for the judge provider. If not set, falls back to env var.",
+    )
+    judge_base_url: Optional[str] = Field(
+        default=None,
+        description="Base URL for OpenAI-compatible judge endpoints (e.g. Fireworks API).",
+    )
     compute_kv: bool = Field(
         default=True,
         description=(
@@ -186,6 +211,11 @@ class KVForgeConfig(BaseModel):
             "recompute_ratio": self.recompute_ratio,
             "confidence_supervision": self.confidence_supervision,
             "use_confidence_token": self.use_confidence_token,
+            "judge_mode": self.judge_mode,
+            "judge_model": self.judge_model,
+            "judge_provider": self.judge_provider,
+            "judge_api_key": self.judge_api_key,
+            "judge_base_url": self.judge_base_url,
             "confidence_label_threshold": self.confidence_label_threshold,
             "kl_to_base_weight": self.kl_to_base_weight,
             "compute_kv": self.compute_kv,

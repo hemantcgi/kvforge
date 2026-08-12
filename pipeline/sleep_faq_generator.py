@@ -356,7 +356,13 @@ def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
             for b in _parse_sleep_blocks(raw):
                 if len(new_faqs) >= count:
                     break
-                new_faqs.append(tag_faq_with_chunk_ids({q_key: b["question"], a_key: b["answer"]}, [point_id]))
+                stamp = {
+                    "generator_provider": provider,
+                    "generator_model": model,
+                    "generated_at": int(_time.time()),
+                }
+                new_faqs.append(tag_faq_with_chunk_ids(
+                    {q_key: b["question"], a_key: b["answer"], **stamp}, [point_id]))
                 chunk_new.append(b["question"][:80])
             if chunk_new:
                 print(f"  [chunk {chunk_idx}/{len(new_records)}] +{len(chunk_new)} FAQs")
@@ -404,8 +410,19 @@ def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
         new_faqs = new_faqs + paraphrased
 
     merged = _deduplicate(existing, new_faqs)
+    # Stamp final generator metadata
+    final_meta = {"generator_provider": provider, "generator_model": model,
+                  "generated_at": int(_time.time()), "faq_count": len(merged)}
     output_path.write_text(json.dumps(merged, indent=2, ensure_ascii=False))
     print(f"\n[sleep-faq] Saved {len(merged)} FAQs ({len(new_faqs)} appended from {chunk_idx} new chunks, {len(existing)} pre-existing)")
+    print(f"[sleep-faq] Generator: {provider} / {model}")
+
+    # Bias warning: check if judge_model matches generator_model
+    cfg_judge = cfg.get("judge_model", "")
+    if cfg_judge and cfg_judge == model:
+        print(f"[sleep-faq] ⚠️ WARN: FAQ generator model '{model}' matches judge model "
+              f"'{cfg_judge}' in config. Using the same LLM for generating QAs and judging "
+              f"answers may introduce evaluation bias.")
 
     # Pre-seed known_good_queries with embedded FAQ questions
     questions = [item[q_key] for item in merged if item.get(q_key)]

@@ -114,7 +114,7 @@ def _augment_with_paraphrases(faqs: list[dict], provider: str, model: str, api_k
             continue
         try:
             prompt = _build_paraphrase_prompt(question, n_per_faq)
-            raw = _call_provider(provider, model, api_key, prompt)
+            raw = _call_provider(provider, model, api_key, prompt, base_url=base_url)
             inter_delay = max(2.0, inter_delay * 0.8)
         except Exception as e:
             if "429" in str(e):
@@ -171,8 +171,14 @@ def _deduplicate(existing: list[dict], new: list[dict]) -> list[dict]:
     return merged
 
 
-def _call_provider(provider: str, model: str, api_key: str, prompt: str) -> str:
-    """Call the specified cloud LLM provider and return the raw text response."""
+def _call_provider(provider: str, model: str, api_key: str, prompt: str,
+                   base_url: str = "") -> str:
+    """Call the specified cloud LLM provider and return the raw text response.
+
+    Args:
+        base_url: Custom base URL for OpenAI-compatible endpoints
+            (Fireworks, vLLM, Together, etc.).  Leave empty for default.
+    """
     if provider == "gemini":
         url = (
             f"https://generativelanguage.googleapis.com/v1beta/models/"
@@ -204,8 +210,10 @@ def _call_provider(provider: str, model: str, api_key: str, prompt: str) -> str:
                        if c.get("type") == "text")
 
     elif provider == "openai":
+        endpoint = base_url.rstrip("/") + "/chat/completions" if base_url \
+            else "https://api.openai.com/v1/chat/completions"
         resp = httpx.post(
-            "https://api.openai.com/v1/chat/completions",
+            endpoint,
             headers={"Authorization": f"Bearer {api_key}",
                      "Content-Type": "application/json"},
             json={"model": model, "max_tokens": 1024, "temperature": 0.4,
@@ -228,20 +236,25 @@ def _load_uc_config(config_path: Path) -> dict:
     return {}
 
 
-def _resolve_provider_config(uc_config: dict) -> tuple[str, str, str]:
-    """Return (provider, model, api_key) from uc_config + env vars + Studio settings."""
+def _resolve_provider_config(uc_config: dict) -> tuple[str, str, str, str]:
+    """Return (provider, model, api_key, base_url) from uc_config + env vars.
+
+    ``base_url`` is used for OpenAI-compatible endpoints (Fireworks, vLLM, etc.).
+    An empty string means use the default ``https://api.openai.com/v1``.
+    """
     llm = uc_config.get("llm", {})
     provider = (llm.get("sleep_faq_provider")
                 or os.environ.get("SLEEP_FAQ_PROVIDER", "gemini"))
     model = (llm.get("sleep_faq_model")
              or os.environ.get("SLEEP_FAQ_MODEL", "gemini-2.5-flash"))
-    key_env = {
+    base_url = llm.get("sleep_faq_base_url", "")
+    key_map = {
         "gemini": "GEMINI_API_KEY",
         "claude": "ANTHROPIC_API_KEY",
         "openai": "OPENAI_API_KEY",
-    }.get(provider, "GEMINI_API_KEY")
-    # Priority: env var → Studio settings DB
-    api_key = os.environ.get(key_env, "")
+    }
+    key_env = key_map.get(provider, "GEMINI_API_KEY")
+    api_key = llm.get("sleep_faq_api_key", "") or os.environ.get(key_env, "")
     if not api_key:
         try:
             from studio.settings_manager import get_setting
@@ -253,7 +266,7 @@ def _resolve_provider_config(uc_config: dict) -> tuple[str, str, str]:
             api_key = get_setting(setting_key) or ""
         except Exception:
             pass
-    return provider, model, api_key
+    return provider, model, api_key, base_url
 
 
 def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
@@ -268,7 +281,7 @@ def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
             set instead of a single-phrasing-per-fact one.
     """
     uc_config = _load_uc_config(config_path)
-    provider, model, api_key = _resolve_provider_config(uc_config)
+    provider, model, api_key, base_url = _resolve_provider_config(uc_config)
 
     if not api_key:
         key_env = {"gemini": "GEMINI_API_KEY", "claude": "ANTHROPIC_API_KEY",
@@ -326,7 +339,7 @@ def generate(cfg: dict, config_path: Path, count: int, output_path: Path,
             continue
         try:
             prompt = _build_sleep_prompt(chunk, n_per_chunk=n_per_chunk)
-            raw = _call_provider(provider, model, api_key, prompt)
+            raw = _call_provider(provider, model, api_key, prompt, base_url=base_url)
             _consecutive_429 = 0          # reset on success
             _inter_delay = max(2.0, _inter_delay * 0.8)  # gradually relax
             chunk_new = []

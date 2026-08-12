@@ -12,3 +12,9 @@ Creating superpowers-format implementation plan for the Knowledge Absorption Cur
 ## Commit at 2026-07-29T03:56:51.476767+00:00
 Starting implementation of Knowledge Absorption Curve plan — Phase 0 tooling with full TDD. Building 6 tools (corpus_slicer, noise_injector, entigraph_generator, validate_diversity_data, absorption_curve_runner, readiness_predictor) on branch research/absorption-curve.
 
+## Commit at 2026-07-31T15:45:42.957624+00:00
+Creating detailed superpowers plan for Phases 2-6 based on Phase 1 findings. Key insight: Gemma 4 E2B crosses over at all corpus sizes while Llama-3.2-3B never crosses over — architecture is the primary determinant. Plan covers multi-dataset crossover, 4-mode comparison, embedding ablation, training signal quality, and predictive model.
+
+## Commit at 2026-08-07T02:49:19.956257+00:00
+Raise a PR for the uncommitted code changes on branch research/absorption-curve. Include only Python/Shell code changes (addons, core, pipeline, tools, scripts, tests) and exclude .GCC audit files, generated docs, and configuration artifacts. Push to smartqdrant fork and create PR to origin/master with title 'Research: absorption curve experiments and Phase 0 tooling'.
+

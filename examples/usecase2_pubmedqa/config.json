@@ -1,65 +1,90 @@
 {
-  "_comment": "Use Case 2 — PubMedQA Biomedical Q&A | ChromaDB + Llama-3.2-3B-Instruct",
-
+  "_comment": "Use Case 2 \u2014 PubMedQA Biomedical Q&A | ChromaDB + Gemma-4-E2B-it",
   "use_case_name": "PubMedQA Biomedical Q&A",
-  "collection":    "pubmedqa",
-  "version_file":  "examples/usecase2_pubmedqa/version.json",
-
-  "addons": ["indexing", "inference", "training", "background", "sync", "monitoring"],
-
+  "collection": "pubmedqa",
+  "version_file": "examples/usecase2_pubmedqa/version.json",
+  "addons": [
+    "indexing",
+    "inference",
+    "training",
+    "background",
+    "sync",
+    "monitoring"
+  ],
   "addon_config": {
     "indexing": {
-      "loader":           "jsonl",
-      "jsonl_text_key":   "text",
-      "chunk_size":       600,
-      "chunk_overlap":    60,
-      "embed_batch":      64,
-      "upsert_batch":     128,
-      "embed_model":      "BAAI/bge-small-en-v1.5",
+      "loader": "jsonl",
+      "jsonl_text_key": "text",
+      "chunk_size": 600,
+      "chunk_overlap": 60,
+      "embed_batch": 64,
+      "upsert_batch": 128,
+      "embed_model": "BAAI/bge-small-en-v1.5",
       "embedder_backend": "fastembed",
-      "vector_dim":       384,
-      "vector_store":     "chroma",
+      "vector_dim": 384,
+      "vector_store": "qdrant",
       "chroma_persist_dir": "examples/usecase2_pubmedqa/.chroma",
       "model_library": {
-        "meta-llama/Llama-3.2-3B-Instruct": {
-          "kv_num_layers": 28, "kv_num_heads": 8, "kv_head_dim": 128
+        "google/gemma-4-E2B-it": {
+          "kv_num_layers": 35,
+          "kv_num_heads": 1,
+          "kv_head_dim": 256
         }
       }
     },
     "inference": {
-      "top_k":          5,
-      "llm_model":      "meta-llama/Llama-3.2-3B-Instruct",
-      "quantization":   "4bit",
-      "vllm_url":       "http://localhost:8092",
-      "vllm_model":     "uc2",
+      "top_k": 5,
+      "llm_model": "google/gemma-4-E2B-it",
+      "quantization": "4bit",
+      "vllm_url": "http://localhost:8092",
+      "vllm_model": "uc2",
       "max_new_tokens": 256,
       "gate_threshold": 0.75
     },
     "training": {
-      "lora_rank":            16,
-      "lora_alpha":           32,
-      "lora_target_modules":  ["q_proj", "k_proj", "v_proj"],
-      "lora_dropout":         0.05,
-      "lora_epochs":          3,
-      "lora_lr":              0.0002,
-      "checkpoint_dir":       "examples/usecase2_pubmedqa/lora_checkpoints/",
-      "replay_db":            "examples/usecase2_pubmedqa/replay.db",
-      "prs_weights":          {"accuracy": 0.7, "calibration": 0.15, "consistency": 0.15},
-      "prs_advancement_threshold": 0.72,
-      "prs_regression_threshold":  0.25,
-      "phase2_advance_threshold":  0.30,
-      "phase3_advance_threshold":  0.55,
-      "faq_question_key":    "question",
-      "faq_answer_key":      "answer"
+      "sft_format": "chat"
     },
-    "background": {"flush_seconds": 300, "flush_queries": 50},
+    "background": {
+      "flush_seconds": 300,
+      "flush_queries": 50
+    },
     "sync": {
       "interval_minutes": 60,
       "hitl_mode": "auto",
       "sync_regression_mode": "pct",
-      "sync_regression_pct_threshold": 0.10,
+      "sync_regression_pct_threshold": 0.1,
       "sync_regression_tier_threshold": 0.15
     },
-    "monitoring": {"port": 8082}
-  }
+    "monitoring": {
+      "port": 8082
+    }
+  },
+  "llm_model": "google/gemma-4-E2B-it",
+  "model_library": {
+    "google/gemma-4-E2B-it": {
+      "kv_num_layers": 35,
+      "kv_num_heads": 1,
+      "kv_head_dim": 256
+    }
+  },
+  "vector_store": "qdrant",
+  "qdrant_host": "localhost",
+  "qdrant_port": 6333,
+  "compute_kv": false,
+  "embed_batch": 64,
+  "upsert_batch": 50,
+  "vector_dim": 384,
+  "embed_model": "BAAI/bge-small-en-v1.5",
+  "cluster_k_range": [
+    3,
+    20
+  ],
+  "checkpoint_dir": "examples/usecase2_pubmedqa/lora_checkpoints/",
+  "judge_mode": "partial",
+  "judge_model": "accounts/fireworks/models/deepseek-v4-flash",
+  "judge_provider": "openai",
+  "judge_api_key": null,
+  "judge_base_url": "https://api.fireworks.ai/inference/v1/",
+  "faq_generator_provider": "claude",
+  "faq_generator_model": "claude-sonnet-4-20250514"
 }

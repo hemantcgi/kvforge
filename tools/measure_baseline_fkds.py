@@ -105,6 +105,7 @@ def run_mode(
     cfg: dict,
     judge_model: str,
     judge_client: Any | None,
+    judge_mode: str = "binary",
 ) -> dict[str, Any]:
     """Run one inference mode and return per-question + aggregate results."""
     import sys
@@ -147,7 +148,9 @@ def run_mode(
         if mode == "parametric":
             ans = _generate_parametric(q, model, tokenizer, sft_format="chat")
         else:
-            ans, used_mode = answer_with_mode(q, cfg, force_mode=mode)
+            # text_rag and kv_meanpool use base model (no LoRA) to measure
+            # retrieval + reading independently of LoRA training
+            ans, used_mode = answer_with_mode(q, cfg, force_mode=mode, use_lora=False)
             if not ans:
                 ans = ""
         latency = time.perf_counter() - t0
@@ -155,10 +158,11 @@ def run_mode(
 
         t1 = time.perf_counter()
         f1 = eval_metrics.token_f1(ans, gt)
-        judge = eval_metrics.llm_judge(q, ans, gt, client=judge_client, model=judge_model)
+        judge = eval_metrics.llm_judge(q, ans, gt, client=judge_client, model=judge_model, judge_mode=judge_mode)
         judge_latency = time.perf_counter() - t1
-        factual_accuracy = 0.5 * f1 + 0.5 * float(judge["factually_correct"])
-        print(f"       judge={int(judge['factually_correct'])} f1={f1:.3f} factual_accuracy={factual_accuracy:.3f} ({judge_latency:.2f}s)", flush=True)
+        judge_score = judge.get("judge_score", float(judge["factually_correct"]))
+        factual_accuracy = 0.5 * f1 + 0.5 * judge_score
+        print(f"       judge_score={judge_score:.1f} f1={f1:.3f} factual_accuracy={factual_accuracy:.3f} ({judge_latency:.2f}s)", flush=True)
 
         cost = estimate_judge_cost(q, ans, gt, judge_model) + estimate_embedding_cost(ans)
 
@@ -170,6 +174,8 @@ def run_mode(
             "factual_accuracy": round(factual_accuracy, 4),
             "f1": round(f1, 4),
             "judge_correct": int(judge["factually_correct"]),
+            "judge_score": round(judge_score, 4),
+            "judge_mode": judge_mode,
             "judge_rationale": judge.get("rationale", ""),
             "latency_sec": round(latency, 4),
             "cost_usd": round(cost, 6),
@@ -194,16 +200,21 @@ def main() -> None:
     p.add_argument("--eval-set", required=True)
     p.add_argument("--output-dir", required=True)
     p.add_argument("--modes", nargs="+", default=["text_rag", "kv_meanpool", "parametric"])
-    p.add_argument("--judge-model", default="gpt-4o-mini")
-    p.add_argument("--judge-provider", default="openai",
-                   help="openai, anthropic, or gemini")
-    p.add_argument("--judge-api-key", default="")
-    p.add_argument("--judge-base-url", default="",
-                   help="Base URL for OpenAI-compatible judge endpoints (Fireworks, vLLM, etc.)")
     p.add_argument("--checkpoint", default=None,
                    help="Explicit LoRA checkpoint path (overrides version.json)")
     p.add_argument("--recompute-ratio", type=float, default=None,
                    help="Override recompute_ratio in config for partial KV recompute sweeps.")
+    p.add_argument("--judge-mode", default=None, choices=["binary", "partial"],
+                   help="Judge mode: 'binary' (CORRECT/INCORRECT) or 'partial' (CORRECT/PARTIAL/INCORRECT). "
+                        "Defaults to config's 'judge_mode' field, then 'binary'.")
+    p.add_argument("--judge-model", default=None,
+                   help="Judge model name. Overrides config's 'judge_model' field.")
+    p.add_argument("--judge-provider", default=None,
+                   help="Judge provider (openai/anthropic/gemini). Overrides config's 'judge_provider'.")
+    p.add_argument("--judge-api-key", default=None,
+                   help="Judge API key. Overrides config's 'judge_api_key'.")
+    p.add_argument("--judge-base-url", default=None,
+                   help="Judge base URL. Overrides config's 'judge_base_url'.")
     args = p.parse_args()
 
     with open(args.config) as f:
@@ -214,30 +225,36 @@ def main() -> None:
         cfg["recompute_ratio"] = args.recompute_ratio
     with open(args.eval_set) as f:
         eval_data = json.load(f)
-    eval_items = eval_data.get("items", eval_data)
+    eval_items = eval_data.get("items", eval_data) if isinstance(eval_data, dict) else eval_data
 
+    # Resolve judge settings: CLI overrides config overrides hardcoded defaults.
+    judge_mode = args.judge_mode or cfg.get("judge_mode", "binary")
+    judge_model = args.judge_model or cfg.get("judge_model", "gpt-4o-mini")
+    judge_provider = args.judge_provider or cfg.get("judge_provider", "openai")
+    judge_api_key = args.judge_api_key or cfg.get("judge_api_key") or os.environ.get(
+        {"openai": "OPENAI_API_KEY", "anthropic": "ANTHROPIC_API_KEY", "gemini": "GEMINI_API_KEY"}.get(
+            judge_provider, "OPENAI_API_KEY"
+        ), "")
+    judge_base_url = args.judge_base_url or cfg.get("judge_base_url", "")
+
+    # Remove old separate --judge-* args from args namespace if they exist.
+    # We consolidated them above.
     # Lazy client setup only if an API key is provided.
     judge_client = None
-    api_key = args.judge_api_key or os.environ.get(
-        {"openai": "OPENAI_API_KEY", "anthropic": "ANTHROPIC_API_KEY", "gemini": "GEMINI_API_KEY"}.get(
-            args.judge_provider, "OPENAI_API_KEY"
-        ),
-        "",
-    )
-    if api_key:
-        if args.judge_provider == "openai":
+    if judge_api_key:
+        if judge_provider == "openai":
             import openai
-            kwargs = {"api_key": api_key}
-            if args.judge_base_url:
-                kwargs["base_url"] = args.judge_base_url.rstrip("/") + "/"
+            kwargs = {"api_key": judge_api_key}
+            if judge_base_url:
+                kwargs["base_url"] = judge_base_url.rstrip("/") + "/"
             judge_client = openai.OpenAI(**kwargs)
-        elif args.judge_provider == "anthropic":
+        elif judge_provider == "anthropic":
             import anthropic
-            judge_client = anthropic.Anthropic(api_key=api_key)
-        elif args.judge_provider == "gemini":
+            judge_client = anthropic.Anthropic(api_key=judge_api_key)
+        elif judge_provider == "gemini":
             judge_client = None
         else:
-            raise ValueError(f"Unknown judge provider: {args.judge_provider}")
+            raise ValueError(f"Unknown judge provider: {judge_provider}")
 
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -245,13 +262,14 @@ def main() -> None:
     report = {
         "config": cfg,
         "eval_set": args.eval_set,
-        "judge_model": args.judge_model,
+        "judge_model": judge_model,
+        "judge_mode": judge_mode,
         "modes": {},
     }
 
     for mode in args.modes:
         print(f"\n🔬 Running mode: {mode}")
-        result = run_mode(mode, eval_items, cfg, args.judge_model, judge_client)
+        result = run_mode(mode, eval_items, cfg, judge_model, judge_client, judge_mode=judge_mode)
         report["modes"][mode] = {
             "factual_accuracy": result["factual_accuracy"],
             "latency": result["latency"],

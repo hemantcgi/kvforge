@@ -20,7 +20,7 @@ Example JSON format::
           "qdrant_port": 6333
         },
         "inference": {
-          "llm_model": "meta-llama/Llama-3.2-3B-Instruct",
+          "llm_model": "google/gemma-4-E2B-it",
           "top_k": 5,
           "gate_threshold": 0.75
         },

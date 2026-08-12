@@ -2,7 +2,7 @@
   "id": "usecase1_customer_support",
   "display_name": "Customer Support",
   "type": "example",
-  "created_at": "2026-07-29T01:02:53.765369+00:00",
+  "created_at": "2026-08-09T21:48:13.996647+00:00",
   "data": {
     "source_type": "huggingface",
     "source_path": "",
@@ -24,6 +24,9 @@
     "quantization": "4bit",
     "vllm_url": "",
     "comparison_provider": "gemini",
-    "comparison_model": "gemini-2.5-flash"
+    "comparison_model": "gemini-2.5-flash",
+    "sleep_faq_provider": "claude",
+    "sleep_faq_model": "claude-sonnet-4-20250514",
+    "sleep_faq_base_url": ""
   }
 }
