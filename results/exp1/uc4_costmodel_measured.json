@@ -1,0 +1,72 @@
+{
+ "meta": {
+  "c_par": 0.08347,
+  "c_rag": 0.22595,
+  "c_warm": 0.08347,
+  "c_warm_is_proxy": true,
+  "rate_usd_per_gpu_s": 0.00027944,
+  "usd_per_hr": 1.006,
+  "chunks": 2520,
+  "kv_included": true,
+  "par_one_time_s": 5068.0,
+  "rag_one_time_s": 60.0,
+  "par_one_time_usd": 1.4162,
+  "note": "c_warm proxied by c_par unless --c-warm given; measure directly."
+ },
+ "per_query_usd": {
+  "parametric": 2.332522777777778e-05,
+  "rag": 6.314047222222223e-05,
+  "rag_cache_warm": 2.332522777777778e-05
+ },
+ "break_even_N": {
+  "vs_plain_rag": 35149,
+  "vs_prefix_cached_rag": {
+   "alpha_0.0": null,
+   "alpha_0.5": null,
+   "alpha_0.8": null,
+   "alpha_1.0": null,
+   "alpha_1.2": null
+  },
+  "distinct_threshold_vs_cached": 35149,
+  "pool_size": 2000,
+  "parametric_can_beat_cached_rag": false,
+  "vs_prefix_cached_rag_measured": {
+   "alpha_0.0": {
+    "c_rag_eff_measured": 0.22185,
+    "prefix_cache_hit_rate": null,
+    "repeat_rate": 0.4308,
+    "N_star": 36191
+   },
+   "alpha_0.8": {
+    "c_rag_eff_measured": 0.18843,
+    "prefix_cache_hit_rate": null,
+    "repeat_rate": 0.6064,
+    "N_star": 47714
+   },
+   "alpha_1.2": {
+    "c_rag_eff_measured": 0.11931,
+    "prefix_cache_hit_rate": null,
+    "repeat_rate": 0.8124,
+    "N_star": 139733
+   }
+  }
+ },
+ "cost_curve_usd_per_1M": {
+  "1000": {
+   "parametric": 1439.55,
+   "plain_rag": 79.91
+  },
+  "10000": {
+   "parametric": 164.95,
+   "plain_rag": 64.82
+  },
+  "100000": {
+   "parametric": 37.49,
+   "plain_rag": 63.31
+  },
+  "1000000": {
+   "parametric": 24.74,
+   "plain_rag": 63.16
+  }
+ }
+}

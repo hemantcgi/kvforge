@@ -1,0 +1,52 @@
+{
+ "meta": {
+  "c_par": 0.0819,
+  "c_rag": 0.24332,
+  "c_warm": 0.0819,
+  "c_warm_is_proxy": true,
+  "rate_usd_per_gpu_s": 0.00027944,
+  "usd_per_hr": 1.006,
+  "chunks": 2520,
+  "kv_included": true,
+  "par_one_time_s": 3068.0,
+  "rag_one_time_s": 60.0,
+  "par_one_time_usd": 0.8573,
+  "note": "c_warm proxied by c_par unless --c-warm given; measure directly."
+ },
+ "per_query_usd": {
+  "parametric": 2.2886500000000002e-05,
+  "rag": 6.799442222222223e-05,
+  "rag_cache_warm": 2.2886500000000002e-05
+ },
+ "break_even_N": {
+  "vs_plain_rag": 18635,
+  "vs_prefix_cached_rag": {
+   "alpha_0.0": null,
+   "alpha_0.5": null,
+   "alpha_0.8": null,
+   "alpha_1.0": null,
+   "alpha_1.2": null
+  },
+  "distinct_threshold_vs_cached": 18635,
+  "pool_size": 2000,
+  "parametric_can_beat_cached_rag": false
+ },
+ "cost_curve_usd_per_1M": {
+  "1000": {
+   "parametric": 880.22,
+   "plain_rag": 84.76
+  },
+  "10000": {
+   "parametric": 108.62,
+   "plain_rag": 69.67
+  },
+  "100000": {
+   "parametric": 31.46,
+   "plain_rag": 68.16
+  },
+  "1000000": {
+   "parametric": 23.74,
+   "plain_rag": 68.01
+  }
+ }
+}
