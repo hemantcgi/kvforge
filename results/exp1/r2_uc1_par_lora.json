@@ -1,0 +1,23 @@
+{
+ "arm": "parametric",
+ "base_model": "google/gemma-4-E2B-it",
+ "collection": "customer-support",
+ "alpha": 0.8,
+ "volume": 2000,
+ "pool_size": 2000,
+ "concurrency": 32,
+ "top_k": 5,
+ "out_len": 48,
+ "ignore_eos": true,
+ "runtime_lora": true,
+ "repeat_rate": 0.5685,
+ "distinct": 863,
+ "engine_init_s": 72.7,
+ "wall_s": 290.745,
+ "throughput_qps": 6.879,
+ "realized_gpu_s_per_query": 0.14537,
+ "prefix_cache_hit_rate": null,
+ "mean_prompt_tokens": 37.5,
+ "mean_output_tokens": 48.0,
+ "enforce_eager": true
+}
