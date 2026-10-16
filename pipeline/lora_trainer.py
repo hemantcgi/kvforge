@@ -19,15 +19,36 @@ Usage::
 """
 
 import argparse
+import datetime
 import json
 import os
+import random
+import re
 import sys
 import time
 from pathlib import Path
 
-import torch
-from datasets import Dataset
-from transformers import TrainingArguments, Trainer, DataCollatorForLanguageModeling
+import numpy as np
+
+try:
+    import torch
+    from transformers import (
+        TrainingArguments,
+        Trainer,
+        TrainerCallback,
+        DataCollatorForLanguageModeling,
+        DataCollatorForSeq2Seq,
+    )
+except ImportError as _e:
+    print(
+        f"ERROR: Missing GPU/ML dependency: {_e}\n"
+        "LoRA training requires: torch, transformers, datasets, peft\n"
+        "Install with: pip install torch transformers datasets peft accelerate\n"
+        "Note: LoRA training is a GPU operation — run on the EC2 instance (g5.xlarge)\n"
+        "      or configure a remote GPU worker in Studio → Use Case → GPU Settings.",
+        flush=True,
+    )
+    sys.exit(1)
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import core.model_loader as model_loader
@@ -35,6 +56,70 @@ import core.version as ver
 from core.replay_buffer import ReplayBuffer
 from qdrant_client import QdrantClient
 from qdrant_client.models import Filter, FieldCondition, MatchValue
+
+
+def set_seed(seed: int, deterministic: bool = True) -> None:
+    """Set all random seeds for reproducible LoRA training.
+
+    Seeds Python ``random``, NumPy, and PyTorch (CPU, CUDA, and all CUDA
+    devices).  When *deterministic* is True (default), also enables
+    deterministic cuDNN algorithms and disables the benchmark autotuner.
+    This may be slightly slower but is essential for A/B comparisons and
+    regression tests.
+
+    Args:
+        seed: Integer random seed.
+        deterministic: Whether to force deterministic cuDNN behaviour.
+    """
+    random.seed(seed)
+    np.random.seed(seed)
+    try:
+        import torch
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        # When using generator workers in DataLoader these would also need
+        # seeding; KVForge uses a single-process trainer so the above is
+        # sufficient.
+        if deterministic:
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+    except ImportError:
+        pass
+
+
+def save_training_metadata(
+    output_dir: str,
+    cfg: dict,
+    seed: int,
+    command: list[str],
+    notes: dict | None = None,
+) -> None:
+    """Write a snapshot of the training configuration next to the adapter.
+
+    The metadata file makes every adapter self-describing: it records the
+    exact config, seed, command-line invocation, and timestamp.  This is
+    required for versioned adapters, rollback, and reproducible A/B tests.
+
+    Args:
+        output_dir: Directory where the LoRA adapter was saved.
+        cfg: Datasource configuration dict used for training.
+        seed: Random seed that was set before training.
+        command: Full argv list for the training invocation.
+        notes: Optional dict with extra information (e.g. data source counts).
+    """
+    meta = {
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z"),
+        "seed": seed,
+        "command": command,
+        "config": cfg,
+        "notes": notes or {},
+    }
+    out_path = Path(output_dir)
+    out_path.mkdir(parents=True, exist_ok=True)
+    meta_path = out_path / "kvforge_training_metadata.json"
+    with open(meta_path, "w") as f:
+        json.dump(meta, f, indent=2, default=str)
+    print(f"📝 Training metadata saved to {meta_path}")
 
 
 def fetch_chunks_for_source(client: QdrantClient, collection: str,
@@ -93,8 +178,131 @@ def format_qa_texts(faqs: list[dict]) -> list[str]:
     return texts
 
 
+def _strip_variant_suffix(question: str) -> str:
+    """Remove a trailing ``(variant N)`` augmentation suffix from a FAQ question.
+
+    100% of the synthetic training FAQs carry this suffix; training on it makes the model
+    echo ``variant N`` at generation time (a confirmed format-artifact leak). Only a trailing
+    ``(variant <digits>)`` is stripped — other parentheticals are preserved.
+    """
+    return re.sub(r"\s*\(variant\s+\d+\)\s*$", "", question).strip()
+
+
+def mask_prompt_labels(prompt_ids: list, full_ids: list) -> list:
+    """Build SFT labels that mask the prompt so loss is computed only on the answer.
+
+    ``full_ids`` is the tokenized ``[user, assistant]`` chat sequence (answer text + EOS);
+    ``prompt_ids`` is the tokenized ``[user]`` chat sequence with the assistant generation
+    prompt. Returns labels equal to ``full_ids`` with the first ``len(prompt_ids)`` positions
+    set to ``-100`` (ignored by the loss). The trailing EOS stays unmasked so the model learns
+    to stop after the answer.
+    """
+    n = len(prompt_ids)
+    return [-100] * n + list(full_ids[n:])
+
+
+def build_sft_example(tokenizer, question: str, answer: str, max_length: int) -> dict:
+    """Tokenize one QA pair for chat-format SFT with answer-only loss labels.
+
+    Returns ``{"input_ids", "labels", "attention_mask"}``. The prompt (user turn + assistant
+    header) is masked to ``-100`` in labels; loss falls only on the answer tokens and the
+    trailing EOS. Truncates to ``max_length`` (keeps the sequence start; QA pairs are short so
+    truncation should be rare).
+    """
+    q = _strip_variant_suffix(question)
+    prompt_ids = tokenizer.apply_chat_template(
+        [{"role": "user", "content": q}], add_generation_prompt=True, tokenize=True,
+        return_dict=False,
+    )
+    full_ids = tokenizer.apply_chat_template(
+        [{"role": "user", "content": q}, {"role": "assistant", "content": answer}],
+        tokenize=True, return_dict=False,
+    )
+    labels = mask_prompt_labels(prompt_ids, full_ids)
+    input_ids = list(full_ids)[:max_length]
+    labels = labels[:max_length]
+    return {
+        "input_ids": input_ids,
+        "labels": labels,
+        "attention_mask": [1] * len(input_ids),
+    }
+
+
+def build_confidence_sft_example(
+    tokenizer, question: str, answer: str, confidence_label: bool, max_length: int
+) -> dict:
+    """Tokenize one QA pair for chat-format SFT with confidence supervision.
+
+    Identical to :func:`build_sft_example` except the assistant answer has the
+    confidence pseudo-token suffix appended: ``\\nConfidence: yes/no``. The
+    entire suffix is included in the unmasked labels so the model is
+    supervised to emit the confidence token.
+    """
+    from pipeline.confidence_token import append_confidence_suffix
+
+    answer_with_confidence = append_confidence_suffix(answer, confidence_label)
+    return build_sft_example(tokenizer, question, answer_with_confidence, max_length)
+
+
+def _faq_confidence_label(faq: dict) -> bool:
+    """Return the confidence label stored in a FAQ dict, defaulting to ``True``.
+
+    Supports ``confidence_label`` (bool) and ``confidence`` (``"yes"``/``"no"``)
+    keys. Falls back to ``True`` (yes) when neither is present, which is the
+    conservative default for teacher-SFT data where the answer is assumed to be
+    the correct target.
+    """
+    if "confidence_label" in faq:
+        return bool(faq["confidence_label"])
+    if "confidence" in faq:
+        return str(faq["confidence"]).strip().lower() == "yes"
+    return True
+
+
+def load_kds_into_replay_buffer(rb: ReplayBuffer, cfg: dict) -> None:
+    """Import per-chunk KDS from the vector store into the replay buffer.
+
+    The vector store is the source of truth for KDS (written by
+    ``prs_evaluator.compute_kds``).  This helper closes the feedback loop by
+    copying those scores into the replay buffer so that the next LoRA round's
+    sampling can boost under-differentiated chunks.  If the vector store is
+    unavailable or unconfigured, the function is a no-op.
+    """
+    try:
+        from vectorstore.registry import get_store
+        indexing_cfg = cfg.get("addon_config", {}).get("indexing", {})
+        effective_cfg = {**cfg, **indexing_cfg}
+        store = get_store(effective_cfg)
+        collection = effective_cfg.get("collection")
+        if not collection:
+            return
+        offset = None
+        while True:
+            page, offset = store.scroll(
+                collection,
+                limit=1000,
+                with_payload=True,
+                offset=offset,
+            )
+            for p in page:
+                payload = p.payload or {}
+                if "kds" in payload:
+                    try:
+                        cid = int(p.id)
+                    except (ValueError, TypeError):
+                        continue
+                    rb.add_kds(cid, float(payload["kds"]))
+            if offset is None:
+                break
+    except Exception:
+        pass
+
+
 def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
-          output_dir: str, qa_texts: list[str] | None = None) -> None:
+          output_dir: str, qa_texts: list[str] | None = None,
+          from_base: bool = False,
+          faqs: list[dict] | None = None,
+          resume_from_checkpoint: str | None = None) -> None:
     """Run LoRA fine-tuning and save the adapter to *output_dir*.
 
     Builds a PEFT ``LoraConfig`` from *cfg*, applies it to the base model,
@@ -116,7 +324,24 @@ def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
         output_dir: Directory where the trained LoRA adapter is saved.
         qa_texts: Pre-formatted Q&A training strings for instruction mode.
             If ``None``, raw-chunk (continuation) mode is used.
+        faqs: Raw FAQ dicts (``{"question", "answer"}``) used by the chat-format
+            SFT path.  Required when ``sft_format == "chat"``; enables the
+            answer-masked, chat-template training examples.
+        from_base: If True, train a fresh LoRA adapter from the base model
+            instead of continuing from the current checkpoint in
+            ``version.json``.  Useful for ablation studies.
     """
+    # Lazy import: datasets is only needed inside training, and importing it at
+    # module level causes test-isolation issues with pyarrow extension types
+    # when this module is loaded only for helper functions like
+    # ``_strip_variant_suffix``.
+    from datasets import Dataset
+
+    # Support both flat configs and nested addon_config.
+    inference_cfg = cfg.get("addon_config", {}).get("inference", {})
+    training_cfg = cfg.get("addon_config", {}).get("training", {})
+    effective_cfg = {**cfg, **inference_cfg, **training_cfg}
+
     from peft import LoraConfig, TaskType, get_peft_model  # lazy import
 
     if qa_texts:
@@ -130,35 +355,77 @@ def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
         print(f"🎓 Training on {len(new_chunks)} new + {len(replay_chunks)} replay "
               f"= {len(all_texts)} chunks total")
 
-    # Reload base model without merged LoRA for training
-    lora_ckpt = ver.load().get("checkpoint_path")
+    # Reload base model.  For ablations, start from the bare base model so that
+    # a fresh LoRA adapter is trained instead of stacking a new LoRA on top of
+    # an already-applied one.
+    lora_ckpt = None if from_base else ver.load().get("checkpoint_path")
     model, tokenizer = model_loader.reload(lora_ckpt)
+    print(f"🔄 Training LoRA from {'base model' if from_base else lora_ckpt}")
 
     # Required for 4-bit/8-bit quantized models: sets requires_grad on LoRA
     # layers and casts layer norms to float32 for stable training.
-    if cfg.get("quantization") in ("4bit", "8bit"):
+    # SKIPPED for Gemma4 — kbit training corrupts its variable-head-dim attention.
+    if effective_cfg.get("quantization") in ("4bit", "8bit"):
         from peft import prepare_model_for_kbit_training
-        model = prepare_model_for_kbit_training(
-            model, use_gradient_checkpointing=True
-        )
+        model_id = cfg.get("llm_model", "").lower()
+        if "gemma-4" in model_id or "gemma4" in model_id:
+            model.gradient_checkpointing_enable()
+        else:
+            model = prepare_model_for_kbit_training(
+                model, use_gradient_checkpointing=True
+            )
 
-    import core.model_loader as _ml
-    lora_target_modules = cfg.get("lora_target_modules", ["q_proj", "k_proj", "v_proj"])
-    lora_target_modules = _ml.detect_lora_targets(model, lora_target_modules)
+    import torch.nn as _nn
+    configured = effective_cfg.get("lora_target_modules", ["q_proj", "k_proj", "v_proj"])
+    # Only use module names where ALL instances are standard nn.Linear
+    # (skips Gemma4ClippableLinear which PEFT cannot inject into)
+    _name_types: dict[str, set[type]] = {}
+    for _n, _m in model.named_modules():
+        _leaf = _n.split(".")[-1]
+        _name_types.setdefault(_leaf, set()).add(type(_m))
+    lora_target_modules = [t for t in configured
+                           if t in _name_types
+                           and all(issubclass(tt, _nn.Linear) for tt in _name_types[t])]
+    if not lora_target_modules:
+        _safe = sorted(k for k, v in _name_types.items()
+                        if all(issubclass(tt, _nn.Linear) for tt in v))
+        import warnings
+        warnings.warn(
+            f"None of {configured} are safe (all nn.Linear). "
+            f"Falling back to per_layer_projection. "
+            f"Available safe names: {_safe[:10]}",
+            UserWarning, stacklevel=2
+        )
+        lora_target_modules = ["per_layer_projection"]
 
     lora_cfg = LoraConfig(
-        r=cfg.get("lora_rank", 16),
-        lora_alpha=cfg.get("lora_alpha", 32),
+        r=effective_cfg.get("lora_rank", 16),
+        lora_alpha=effective_cfg.get("lora_alpha", 32),
         target_modules=lora_target_modules,
-        lora_dropout=cfg.get("lora_dropout", 0.05),
+        lora_dropout=effective_cfg.get("lora_dropout", 0.05),
         bias="none",
         task_type=TaskType.CAUSAL_LM,
     )
     model = get_peft_model(model, lora_cfg)
     model.print_trainable_parameters()
 
-    # Use dynamic max_length: 128 for short Q&A pairs, 512 for raw chunks
-    _max_len = 128 if qa_texts else 512
+    # sft_format="chat" (default) selects the answer-masked chat-template SFT
+    # path; "bare" preserves the legacy continuation-LM path for A/B baselines.
+    sft_format = cfg.get("addon_config", {}).get("training", {}).get("sft_format", "chat")
+    use_chat_sft = bool(qa_texts) and sft_format == "chat" and faqs is not None
+
+    # Compute adaptive max_length from actual answer token counts.
+    # Prevents mismatch where model generates 128 tokens for 4-token answers (2WikiMQA).
+    if qa_texts and faqs:
+        answer_lens = []
+        for f in faqs[:1000]:  # sample to avoid scanning 500+ FAQs multiple times
+            tok = tokenizer(f.get("answer", ""), truncation=False)["input_ids"]
+            answer_lens.append(len(tok))
+        import numpy as _np
+        _p95 = int(_np.percentile(answer_lens, 95)) if answer_lens else 64
+        _max_len = max(16, _p95 + 8)  # minimum 16 tokens, some headroom
+    else:
+        _max_len = 512
     def tokenize(example):
         return tokenizer(example["text"], truncation=True, max_length=_max_len,
                          padding="max_length")
@@ -166,33 +433,397 @@ def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
     dataset = Dataset.from_dict({"text": all_texts})
     tokenized = dataset.map(tokenize, remove_columns=["text"])
 
-    # Use configured batch size; fall back to micro-batch=1 + accum=16 (eff. batch 16)
-    batch_size = int(cfg.get("train_batch_size", 1))
-    grad_accum = max(1, 16 // batch_size)
+    confidence_supervision = effective_cfg.get("confidence_supervision", False)
+    if use_chat_sft:
+        # Chat-format SFT: answer-masked Q&A examples + bare-LM replay chunks
+        # for regularisation, collated with dynamic padding.
+        # Adaptive length must cover the FULL rendered chat sequence (prompt +
+        # answer), not the answer alone. Sizing from the answer truncated the
+        # sequence whenever questions were long - on UC1 that silently dropped
+        # 5.2% of answer tokens across 22.4% of examples.
+        import numpy as _np
+        seq_lens = []
+        for f in faqs[:2000]:
+            try:
+                _ids = tokenizer.apply_chat_template(
+                    [{"role": "user", "content": _strip_variant_suffix(f["question"])},
+                     {"role": "assistant", "content": f["answer"]}],
+                    tokenize=True, return_dict=False)
+                seq_lens.append(len(_ids))
+            except Exception:
+                continue
+        _sft_max_len = (max(64, int(_np.percentile(seq_lens, 99)) + 8)
+                        if seq_lens else 256)
+        print(f"\U0001F4CF SFT max_length={_sft_max_len} "
+              f"(p99 of {len(seq_lens)} rendered sequences)")
+
+        def _has_supervision(ex: dict) -> bool:
+            """An example must retain at least one non-masked label token."""
+            return (len(ex.get("input_ids", [])) > 0
+                    and any(l != -100 for l in ex.get("labels", [])))
+        if confidence_supervision:
+            # Sprint 2.5: append a supervised confidence pseudo-token suffix.
+            examples = [ex for f in faqs
+                        if (ex := build_confidence_sft_example(
+                            tokenizer, f["question"], f["answer"],
+                            _faq_confidence_label(f), _sft_max_len,
+                        ))
+                        if _has_supervision(ex)]
+            sft_mode_label = "confidence-supervised"
+        else:
+            examples = [ex for f in faqs
+                        if (ex := build_sft_example(tokenizer, f["question"], f["answer"],
+                                                     _sft_max_len))
+                        if _has_supervision(ex)]
+            sft_mode_label = "answer-masked"
+        for c in replay_chunks:
+            txt = c.get("text", "").strip()
+            if not txt:
+                continue
+            _chunk_max_len = 512
+            ids = tokenizer(txt, truncation=True, max_length=_chunk_max_len)["input_ids"]
+            examples.append({"input_ids": ids, "labels": list(ids),
+                             "attention_mask": [1] * len(ids)})
+        from datasets import Dataset as _DS
+        tokenized = _DS.from_list(examples)
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+        from transformers import DataCollatorForSeq2Seq
+        collator = DataCollatorForSeq2Seq(tokenizer, padding=True)
+        print(f"🎓 Chat-SFT instruction fine-tuning: {len(faqs)} Q&A ({sft_mode_label}) "
+              f"+ {len(replay_chunks)} replay = {len(examples)} examples")
 
     training_args = TrainingArguments(
         output_dir=output_dir,
-        num_train_epochs=cfg.get("lora_epochs", 3),
-        per_device_train_batch_size=batch_size,
-        gradient_accumulation_steps=grad_accum,
-        learning_rate=cfg.get("lora_lr", 2e-4),
+        num_train_epochs=effective_cfg.get("lora_epochs", 3),
+        per_device_train_batch_size=1,
+        gradient_accumulation_steps=effective_cfg.get("grad_accum_steps", 16),
+        learning_rate=effective_cfg.get("lora_lr", 2e-4),
         fp16=True,
         gradient_checkpointing=True,
         logging_steps=10,
-        save_strategy="no",
+        save_strategy="steps",
+        save_steps=effective_cfg.get("lora_save_steps", 1500),
+        save_total_limit=effective_cfg.get("lora_save_total_limit", 6),
         report_to="none",
+        seed=effective_cfg.get("lora_seed", 42),
+        data_seed=effective_cfg.get("lora_seed", 42),
     )
 
     trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=tokenized,
-        data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
+        data_collator=collator if use_chat_sft else DataCollatorForLanguageModeling(tokenizer, mlm=False),
+    )
+    trainer.train(resume_from_checkpoint=resume_from_checkpoint)
+    model.save_pretrained(output_dir)
+    tokenizer.save_pretrained(output_dir)
+    print(f"💾 LoRA adapter saved to {output_dir}")
+
+
+# ---------------------------------------------------------------------------
+# Sprint 2: distillation-mode training
+# ---------------------------------------------------------------------------
+
+
+class _SourcePreservingCollator:
+    """Wrap DataCollatorForSeq2Seq and keep the ``source`` field as a string list."""
+
+    def __init__(self, tokenizer):
+        self.base = DataCollatorForSeq2Seq(tokenizer, padding=True)
+
+    def __call__(self, features: list[dict]) -> dict:
+        sources = [f.pop("source", "unknown") for f in features]
+        batch = self.base(features)
+        batch["source"] = sources
+        return batch
+
+
+class _SourceAwareTrainer(Trainer):
+    """Trainer that ignores the ``source`` metadata when computing loss.
+
+    Optionally adds a KL-divergence regularisation term to a frozen base model
+    (``kl_to_base_weight > 0``). This keeps the distillation from drifting too
+    far from the base model's behaviour.
+    """
+
+    def __init__(self, *args, base_model=None, kl_weight: float = 0.0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.base_model = base_model
+        self.kl_weight = kl_weight
+        if self.base_model is not None:
+            self.base_model.eval()
+            for p in self.base_model.parameters():
+                p.requires_grad = False
+
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        inputs = {k: v for k, v in inputs.items() if k != "source"}
+        loss = super().compute_loss(model, inputs, return_outputs=False, **kwargs)
+
+        if self.base_model is None or self.kl_weight <= 0:
+            return (loss, None) if return_outputs else loss
+
+        # Compute KL(student || base) over the same input ids.
+        with torch.no_grad():
+            base_outputs = self.base_model(
+                input_ids=inputs["input_ids"],
+                attention_mask=inputs.get("attention_mask"),
+            )
+        student_outputs = model(
+            input_ids=inputs["input_ids"],
+            attention_mask=inputs.get("attention_mask"),
+            labels=inputs.get("labels"),
+        )
+        student_logits = student_outputs.logits
+        base_logits = base_outputs.logits
+        # Shift logits to align with labels for next-token prediction.
+        shift_student = student_logits[..., :-1, :].contiguous()
+        shift_base = base_logits[..., :-1, :].contiguous()
+        shift_labels = inputs["labels"][..., 1:].contiguous()
+        # Mask ignored positions (-100).
+        mask = shift_labels != -100
+        if mask.sum() == 0:
+            return (loss, None) if return_outputs else loss
+        kl = torch.nn.functional.kl_div(
+            torch.log_softmax(shift_student, dim=-1),
+            torch.softmax(shift_base, dim=-1),
+            reduction="none",
+        ).sum(dim=-1)
+        kl_loss = (kl * mask).sum() / mask.sum()
+        total_loss = loss + self.kl_weight * kl_loss
+        return (total_loss, None) if return_outputs else total_loss
+
+
+class _PerSourceLossCallback(TrainerCallback):
+    """Log average loss per source at the end of every epoch.
+
+    The callback stores a dict mapping epoch -> {source: avg_loss}. The dict is
+    written to the adapter directory as ``kvforge_per_source_loss.json`` after
+    training.
+
+    Accepts optional model + tokenizer + device for the HF-bug workaround
+    where ``callback.trainer`` is never set by the Trainer.
+    """
+
+    def __init__(self, dataset, source_key: str = "source",
+                 model=None, tokenizer=None, device=None):
+        self.dataset = dataset
+        self.source_key = source_key
+        self.epoch_losses: dict[float, dict[str, float]] = {}
+        self._model = model
+        self._tokenizer = tokenizer
+        self._device = device
+
+    def _compute_source_loss(self, source: str) -> float:
+        """Compute average loss for all examples with the given source."""
+        indices = [i for i, s in enumerate(self.dataset[self.source_key]) if s == source]
+        if not indices:
+            return 0.0
+        from torch.utils.data import DataLoader
+        import torch
+        from transformers import DataCollatorForSeq2Seq
+        subset = self.dataset.select(indices)
+        # Strip source before collation to avoid DataCollatorForSeq2Seq choking on strings.
+        stripped = [{k: v for k, v in item.items() if k != self.source_key} for item in subset]
+        collator = DataCollatorForSeq2Seq(self._tokenizer, padding=True) if self._tokenizer else None
+        loader = DataLoader(
+            stripped, batch_size=min(4, len(indices)),
+            collate_fn=collator if collator else (lambda x: x),
+            shuffle=False,
+        )
+        total_loss = 0.0
+        count = 0
+        model = self._model
+        if model is None:
+            return 0.0
+        device = self._device or next(model.parameters()).device
+        for batch in loader:
+            batch = {
+                k: v.to(device) if isinstance(v, torch.Tensor) else v
+                for k, v in batch.items()
+                if k != "source"
+            }
+            with torch.no_grad():
+                outputs = model(**batch)
+            loss = outputs.loss.item()
+            n = len(batch["input_ids"])
+            total_loss += loss * n
+            count += n
+        return total_loss / count if count else 0.0
+
+    def on_epoch_end(self, args, state, control, **kwargs):
+        if self._model is None:
+            return
+        if self.dataset is None:
+            return
+        sources = sorted(set(self.dataset[self.source_key]))
+        losses = {src: self._compute_source_loss(src) for src in sources}
+        self.epoch_losses[state.epoch] = losses
+        print(f"  Per-source loss at epoch {state.epoch}: {losses}", flush=True)
+
+
+def _build_distillation_examples(
+    tokenizer,
+    teacher_pairs: list[dict],
+    on_policy_pairs: list[dict],
+    replay_chunks: list[dict],
+    confidence_supervision: bool,
+    max_length: int = 256,
+) -> list[dict]:
+    """Build chat-SFT examples with per-example source tags."""
+    examples = []
+
+    for p in teacher_pairs:
+        q = p["question"]
+        answer = p["teacher_answer"]
+        label = p.get("confidence_label", True)
+        if confidence_supervision:
+            ex = build_confidence_sft_example(tokenizer, q, answer, label, max_length)
+        else:
+            ex = build_sft_example(tokenizer, q, answer, max_length)
+        ex["source"] = "teacher_sft"
+        examples.append(ex)
+
+    for p in on_policy_pairs:
+        q = p["question"]
+        # The target for on-policy corrections is the teacher answer.
+        answer = p["teacher_answer"]
+        label = p.get("confidence_label", False)
+        if confidence_supervision:
+            ex = build_confidence_sft_example(tokenizer, q, answer, label, max_length)
+        else:
+            ex = build_sft_example(tokenizer, q, answer, max_length)
+        ex["source"] = "on_policy_correction"
+        examples.append(ex)
+
+    for c in replay_chunks:
+        ids = tokenizer(c["text"], truncation=True, max_length=max_length)["input_ids"]
+        examples.append({
+            "input_ids": ids,
+            "labels": list(ids),
+            "attention_mask": [1] * len(ids),
+            "source": "replay",
+        })
+
+    return examples
+
+
+def train_distillation(
+    cfg: dict,
+    teacher_pairs: list[dict],
+    on_policy_pairs: list[dict],
+    replay_chunks: list[dict],
+    output_dir: str,
+    from_base: bool = False,
+) -> None:
+    """Run distillation-mode LoRA fine-tuning.
+
+    Combines teacher-SFT, on-policy corrections, and replay chunks. When
+    ``cfg.confidence_supervision`` is True, each answer is appended with the
+    confidence pseudo-token suffix and the corresponding label.
+
+    Args:
+        cfg: Datasource configuration dict.
+        teacher_pairs: Quality-filtered teacher (query → teacher_answer) pairs.
+        on_policy_pairs: Student on-policy samples with ``confidence_label``.
+        replay_chunks: Raw replay chunks for regularisation.
+        output_dir: Directory where the trained LoRA adapter is saved.
+        from_base: If True, train from the base model instead of the current checkpoint.
+    """
+    from datasets import Dataset
+
+    inference_cfg = cfg.get("addon_config", {}).get("inference", {})
+    training_cfg = cfg.get("addon_config", {}).get("training", {})
+    effective_cfg = {**cfg, **inference_cfg, **training_cfg}
+
+    confidence_supervision = effective_cfg.get("confidence_supervision", False)
+    sft_format = training_cfg.get("sft_format", "chat")
+    if sft_format != "chat":
+        raise ValueError("train_distillation currently only supports chat-format SFT")
+
+    lora_ckpt = None if from_base else ver.load().get("checkpoint_path")
+
+    kl_weight = effective_cfg.get("kl_to_base_weight", 0.0)
+    base_model = None
+    if kl_weight > 0 and not from_base:
+        # Load the frozen base model once before reloading the student model.
+        print("🔄 Loading base model for KL-to-base regularisation")
+        base_model, _ = model_loader.reload(None)
+
+    model, tokenizer = model_loader.reload(lora_ckpt)
+    print(f"🔄 Distillation LoRA from {'base model' if from_base else lora_ckpt}")
+
+    if effective_cfg.get("quantization") in ("4bit", "8bit"):
+        from peft import prepare_model_for_kbit_training
+        model_id = cfg.get("llm_model", "").lower()
+        if "gemma-4" in model_id or "gemma4" in model_id:
+            model.gradient_checkpointing_enable()
+        else:
+            model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True)
+
+    import core.model_loader as _ml
+    lora_target_modules = effective_cfg.get("lora_target_modules", ["q_proj", "k_proj", "v_proj"])
+    lora_target_modules = _ml.detect_lora_targets(model, lora_target_modules)
+
+    from peft import LoraConfig, TaskType, get_peft_model
+    lora_cfg = LoraConfig(
+        r=effective_cfg.get("lora_rank", 16),
+        lora_alpha=effective_cfg.get("lora_alpha", 32),
+        target_modules=lora_target_modules,
+        lora_dropout=effective_cfg.get("lora_dropout", 0.05),
+        bias="none",
+        task_type=TaskType.CAUSAL_LM,
+    )
+    model = get_peft_model(model, lora_cfg)
+    model.print_trainable_parameters()
+
+    _max_len = effective_cfg.get("max_seq_length", 1024)
+    examples = _build_distillation_examples(
+        tokenizer, teacher_pairs, on_policy_pairs, replay_chunks,
+        confidence_supervision=confidence_supervision, max_length=_max_len,
+    )
+    dataset = Dataset.from_list(examples)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    collator = _SourcePreservingCollator(tokenizer)
+    loss_callback = _PerSourceLossCallback(
+        dataset, model=model, tokenizer=tokenizer, device=model.device,
+    )
+
+    training_args = TrainingArguments(
+        output_dir=output_dir,
+        num_train_epochs=effective_cfg.get("lora_epochs", 1),
+        per_device_train_batch_size=1,
+        gradient_accumulation_steps=16,
+        learning_rate=effective_cfg.get("lora_lr", 5e-5),
+        fp16=True,
+        gradient_checkpointing=True,
+        logging_steps=10,
+        save_strategy="no",
+        report_to="none",
+        seed=effective_cfg.get("lora_seed", 42),
+        data_seed=effective_cfg.get("lora_seed", 42),
+    )
+
+    trainer = _SourceAwareTrainer(
+        model=model,
+        args=training_args,
+        train_dataset=dataset,
+        data_collator=collator,
+        callbacks=[loss_callback],
+        base_model=base_model,
+        kl_weight=kl_weight,
     )
     trainer.train()
     model.save_pretrained(output_dir)
     tokenizer.save_pretrained(output_dir)
+
+    loss_path = Path(output_dir) / "kvforge_per_source_loss.json"
+    loss_path.write_text(json.dumps(loss_callback.epoch_losses, indent=2))
     print(f"💾 LoRA adapter saved to {output_dir}")
+    print(f"📝 Per-source loss log saved to {loss_path}")
 
 
 def main() -> None:
@@ -202,53 +833,156 @@ def main() -> None:
                    help="Source file name in Qdrant payload — used in chunk mode")
     p.add_argument("--faqs", default=None,
                    help="Path to Q&A JSON file for instruction fine-tuning mode")
+    p.add_argument("--rewrites", default=None,
+                   help="Path to JSON list of rewritten chunk texts used as continuation examples")
+    p.add_argument("--distill-pairs", default=None,
+                   help="Path to distillation pairs JSON for Sprint 2 distillation mode")
     p.add_argument("--replay-ratio", type=float, default=0.2)
+    p.add_argument("--uniform-sampling", action="store_true",
+                   help="Disable tier-weighted replay sampling (uniform random)")
+    p.add_argument("--checkpoint-dir", default=None,
+                   help="Override the checkpoint directory from the config")
+    p.add_argument("--seed", type=int, default=42,
+                   help="Random seed for reproducible sampling and training")
+    p.add_argument("--non-deterministic", action="store_true",
+                   help="Disable deterministic cuDNN (may speed up training but "
+                        "sacrifices exact reproducibility)")
+    p.add_argument("--from-base", action="store_true",
+                   help="Train a fresh LoRA adapter from the base model instead of "
+                        "continuing from the current checkpoint")
+    p.add_argument("--resume-from-checkpoint", default=None,
+                   help="Resume training from a Trainer checkpoint directory")
     args = p.parse_args()
 
-    if not args.source_file and not args.faqs:
-        p.error("provide --source-file (chunk mode) or --faqs (Q&A mode)")
+    if not args.source_file and not args.faqs and not args.distill_pairs:
+        p.error("provide --source-file (chunk mode), --faqs (Q&A mode), or --distill-pairs (distillation mode)")
 
     with open(args.config) as f:
-        raw = json.load(f)
-    # Flatten addon_config sections so lora_trainer works with both flat and
-    # nested config structures (new UCs use addon_config, legacy ones are flat)
-    cfg = {**raw}
-    for _sec in ("indexing", "inference", "training", "compute"):
-        cfg.update(raw.get("addon_config", {}).get(_sec, {}))
+        cfg = json.load(f)
     ver.init(cfg)
     model_loader.init(cfg)
 
-    rb = ReplayBuffer(db_path=cfg.get("replay_db", "replay_buffer.db"))
+    # Support both flat configs and nested addon_config.
+    indexing_cfg = cfg.get("addon_config", {}).get("indexing", {})
+    training_cfg = cfg.get("addon_config", {}).get("training", {})
+    effective_cfg = {**cfg, **indexing_cfg, **training_cfg}
+
+    rb = ReplayBuffer(db_path=effective_cfg.get("replay_db", "replay_buffer.db"))
+
+    # Close the KDS feedback loop: import KDS from vector store into replay buffer.
+    load_kds_into_replay_buffer(rb, effective_cfg)
+    kds_map = {cid: kds for cid, kds in rb.get_kds_map().items() if kds is not None}
+
+    set_seed(args.seed, deterministic=not args.non_deterministic)
 
     qa_texts = None
-    if args.faqs:
+    faqs = None
+    distill_pairs = None
+    kl_weight = effective_cfg.get("kl_to_base_weight", 0.0)
+    if args.distill_pairs:
+        # Sprint 2 distillation mode: teacher pairs + on-policy corrections + replay.
+        with open(args.distill_pairs) as f:
+            distill_pairs = json.load(f)
+        teacher_pairs = distill_pairs.get("teacher_pairs", [])
+        on_policy_pairs = distill_pairs.get("on_policy_pairs", [])
+        n_replay = max(10, int((len(teacher_pairs) + len(on_policy_pairs)) * args.replay_ratio))
+        replay_chunks = rb.sample(
+            n=n_replay,
+            weight_by_tier=not args.uniform_sampling,
+            kds_map=kds_map,
+        )
+        new_chunks = []
+    elif args.faqs:
         # Q&A instruction mode
         with open(args.faqs) as f:
             faqs = json.load(f)
         qa_texts = format_qa_texts(faqs)
-        # Sample a small set of raw chunks for regularization
-        n_replay = max(10, int(len(qa_texts) * args.replay_ratio))
-        replay_chunks = rb.sample(n=n_replay, weight_by_tier=True)
+        if args.rewrites:
+            with open(args.rewrites) as f:
+                _rw = json.load(f)
+            replay_chunks = [{"text": r} for r in _rw if isinstance(r, str) and r.strip()]
+        else:
+            # Sample a small set of raw chunks for regularization
+            n_replay = max(10, int(len(qa_texts) * args.replay_ratio))
+            replay_chunks = rb.sample(
+                n=n_replay,
+                weight_by_tier=not args.uniform_sampling,
+                kds_map=kds_map,
+            )
         new_chunks = []
     else:
         # Raw chunk mode — Qdrant client only needed here
-        client = QdrantClient(host=cfg["qdrant_host"], port=cfg["qdrant_port"])
-        new_chunks = fetch_chunks_for_source(client, cfg["collection"], args.source_file)
+        client = QdrantClient(host=effective_cfg["qdrant_host"], port=effective_cfg["qdrant_port"])
+        new_chunks = fetch_chunks_for_source(client, effective_cfg["collection"], args.source_file)
         if not new_chunks:
             print(f"❌ No chunks found for source_file='{args.source_file}'")
             sys.exit(1)
         rb.add_chunks(new_chunks)
+        # KDS may have been imported before add_chunks; refresh the map after adding.
+        kds_map = {cid: kds for cid, kds in rb.get_kds_map().items() if kds is not None}
         n_replay = max(1, int(len(new_chunks) * args.replay_ratio))
-        replay_chunks = rb.sample(n=n_replay, weight_by_tier=True)
+        replay_chunks = rb.sample(
+            n=n_replay,
+            weight_by_tier=not args.uniform_sampling,
+            kds_map=kds_map,
+        )
         new_ids = {c["chunk_id"] for c in new_chunks}
         replay_chunks = [c for c in replay_chunks if c["chunk_id"] not in new_ids]
 
-    new_ver = ver.get_lora_version() + 1
-    output_dir = cfg.get("checkpoint_dir", "lora_checkpoints/") + f"v{new_ver}/"
+    if args.checkpoint_dir:
+        output_dir = args.checkpoint_dir
+        if not output_dir.endswith("/"):
+            output_dir += "/"
+        name = Path(output_dir).name
+        if name.startswith("v"):
+            try:
+                new_ver = int(name[1:].split("_")[0])
+            except ValueError:
+                new_ver = ver.get_lora_version() + 1
+        else:
+            new_ver = ver.get_lora_version() + 1
+    else:
+        new_ver = ver.get_lora_version() + 1
+        output_dir = effective_cfg.get("checkpoint_dir", "lora_checkpoints/") + f"v{new_ver}/"
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-    train(cfg, new_chunks, replay_chunks, output_dir, qa_texts=qa_texts)
-    ver.increment_lora_version(output_dir)
+    if args.distill_pairs:
+        teacher_pairs = distill_pairs.get("teacher_pairs", [])
+        on_policy_pairs = distill_pairs.get("on_policy_pairs", [])
+        train_distillation(
+            cfg, teacher_pairs, on_policy_pairs, replay_chunks, output_dir,
+            from_base=args.from_base,
+        )
+        notes = {
+            "mode": "distillation",
+            "teacher_pairs": len(teacher_pairs),
+            "on_policy_pairs": len(on_policy_pairs),
+            "replay_chunks": len(replay_chunks),
+            "replay_ratio": args.replay_ratio,
+            "uniform_sampling": args.uniform_sampling,
+            "from_base": args.from_base,
+            "kl_to_base_weight": kl_weight,
+        }
+    else:
+        train(cfg, new_chunks, replay_chunks, output_dir, qa_texts=qa_texts,
+              from_base=args.from_base, faqs=faqs,
+              resume_from_checkpoint=args.resume_from_checkpoint)
+        notes = {
+            "mode": "qa" if args.faqs else "chunk",
+            "new_chunks": len(new_chunks),
+            "replay_chunks": len(replay_chunks),
+            "replay_ratio": args.replay_ratio,
+            "uniform_sampling": args.uniform_sampling,
+            "from_base": args.from_base,
+        }
+        if args.faqs:
+            notes["qa_examples"] = len(qa_texts) if qa_texts else 0
+
+    if not args.checkpoint_dir:
+        ver.increment_lora_version(output_dir)
+
+    save_training_metadata(output_dir, cfg, args.seed, sys.argv, notes=notes)
+
     print(f"✅ LoRA version → {new_ver}  checkpoint: {output_dir}")
 
 
