@@ -1,0 +1,274 @@
+{
+  "HEADLINE": {
+    "pre_registered_primary": "WORKS \u2014 COMPLEMENTARITY CONFIRMED. R2 (RAFT+top5) coverage@0.5=0.809 vs R0 (base+top5)=0.728, \u0394=+0.081 (McNemar \u03c7\u00b2=22.2, 52 fixed/13 regressed, p\u22480; Wilcoxon on 3-level score p=1.5e-7). Gain concentrates on retrieval-MISSES: \u0394_miss=+0.162 vs \u0394_hit=+0.028, diff-in-diff=+0.135, 95% CI [0.062,0.206], p=0.0003. Holds on clean (non-leaked) subset: n=406 \u0394=+0.071 \u03c7\u00b2=14.8 p<1e-4. DiD lower CI 0.062 > \u00a79 ~0.038 artifact bound.",
+    "mechanism_evidence": "Parametric fallback is the dominant mechanism for the miss-fixes (DIRECT discriminating test): among the 112 misses R0 fails, R3 (closed-book) covers 68.4% of the 38 facts R2 RESCUES vs only 24.3% of the 74 R2 also fails (base R3-over-all-misses 47%). R2 rescues precisely the misses the model knows in its weights \u2014 ~3x enrichment.",
+    "exploratory_R2_vs_R1": "POST-HOC / EXPLORATORY (NOT pre-registered; \u00a78 pre-registers only R2-vs-R0, R1-vs-R0, R3-vs-R1). Isolating the training OBJECTIVE (R2 vs R1, same 60k QA): miss coverage near-identical (R2 0.576 vs R1 0.571) \u2014 parametric miss-recall comes from the 60k, which plain-QA FT already achieves. Plain-QA FT INTERFERES on hits (R1 0.834 vs R0 0.934, \u22120.100, \u03c7\u00b2=21.2 p\u22480); RAFT REMOVES it (R2 0.962 vs R1, +0.128, \u03c7\u00b2=33.2 p\u22480, 38 restored/1 lost). DiD(R2 vs R1)=\u22120.122 CI[\u22120.196,\u22120.050] p=0.001; Wilcoxon p=5e-9. READ AS: RAFT's distinctive effect is undoing the grounded-reading damage plain FT causes \u2014 NOT adding parametric knowledge. CAVEATS: (a) R1+top-5 is itself length-OOD \u2014 R1 trained on question-only prompts (max_length 71) and never saw retrieved context, so its hit-side drop mixes 'plain FT degrades reading' with 'R1 never trained on context'; (b) not exactly data-matched \u2014 R2 dropped 3,258 long packed examples whose hit/miss skew was never measured (\u00a75.4).",
+    "secondary_closedbook_R3_vs_R1cb": "R3 (RAFT closed-book)=0.462 < R1cb (plain-QA closed-book)=0.528, \u0394=\u22120.067 p=0.005 \u2014 RAFT's raw closed-book recall slightly WORSE than plain-QA's. Directional only (R3 is OOD for R2, always trained WITH context).",
+    "judge_validity": "Blind same-session Opus, 10 shards, 0 blindness breaches, per-shard provenance verified, q/gold identical across all 5 arms. Rubric was RECONSTRUCTED (standard 3-way CORRECT/PARTIAL/INCORRECT + content-only clause), not taken verbatim from Phase-1. CROSS-SESSION DRIFT measured directly: R1cb is byte-identical text to the Phase-1 promotion arm, scored 0.461 there vs 0.528 here = +0.067 drift (2x the ~0.03 in memory). => Absolute coverage levels here are NOT comparable to Phase-1 numbers; only WITHIN-session deltas are valid (all contrasts above are within-session).",
+    "caveats": "13/481 eval prompts exceed R2's 1207-tok training length (mild OOD). 2nd seed NOT needed (not AMBIGUOUS)."
+  },
+  "experiment": "RAFT Phase-2 FT+RAG complementarity \u2014 blind same-session Opus co-judge (5 arms)",
+  "judge": "blind grouped-by-fact, deduped within fact, 10 shards x fresh Opus; coverage@0.5=(CORRECT+PARTIAL)/481",
+  "n_facts": 481,
+  "hit": 290,
+  "miss": 191,
+  "clean": 406,
+  "leaked": 75,
+  "arms": {
+    "R0": "base+top5",
+    "R1": "promo adapter+top5",
+    "R2": "RAFT adapter+top5",
+    "R3": "RAFT closed-book",
+    "R1cb": "promo adapter closed-book (prior deterministic dump)"
+  },
+  "coverage@0.5": {
+    "R0": {
+      "all": 0.7277,
+      "hit": 0.9345,
+      "miss": 0.4136,
+      "clean": 0.734,
+      "leaked": 0.6933,
+      "strict_all": 0.6445
+    },
+    "R1": {
+      "all": 0.7297,
+      "hit": 0.8345,
+      "miss": 0.5707,
+      "clean": 0.7389,
+      "leaked": 0.68,
+      "strict_all": 0.5967
+    },
+    "R2": {
+      "all": 0.8087,
+      "hit": 0.9621,
+      "miss": 0.5759,
+      "clean": 0.8054,
+      "leaked": 0.8267,
+      "strict_all": 0.7401
+    },
+    "R3": {
+      "all": 0.4615,
+      "hit": 0.4552,
+      "miss": 0.4712,
+      "clean": 0.4581,
+      "leaked": 0.48,
+      "strict_all": 0.3035
+    },
+    "R1cb": {
+      "all": 0.5281,
+      "hit": 0.5207,
+      "miss": 0.5393,
+      "clean": 0.5197,
+      "leaked": 0.5733,
+      "strict_all": 0.4116
+    }
+  },
+  "PRIMARY_R2_vs_R0": {
+    "label": "PRIMARY R2 vs R0 (coverage@0.5, all 481)",
+    "n": 481,
+    "R2": 0.8087,
+    "R0": 0.7277,
+    "delta": 0.0811,
+    "mcnemar": {
+      "b_control_only": 13,
+      "c_treat_only": 52,
+      "chi2": 22.215,
+      "exact_p": 0.0,
+      "sig_chi2": true
+    }
+  },
+  "PRIMARY_band": "R2 BEATS PLAIN RAG (\u0394>=+0.040 AND \u03c7\u00b2>=3.84) \u2014 necessary; see interaction",
+  "INTERACTION_R2_vs_R0_diff_in_diff": {
+    "delta_hit": 0.0276,
+    "delta_miss": 0.1623,
+    "structure_effect_miss_minus_hit": 0.1347,
+    "ci95": [
+      0.0618,
+      0.2064
+    ],
+    "bootstrap_p": 0.00025,
+    "ci_excludes_0": true,
+    "artifact_robustness": "DiD lower 95% CI = 0.0618 exceeds the \u00a79 ~0.038 recovery-source artifact bound, so the miss-concentration survives the worst-case oracle-recovery confound."
+  },
+  "INTERACTION_band": "COMPLEMENTARITY CONFIRMED (WORKS): overall gain AND \u0394_miss-\u0394_hit>0, CI excludes 0",
+  "CLEAN_vs_LEAKED_R2_vs_R0": {
+    "clean": {
+      "label": "R2 vs R0 | CLEAN (n=406)",
+      "n": 406,
+      "R2": 0.8054,
+      "R0": 0.734,
+      "delta": 0.0714,
+      "mcnemar": {
+        "b_control_only": 12,
+        "c_treat_only": 41,
+        "chi2": 14.792,
+        "exact_p": 8e-05,
+        "sig_chi2": true
+      }
+    },
+    "leaked": {
+      "label": "R2 vs R0 | LEAKED (n=75)",
+      "n": 75,
+      "R2": 0.8267,
+      "R0": 0.6933,
+      "delta": 0.1333,
+      "mcnemar": {
+        "b_control_only": 1,
+        "c_treat_only": 11,
+        "chi2": 6.75,
+        "exact_p": 0.00635,
+        "sig_chi2": true
+      }
+    }
+  },
+  "SECONDARY_R1_vs_R0_rag": {
+    "label": "does Phase-1 adapter add on top of retrieval?",
+    "n": 481,
+    "R1": 0.7297,
+    "R0": 0.7277,
+    "delta": 0.0021,
+    "mcnemar": {
+      "b_control_only": 42,
+      "c_treat_only": 43,
+      "chi2": 0.0,
+      "exact_p": 1.0,
+      "sig_chi2": false
+    }
+  },
+  "SECONDARY_R3_vs_R1cb_closedbook": {
+    "label": "RAFT objective vs plain-QA, closed-book (data-matched)",
+    "n": 481,
+    "R3": 0.4615,
+    "R1cb": 0.5281,
+    "delta": -0.0665,
+    "mcnemar": {
+      "b_control_only": 78,
+      "c_treat_only": 46,
+      "chi2": 7.75,
+      "exact_p": 0.00516,
+      "sig_chi2": true
+    },
+    "caveat": "R1cb generated in a prior session (deterministic greedy, identical gen cfg: cap48/chat/bare-Q); re-judged fresh in THIS blind session. R3 closed-book is OOD for R2 (always trained WITH context) \u2014 directional."
+  },
+  "confounds_sec9": {
+    "answer_in_context_on_misses": 15,
+    "answer_in_context_on_misses_note": "gold chunk not in top-5 but answer present in another retrieved chunk; these misses can be solved by reading, not parametrics",
+    "recovery_source_asymmetry": "CORPUS-SCAN-only oracle 21.7% miss vs 5.4% hit; at 77%/95% precision the effectively-closed-book-via-wrong-oracle excess on misses \u22483.8pp \u2014 could inflate \u0394_miss; small vs \u00b10.040 bands",
+    "length_ood_R2": "13/481 eval prompts exceed R2's 1207-tok training max_length (mild length-OOD; R0/R1 base/plain-QA unaffected)"
+  },
+  "qgold_parity": {
+    "all5_question_mismatches": 0,
+    "all5_gold_mismatches": 0,
+    "core4_question_mismatches": 0,
+    "core4_gold_mismatches": 0,
+    "note": "core4 = R0/R1/R2/R3 share the same dump; R1cb from the prior rwscale dumper. Any all5-only mismatch affects ONLY the R3-vs-R1cb secondary."
+  },
+  "SECONDARY_R2_vs_R1_isolates_RAFT_objective": {
+    "note": "R1 and R2 differ only in training objective (plain-QA vs RAFT); isolates the RAFT objective",
+    "all": {
+      "R2": 0.8087,
+      "R1": 0.7297,
+      "delta": 0.079,
+      "mcnemar": {
+        "b_control_only": 18,
+        "c_treat_only": 56,
+        "chi2": 18.5,
+        "exact_p": 1e-05,
+        "sig": true
+      }
+    },
+    "hit": {
+      "R2": 0.9621,
+      "R1": 0.8345,
+      "delta": 0.1276,
+      "mcnemar": {
+        "b_control_only": 1,
+        "c_treat_only": 38,
+        "chi2": 33.231,
+        "exact_p": 0.0,
+        "sig": true
+      }
+    },
+    "miss": {
+      "R2": 0.5759,
+      "R1": 0.5707,
+      "delta": 0.0052,
+      "mcnemar": {
+        "b_control_only": 17,
+        "c_treat_only": 18,
+        "chi2": 0.0,
+        "exact_p": 1.0,
+        "sig": false
+      }
+    },
+    "diff_in_diff_miss_minus_hit": {
+      "delta_hit": 0.1276,
+      "delta_miss": 0.0052,
+      "did": -0.1224,
+      "ci95": [
+        -0.1956,
+        -0.0496
+      ],
+      "p": 0.001,
+      "ci_excludes_0": true
+    },
+    "status": "POST-HOC / EXPLORATORY \u2014 not pre-registered",
+    "caveats": [
+      "R1+top-5 is length-OOD for R1 (trained question-only at max_length 71, never saw retrieved context) \u2014 hit-side drop confounds 'FT degrades reading' with 'R1 never trained on context'",
+      "not exactly data-matched: R2 dropped 3,258 long packed examples (\u00a75.4), hit/miss skew unmeasured"
+    ],
+    "hit_mcnemar": {
+      "b_control_only": 1,
+      "c_treat_only": 38,
+      "chi2": 33.231,
+      "exact_p": 0.0
+    }
+  },
+  "R1_hit_side_interference_vs_R0": {
+    "R1_hit": 0.8345,
+    "R0_hit": 0.9345,
+    "delta": -0.1,
+    "mcnemar": {
+      "b_control_only": 33,
+      "c_treat_only": 4,
+      "chi2": 21.189,
+      "exact_p": 0.0,
+      "sig": true
+    },
+    "significant": true
+  },
+  "MECHANISM_miss_gain_source": {
+    "test": "among misses where R0 fails (n=112), compare R3 closed-book coverage for R2-pass vs R2-fail",
+    "miss_R0_fails": 112,
+    "R2_pass_n": 38,
+    "R2_pass_R3_coverage": 0.6842,
+    "R2_fail_n": 74,
+    "R2_fail_R3_coverage": 0.2432,
+    "R3_coverage_all_misses": 0.4712,
+    "conclusion": "parametric fallback dominates: R2 rescues are ~3x enriched for facts R3 also recalls closed-book"
+  },
+  "format_parity_median_pred_words": {
+    "R0": 3,
+    "R1": 4,
+    "R2": 5,
+    "R3": 14,
+    "R1cb": 6
+  },
+  "wilcoxon_3level_paired": {
+    "R2_vs_R0": {
+      "p": 1.49e-07,
+      "mean_delta": 0.0884
+    },
+    "R2_vs_R1": {
+      "p": 5.25e-09,
+      "mean_delta": 0.1112
+    },
+    "note": "pre-registered \u00a78 Wilcoxon on the 3-level graded score (CORRECT=1/PARTIAL=0.5/INCORRECT=0); confirms the band, does not change it"
+  },
+  "cross_session_drift": {
+    "R1cb_this_session": 0.5281,
+    "R1cb_phase1_promotion_judge": 0.461,
+    "drift": 0.0671,
+    "note": "direct measurement on byte-identical text; absolute levels not comparable across sessions, only within-session deltas valid; rubric reconstructed not verbatim"
+  }
+}
