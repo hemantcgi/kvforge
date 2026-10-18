@@ -1,0 +1,1106 @@
+[
+ {
+  "fact_id": "f0009",
+  "question": "Which boto3 method should be called on an Amazon Bedrock client to list available foundation models in a region?",
+  "gold": "Call list_foundation_models() on the boto3 Bedrock client to return available foundation models.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "list_foundation_models()"
+   },
+   {
+    "label": "B",
+    "prediction": "`list_foundation_models()`"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0019",
+  "question": "In the Amazon Titan Image Generator G1 example, what exception is raised if the response contains an error?",
+  "gold": "ImageError is raised with the message 'Image generation error. Error is {finish_reason}'.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "ImageError"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0029",
+  "question": "When defining the computer tool for the computer use API, what value should the 'type' field be set to?",
+  "gold": "The 'type' field must be set to computer_20241022.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "computer"
+   },
+   {
+    "label": "B",
+    "prediction": "The 'type' field should be set to **\"computer\"**."
+   },
+   {
+    "label": "C",
+    "prediction": "computer_20241022"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0039",
+  "question": "In Amazon Bedrock function calling, what happens if I set tool_choice to none?",
+  "gold": "If tool_choice is set to none, the model won't call a function and will generate a message instead.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The model will respond with a message instead of calling the tool."
+   },
+   {
+    "label": "B",
+    "prediction": "Model guesses function/method."
+   },
+   {
+    "label": "C",
+    "prediction": "The model will not call any tools."
+   },
+   {
+    "label": "D",
+    "prediction": "If you set tool_choice to none, the model will not be instructed to call any tools. Instead, it will generate a response based solely on its own knowledge."
+   },
+   {
+    "label": "E",
+    "prediction": "The model will not invoke the function."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0049",
+  "question": "Which hyperparameter for Amazon Titan Image Generator G1 customization has no default value and supports the value 'auto'?",
+  "gold": "stepCount has no default value, must be specified, and supports the value auto.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "TrainingDataConfig"
+   },
+   {
+    "label": "B",
+    "prediction": "Max epochs"
+   },
+   {
+    "label": "C",
+    "prediction": "Learning rate"
+   },
+   {
+    "label": "D",
+    "prediction": "The **seed** hyperparameter has no default value and supports the value 'auto'."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0059",
+  "question": "When you decrease the Top K parameter in Amazon Bedrock, what happens to lower-probability tokens?",
+  "gold": "Lower Top K removes lower-probability tokens.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Lower-probability tokens are removed."
+   },
+   {
+    "label": "B",
+    "prediction": "When you decrease the Top K parameter in Amazon Bedrock, you are essentially telling the model to restrict its selection of the most probable next tokens to a smaller set.\n\n**What happens to lower-probability tokens:**\n\n* **They become"
+   },
+   {
+    "label": "C",
+    "prediction": "Lower-probability tokens are removed from consideration."
+   },
+   {
+    "label": "D",
+    "prediction": "Removes lower-probability tokens."
+   },
+   {
+    "label": "E",
+    "prediction": "They are removed from the pool of next tokens."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0069",
+  "question": "In the Converse API, what does the model return if it determines that a tool can help generate a response?",
+  "gold": "It returns a request for you to use the tool and send the tool results back to the model.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "It returns a request for you to use the tool."
+   },
+   {
+    "label": "B",
+    "prediction": "The model returns a tool use request."
+   },
+   {
+    "label": "C",
+    "prediction": "The model returns a toolUse object in the content field."
+   },
+   {
+    "label": "D",
+    "prediction": "The model returns a toolUse object in the response."
+   },
+   {
+    "label": "E",
+    "prediction": "The model returns a request for you to use the tool and send the tool results back to the model."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0079",
+  "question": "Which inference profile ID corresponds to the US Anthropic Claude 3.5 Haiku model?",
+  "gold": "The inference profile ID is us.anthropic.claude-3-5-haiku-20241022-v1:0.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "us-anthropic-cl-3-5-haiku"
+   },
+   {
+    "label": "B",
+    "prediction": "us.anthropic.claude-3-5-hai"
+   },
+   {
+    "label": "C",
+    "prediction": "us.anthropic.claude-3-5-haiku"
+   },
+   {
+    "label": "D",
+    "prediction": "us.anthropic.claude-3-5-haiku-20240620-v1:0"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0089",
+  "question": "In the poem, what are the woods used as a metaphor for?",
+  "gold": "The unknown and the afterlife.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The woods are used as a metaphor for death."
+   },
+   {
+    "label": "B",
+    "prediction": "The woods are used as a metaphor for the unknown and the afterlife."
+   },
+   {
+    "label": "C",
+    "prediction": "Death, unknown, afterlife."
+   },
+   {
+    "label": "D",
+    "prediction": "The woods are used as a metaphor for the speaker's own memories and the past."
+   },
+   {
+    "label": "E",
+    "prediction": "Death"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0099",
+  "question": "What example use case does Amazon Bedrock give for redacting users' personal information?",
+  "gold": "Generating summaries from customer and agent conversation transcripts.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "No example use case provided."
+   },
+   {
+    "label": "B",
+    "prediction": "Amazon Bedrock gives the example use case of redacting personally identifiable information (PII) in documents."
+   },
+   {
+    "label": "C",
+    "prediction": "Amazon Bedrock gives the example of redacting users' personal information in a customer service email."
+   },
+   {
+    "label": "D",
+    "prediction": "Amazon Bedrock provides the example of redacting personally identifiable information (PII) in documents."
+   },
+   {
+    "label": "E",
+    "prediction": "The example use case is redacting personally identifiable information (PII) in documents."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0109",
+  "question": "When creating a guardrail in Amazon Bedrock, what is the minimum number of filters you must configure before selecting Create?",
+  "gold": "At least one filter.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "At least one filter."
+   },
+   {
+    "label": "B",
+    "prediction": "You must configure at least one filter before selecting Create."
+   },
+   {
+    "label": "C",
+    "prediction": "You must configure at least one filter to create a guardrail."
+   },
+   {
+    "label": "D",
+    "prediction": "You must configure at least one filter."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0119",
+  "question": "When using ConverseStream, which optional field can you set to have the model finish guardrail assessment before returning streaming response chunks?",
+  "gold": "The field is streamProcessingMode.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The optional field you can set is **guardrailConfiguration**."
+   },
+   {
+    "label": "B",
+    "prediction": "streamProcessingMode"
+   },
+   {
+    "label": "C",
+    "prediction": "The guardrailState field can be set to \"INTERVENED\"."
+   },
+   {
+    "label": "D",
+    "prediction": "The streamProcessingMode field"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0129",
+  "question": "After successfully starting an Amazon Bedrock model evaluation job, what status does it change to?",
+  "gold": "In progress.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "In progress"
+   },
+   {
+    "label": "B",
+    "prediction": "The status changes to In progress."
+   },
+   {
+    "label": "C",
+    "prediction": "Ready"
+   },
+   {
+    "label": "D",
+    "prediction": "The status changes to **In progress**."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0139",
+  "question": "When should a response automatically be rated as logically cohesive, according to the Amazon Bedrock guidance?",
+  "gold": "If the response doesn't require argumentation or inference-making and simply presents facts without attempting to draw conclusions, automatically rate logical cohesion as 'Yes'.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "A response should be automatically rated as logically cohesive if it contains no logic gaps."
+   },
+   {
+    "label": "B",
+    "prediction": "When there are no logic gaps, it can be considered logically cohesive by default."
+   },
+   {
+    "label": "C",
+    "prediction": "A response should be automatically rated as logically cohesive when there are no logic gaps."
+   },
+   {
+    "label": "D",
+    "prediction": "A response should be rated as logically cohesive when it is **clear and free of logical gaps**."
+   },
+   {
+    "label": "E",
+    "prediction": "When no logic gaps exist."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0149",
+  "question": "When evaluating a candidate response against a reference response for step-by-step solutions, what should you ensure?",
+  "gold": "Ensure that the candidate response doesn't miss any critical steps present in the reference response.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You should ensure that the candidate response includes all the key points and major ideas that are present in the reference response."
+   },
+   {
+    "label": "B",
+    "prediction": "The candidate response doesn't miss any critical steps that are present in the reference response."
+   },
+   {
+    "label": "C",
+    "prediction": "Don't miss critical steps."
+   },
+   {
+    "label": "D",
+    "prediction": "You should ensure that the candidate response does not miss any critical steps present in the reference response."
+   },
+   {
+    "label": "E",
+    "prediction": "You should ensure that the candidate response doesn't miss any critical steps present in the reference response."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0159",
+  "question": "Which two XML strings are described as badly-formatted instances of the schema?",
+  "gold": "The badly-formatted instances are \"<foo> <bar> </foo>\" and \"<foo> <tag> </tag> </foo>\".",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "<foo>\n<tag>\n</tag>\n</foo>\n<foo>\n<tag>\n</tag>\n</foo>"
+   },
+   {
+    "label": "B",
+    "prediction": "\"<foo>\\n<bar>\\n</foo>\" and \"<foo>\\n<tag>\\n</tag>\\n</foo>\""
+   },
+   {
+    "label": "C",
+    "prediction": "```xml\n<response>\n<reasoning>The context provides three examples for a schema with tags [\"foo\", \"bar\", \"baz\"]:\n1. Well-formatted: \"<foo><bar><baz></baz></bar></"
+   },
+   {
+    "label": "D",
+    "prediction": "The two XML strings are \"<foo><bar><baz></baz></bar></foo>\" and \"<foo><bar><baz></baz></bar></foo>\""
+   },
+   {
+    "label": "E",
+    "prediction": "The two XML strings described as badly-formatted instances of the schema are:\n\n1. **<foo><bar></foo>**\n2. **<foo><tag></tag></foo>**"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0169",
+  "question": "How many points are awarded when approximately half of the answer is present in the context?",
+  "gold": "Approximately half is present in context maps to a score of 2.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "2"
+   },
+   {
+    "label": "B",
+    "prediction": "Explanation: The score mapping indicates that \"approximately half is present in context\" corresponds to a score of 2.\nAnswer: approximately half is present in context"
+   },
+   {
+    "label": "C",
+    "prediction": "2 points"
+   },
+   {
+    "label": "D",
+    "prediction": "1 point"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0179",
+  "question": "In what way can Amazon Bedrock Knowledge Bases augment prompts?",
+  "gold": "By feeding the returned relevant information into the prompt.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Amazon Bedrock Knowledge Bases can augment prompts by using retrieved information to enhance the prompt sent to the model."
+   },
+   {
+    "label": "B",
+    "prediction": "Augment response generation with knowledge base."
+   },
+   {
+    "label": "C",
+    "prediction": "Amazon Bedrock Knowledge Bases can augment prompts by providing context to the model."
+   },
+   {
+    "label": "D",
+    "prediction": "Amazon Bedrock Knowledge Bases can augment prompts by retrieving relevant information from data sources and incorporating it into the prompt."
+   },
+   {
+    "label": "E",
+    "prediction": "Amazon Bedrock Knowledge Bases can augment prompts by providing relevant, context-specific information to enhance the quality and accuracy of responses generated by foundation models. This augmentation occurs through the retrieval of relevant data from your knowledge base, which is then incorporated into"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0189",
+  "question": "When configuring the vector index metadata fields, what data type and Filterable value apply to the field where Amazon Bedrock chunks the raw text from your data?",
+  "gold": "The field uses the String data type and has the Filterable value set to True.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Text"
+   },
+   {
+    "label": "B",
+    "prediction": "The data type is String and the Filterable value is \"Include\"."
+   },
+   {
+    "label": "C",
+    "prediction": "Text and Filterable"
+   },
+   {
+    "label": "D",
+    "prediction": "Text: text, Filterable: No"
+   },
+   {
+    "label": "E",
+    "prediction": "The data type is **string** and the Filterable value is **yes**."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0199",
+  "question": "When configuring SharePoint Online as a data source for an Amazon Bedrock knowledge base, what three Entra-related credentials do I need?",
+  "gold": "Entra client secret for App Only at Tenant Level, Entra client ID for SharePoint in Entra, and Entra client secret for SharePoint to Entra.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Client ID, Client Secret, and Refresh Token"
+   },
+   {
+    "label": "B",
+    "prediction": "You need three Entra-related credentials:\n\n1. **Client ID**\n2. **Client Secret**\n3. **Tenant ID**"
+   },
+   {
+    "label": "C",
+    "prediction": "SharePoint Online tenant ID, SharePoint Online client ID, and SharePoint Online client secret."
+   },
+   {
+    "label": "D",
+    "prediction": "SharePoint app-only client ID, client secret, and client secret."
+   },
+   {
+    "label": "E",
+    "prediction": "No specific Entra-related credentials are mentioned."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0209",
+  "question": "What parameters are required for a ListIngestionJobs request in Amazon Bedrock?",
+  "gold": "Specify the dataSourceId and the knowledgeBaseId of the knowledge base that the data is being ingested to.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "No parameters are explicitly listed as required for `ListIngestionJobs`."
+   },
+   {
+    "label": "B",
+    "prediction": "The parameters required are jobIdentifier and maxResults."
+   },
+   {
+    "label": "C",
+    "prediction": "The required parameters are:\n- knowledgeBaseId: The ID of the knowledge base to list jobs for\n- region: The AWS Region where the knowledge base is located"
+   },
+   {
+    "label": "D",
+    "prediction": "The ListIngestionJobs request requires the following parameters:\n\n* **jobIdentifiers:** A list of job identifiers (you can use wildcards like \"job/*\" to select multiple jobs)\n* **maxResults:** An integer specifying the"
+   },
+   {
+    "label": "E",
+    "prediction": "The required parameters are the knowledgeBaseId and dataSourceId."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0219",
+  "question": "For Amazon Bedrock Redshift Serverless authentication using AWS Secrets Manager, what type and field are required?",
+  "gold": "Specify type as USERNAME_PASSWORD and provide the secret ARN in usernamePasswordSecretArn.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "`USERNAME_PASSWORD` and `usernamePasswordSecretArn`."
+   },
+   {
+    "label": "B",
+    "prediction": "A username and password field are required."
+   },
+   {
+    "label": "C",
+    "prediction": "The type must be USERNAME_PASSWORD and the usernamePasswordSecretArn field must be specified with the ARN of the secret."
+   },
+   {
+    "label": "D",
+    "prediction": "The type is USERNAME_PASSWORD and the field is usernamePasswordSecretArn."
+   },
+   {
+    "label": "E",
+    "prediction": "The required type is **SecretArn** and the required field is **SecretArn**."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0229",
+  "question": "Which models support using XML tags to structure and delineate prompts?",
+  "gold": "Anthropic models support using XML tags to structure and delineate prompts.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Anthropic Claude V2.x and Anthropic Claude Instant"
+   },
+   {
+    "label": "B",
+    "prediction": "The models that support using XML tags to structure and delineate prompts are:\n\n* **Anthropic Claude 3.5 Sonnet**\n* **Anthropic Claude 3.5 Haiku**\n* **Anthropic Claude 3"
+   },
+   {
+    "label": "C",
+    "prediction": "Anthropic models support XML tags."
+   },
+   {
+    "label": "D",
+    "prediction": "Anthropic Claude 3.5 Sonnet and Anthropic Claude 3 Haiku"
+   },
+   {
+    "label": "E",
+    "prediction": "Anthropic models support the use of XML tags to structure and delineate prompts."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0239",
+  "question": "Which Amazon Bedrock API allows you to configure and invoke an inline agent dynamically at runtime?",
+  "gold": "The InvokeInlineAgent API allows you to configure and invoke an inline Amazon Bedrock agent dynamically at runtime.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The **Converse API** allows you to configure and invoke an inline agent dynamically at runtime."
+   },
+   {
+    "label": "B",
+    "prediction": "The InvokeInlineAgent API allows you to configure and invoke an inline agent dynamically at runtime."
+   },
+   {
+    "label": "C",
+    "prediction": "InvokeInlineAgent API"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0249",
+  "question": "How can I protect my Amazon Bedrock application from malicious prompt injections before invoking an action group function?",
+  "gold": "Request confirmation from your application users before invoking the action group function.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "By requesting confirmation from the user before invoking the action group function."
+   },
+   {
+    "label": "B",
+    "prediction": "By using a guardrail to filter harmful content in user input and model responses."
+   },
+   {
+    "label": "C",
+    "prediction": "You can protect your Amazon Bedrock application from malicious prompt injections before invoking an action group function by implementing several security measures. The most effective approach involves **input validation and sanitization** combined with **contextual filtering**.\n\nHere is a breakdown"
+   },
+   {
+    "label": "D",
+    "prediction": "Validate and sanitize all user input."
+   },
+   {
+    "label": "E",
+    "prediction": "I can safeguard my application by requesting confirmation from my application users before invoking the action group function."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0259",
+  "question": "What should I specify in an InvokeAgent request to force end a session while a session summary is being generated?",
+  "gold": "Specify Y for the endSession field.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Y for the endSession field"
+   },
+   {
+    "label": "B",
+    "prediction": "You should specify endSession=true in the InvokeAgent request."
+   },
+   {
+    "label": "C",
+    "prediction": "Specify `endSession` as `Y`."
+   },
+   {
+    "label": "D",
+    "prediction": "You should specify the \"endSession\" field with a value of \"true\" in your InvokeAgent request to force end a session while a session summary is being generated."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0269",
+  "question": "When using the function calling format, what XML tag must wrap the entire set of function calls?",
+  "gold": "The entire set of function calls must be wrapped in <function_calls> tags.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "<function_call>"
+   },
+   {
+    "label": "B",
+    "prediction": "The <function_calls> tag must wrap the entire set of function calls."
+   },
+   {
+    "label": "C",
+    "prediction": "<function_calls>"
+   },
+   {
+    "label": "D",
+    "prediction": "The <invoke_tool> tag must wrap the entire set of function calls."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0279",
+  "question": "In the parse_function_call function, what delimiter is used to split the tool name?",
+  "gold": "The tool name is split using a double underscore ('__').",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The delimiter used is \"::\"."
+   },
+   {
+    "label": "B",
+    "prediction": "The delimiter used to split the tool name is the underscore character (`_`)."
+   },
+   {
+    "label": "C",
+    "prediction": "<tool_name>"
+   },
+   {
+    "label": "D",
+    "prediction": "The delimiter \"_TOOL_NAME_\" is used to split the tool name."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0289",
+  "question": "When checking an Amazon Bedrock agent's optimization in the console, what should you verify about the User input field?",
+  "gold": "Check that the User input field is DISABLED.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You should check that the User input field is DISABLED."
+   },
+   {
+    "label": "B",
+    "prediction": "You should verify that the User input field is enabled."
+   },
+   {
+    "label": "C",
+    "prediction": "User input field is DISABLED."
+   },
+   {
+    "label": "D",
+    "prediction": "The User input field should be DISABLED."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0299",
+  "question": "In Amazon Bedrock Flow builder, how do you connect the Flow input node to the second node?",
+  "gold": "Drag a line from the circle on the Flow input node to the circle in the Input section of the node you just added.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "By dragging a line from the circle on the Flow input node to the circle in the Input section of the node you just added."
+   },
+   {
+    "label": "B",
+    "prediction": "Drag a line from the circle on the Flow input node to the circle in the Input section of the node you just added."
+   },
+   {
+    "label": "C",
+    "prediction": "You connect the Flow input node to the second node by dragging a connection from the Flow input node to the input of the second node."
+   },
+   {
+    "label": "D",
+    "prediction": "Drag a connection from the Flow input node to the Flow input node."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0309",
+  "question": "Which Amazon model do the customization guidelines and recommended baseline values apply to?",
+  "gold": "The Amazon Titan Text Premier model.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The customization guidelines and recommended baseline values apply to the Amazon Titan Text Premier model."
+   },
+   {
+    "label": "B",
+    "prediction": "The customization guidelines and recommended baseline values apply to **Amazon Nova models**."
+   },
+   {
+    "label": "C",
+    "prediction": "The guidelines and recommended baseline values apply to the Amazon Titan models."
+   },
+   {
+    "label": "D",
+    "prediction": "Amazon Titan Text Premier."
+   },
+   {
+    "label": "E",
+    "prediction": "Amazon Titan Text models"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0319",
+  "question": "In Amazon Bedrock model distillation jobs, what is the purpose of the clientRequestToken field?",
+  "gold": "The clientRequestToken field is a token to prevent the request from completing more than once.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The clientRequestToken field is used to prevent the request from completing more than once."
+   },
+   {
+    "label": "B",
+    "prediction": "Token to prevent the request from completing more than once."
+   },
+   {
+    "label": "C",
+    "prediction": "The clientRequestToken field is used to ensure the request completes only once."
+   },
+   {
+    "label": "D",
+    "prediction": "To prevent the request from completing more than once"
+   },
+   {
+    "label": "E",
+    "prediction": "The clientRequestToken field is used to ensure that your request is processed only once by the system. It acts as a unique identifier for your request, preventing duplicate processing."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0329",
+  "question": "What optional argument should I add to the model import command to specify a VPC configuration?",
+  "gold": "--vpc-config with securityGroupIds and subnetIds.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "vpc-config"
+   },
+   {
+    "label": "B",
+    "prediction": "--vpc-config"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0339",
+  "question": "In the Bedrock prompt template, what default date string is set if no date_string is defined?",
+  "gold": "The default date_string is \"26 Jul 2024\".",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "26 Jul 2024"
+   },
+   {
+    "label": "B",
+    "prediction": "The default date string set is \"2024-01-01\"."
+   },
+   {
+    "label": "C",
+    "prediction": "\"2024-01-01\""
+   },
+   {
+    "label": "D",
+    "prediction": "\"26 Jul 2024\""
+   }
+  ]
+ },
+ {
+  "fact_id": "f0349",
+  "question": "Which token ID is assigned the content value \"[control_382]\"?",
+  "gold": "Token ID 384 is assigned the content value \"[control_382]\".",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "382"
+   },
+   {
+    "label": "B",
+    "prediction": "384"
+   },
+   {
+    "label": "C",
+    "prediction": "The token ID assigned the content value \"[control_382]\" is 384."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0359",
+  "question": "Which document class contains details such as when payment is due and how much is owed?",
+  "gold": "Invoice",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "A bill."
+   },
+   {
+    "label": "B",
+    "prediction": "A **statement of account** contains details such as when payment is due and how much is owed."
+   },
+   {
+    "label": "C",
+    "prediction": "Invoice"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0369",
+  "question": "When removing tags from an Amazon Bedrock Provisioned Throughput, which request parameter contains the keys for the tags you want to remove?",
+  "gold": "The tagKeys request parameter.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The request parameter is the request.tags parameter."
+   },
+   {
+    "label": "B",
+    "prediction": "The **tagsKeys** parameter contains the keys for the tags you want to remove."
+   },
+   {
+    "label": "C",
+    "prediction": "`tagKeys`"
+   },
+   {
+    "label": "D",
+    "prediction": "The tagKeys request parameter contains the keys for the tags that you want to remove."
+   },
+   {
+    "label": "E",
+    "prediction": "The tagKeys request parameter contains the keys for the tags you want to remove."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0379",
+  "question": "After adding a user to a Bedrock Studio workspace, what steps should you take to invite them?",
+  "gold": "Choose the Overview tab, copy the Bedrock Studio URL, and send it to the new users.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You should send them an email invitation."
+   },
+   {
+    "label": "B",
+    "prediction": "Choose the Overview tab, copy the Bedrock Studio URL, and send the URL to the new user."
+   },
+   {
+    "label": "C",
+    "prediction": "You should send an email to the user."
+   },
+   {
+    "label": "D",
+    "prediction": "After adding a user to a Bedrock Studio workspace, you should invite them to the workspace by following these steps:\n\n1. **Access the Workspace:** Go to the Bedrock Studio workspace you want to invite the user to.\n2"
+   },
+   {
+    "label": "E",
+    "prediction": "Copy Bedrock Studio URL and send it."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0389",
+  "question": "What AWS service can I use to establish a private connection between my VPC and Amazon Bedrock?",
+  "gold": "AWS PrivateLink, using interface VPC endpoints.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "AWS PrivateLink."
+   },
+   {
+    "label": "B",
+    "prediction": "You can use **AWS PrivateLink** to establish a private connection between your VPC and Amazon Bedrock."
+   },
+   {
+    "label": "C",
+    "prediction": "AWS PrivateLink"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0399",
+  "question": "Which S3 actions are included in the AccessS3Buckets statement for Amazon Bedrock Studio?",
+  "gold": "s3:ListBucket, s3:ListBucketVersions, s3:GetObject, s3:PutObject, s3:DeleteObject, s3:GetObjectVersion, and s3:DeleteObjectVersion.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "GetObject, ListBucket"
+   },
+   {
+    "label": "B",
+    "prediction": "s3:GetObject, s3:ListBucket, s3:PutObject, s3:DeleteObject, s3:AbortMultipartUpload, and s3:ListBucketMultipartUploads"
+   },
+   {
+    "label": "C",
+    "prediction": "The S3 actions included in the AccessS3Buckets statement are:\n\n* **s3:GetObject**\n* **s3:ListBucket**\n* **s3:GetBucketLocation**\n* **s3:"
+   },
+   {
+    "label": "D",
+    "prediction": "s3:GetObject and s3:ListBucket"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0409",
+  "question": "For added security, what restriction applies to the automatically-created role?",
+  "gold": "It is tied to a single knowledge base instance.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The automatically-created role is restricted to only the actions that are necessary."
+   },
+   {
+    "label": "B",
+    "prediction": "The automatically-created role has no permissions other than those required for model customization."
+   },
+   {
+    "label": "C",
+    "prediction": "Encrypt input/output data, create VPC."
+   },
+   {
+    "label": "D",
+    "prediction": "The automatically-created role cannot be used for any other purpose besides model customization."
+   },
+   {
+    "label": "E",
+    "prediction": "The restriction is that the role cannot be used by anyone other than the service that created it."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0419",
+  "question": "In Amazon EventBridge, what source value identifies events that come from Amazon Bedrock?",
+  "gold": "The source value is aws.bedrock.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "bedrock"
+   },
+   {
+    "label": "B",
+    "prediction": "aws.bedrock"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0429",
+  "question": "Which model providers have examples that use Bedrock's Converse API?",
+  "gold": "Anthropic Claude and Cohere Command.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Anthropic Claude and Meta Llama"
+   },
+   {
+    "label": "B",
+    "prediction": "Amazon Bedrock."
+   },
+   {
+    "label": "C",
+    "prediction": "Anthropic Claude, Cohere Command, and Meta Llama all have examples that use Bedrock's Converse API."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0439",
+  "question": "When saving a generated Titan image locally, what naming convention does the script use to avoid overwriting existing files?",
+  "gold": "It uses titan_{i}.png in the output directory, incrementing i until the filename does not exist.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "It appends \"_v1\" to the filename."
+   },
+   {
+    "label": "B",
+    "prediction": "`model_id` + `_` + `$i.png`"
+   },
+   {
+    "label": "C",
+    "prediction": "The script appends a counter to the filename to ensure uniqueness, using the format `image-{counter}.png`."
+   },
+   {
+    "label": "D",
+    "prediction": "The script appends a counter to the filename to avoid overwriting existing files."
+   },
+   {
+    "label": "E",
+    "prediction": "It appends a counter to the filename (titan_{i}.png) to ensure unique file names."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0449",
+  "question": "When a new message embeds tool results in the ongoing conversation, what role is assigned to that message?",
+  "gold": "The message is assigned the role 'user'.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "user"
+   },
+   {
+    "label": "B",
+    "prediction": "The role assigned to that message is **tool_result**."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0459",
+  "question": "What is the maxTokens limit set in the Amazon Bedrock converse request configuration?",
+  "gold": "The maxTokens limit is set to 512.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "512"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0469",
+  "question": "When using the Amazon Bedrock JavaScript SDK to retrieve an agent by ID, which details are printed for each agent?",
+  "gold": "The agent's name, status, ARN, and foundation model.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Name, Status, ARN, Foundation model."
+   },
+   {
+    "label": "B",
+    "prediction": "Name, Status, ARN, and Foundation model"
+   },
+   {
+    "label": "C",
+    "prediction": "The agent's name, ID, and alias are printed."
+   },
+   {
+    "label": "D",
+    "prediction": "The agent's name, status, ARN, and foundation model"
+   },
+   {
+    "label": "E",
+    "prediction": "The details printed for each agent include:\n\n* **Agent ID**\n* **Agent Name**\n* **Agent Alias**\n* **Agent Version**\n* **Agent Status**\n* **Foundation Model**\n* **Guard"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0479",
+  "question": "What HTTP status code is returned for an AccessDeniedException in Amazon Bedrock?",
+  "gold": "AccessDeniedException has HTTP status code 400.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "403"
+   },
+   {
+    "label": "B",
+    "prediction": "400"
+   }
+  ]
+ }
+]

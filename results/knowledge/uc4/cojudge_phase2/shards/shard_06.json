@@ -1,0 +1,1086 @@
+[
+ {
+  "fact_id": "f0006",
+  "question": "In the Amazon Bedrock documentation, which error type is listed immediately after ValidationError?",
+  "gold": "ResourceNotFound is listed immediately after ValidationError.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "ThrottlingException"
+   },
+   {
+    "label": "B",
+    "prediction": "ClientError"
+   },
+   {
+    "label": "C",
+    "prediction": "ResourceNotFoundException"
+   },
+   {
+    "label": "D",
+    "prediction": "ResourceNotFound"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0016",
+  "question": "Which versions of the Amazon Titan Image Generator G1 support inference parameters and model responses?",
+  "gold": "Amazon Titan Image Generator G1 V1 and Titan Image Generator G1 V2.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Amazon Titan Image Generator G1 V1 and V2"
+   },
+   {
+    "label": "B",
+    "prediction": "The Amazon Titan Image Generator G1 V1 and Titan Image Generator G1 V2 models support inference parameters and model responses."
+   },
+   {
+    "label": "C",
+    "prediction": "The Amazon Titan Image Generator G1 V1 and V2 versions support inference parameters and model responses."
+   },
+   {
+    "label": "D",
+    "prediction": "G1 V1 and G1 V2."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0026",
+  "question": "When using Anthropic Claude models in Amazon Bedrock, what is the maximum number of documents I can include in a single request, and what is the size limit for each document?",
+  "gold": "You can include up to five documents, and each document's size must be no more than 4.5 MB.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You can include up to five documents, and each document's size must be no more than 4.5 MB."
+   },
+   {
+    "label": "B",
+    "prediction": "Five documents, max 4.5MB each."
+   },
+   {
+    "label": "C",
+    "prediction": "You can include up to 10 documents in a single request, and each document must be less than 10 MB in size."
+   },
+   {
+    "label": "D",
+    "prediction": "The maximum number of documents you can include in a single request is **10**.\n\nThe size limit for each document is **10 MB**."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0036",
+  "question": "What model ID is used in the code example for invoking the AI21 Labs Jamba-Instruct model?",
+  "gold": "The model ID is ai21.jamba-instruct-v1:0.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The model ID used is \"ai21.jamba-instruct-v1:0\"."
+   },
+   {
+    "label": "B",
+    "prediction": "ai21.jamba-instruct-v1:0"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0046",
+  "question": "When using Stability AI models in Amazon Bedrock, what value must the samples parameter be set to if supplied?",
+  "gold": "The samples parameter must be set to 1, since Amazon Bedrock supports generating only one image.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The samples parameter must be set to **1** if supplied."
+   },
+   {
+    "label": "B",
+    "prediction": "One."
+   },
+   {
+    "label": "C",
+    "prediction": "The value must be one."
+   },
+   {
+    "label": "D",
+    "prediction": "1"
+   },
+   {
+    "label": "E",
+    "prediction": "The samples parameter must be set to 1 if supplied."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0056",
+  "question": "Do you need a subscription to use a HuggingFace model from Amazon Bedrock Marketplace?",
+  "gold": "No, publicly available models, such as a HuggingFace model, don't need a subscription.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "No."
+   },
+   {
+    "label": "B",
+    "prediction": "No, you do not need a subscription to use a HuggingFace model from Amazon Bedrock Marketplace."
+   },
+   {
+    "label": "C",
+    "prediction": "No, you don't need a subscription to use a HuggingFace model from Amazon Bedrock Marketplace."
+   },
+   {
+    "label": "D",
+    "prediction": "No, you don't need a subscription if you're using a publicly available model such as a HuggingFace model."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0066",
+  "question": "In Amazon Bedrock Converse API, how can I determine why the model stopped generating content?",
+  "gold": "Check the stopReason field in ConverseMetrics.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "By checking the stopReason field"
+   },
+   {
+    "label": "B",
+    "prediction": "Check the `stopReason` field."
+   },
+   {
+    "label": "C",
+    "prediction": "By checking the stop_reason field in the response"
+   },
+   {
+    "label": "D",
+    "prediction": "The documentation for the Amazon Bedrock Converse API doesn't explicitly detail a specific field for \"why the model stopped generating content.\" However, you can infer the reason by examining the **stopReason** field in the response.\n\nHere'"
+   },
+   {
+    "label": "E",
+    "prediction": "By checking the stopReason field in the response."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0076",
+  "question": "Which API request do I use to retrieve details of a batch inference job by its ID or ARN?",
+  "gold": "Send a GetModelInvocationJob request with an Amazon Bedrock control plane endpoint and provide the ID or ARN in the jobIdentifier field.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You use the **GetModelInvocationJob** API request to retrieve details of a batch inference job by its ID or ARN."
+   },
+   {
+    "label": "B",
+    "prediction": "GetModelInvocationJob"
+   },
+   {
+    "label": "C",
+    "prediction": "GetModelInvocationJob request"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0086",
+  "question": "On what date did Austria begin mobilizing units along the Russian border in Galicia?",
+  "gold": "Austrian mobilization started on 21 November 1912.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "September 21, 1914"
+   },
+   {
+    "label": "B",
+    "prediction": "November 21, 1912"
+   },
+   {
+    "label": "C",
+    "prediction": "August 21, 1914"
+   },
+   {
+    "label": "D",
+    "prediction": "21 November 1912"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0096",
+  "question": "When creating connections between the flow input node and each prompt node input, what separator is used to construct the connection name?",
+  "gold": "An underscore ('_') is used as the separator.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "An underscore (\"_\") is used as a separator between the node name, prompt node name, and input name."
+   },
+   {
+    "label": "B",
+    "prediction": "An underscore (\"_\") is used to join the input node name, prompt node name, and input name."
+   },
+   {
+    "label": "C",
+    "prediction": "A hyphen (-) is used as the separator."
+   },
+   {
+    "label": "D",
+    "prediction": "_"
+   },
+   {
+    "label": "E",
+    "prediction": "A hyphen (-) is used as the separator to construct the connection name."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0106",
+  "question": "In the content moderation taxonomy, which category includes demeaning, humiliating, mocking, insulting, or belittling language and is also labeled as bullying?",
+  "gold": "The category is Insults.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Bullying"
+   },
+   {
+    "label": "B",
+    "prediction": "The category that includes demeaning, humiliating, mocking, insulting, or belittling language and is also labeled as bullying is **Bullying**."
+   },
+   {
+    "label": "C",
+    "prediction": "Insults"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0116",
+  "question": "What HTTP method and path are used to create a new version of a guardrail in Amazon Bedrock?",
+  "gold": "POST /guardrails/guardrailIdentifier",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "POST /guardrails/guardrailIdentifier"
+   },
+   {
+    "label": "B",
+    "prediction": "POST /guardrails"
+   },
+   {
+    "label": "C",
+    "prediction": "PUT /guardrails/guardrailIdentifier/versions"
+   },
+   {
+    "label": "D",
+    "prediction": "The HTTP method used is **POST** and the path is **/guardrails/guardrailIdentifier/versions**."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0126",
+  "question": "When using the AWS CLI list-evaluation-jobs command for Amazon Bedrock, what maximum number of jobs is specified in the provided example?",
+  "gold": "A maximum of 5 jobs.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "5"
+   },
+   {
+    "label": "B",
+    "prediction": "10"
+   },
+   {
+    "label": "C",
+    "prediction": "5 jobs"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0136",
+  "question": "In Amazon Bedrock's score mapping, what numeric score is assigned to a response rated as 'Neutral/Mixed'?",
+  "gold": "Neutral/Mixed is assigned a score of 2.0.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "A score of **3** is assigned to a response rated as 'Neutral/Mixed'."
+   },
+   {
+    "label": "B",
+    "prediction": "```json\n{\"reasoning\": \"The question asks for the numeric score assigned to a 'Neutral/Mixed' rating in the score mapping. I need to look at the provided score mapping to find the corresponding score.\", \"answer\": \""
+   },
+   {
+    "label": "C",
+    "prediction": "2.0"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0146",
+  "question": "In the readability score mapping, what numeric score is assigned to good readability?",
+  "gold": "Good readability is assigned a score of 3.0.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "3.0"
+   },
+   {
+    "label": "B",
+    "prediction": "4.0"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0156",
+  "question": "What types of evaluation can be performed on an Amazon Bedrock knowledge base?",
+  "gold": "Knowledge base evaluation of retrieval or response generation.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Retrieval and generation evaluation"
+   },
+   {
+    "label": "B",
+    "prediction": "Retrieval only of your knowledge base or retrieval with response generation"
+   },
+   {
+    "label": "C",
+    "prediction": "Retrieval only or retrieval with response generation"
+   },
+   {
+    "label": "D",
+    "prediction": "Retrieval or response generation."
+   },
+   {
+    "label": "E",
+    "prediction": "You can perform several types of evaluations on an Amazon Bedrock knowledge base, including:\n\n* **Retrieval and Generation Evaluation:** This evaluates the quality of responses generated by the knowledge base.\n* **Retrieval Evaluation:** This evaluates the"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0166",
+  "question": "What well-formed XML string is given as an example for the tags foo, bar, and baz?",
+  "gold": "The string \"<foo><bar><baz></baz></bar></foo>\" is a well-formatted instance for the tags foo, bar, and baz.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "<foo><bar><baz></baz></bar></foo>"
+   },
+   {
+    "label": "B",
+    "prediction": "<foo>\n<bar>\n<baz></baz>\n</bar>\n</foo>"
+   },
+   {
+    "label": "C",
+    "prediction": "```xml\n<response>\n<reasoning>The context provides an example of a well-formatted instance of the schema for tags \"foo\", \"bar\", and \"baz\". The well-formatted string is \"<foo><bar><"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0176",
+  "question": "How many bodies were recovered from the flooded coal mine in Yiyang City as of Thursday morning?",
+  "gold": "Two bodies were recovered from the flooded coal mine in Yiyang City, Henan province, as of Thursday morning.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Two bodies."
+   },
+   {
+    "label": "B",
+    "prediction": "Three bodies were recovered from the flooded coal mine in Yiyang City as of Thursday morning."
+   },
+   {
+    "label": "C",
+    "prediction": "Two bodies were recovered from the flooded coal mine."
+   },
+   {
+    "label": "D",
+    "prediction": "Two bodies"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0186",
+  "question": "Which embedding models in Amazon Bedrock Knowledge Bases support binary vector types?",
+  "gold": "Amazon Titan Text Embeddings V2, Cohere Embed (English), and Cohere Embed (Multilingual) support binary vector types.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Amazon Titan Text Embeddings V2 and Cohere Embed English"
+   },
+   {
+    "label": "B",
+    "prediction": "Titan Text Embeddings V2, Cohere Embed (English), Cohere Embed (Multilingual)."
+   },
+   {
+    "label": "C",
+    "prediction": "Amazon Titan Text Embeddings V2 and Cohere Embed (English)"
+   },
+   {
+    "label": "D",
+    "prediction": "The embedding models that support binary vector types in Amazon Bedrock Knowledge Bases are:\n\n* **Amazon Titan G1 Embeddings**\n* **Amazon Titan V2 Embeddings**\n\nThese models are capable of generating embeddings in binary vector format"
+   },
+   {
+    "label": "E",
+    "prediction": "Amazon Titan Text Embeddings V2 and Cohere Embed (English) and Cohere Embed (Multilingual) support binary vector types."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0196",
+  "question": "When configuring basic authentication for an Atlassian Confluence data source in Amazon Bedrock, what key-value pairs should the AWS Secrets Manager secret include?",
+  "gold": "It should include username as the admin user email address of the Atlassian account and password as the Confluence API token.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "username: admin user email address of Atlassian account and password: Confluence API token"
+   },
+   {
+    "label": "B",
+    "prediction": "username: admin user email address, password: Confluence API token."
+   },
+   {
+    "label": "C",
+    "prediction": "The AWS Secrets Manager secret should include the following key-value pairs:\n\n* **username:** Your Atlassian account username or email address\n* **password:** Your Atlassian account password\n* **app_password:** Your At"
+   },
+   {
+    "label": "D",
+    "prediction": "username and password"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0206",
+  "question": "When sending a CreateDataSource request in Amazon Bedrock, which field can you modify to customize vector ingestion for a data source?",
+  "gold": "The vectorIngestionConfiguration field.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "vectorIngestionConfiguration"
+   },
+   {
+    "label": "B",
+    "prediction": "The vectorIngestionConfiguration field"
+   },
+   {
+    "label": "C",
+    "prediction": "The vectorIngestionConfiguration field."
+   },
+   {
+    "label": "D",
+    "prediction": "You can modify the **vectorIngestionConfiguration** field to customize vector ingestion for a data source."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0216",
+  "question": "When configuring a service role to access an Amazon Redshift provisioned query engine, which IAM action must be allowed to obtain cluster credentials?",
+  "gold": "The service role must allow the redshift:GetClusterCredentials action.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "`redshift:GetClusterCredentials`"
+   },
+   {
+    "label": "B",
+    "prediction": "redshift:GetClusterCredentials"
+   },
+   {
+    "label": "C",
+    "prediction": "The IAM action that must be allowed to obtain cluster credentials is **redshift:GetClusterCredentials**."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0226",
+  "question": "Which Amazon OpenSearch Serverless vector store configuration is required to use the hybrid search option that queries both embeddings and raw text?",
+  "gold": "An Amazon OpenSearch Serverless vector store configured with a filterable text field.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You need to configure the vector store to use **both** the vector index and the text index."
+   },
+   {
+    "label": "B",
+    "prediction": "The Amazon OpenSearch Serverless vector store configuration with the vectorSearchConfiguration field is required."
+   },
+   {
+    "label": "C",
+    "prediction": "Filterable text field."
+   },
+   {
+    "label": "D",
+    "prediction": "A filterable text field"
+   },
+   {
+    "label": "E",
+    "prediction": "The vector store must contain a filterable text field."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0236",
+  "question": "What does preparing an Amazon Bedrock agent package and enable?",
+  "gold": "Preparing the agent packages all components of the agent, including security configurations, and brings it into a state where it can be tested in runtime.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Prepare agent for deployment."
+   },
+   {
+    "label": "B",
+    "prediction": "It enables the agent to be deployed to your application."
+   },
+   {
+    "label": "C",
+    "prediction": "The agent's configurations"
+   },
+   {
+    "label": "D",
+    "prediction": "It prepares the agent package and enables it."
+   },
+   {
+    "label": "E",
+    "prediction": "Preparing an Amazon Bedrock agent package and enabling it is a prerequisite step that allows you to deploy your agent to your application. The process involves creating a package that contains all the necessary configurations and resources for your agent to function correctly."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0246",
+  "question": "When an Amazon Bedrock action group is defined with an API schema, what fields appear in the input event?",
+  "gold": "The input event contains apiPath, httpMethod, and requestBody.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The fields that appear in the input event are the fields defined in the API schema."
+   },
+   {
+    "label": "B",
+    "prediction": "API schema fields."
+   },
+   {
+    "label": "C",
+    "prediction": "The input event contains the parameters that the agent needs to invoke the API operation."
+   },
+   {
+    "label": "D",
+    "prediction": "When an Amazon Bedrock action group is defined with an API schema, the input event contains several fields that provide the necessary information for the action group to function. The specific fields that appear depend on the API schema you've defined, but"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0256",
+  "question": "When creating an action group to disable user input for an Amazon Bedrock agent, what value should you set for parentActionGroupSignature?",
+  "gold": "Set parentActionGroupSignature to AMAZON.UserInput.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You should set the value to **\"DISABLED\"**."
+   },
+   {
+    "label": "B",
+    "prediction": "AMAZON.UserInput"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0266",
+  "question": "Which field in the request payload specifies the alias ARN of the collaborator agent?",
+  "gold": "agentCollaboratorAliasArn",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "agentCollaboratorAliasArn"
+   },
+   {
+    "label": "B",
+    "prediction": "The field is called **collaboratorAgent** and it contains the alias ARN of the collaborator agent."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0276",
+  "question": "In the Bedrock agent function-calling code, what regex pattern is assigned to ASK_USER_FUNCTION_CALL_REGEX?",
+  "gold": "The regex pattern assigned to ASK_USER_FUNCTION_CALL_REGEX is r\"<tool_name>user::askuser</tool_name>\".",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "`r\"(<function_call>user::askuser)(.*)\\)\"`"
+   },
+   {
+    "label": "B",
+    "prediction": "\"<function_calls>(\\w+):(\\\\w+):(\\\\w+):(\\\\w+)</function_calls>\""
+   },
+   {
+    "label": "C",
+    "prediction": "The regex pattern assigned to ASK_USER_FUNCTION_CALL_REGEX is: `(?<=<answer>)(.*)`"
+   },
+   {
+    "label": "D",
+    "prediction": "r\"(<function_call>user::askuser)(.*)\\)\""
+   },
+   {
+    "label": "E",
+    "prediction": "ASK_USER_FUNCTION_CALL_REGEX"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0286",
+  "question": "What error message is thrown when an invalid incoming state is provided in the Lambda orchestration function?",
+  "gold": "Invalid state provided!",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Invalid state provided!"
+   },
+   {
+    "label": "B",
+    "prediction": "An exception with the message \"Invalid incoming state\" is thrown."
+   },
+   {
+    "label": "C",
+    "prediction": "\"Invalid state provided!\""
+   },
+   {
+    "label": "D",
+    "prediction": "'Invalid state provided!'"
+   },
+   {
+    "label": "E",
+    "prediction": "\"Invalid incoming state\""
+   }
+  ]
+ },
+ {
+  "fact_id": "f0296",
+  "question": "What is the output name and type of the Collector node in Amazon Bedrock flows?",
+  "gold": "The Collector node outputs an array named 'collected' of type Array.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The output name is \"outputs\" and the output type is \"array\"."
+   },
+   {
+    "label": "B",
+    "prediction": "The output name is \"document\" and the type is \"Object\"."
+   },
+   {
+    "label": "C",
+    "prediction": "Array."
+   },
+   {
+    "label": "D",
+    "prediction": "The output name is **FlowOutput** and the type is **Object**."
+   },
+   {
+    "label": "E",
+    "prediction": "The output name is \"document\" and the type is \"String\"."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0306",
+  "question": "In the Amazon Bedrock example flow code, what node name and output name are used when constructing the flow input data?",
+  "gold": "The flow input data uses 'FlowInputNode' as nodeName and 'document' as nodeOutputName.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "document, $.data"
+   },
+   {
+    "label": "B",
+    "prediction": "The node name is \"FlowInputNode\" and the output name is \"document\"."
+   },
+   {
+    "label": "C",
+    "prediction": "FlowInputNode and FlowOutputNode"
+   },
+   {
+    "label": "D",
+    "prediction": "The node name is \"FlowInput\" and the output name is \"document\"."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0316",
+  "question": "In the Amazon Bedrock model customization IAM setup, what should you use for the `--policy-arn` value in the `aws iam attach-role-policy` command?",
+  "gold": "The ARN in the response from the previous step.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The ARN of the policy that you created"
+   },
+   {
+    "label": "B",
+    "prediction": "The ARN of the policy that you created for the role"
+   },
+   {
+    "label": "C",
+    "prediction": "The ARN returned from the previous step"
+   },
+   {
+    "label": "D",
+    "prediction": "You should use the ARN of the Amazon Bedrock service role that you created."
+   },
+   {
+    "label": "E",
+    "prediction": "The ARN returned in the response."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0326",
+  "question": "How can I tell when my Amazon Bedrock custom model import job has finished?",
+  "gold": "The job is complete when the Status value for the model is Complete.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Status is Complete."
+   },
+   {
+    "label": "B",
+    "prediction": "By checking the status of the job."
+   },
+   {
+    "label": "C",
+    "prediction": "You can tell when your Amazon Bedrock custom model import job has finished by checking the status of the job in the Amazon Bedrock console or by using the API.\n\nHere are the specific ways to monitor your job's progress:"
+   },
+   {
+    "label": "D",
+    "prediction": "When the status is Complete."
+   },
+   {
+    "label": "E",
+    "prediction": "You can check the status of your job by using the GetModelImportJob operation."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0336",
+  "question": "Which reserved special token is assigned to token ID 128109?",
+  "gold": "Token ID 128109 is assigned the content <|reserved_special_token_101|>.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "No context provided."
+   },
+   {
+    "label": "B",
+    "prediction": "<|reserved_special_token_101|>"
+   },
+   {
+    "label": "C",
+    "prediction": "[control_101]"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0346",
+  "question": "In the vocabulary mapping, what special token content is associated with the ID 186?",
+  "gold": "The content '[control_184]' is associated with ID 186 and is marked as special.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "assistant<|end_header_id|>"
+   },
+   {
+    "label": "B",
+    "prediction": "[control_184]"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0356",
+  "question": "In the example BDA audio output, what word count, speaker count, and segment count are reported in the statistics?",
+  "gold": "The statistics report a word count of 150, a speaker count of 2, and a segment count of 6.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Word count: 9, speaker count: 2, and segment count: 6"
+   },
+   {
+    "label": "B",
+    "prediction": "Word count: 150, speaker count: 2, segment count: 6."
+   },
+   {
+    "label": "C",
+    "prediction": "Word count: 100, speaker count: 1, segment count: 1"
+   },
+   {
+    "label": "D",
+    "prediction": "The statistics report the word count, speaker count, and segment count."
+   },
+   {
+    "label": "E",
+    "prediction": "Word count: 150, speaker count: 2, segment count: 6"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0366",
+  "question": "How can you restrict an IAM role's access to only specific API actions in Amazon Bedrock?",
+  "gold": "Modify the list in the Action field to contain only the API operations that you want to allow access to.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You can restrict an IAM role's access to only specific API actions in Amazon Bedrock by using **IAM actions** combined with **resource-based policies** or **service-linked roles**.\n\nHere's a breakdown of the key"
+   },
+   {
+    "label": "B",
+    "prediction": "You can restrict an IAM role's access to only specific API actions by using a resource-based policy."
+   },
+   {
+    "label": "C",
+    "prediction": "You can restrict an IAM role's access to only specific API actions by using a policy that specifies the actions you want to allow."
+   },
+   {
+    "label": "D",
+    "prediction": "By using condition keys in the Condition field"
+   },
+   {
+    "label": "E",
+    "prediction": "Use IAM policies."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0376",
+  "question": "What permission boundary is used when creating scoped-down roles for builders in Amazon Bedrock Studio?",
+  "gold": "AmazonDataZoneBedrockPermissionsBoundary is used to create the scoped-down roles for builders.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "AmazonBedrockStudioPermissionsBoundary"
+   },
+   {
+    "label": "B",
+    "prediction": "AmazonDataZoneBedrockPermissionsBoundary"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0386",
+  "question": "Which KMS encryption context key must match the agent alias ARN in the Bedrock agents data plane long term memory permissions policy?",
+  "gold": "The `kms:EncryptionContext:aws-crypto-ec:aws:bedrock:arn` key must match the agent alias ARN.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "`arn:aws:bedrock:${region}:${account-id}:agent-alias/*`"
+   },
+   {
+    "label": "B",
+    "prediction": "aws-crypto-ec:aws:bedrock:arn"
+   },
+   {
+    "label": "C",
+    "prediction": "The KMS encryption context key must match the **agent_id** in the agent alias ARN."
+   },
+   {
+    "label": "D",
+    "prediction": "The kms:EncryptionContext:aws:bedrock:agent-alias must match the agent alias ARN."
+   },
+   {
+    "label": "E",
+    "prediction": "The kms:EncryptionContext:agentAliasArn must match the agent alias ARN."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0396",
+  "question": "In the Amazon Bedrock identity-based policy example, which two AWS KMS actions are allowed by the statement with Sid 'UseKmsKeyWithBedrock'?",
+  "gold": "The allowed actions are kms:Decrypt and kms:GenerateDataKey.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Decrypt,GenerateDataKey"
+   },
+   {
+    "label": "B",
+    "prediction": "The two AWS KMS actions allowed by the statement with Sid 'UseKmsKeyWithBedrock' are:\n\n1. **kms:GenerateDataKey**\n2. **kms:Decrypt**"
+   },
+   {
+    "label": "C",
+    "prediction": "kms:Decrypt and kms:GenerateDataKey"
+   },
+   {
+    "label": "D",
+    "prediction": "kms:Decrypt and kms:DescribeKey"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0406",
+  "question": "Which CloudFormation actions are allowed by the ManageStacks statement in this IAM policy?",
+  "gold": "The ManageStacks statement allows cloudformation:DescribeStacks, cloudformation:DescribeStackEvents, cloudformation:UpdateStack, and cloudformation:DeleteStack.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "cloudformation:CreateStack, cloudformation:UpdateStack, cloudformation:DeleteStack, and cloudformation:TagResource"
+   },
+   {
+    "label": "B",
+    "prediction": "cloudformation:CreateStack and cloudformation:TagResource"
+   },
+   {
+    "label": "C",
+    "prediction": "CreateStack, TagResource"
+   },
+   {
+    "label": "D",
+    "prediction": "The allowed CloudFormation actions are:\n\n* **CreateStack**\n* **UpdateStack**\n* **DeleteStack**\n* **DescribeStacks**"
+   },
+   {
+    "label": "E",
+    "prediction": "The CloudFormation actions allowed are \"cloudformation:CreateStack\" and \"cloudformation:TagResource\"."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0416",
+  "question": "Which API operation should I call to link a delivery source to its destination when setting up knowledge base logging with CloudWatch?",
+  "gold": "Call the CreateDelivery API to associate the delivery source with the end destination.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "CreateDelivery"
+   },
+   {
+    "label": "B",
+    "prediction": "PutDeliverySource"
+   },
+   {
+    "label": "C",
+    "prediction": "You should call the **CreateDeliverySource** API operation."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0426",
+  "question": "Which AWS SDK for JavaScript v3 command is used to retrieve details about an Amazon Bedrock foundation model?",
+  "gold": "GetFoundationModelCommand from @aws-sdk/client-bedrock.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The command used is **GetFoundationModelCommand**."
+   },
+   {
+    "label": "B",
+    "prediction": "GetFoundationModelCommand"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0436",
+  "question": "How many max tokens are set in the request payload for the model invocation?",
+  "gold": "The request payload sets maxTokens to 500.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "512"
+   },
+   {
+    "label": "B",
+    "prediction": "200"
+   },
+   {
+    "label": "C",
+    "prediction": "`max_tokens`"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0446",
+  "question": "Which AWS SDK for Java version is used in the example that sends a text message to Anthropic Claude?",
+  "gold": "The example uses the AWS SDK for Java 2.x.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "SDK for Java 2.x"
+   },
+   {
+    "label": "B",
+    "prediction": "Java 2.x"
+   },
+   {
+    "label": "C",
+    "prediction": "The example uses **SDK for Java 2.x** (specifically the BedrockRuntimeAsyncClient)."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0456",
+  "question": "What happens when max_recursion is less than or equal to zero in the Amazon Bedrock model response handling code?",
+  "gold": "It logs a warning stating 'Maximum number of recursions reached. Please try again.' and exits the process.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The code prints a message indicating that max_recursion is less than or equal to zero and then returns None."
+   },
+   {
+    "label": "B",
+    "prediction": "Stop."
+   },
+   {
+    "label": "C",
+    "prediction": "The code throws an exception."
+   },
+   {
+    "label": "D",
+    "prediction": "When max_recursion is less than or equal to zero, the code sets it to 1."
+   },
+   {
+    "label": "E",
+    "prediction": "The function stops processing and returns the response"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0466",
+  "question": "What example does the Amazon Bedrock User Guide provide for using Stable Diffusion with AWS SDKs?",
+  "gold": "Invoke Stability.ai Stable Diffusion XL on Amazon Bedrock to generate an image.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The example provided is \"Hello Amazon Bedrock.\""
+   },
+   {
+    "label": "B",
+    "prediction": "Invoke Stability.ai Stable Diffusion XL on Amazon Bedrock to generate an image"
+   },
+   {
+    "label": "C",
+    "prediction": "Invoke Stability.ai Stable Diffusion XL on Amazon Bedrock."
+   },
+   {
+    "label": "D",
+    "prediction": "The Amazon Bedrock User Guide provides code examples for using Stable Diffusion with AWS SDKs."
+   },
+   {
+    "label": "E",
+    "prediction": "The example shows how to use the Amazon Bedrock Runtime with AWS SDKs to generate an image using Stable Diffusion."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0476",
+  "question": "What regular expression is used to validate an Amazon Bedrock agent name?",
+  "gold": "^[a-zA-Z0-9_-]{1,100}$",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The regex pattern \"^[a-zA-Z0-9_-]{1,100}$\" is used to validate the agent name."
+   },
+   {
+    "label": "B",
+    "prediction": "`^[a-zA-Z0-9_-]{1,100}$`"
+   },
+   {
+    "label": "C",
+    "prediction": "The regular expression used to validate an Amazon Bedrock agent name is:\n\n`^[a-zA-Z0-9_-]+$`\n\nThis pattern ensures the name consists only of alphanumeric characters, underscores, and hyphens, with no"
+   },
+   {
+    "label": "D",
+    "prediction": "The regex pattern r\"^[a-zA-Z0-9-]{1,60}$\" is used to validate the agent name."
+   },
+   {
+    "label": "E",
+    "prediction": "r\"^[a-zA-Z0-9_-]{1,100}$\""
+   }
+  ]
+ }
+]

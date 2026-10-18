@@ -1,0 +1,1134 @@
+[
+ {
+  "fact_id": "f0005",
+  "question": "What two destination types can you set up for Amazon Bedrock model invocation logging?",
+  "gold": "You can set up an Amazon S3 destination and a CloudWatch Logs destination.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "CloudWatch Logs and Amazon S3."
+   },
+   {
+    "label": "B",
+    "prediction": "Amazon S3 and CloudWatch Logs"
+   },
+   {
+    "label": "C",
+    "prediction": "You can set up logging to two destination types: **Amazon S3** and **Amazon CloudWatch Logs**."
+   },
+   {
+    "label": "D",
+    "prediction": "CloudWatch Logs and Amazon S3"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0015",
+  "question": "What completionReason value indicates an Amazon Titan response was truncated because of the response length you set?",
+  "gold": "The completionReason value is LENGTH, which indicates the response was truncated because of the response length you set.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The completionReason value **\"Length\"** indicates that the response was truncated because of the response length you set."
+   },
+   {
+    "label": "B",
+    "prediction": "LENGTH"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0025",
+  "question": "When using the Converse API to create a new message, which parameter do I use to specify prior conversational turns?",
+  "gold": "You specify prior conversational turns with the messages parameter.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "messages"
+   },
+   {
+    "label": "B",
+    "prediction": "The parameter you use is **messages**."
+   },
+   {
+    "label": "C",
+    "prediction": "The messages parameter"
+   },
+   {
+    "label": "D",
+    "prediction": "The messages parameter."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0035",
+  "question": "Which parameter in AI21 Labs Jurassic-2 models can I increase to lower the probability of generating new tokens?",
+  "gold": "Presence penalty (presencePenalty); use a higher value to lower the probability of generating new tokens.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The temperature parameter."
+   },
+   {
+    "label": "B",
+    "prediction": "You can increase the **temperature** parameter to lower the probability of generating new tokens."
+   },
+   {
+    "label": "C",
+    "prediction": "Presence penalty."
+   },
+   {
+    "label": "D",
+    "prediction": "Temperature"
+   },
+   {
+    "label": "E",
+    "prediction": "Presence penalty (presencePenalty)"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0045",
+  "question": "What is the maximum allowed length for the prompt parameter in a Stability AI text-to-image inference call?",
+  "gold": "The prompt parameter has a maximum value of 10,000.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The maximum allowed length for the prompt parameter is **512 characters**."
+   },
+   {
+    "label": "B",
+    "prediction": "512"
+   },
+   {
+    "label": "C",
+    "prediction": "10,000"
+   },
+   {
+    "label": "D",
+    "prediction": "The maximum length for the prompt parameter is 10,000 characters."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0055",
+  "question": "What example hub content ARN is provided for listing endpoints for a model in Amazon Bedrock?",
+  "gold": "arn:aws:sagemaker:us-west-2:aws:hub-content/SageMakerPublicHub/Model/huggingface-textgeneration1-mpt-7b-storywriter-bf16/3.2.0",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "arn:aws:sagemaker:region:111122223333:hub-content/SageMakerPublicHub/Model/huggingface-textgeneration1-mpt-7b-"
+   },
+   {
+    "label": "B",
+    "prediction": "arn:aws:bedrock:us-west-2:111122223333:hub/model-catalog/model-name"
+   },
+   {
+    "label": "C",
+    "prediction": "`arn:aws:sagemaker:*:111122223333:endpoint/*`"
+   },
+   {
+    "label": "D",
+    "prediction": "arn:aws:sagemaker:*:*:hub-content/SageMakerPublicHub/Model/*"
+   },
+   {
+    "label": "E",
+    "prediction": "arn:aws:sagemaker:us-west-2:aws:hub-content/SageMakerPublicHub/Model/huggingface-textgeneration1-mpt-7b-storywriter-bf16/"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0065",
+  "question": "When using Amazon Bedrock Converse, how many images can be included in the content field?",
+  "gold": "Up to 20 images.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "20 images."
+   },
+   {
+    "label": "B",
+    "prediction": "Up to 20 images can be included in the content field."
+   },
+   {
+    "label": "C",
+    "prediction": "You can include up to **5 images** in the content field."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0075",
+  "question": "Which condition key must be set to true for the ec2:CreateNetworkInterface action in this Bedrock VPC setup policy?",
+  "gold": "The aws:RequestTag/BedrockManaged condition key must equal true.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "BedrockManaged"
+   },
+   {
+    "label": "B",
+    "prediction": "aws:RequestTag/BedrockManaged"
+   },
+   {
+    "label": "C",
+    "prediction": "`ec2:CreateAction`"
+   },
+   {
+    "label": "D",
+    "prediction": "The condition key **aws:bedrock:arn** must be set to true for the ec2:CreateNetworkInterface action."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0085",
+  "question": "What are two example sentiment classification outcomes mentioned for text classification prompts?",
+  "gold": "Positive or negative, or harmless or toxic.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Positive, Negative, Neutral"
+   },
+   {
+    "label": "B",
+    "prediction": "Positive and negative"
+   },
+   {
+    "label": "C",
+    "prediction": "Positive and negative are two example sentiment classification outcomes mentioned for text classification prompts."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0095",
+  "question": "In the provided script, which AWS service client is instantiated before the optimize_prompt call?",
+  "gold": "A boto3 client for bedrock-agent-runtime.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "bedrock-agent-runtime"
+   },
+   {
+    "label": "B",
+    "prediction": "bedrock-runtime"
+   },
+   {
+    "label": "C",
+    "prediction": "boto3.client('bedrock-agent-runtime')"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0105",
+  "question": "When using contextual grounding check with the ApplyGuardrail API, what extra content block do I need to include and how should it be qualified?",
+  "gold": "You must provide an extra content block with the content to be guarded, optionally qualified with guard_content.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You must provide an extra content block with the content to be guarded, which can be optionally qualified with guard_content."
+   },
+   {
+    "label": "B",
+    "prediction": "Provide an extra content block, optionally qualified with `guard_content`."
+   },
+   {
+    "label": "C",
+    "prediction": "You need to include an extra content block with the content to be guarded, and it should be qualified with the guardContent qualifier."
+   },
+   {
+    "label": "D",
+    "prediction": "You need to include a **contextualGroundingCheck** content block.\n\nThis block should be qualified with the **contextualGroundingCheck** qualifier."
+   },
+   {
+    "label": "E",
+    "prediction": "An extra content block with the type \"contextualGrounding\" should be included, qualified as \"grounding\""
+   }
+  ]
+ },
+ {
+  "fact_id": "f0115",
+  "question": "Which guardrail version does the response return if you omit the version parameter from the request?",
+  "gold": "The DRAFT version.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The response returns the latest version of the guardrail."
+   },
+   {
+    "label": "B",
+    "prediction": "DRAFT version."
+   },
+   {
+    "label": "C",
+    "prediction": "The response returns details for the DRAFT version."
+   },
+   {
+    "label": "D",
+    "prediction": "The response returns the DRAFT version of the guardrail."
+   },
+   {
+    "label": "E",
+    "prediction": "The DRAFT version"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0125",
+  "question": "In the Amazon Bedrock console, after navigating to Model evaluation, what option should I choose under Automatic in the Build an evaluation card?",
+  "gold": "Choose Create automatic evaluation.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You should choose **Create automatic evaluation** under Automatic in the Build an evaluation card."
+   },
+   {
+    "label": "B",
+    "prediction": "Human"
+   },
+   {
+    "label": "C",
+    "prediction": "Create automatic evaluation."
+   },
+   {
+    "label": "D",
+    "prediction": "Create automatic evaluation"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0135",
+  "question": "In an Amazon Bedrock prompt dataset, which placeholder represents the generator model's responses when no ground truth is supplied?",
+  "gold": "The {prediction} placeholder represents the generator model's responses.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The placeholder **[prediction]** represents the generator model's responses when no ground truth is supplied."
+   },
+   {
+    "label": "B",
+    "prediction": "prediction"
+   },
+   {
+    "label": "C",
+    "prediction": "The {prediction} placeholder represents the generator model's responses when no ground truth is supplied."
+   },
+   {
+    "label": "D",
+    "prediction": "The placeholder {prediction} represents the generator model's responses when no ground truth is supplied."
+   },
+   {
+    "label": "E",
+    "prediction": "The {prediction} placeholder represents the generator model's responses."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0145",
+  "question": "In the evaluation scoring rubric, how many points is a partially correct response worth?",
+  "gold": "A partially correct response is worth 1.0 points.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "1 point"
+   },
+   {
+    "label": "B",
+    "prediction": "4 points"
+   },
+   {
+    "label": "C",
+    "prediction": "Not specified."
+   },
+   {
+    "label": "D",
+    "prediction": "A partially correct response worth 1.0 point."
+   },
+   {
+    "label": "E",
+    "prediction": "A partially correct response is worth 1 point."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0155",
+  "question": "Which AWS CLI command can I use to list Amazon Bedrock model evaluation jobs with a maximum of five jobs returned?",
+  "gold": "Use aws bedrock list-evaluation-jobs with the maximum set to 5.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "aws bedrock list-evaluation-jobs"
+   },
+   {
+    "label": "B",
+    "prediction": "aws bedrock list-evaluation-jobs --max-items 5"
+   },
+   {
+    "label": "C",
+    "prediction": "You can use the command:\n\n```bash\naws bedrock list-evaluation-jobs --max-items 5\n```\n\nThis command lists Amazon Bedrock model evaluation jobs and limits the output to a maximum of five results."
+   },
+   {
+    "label": "D",
+    "prediction": "`aws bedrock list-evaluation-jobs --max-items 5`"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0165",
+  "question": "In the harmful response evaluator prompt, what word limit applies to the explanation and what score mapping is used for Yes/No?",
+  "gold": "The explanation must be less than 30 words; Yes maps to 1 and No maps to 0.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Explanation: The explanation limit is less than 30 words, and the score mapping is Yes: 1, No: 0. Answer: Yes"
+   },
+   {
+    "label": "B",
+    "prediction": "The explanation must be less than 30 words, and Yes is 1, No is 0."
+   },
+   {
+    "label": "C",
+    "prediction": "The explanation should be less than 30 words. Yes is scored as 1, and No is scored as 0."
+   },
+   {
+    "label": "D",
+    "prediction": "The explanation must be less than 50 words, and Yes is mapped to 1, No is mapped to 0."
+   },
+   {
+    "label": "E",
+    "prediction": "The word limit for the explanation is **50 words**.\n\nThe score mapping is: **Yes = 1, No = 0**."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0175",
+  "question": "In an Amazon Bedrock model evaluation job output file, which key value pair stores the results from each worker for a thumbs up/down rating?",
+  "gold": "The results from each worker are saved to the \"evaluationResults\": \"thumbsUpDown\" key value pair.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The key \"evaluationResults\" stores the results from each worker for a thumbs up/down rating."
+   },
+   {
+    "label": "B",
+    "prediction": "\"evaluationResults\": \"thumbsUpDown\""
+   },
+   {
+    "label": "C",
+    "prediction": "evaluationResults"
+   },
+   {
+    "label": "D",
+    "prediction": "The key-value pair that stores the results from each worker for a thumbs up/down rating is **\"thumbs_up\"** with a value of **1** or **\"thumbs_down\"** with a value of **0"
+   },
+   {
+    "label": "E",
+    "prediction": "The \"evaluationResults\": \"thumbsUpDown\" key value pair stores the results from each worker."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0185",
+  "question": "When splitting a CSV description into chunks, how is the creation date value handled?",
+  "gold": "It is treated as a string representation of the date and associated with each chunk for the description.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The creation date value is split into two parts: the year and the month."
+   },
+   {
+    "label": "B",
+    "prediction": "The creation date value is treated as a string representation of the date and is associated with each chunk for the description."
+   },
+   {
+    "label": "C",
+    "prediction": "Creation date is associated with each chunk."
+   },
+   {
+    "label": "D",
+    "prediction": "The creation date value is handled as a **string** and is **not normalized** (it is not converted to a standard date format)."
+   },
+   {
+    "label": "E",
+    "prediction": "The creation date value is treated as a string."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0195",
+  "question": "When creating an Amazon Bedrock knowledge base using the console, where can you add a new secret or use an existing secret during data source configuration?",
+  "gold": "You can go to AWS Secrets Manager to add your secret or use an existing secret as part of the data source configuration step.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "In the Credentials secret ARN field"
+   },
+   {
+    "label": "B",
+    "prediction": "You can add a new secret or use an existing secret in the **Authentication method** section when configuring your data source."
+   },
+   {
+    "label": "C",
+    "prediction": "No context provided."
+   },
+   {
+    "label": "D",
+    "prediction": "In the Secrets manager section"
+   },
+   {
+    "label": "E",
+    "prediction": "You can add a new secret or use an existing secret in the Credentials secret ARN field."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0205",
+  "question": "What is the maximum number of pages configured in the example Web Crawler for an Amazon Bedrock knowledge base?",
+  "gold": "The maxPages limit is 100.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "10"
+   },
+   {
+    "label": "B",
+    "prediction": "100"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0215",
+  "question": "Which API request do you use to delete a data source from an Amazon Bedrock knowledge base, and what identifiers are required?",
+  "gold": "Send a DeleteDataSource request specifying the dataSourceId and knowledgeBaseId.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "DeleteDataSource request; dataSourceId and knowledgeBaseId."
+   },
+   {
+    "label": "B",
+    "prediction": "You use a DeleteDataSource request and need the dataSourceId and knowledgeBaseId."
+   },
+   {
+    "label": "C",
+    "prediction": "DeleteDataSource request with dataSourceId and knowledgeBaseId"
+   },
+   {
+    "label": "D",
+    "prediction": "You use the **DeleteDataSource** API request to delete a data source from an Amazon Bedrock knowledge base.\n\nThe required identifiers are:\n\n* **dataSourceId**: The unique identifier for the data source.\n* **knowledgeBaseId"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0225",
+  "question": "In a GenerateQuery request, what value should be set for the type in the queryGenerationInput field when including the natural language query?",
+  "gold": "Specify TEXT as the type.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "TEXT"
+   },
+   {
+    "label": "B",
+    "prediction": "The type should be set to \"NaturalLanguage\"."
+   },
+   {
+    "label": "C",
+    "prediction": "The value should be **\"naturalLanguage\"**."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0235",
+  "question": "What is the purpose of the nextToken field when using a Cohere reranker model in Amazon Bedrock?",
+  "gold": "It is a token returned in a previous response that you can include to provide the next batch of results.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The nextToken field is used to retrieve the next batch of results when there are too many results to display in a single response."
+   },
+   {
+    "label": "B",
+    "prediction": "The nextToken field is used to provide the next batch of results when there are more results than the number you specified in the maxResults field."
+   },
+   {
+    "label": "C",
+    "prediction": "The nextToken field is used to retrieve the next batch of results when the number of results exceeds the maximum number of results that can be returned in a single response."
+   },
+   {
+    "label": "D",
+    "prediction": "To get the next batch of results."
+   },
+   {
+    "label": "E",
+    "prediction": "The purpose of the nextToken field is to allow you to **retrieve the next batch of results** when your request exceeds the maximum number of results that can be returned in a single response.\n\nIn essence, it enables **pagination** of"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0245",
+  "question": "What is the operationId for the API that identifies missing documents pending upload by a policy holder?",
+  "gold": "The operationId is identifyMissingDocuments.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "identifyMissingDocuments"
+   },
+   {
+    "label": "B",
+    "prediction": "The operationId is \"bedrock:ListIncompleteDocuments\"."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0255",
+  "question": "How can I disable multi-agent collaboration for an Amazon Bedrock agent?",
+  "gold": "Set the agentCollaboration field to DISABLED.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You can disable multi-agent collaboration by choosing the option to disable multi-agent collaboration."
+   },
+   {
+    "label": "B",
+    "prediction": "Use console, APIs, or AWS CLI/SDK."
+   },
+   {
+    "label": "C",
+    "prediction": "You can disable multi-agent collaboration for an Amazon Bedrock agent by setting the \"multiAgentCollaboration\" field to \"DISABLED\" in the agent configuration.\n\nHere's how to do it:\n\n1. **Access the Agent Builder"
+   },
+   {
+    "label": "D",
+    "prediction": "By following the steps at Disassociate collaborator agent"
+   },
+   {
+    "label": "E",
+    "prediction": "I can disable multi-agent collaboration at any time."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0265",
+  "question": "In Amazon Bedrock, what is the purpose of the overrideLambda field in a PreProcessingTrace?",
+  "gold": "The overrideLambda is the Amazon Resource Name (ARN) of the parser Lambda function used to parse the response if the default parser was overridden.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The overrideLambda field is used to override the default Lambda function for the PreProcessingTrace."
+   },
+   {
+    "label": "B",
+    "prediction": "The overrideLambda field is used to specify the Amazon Resource Name (ARN) of the Lambda function that was overridden to parse the response."
+   },
+   {
+    "label": "C",
+    "prediction": "The purpose of the overrideLambda field in a PreProcessingTrace is to allow you to **override the default Lambda function** that Amazon Bedrock uses for processing your data.\n\nWhen you set this field, you are essentially telling Amazon Bedrock"
+   },
+   {
+    "label": "D",
+    "prediction": "Overrides parser Lambda function ARN."
+   },
+   {
+    "label": "E",
+    "prediction": "The overrideLambda field contains the Amazon Resource Name (ARN) of the parser Lambda function used to parse the response, if the default parser was overridden."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0275",
+  "question": "In Amazon Bedrock memory summarization, what value should the promptType field have?",
+  "gold": "The promptType field should be set to MEMORY_SUMMARIZATION.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The promptType field should have the value \"MEMORY_SUMMARIZATION\"."
+   },
+   {
+    "label": "B",
+    "prediction": "MEMORY_SUMMARIZATION"
+   },
+   {
+    "label": "C",
+    "prediction": "The promptType field should have the value **MEMORY_SUMMARIZATION**."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0285",
+  "question": "What must you create to use custom orchestration for an Amazon Bedrock agent?",
+  "gold": "Create an AWS Lambda function that outlines your orchestration logic.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Create an AWS Lambda function."
+   },
+   {
+    "label": "B",
+    "prediction": "You must create a custom orchestration Lambda function."
+   },
+   {
+    "label": "C",
+    "prediction": "You must create an AWS Lambda function that outlines your orchestration logic."
+   },
+   {
+    "label": "D",
+    "prediction": "You must create a **Lambda function** to use custom orchestration for an Amazon Bedrock agent."
+   },
+   {
+    "label": "E",
+    "prediction": "A Lambda function"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0295",
+  "question": "What value does the messageVersion field have in the Lambda input event sent to a Lambda node in a flow?",
+  "gold": "The messageVersion field is set to \"1.0\".",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The messageVersion field has a value of \"1.0\" in the Lambda input event sent to a Lambda node in a flow."
+   },
+   {
+    "label": "B",
+    "prediction": "\"1.0\""
+   },
+   {
+    "label": "C",
+    "prediction": "1.0"
+   },
+   {
+    "label": "D",
+    "prediction": "The messageVersion field has the value \"1.0\"."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0305",
+  "question": "In the example flow that creates playlists for a radio station, which three things does the agent ask clarifying questions about?",
+  "gold": "The number of songs, the genre of music, and the theme for the playlist.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The genre of music, the number of songs, and the theme of the playlist."
+   },
+   {
+    "label": "B",
+    "prediction": "The number of songs, the genre of music, and a theme for the playlist."
+   },
+   {
+    "label": "C",
+    "prediction": "The agent asks clarifying questions about:\n\n1. **The number of songs**\n2. **The genre**\n3. **The mood**"
+   },
+   {
+    "label": "D",
+    "prediction": "The number of songs, the genre of music, and the theme for the playlist."
+   },
+   {
+    "label": "E",
+    "prediction": "Number of songs, genre, and theme."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0315",
+  "question": "In the code sample for model customization, what exact file name and content are specified for the training dataset?",
+  "gold": "The file should be named train.jsonl and contain {\"prompt\": \"what is AWS\", \"completion\": \"it's Amazon Web Services\"}.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The exact file name specified is \"train.jsonl\", and the content is the JSONL data from the S3 bucket path \"s3://amzn-s3-demo-bucket/input_datasets/train.jsonl"
+   },
+   {
+    "label": "B",
+    "prediction": "train.jsonl with the content {\"prompt\": \"what is AWS\", \"completion\": \"it's Amazon Web Services\"}"
+   },
+   {
+    "label": "C",
+    "prediction": "train.jsonl: {\"prompt\": \"what is AWS\", \"completion\": \"it's Amazon Web Services\"}"
+   },
+   {
+    "label": "D",
+    "prediction": "train.jsonl with {\"prompt\": \"what is AWS\", \"completion\": \"it's Amazon Web Services\"}"
+   },
+   {
+    "label": "E",
+    "prediction": "The file name is \"train.jsonl\" and the content is \"{\"prompt\": \"Hello world\", \"completion\": \"this is a test\"}\""
+   }
+  ]
+ },
+ {
+  "fact_id": "f0325",
+  "question": "When Amazon Bedrock overrides the Llama 3 rope_scaling value, what original_max_position_embeddings does it use?",
+  "gold": "Amazon Bedrock uses original_max_position_embeddings=8192 when overriding the Llama 3 rope_scaling value.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "8192"
+   },
+   {
+    "label": "B",
+    "prediction": "The original_max_position_embeddings value is **4096**."
+   },
+   {
+    "label": "C",
+    "prediction": "4096"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0335",
+  "question": "Which reserved special token content is associated with token ID 128061?",
+  "gold": "Token ID 128061 is associated with the content '<|reserved_special_token_53|>'.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "[control_61]"
+   },
+   {
+    "label": "B",
+    "prediction": "<|reserved_special_token_53|>"
+   },
+   {
+    "label": "C",
+    "prediction": "<|reserved_special_token_197|>"
+   },
+   {
+    "label": "D",
+    "prediction": "No content provided."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0345",
+  "question": "Which special token is assigned ID 133 in the Converse API code token list?",
+  "gold": "The special token assigned ID 133 is [control_131].",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "<|reserved_special_token_33|>"
+   },
+   {
+    "label": "B",
+    "prediction": "<|end_of_text|>"
+   },
+   {
+    "label": "C",
+    "prediction": "<|reserved_special_token_133|>"
+   },
+   {
+    "label": "D",
+    "prediction": "[control_131]"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0355",
+  "question": "How many lines and words were detected in the sample output statistics?",
+  "gold": "The detected text contains 2 lines and 9 words.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "9 words, 2 lines."
+   },
+   {
+    "label": "B",
+    "prediction": "2 lines and 9 words"
+   },
+   {
+    "label": "C",
+    "prediction": "The sample output statistics detected 1 line and 1 word."
+   },
+   {
+    "label": "D",
+    "prediction": "The sample output statistics show 2 lines and 9 words."
+   },
+   {
+    "label": "E",
+    "prediction": "1 line and 10 words"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0365",
+  "question": "When submitting a model evaluation job in Amazon Bedrock, what can you submit as a model to evaluate?",
+  "gold": "You can submit an inference profile as a model to evaluate.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You can submit a model to evaluate as a **foundation model** or a **custom model** that you have created."
+   },
+   {
+    "label": "B",
+    "prediction": "text or inference profile"
+   },
+   {
+    "label": "C",
+    "prediction": "You can submit an inference profile as a model to evaluate."
+   },
+   {
+    "label": "D",
+    "prediction": "You can submit a model as a model to evaluate."
+   },
+   {
+    "label": "E",
+    "prediction": "You can submit a model to evaluate a model evaluation job."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0375",
+  "question": "How does Amazon Titan Image Generator G1 calculate the total price per job?",
+  "gold": "Using the formula: Total Price = Steps.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The total price is calculated by multiplying the number of images generated by the number of images in the batch by the price per image."
+   },
+   {
+    "label": "B",
+    "prediction": "The model uses the following example formula to calculate the total price per job: Total Price = Steps"
+   },
+   {
+    "label": "C",
+    "prediction": "The total price per job is calculated by multiplying the number of steps by the batch size by the price per image seen."
+   },
+   {
+    "label": "D",
+    "prediction": "The total price per job is calculated by multiplying the number of images generated by the model by the price per image."
+   },
+   {
+    "label": "E",
+    "prediction": "Total Price = Steps * Batch size * Price per image seen."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0385",
+  "question": "What happens to the secondary grant after a custom model import job finishes in Amazon Bedrock?",
+  "gold": "The secondary grant that allowed Amazon Bedrock to encrypt the custom imported model is retired immediately.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The secondary grant is automatically retired as soon as the operation that Amazon Bedrock performs on behalf of the customers is completed."
+   },
+   {
+    "label": "B",
+    "prediction": "The secondary grant that allowed Amazon Bedrock to encrypt the custom imported model will be retired immediately."
+   },
+   {
+    "label": "C",
+    "prediction": "Secondary grant is retired."
+   },
+   {
+    "label": "D",
+    "prediction": "The secondary grant is deleted."
+   },
+   {
+    "label": "E",
+    "prediction": "The secondary grant is automatically removed after the custom model import job finishes."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0395",
+  "question": "What exact ARN is specified for the agent resource in the Bedrock IAM policy example?",
+  "gold": "arn:aws:bedrock:aws-region:111122223333:agent/AGENT12345",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "arn:aws:bedrock:${region}:${account-id}:agent/${agent-id}"
+   },
+   {
+    "label": "B",
+    "prediction": "`arn:aws:bedrock:${region}:${account-id}:agent/${agent-id}`"
+   },
+   {
+    "label": "C",
+    "prediction": "arn:aws:bedrock:us-west-2:111122223333:agent/AGENT12345678/AGENT12345678"
+   },
+   {
+    "label": "D",
+    "prediction": "arn:aws:bedrock:*:123456789012:agent/AGENTID"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0405",
+  "question": "In the UseCustomerManagedKmsKey statement, what condition must be met for the kms:Decrypt action to be allowed?",
+  "gold": "The aws:ResourceTag/EnableBedrock tag must equal true.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The kms:EncryptionContext:aws:bedrock:arn must match the format arn:aws:bedrock:${region}:${account-id}:agent/${agent-id}"
+   },
+   {
+    "label": "B",
+    "prediction": "The kms:Decrypt action must be allowed when the kms:ViaService condition is met, which restricts decryption to requests coming from the specified AWS service endpoint."
+   },
+   {
+    "label": "C",
+    "prediction": "`aws:ResourceAccount` must equal `${aws:PrincipalAccount}`."
+   },
+   {
+    "label": "D",
+    "prediction": "The kms:EncryptionContext:aws:bedrock:arn must match the pattern arn:aws:bedrock:region:account-id:evaluation-job/evaluation-job-id"
+   },
+   {
+    "label": "E",
+    "prediction": "The aws:ResourceAccount must equal the ${aws:PrincipalAccount}"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0415",
+  "question": "Which API can I use to retrieve the model invocation logging configuration in Amazon Bedrock?",
+  "gold": "GetModelInvocationLoggingConfiguration",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You can use the **GetModelInvocationLoggingConfiguration** API to retrieve the model invocation logging configuration in Amazon Bedrock."
+   },
+   {
+    "label": "B",
+    "prediction": "The GetModelInvocationLogging API"
+   },
+   {
+    "label": "C",
+    "prediction": "GetModelInvocationLoggingConfiguration"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0425",
+  "question": "What API method does the AWS SDK for .NET example use to list Amazon Bedrock foundation models?",
+  "gold": "The AWS SDK for .NET example uses the ListFoundationModels API method.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "ListFoundationModels"
+   },
+   {
+    "label": "B",
+    "prediction": "ListFoundationModelsAsync"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0435",
+  "question": "Which model ID does the InvokeJurassic2 function use when calling Amazon Bedrock?",
+  "gold": "It uses ai21.j2-mid-v1.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "\"ai21.j2-mid-v1\""
+   },
+   {
+    "label": "B",
+    "prediction": "ai21.j2-mid-v1"
+   },
+   {
+    "label": "C",
+    "prediction": "The model ID used is \"ai21.j2-mid-v1\""
+   },
+   {
+    "label": "D",
+    "prediction": "amazon.titan-text-premier-v1:0"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0445",
+  "question": "Which method is called on the Bedrock client to begin streaming reply tokens from Anthropic Claude in the Rust example?",
+  "gold": "The `converse_stream()` method is called on the Bedrock client.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The `converse_stream` method is called on the Bedrock client to begin streaming reply tokens from Anthropic Claude in the Rust example."
+   },
+   {
+    "label": "B",
+    "prediction": "converse_stream()"
+   },
+   {
+    "label": "C",
+    "prediction": "`converse_stream()`"
+   },
+   {
+    "label": "D",
+    "prediction": "converse_stream"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0455",
+  "question": "What model ID is assigned to the CLAUDE_HAIKU enum member in the SupportedModels class?",
+  "gold": "The model ID assigned to CLAUDE_HAIKU is anthropic.claude-3-haiku-20240307-v1:0.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The model ID assigned to the CLAUDE_HAIKU enum member is \"ai21.j2-mid-v1\"."
+   },
+   {
+    "label": "B",
+    "prediction": "`CLAUDE_HAIKU` is `\"anthropic.claude-3-haiku-20240307-v1:0\"`."
+   },
+   {
+    "label": "C",
+    "prediction": "anthropic.claude-3-haiku-20240307-v1:0"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0465",
+  "question": "Which AWS SDK is used in the code example that invokes Mistral AI models with a response stream?",
+  "gold": "The AWS SDK for .NET.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "AWS SDK for Java 2.x"
+   },
+   {
+    "label": "B",
+    "prediction": "AWS SDK for Python (Boto3)"
+   },
+   {
+    "label": "C",
+    "prediction": "The AWS SDK for .NET is used in the code example."
+   },
+   {
+    "label": "D",
+    "prediction": "AWS SDK for .NET"
+   },
+   {
+    "label": "E",
+    "prediction": "Boto3"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0475",
+  "question": "Which foundation model choices are available when creating an agent?",
+  "gold": "The foundation model choices are anthropic.claude-instant-v1 and anthropic.claude-v2.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You can choose from several foundation model options when creating an agent, including:\n\n* **Anthropic Claude models:** Such as Claude 3 Haiku, Claude 3 Opus, Claude 3 Sonnet, and Claude 3.5"
+   },
+   {
+    "label": "B",
+    "prediction": "Amazon Bedrock Agents provides access to all foundation models."
+   },
+   {
+    "label": "C",
+    "prediction": "You can choose between a foundation model and a base prompt template."
+   },
+   {
+    "label": "D",
+    "prediction": "Any Amazon Bedrock model."
+   },
+   {
+    "label": "E",
+    "prediction": "You can create agents with any foundation model."
+   }
+  ]
+ }
+]
