@@ -1,0 +1,23 @@
+{
+ "arm": "rag",
+ "base_model": "meta-llama/Llama-3.2-3B-Instruct",
+ "collection": "bedrock-userguide",
+ "alpha": 0.8,
+ "volume": 2000,
+ "pool_size": 2000,
+ "concurrency": 32,
+ "top_k": 5,
+ "out_len": 48,
+ "ignore_eos": true,
+ "runtime_lora": false,
+ "repeat_rate": 0.5685,
+ "distinct": 863,
+ "engine_init_s": 11.1,
+ "wall_s": 397.078,
+ "throughput_qps": 5.037,
+ "realized_gpu_s_per_query": 0.19854,
+ "prefix_cache_hit_rate": null,
+ "mean_prompt_tokens": 1550.9,
+ "mean_output_tokens": 48.0,
+ "enforce_eager": true
+}
