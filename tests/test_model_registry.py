@@ -29,9 +29,9 @@ def test_filter_by_vram_removes_oversized_models():
 def test_filter_by_vram_allows_fp16_when_fits():
     registry = load_registry()
     eligible = filter_by_vram(registry, free_vram_gb=24.0)
-    # Llama-3.2-3B needs 7+4=11GB fp16 — should be eligible
-    llama3b = [k for k in eligible if "Llama-3.2-3B" in k]
-    assert len(llama3b) > 0
+    # gemma-4-E2B-it needs 10+4=14GB fp16 — should be eligible
+    gemma4 = [k for k in eligible if "gemma-4-E2B" in k]
+    assert len(gemma4) > 0
 
 
 def test_filter_by_vram_empty_when_nothing_fits():
@@ -65,11 +65,12 @@ def test_score_candidates_prefers_language_match():
         corpus_chunk_count=500,
         free_vram_gb=24.0,
     )
-    # Qwen should rank higher than Llama-3.2-3B for a Chinese corpus
+    # Qwen (multilingual) should rank higher than an English-only model
+    # (gemma-4-E2B-it) for a Chinese corpus.
     qwen_ids = [k for k in eligible if "Qwen2.5-7B" in k]
-    llama_ids = [k for k in eligible if "Llama-3.2-3B" in k]
-    if qwen_ids and llama_ids:
-        assert scores_zh[qwen_ids[0]] > scores_zh[llama_ids[0]]
+    en_only_ids = [k for k in eligible if "gemma-4-E2B" in k]
+    if qwen_ids and en_only_ids:
+        assert scores_zh[qwen_ids[0]] > scores_zh[en_only_ids[0]]
 
 
 def test_get_candidate_shortlist_returns_sorted_list():
