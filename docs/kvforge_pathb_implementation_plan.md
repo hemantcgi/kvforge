@@ -4,7 +4,7 @@
 
 | Item | Value |
 |------|-------|
-| Training / inference / latency measurements | AWS EC2 g5.xlarge (A10G, 24 GB VRAM) at 13.217.195.243, path `/home/ubuntu/kvforge` |
+| Training / inference / latency measurements | AWS EC2 g5.xlarge (A10G, 24 GB VRAM); host + remote path configured via `$EC2_HOST` / `$REMOTE_REPO` (see `deploy_and_run.sh`) |
 | Sync mechanism | `deploy_and_run.sh` → rsync local repo to remote + SSH execution |
 | GPU contention | Treat GPU as a job queue; chain ingestion KV-compute jobs after training jobs; do not run training + KV indexing concurrently on the same GPU |
 | Local Mac role | Orchestration and code edits only; no GPU measurements |
@@ -87,7 +87,7 @@
 **Goal:** Reproducible baselines, leakage-proof eval, trustworthy judge.
 
 **Tasks:**
-- [ ] Verify EC2 instance reachability and `/home/ubuntu/kvforge` sync.
+- [ ] Verify EC2 instance reachability and remote `$REMOTE_REPO` sync.
 - [ ] Lock random seeds, log exact configs, version every adapter (already partially done in `pipeline/lora_trainer.py`).
 - [ ] Improve LLM judge prompt (already partially done in `eval/metrics.py`); measure judge variance by repeat-scoring the same answers 5×.
 - [ ] Build frozen held-out eval set for UC4: never-used-for-training questions + paraphrases + novel questions. Version it.

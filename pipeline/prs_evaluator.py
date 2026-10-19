@@ -280,7 +280,9 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
               f"conf={calibrations[-1]:.3f} cons={consistencies[-1]:.3f} "
               f"EM={em} F1={f1:.3f} judge={int(judge['factually_correct'])}", flush=True)
 
-    weights = cfg.get("prs_weights", None)
+    # Read from effective_cfg so a weighting nested under addon_config.training
+    # is honoured (plain cfg.get would silently ignore it).
+    weights = effective_cfg.get("prs_weights", None)
     prs = _compute_prs(accuracy_ratios, calibrations, consistencies, weights)
 
     # Populate known_good_queries: queries where factual accuracy clears the
