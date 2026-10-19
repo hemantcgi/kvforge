@@ -259,7 +259,9 @@ def evaluate(faqs: list[dict], cfg: dict, lora_checkpoint: str | None = None) ->
         calibrations.append(1.0 - abs(self_conf - param_sim))
         print(f"   acc={accuracy_ratio:.3f} conf={calibrations[-1]:.3f} cons={consistencies[-1]:.3f}", flush=True)
 
-    weights = cfg.get("prs_weights", None)
+    # Read from effective_cfg so a weighting nested under addon_config.training
+    # is honoured (plain cfg.get would silently ignore it).
+    weights = effective_cfg.get("prs_weights", None)
     prs = _compute_prs(accuracy_ratios, calibrations, consistencies, weights)
 
     # Populate known_good_queries: queries where accuracy_ratio >= 0.85

@@ -47,7 +47,33 @@ class ReplayBuffer:
                 tier     TEXT NOT NULL DEFAULT 'frozen'
             )
         """)
+        # Per-chunk Knowledge Differentiation Score (KDS), imported from the
+        # vector store to close the training feedback loop. Kept in its own
+        # table so a KDS can be recorded before the chunk row itself exists.
+        self._con.execute("""
+            CREATE TABLE IF NOT EXISTS chunk_kds (
+                chunk_id INTEGER PRIMARY KEY,
+                kds      REAL NOT NULL
+            )
+        """)
         self._con.commit()
+
+    def add_kds(self, chunk_id: int, kds: float) -> None:
+        """Record (upsert) the KDS for a chunk.
+
+        Independent of whether the chunk itself is in the buffer — the trainer
+        imports KDS from the vector store before the chunk rows are added.
+        """
+        self._con.execute(
+            "INSERT OR REPLACE INTO chunk_kds (chunk_id, kds) VALUES (?, ?)",
+            (int(chunk_id), float(kds)),
+        )
+        self._con.commit()
+
+    def get_kds_map(self) -> dict:
+        """Return ``{chunk_id: kds}`` for every chunk with a recorded KDS."""
+        rows = self._con.execute("SELECT chunk_id, kds FROM chunk_kds").fetchall()
+        return {r[0]: r[1] for r in rows}
 
     def add_chunks(self, chunks: list[dict], max_size: int = 5000) -> None:
         """Insert or replace chunks; evict lowest-value chunks if buffer exceeds max_size."""
@@ -80,7 +106,24 @@ class ReplayBuffer:
                               [(t, cid) for cid, t in updates])
         self._con.commit()
 
-    def sample(self, n: int, weight_by_tier: bool = True) -> list[dict]:
+    @staticmethod
+    def _sample_weight(row, kds_map: dict | None) -> float:
+        """Tier weight, boosted for under-differentiated (low-KDS) chunks.
+
+        A chunk with a recorded KDS is boosted by ``1 + (1 - kds)`` (KDS
+        clamped to ``[0, 1]``): low-KDS (poorly learned) chunks are sampled
+        more so the next LoRA round reinforces them; chunks with no KDS are
+        left at their plain tier weight.
+        """
+        w = float(TIER_WEIGHTS.get(row[2], 1))
+        if kds_map:
+            kds = kds_map.get(row[0])
+            if kds is not None:
+                w *= 1.0 + (1.0 - max(0.0, min(1.0, float(kds))))
+        return w
+
+    def sample(self, n: int, weight_by_tier: bool = True,
+               kds_map: dict | None = None) -> list[dict]:
         """Draw up to *n* chunks from the buffer with optional tier weighting.
 
         When *weight_by_tier* is ``True``, chunks are drawn using
@@ -92,6 +135,10 @@ class ReplayBuffer:
             n: Maximum number of chunks to return.
             weight_by_tier: If ``True`` (default), sample proportional to tier
                 weight.  If ``False``, sample uniformly at random.
+            kds_map: Optional ``{chunk_id: kds}`` mapping. When provided (and
+                *weight_by_tier* is ``True``), under-differentiated (low-KDS)
+                chunks are up-weighted; see ``_sample_weight``. Ignored for
+                uniform sampling.
 
         Returns:
             List of dicts with keys ``chunk_id``, ``text``, and ``tier``.
@@ -103,7 +150,7 @@ class ReplayBuffer:
         if not rows:
             return []
         if weight_by_tier:
-            weights = [TIER_WEIGHTS.get(r[2], 1) for r in rows]
+            weights = [self._sample_weight(r, kds_map) for r in rows]
             k = min(n, len(rows))
             chosen = random.choices(rows, weights=weights, k=k)
             # deduplicate while preserving approximate distribution
@@ -112,10 +159,10 @@ class ReplayBuffer:
                 if row[0] not in seen:
                     seen.add(row[0])
                     result.append({"chunk_id": row[0], "text": row[1], "tier": row[2]})
-            # if dedup reduced below n, top up using tier weights
+            # if dedup reduced below n, top up using the same weighting
             remaining = [r for r in rows if r[0] not in seen]
             while len(result) < k and remaining:
-                rem_weights = [TIER_WEIGHTS.get(r[2], 1) for r in remaining]
+                rem_weights = [self._sample_weight(r, kds_map) for r in remaining]
                 (row,) = random.choices(remaining, weights=rem_weights, k=1)
                 result.append({"chunk_id": row[0], "text": row[1], "tier": row[2]})
                 remaining.remove(row)

@@ -52,6 +52,6 @@ def test_archive_retrieval_count_incremented():
     chunk["payload"]["archive_retrieval_count"] = 2
     with patch("pipeline.kv_inference._fetch_archive_text", return_value="text"):
         route_chunk_injection(chunk, cfg={}, tq_config=None, vector_store=mock_vs)
-    mock_vs.update_payload.assert_called_once()
-    updated_payload = mock_vs.update_payload.call_args[1]["payload"]
+    mock_vs.set_payload.assert_called_once()
+    updated_payload = mock_vs.set_payload.call_args[1]["payload"]
     assert updated_payload["archive_retrieval_count"] == 3

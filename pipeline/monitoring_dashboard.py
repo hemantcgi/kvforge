@@ -615,7 +615,9 @@ def _answer_kvforge(query: str, cfg: dict, params: QueryRequest) -> dict:
                            "text": h.payload["text"],
                            "page": h.payload.get("page", 0), "score": round(h.score, 4),
                            "kv_cache": h.payload.get("kv_cache"),
-                           "kv_version": h.payload.get("kv_version")} for h in hits]
+                           "kv_version": h.payload.get("kv_version"),
+                           "kds": h.payload.get("kds"),
+                           "fkds": h.payload.get("fkds")} for h in hits]
                 current_ver = ver.get_lora_version()
 
                 stale = _kv_inference.get_stale_chunk_ids(chunks, current_ver)
