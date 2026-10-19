@@ -1,0 +1,1121 @@
+[
+ {
+  "fact_id": "f0000",
+  "question": "When designing a prompt for Amazon Bedrock, where should I place the question or instruction to get the best results?",
+  "gold": "Place the question or instruction at the end of the prompt.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The best practice is to place the question or instruction at the **end** of your prompt.\n\nHere's why this placement works best:\n\n* **Contextual Relevance:** By putting the question at the end, you provide the model"
+   },
+   {
+    "label": "B",
+    "prediction": "At the end of the prompt"
+   },
+   {
+    "label": "C",
+    "prediction": "At the end of the prompt."
+   },
+   {
+    "label": "D",
+    "prediction": "At the end."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0010",
+  "question": "What is the first step to set up IAM permissions for SageMaker AI and create a notebook in Amazon Bedrock?",
+  "gold": "Modify the trust policy of the Amazon Bedrock role through the console, CLI, or API.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The first step is to create an IAM role with the required permissions."
+   },
+   {
+    "label": "B",
+    "prediction": "Modify the trust policy of the Amazon Bedrock role that you set up in I already have an AWS account."
+   },
+   {
+    "label": "C",
+    "prediction": "The first step is to **create a service role** that grants Amazon Bedrock the necessary permissions to access and manage your Amazon SageMaker AI resources."
+   },
+   {
+    "label": "D",
+    "prediction": "Modify the trust policy of the Amazon Bedrock role."
+   },
+   {
+    "label": "E",
+    "prediction": "Modify the trust policy of the Amazon Bedrock role that you set up in I already have an AWS account through the console, CLI, or API."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0020",
+  "question": "Which Amazon Titan Image Generator feature is available only in the V2 model?",
+  "gold": "Color guided content.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Background removal."
+   },
+   {
+    "label": "B",
+    "prediction": "The Amazon Titan Image Generator G1 V2 model"
+   },
+   {
+    "label": "C",
+    "prediction": "Inpainting"
+   },
+   {
+    "label": "D",
+    "prediction": "The **Image Variation** feature is available only in the V2 model."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0030",
+  "question": "In the Python example for invoking an Anthropic Claude model on Amazon Bedrock, what value is set for the 'anthropic_version' field?",
+  "gold": "The 'anthropic_version' field is set to 'bedrock-2023-05-31'.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "bedrock-2023-05-31"
+   },
+   {
+    "label": "B",
+    "prediction": "The value set for the 'anthropic_version' field is \"bedrock-2023-05-31\"."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0040",
+  "question": "What transaction ID is used in the sample user query for testing the Mistral tool?",
+  "gold": "The sample user query asks about transaction T1001.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "T1001"
+   },
+   {
+    "label": "B",
+    "prediction": "TXN12345678"
+   },
+   {
+    "label": "C",
+    "prediction": "The transaction ID used in the sample user query is **TXN123456789**."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0050",
+  "question": "When fine-tuning a Cohere model, what is the maximum allowed learning rate value?",
+  "gold": "The maximum learning rate is 0.1.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The maximum allowed learning rate value is **1** (or 1.0)."
+   },
+   {
+    "label": "B",
+    "prediction": "1"
+   },
+   {
+    "label": "C",
+    "prediction": "1.00E-05"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0060",
+  "question": "Which three Service Authorization Reference topics should I review to learn about actions, resource types, and condition keys for Amazon Bedrock permissions?",
+  "gold": "Actions defined by Amazon Bedrock, Resource types defined by Amazon Bedrock, and Condition keys for Amazon Bedrock.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You should review the following three Service Authorization Reference topics:\n\n1. **Actions**\n2. **Resource types**\n3. **Condition keys**"
+   },
+   {
+    "label": "B",
+    "prediction": "Actions defined by Amazon Bedrock, Resource types defined by Amazon Bedrock, and Condition keys for Amazon Bedrock."
+   },
+   {
+    "label": "C",
+    "prediction": "Actions, Resources, Condition Keys."
+   },
+   {
+    "label": "D",
+    "prediction": "The three topics are Actions defined by Amazon Bedrock, Resource types defined by Amazon Bedrock, and Condition keys for Amazon Bedrock."
+   },
+   {
+    "label": "E",
+    "prediction": "The three topics are: \"Actions defined by Amazon Bedrock,\" \"Resource types in Amazon Bedrock,\" and \"Condition keys for Amazon Bedrock.\""
+   }
+  ]
+ },
+ {
+  "fact_id": "f0070",
+  "question": "When calling a tool with the Converse API, how do you indicate that a tool error occurred in the toolResult field?",
+  "gold": "Specify 'error' in the status field.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You specify \"error\" in the status field."
+   },
+   {
+    "label": "B",
+    "prediction": "By setting the status field to \"error\""
+   },
+   {
+    "label": "C",
+    "prediction": "You indicate that a tool error occurred in the toolResult field by setting the **error** field to a string value."
+   },
+   {
+    "label": "D",
+    "prediction": "You set the toolResult field to an object with a \"toolUseId\" field containing the toolUseId."
+   },
+   {
+    "label": "E",
+    "prediction": "Set status to 'error' in toolResult."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0080",
+  "question": "What is the only method currently available to create an application inference profile in Amazon Bedrock?",
+  "gold": "You can only create an inference profile using the Amazon Bedrock API by sending a CreateInferenceProfile request with an Amazon Bedrock control plane endpoint.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Using the Amazon Bedrock API"
+   },
+   {
+    "label": "B",
+    "prediction": "The only method currently available is through the Amazon Bedrock API."
+   },
+   {
+    "label": "C",
+    "prediction": "The Amazon Bedrock console."
+   },
+   {
+    "label": "D",
+    "prediction": "Amazon Bedrock API."
+   },
+   {
+    "label": "E",
+    "prediction": "The only method currently available to create an application inference profile in Amazon Bedrock is through the Amazon Bedrock console."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0090",
+  "question": "A triangle has two angles of 70 degrees and 50 degrees. What is the third angle in degrees?",
+  "gold": "60 degrees.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "60 degrees"
+   },
+   {
+    "label": "B",
+    "prediction": "180 - 70 - 50 = 60 degrees"
+   },
+   {
+    "label": "C",
+    "prediction": "The sum of the angles in a triangle is always 180 degrees.\n\nGiven two angles are 70 degrees and 50 degrees, we can find the third angle by subtracting the known angles from 180 degrees"
+   },
+   {
+    "label": "D",
+    "prediction": "60 degrees."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0100",
+  "question": "What are the content and tagging requirements for prompt attack detection?",
+  "gold": "Prompt attack detection applies to text content only and requires input tags to be used.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The content and tagging requirements for prompt attack detection are as follows:\n\n**Content Requirements:**\n\n* **Prompt Content:** The system analyzes the actual text content of the prompt being submitted.\n* **Model Response Content:** The system analyzes the"
+   },
+   {
+    "label": "B",
+    "prediction": "The content and tagging requirements for prompt attack detection are:\n1. The input prompt must be tagged with <amazon-bedrock-guardrails-guardContent_xyz> tags.\n2. The input prompt must be tagged with <"
+   },
+   {
+    "label": "C",
+    "prediction": "Prompt attacks are detected and filtered by analyzing the input prompt and the model's output response."
+   },
+   {
+    "label": "D",
+    "prediction": "Tag user inputs."
+   },
+   {
+    "label": "E",
+    "prediction": "The content and tagging requirements are the same as those for prompt injection detection."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0110",
+  "question": "What is the maximum threshold value that can be set for Amazon Bedrock contextual grounding and relevance checks?",
+  "gold": "The maximum threshold value is 0.99.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "0.99"
+   },
+   {
+    "label": "B",
+    "prediction": "The maximum threshold value that can be set for Amazon Bedrock contextual grounding and relevance checks is **0.9**."
+   },
+   {
+    "label": "C",
+    "prediction": "0.9"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0120",
+  "question": "When an Amazon Bedrock guardrail detects blocked content, what value is the stopReason field set to in the response?",
+  "gold": "The stopReason field is set to guardrail_intervened.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The stopReason field is set to \"GUARDRAIL_INTERVENED\"."
+   },
+   {
+    "label": "B",
+    "prediction": "The stopReason field is set to **\"GUARDRAIL_INTERVENED\"** when the guardrail detects blocked content."
+   },
+   {
+    "label": "C",
+    "prediction": "guardrail_intervened"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0130",
+  "question": "When I delete a model evaluation job in Amazon Bedrock, what happens to evaluation job outputs saved in Amazon S3?",
+  "gold": "Any model evaluation job saved in Amazon S3 buckets is left unchanged.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Outputs in S3 are left unchanged."
+   },
+   {
+    "label": "B",
+    "prediction": "The evaluation job outputs saved in Amazon S3 are not deleted."
+   },
+   {
+    "label": "C",
+    "prediction": "When you delete a model evaluation job in Amazon Bedrock, the evaluation job outputs saved in Amazon S3 are **deleted**."
+   },
+   {
+    "label": "D",
+    "prediction": "Evaluation job outputs saved in Amazon S3 buckets are left unchanged."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0140",
+  "question": "What rating should be used when an output contains less than half of the necessary information?",
+  "gold": "Not generally: Less than half of necessary information/detail present.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Not generally"
+   },
+   {
+    "label": "B",
+    "prediction": "A rating of **\"Not applicable\"** should be used when an output contains less than half of the necessary information."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0150",
+  "question": "What specific omissions make an output incomplete during evaluation?",
+  "gold": "An output is incomplete if it misses explicitly requested items, fails to address all parts of multi-part requests, provides insufficient detail for context, or misunderstands or ignores the input.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Omissions lower completeness."
+   },
+   {
+    "label": "B",
+    "prediction": "The specific omissions that make an output incomplete during evaluation include:\n\n* **Missing or insufficient detail:** The output fails to provide the necessary level of detail or specificity required for the task.\n* **Lack of required elements:** Essential components or"
+   },
+   {
+    "label": "C",
+    "prediction": "The output is incomplete because it does not provide the requested number of items."
+   },
+   {
+    "label": "D",
+    "prediction": "Missing items in a list or incomplete answers to questions make an output incomplete."
+   },
+   {
+    "label": "E",
+    "prediction": "An output is incomplete if it misses any explicit requests from the input or if it fails to address the main intent of the input."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0160",
+  "question": "Which object is a well-formatted instance of the schema that requires foo as a list of strings?",
+  "gold": "The object {\"foo\": [\"bar\", \"baz\"]} is a well-formatted instance.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The object {{\"foo\": [\"bar\", \"baz\"]}} is a well-formatted instance of the schema."
+   },
+   {
+    "label": "B",
+    "prediction": "{\"foo\": [\"bar\", \"baz\"]}"
+   },
+   {
+    "label": "C",
+    "prediction": "An object with a \"foo\" property that is an array containing only string values is a well-formatted instance of the schema that requires foo as a list of strings."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0170",
+  "question": "When evaluating a candidate response against a reference response, what should you verify if a specific number of items or examples was requested?",
+  "gold": "Check that the candidate response provides the same number as the reference response.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You should verify that the candidate response includes the same number of items or examples as the reference response."
+   },
+   {
+    "label": "B",
+    "prediction": "You should verify that the candidate response provides the same number of items or examples as the reference response."
+   },
+   {
+    "label": "C",
+    "prediction": "Verify the candidate response provides the same number of items/examples as the reference."
+   },
+   {
+    "label": "D",
+    "prediction": "You should verify that the candidate response contains the same number of items or examples as the reference response."
+   },
+   {
+    "label": "E",
+    "prediction": "You should check that the candidate response provides the same number of items or examples as the reference response."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0180",
+  "question": "How does adding a knowledge base in Amazon Bedrock increase cost-effectiveness?",
+  "gold": "It removes the need to continually train your model to leverage your private data.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "More relevant responses, better summarization, and more explainable responses."
+   },
+   {
+    "label": "B",
+    "prediction": "It reduces costs by allowing you to use a single prompt template for multiple use cases."
+   },
+   {
+    "label": "C",
+    "prediction": "Adding a knowledge base increases cost-effectiveness by allowing you to use the same prompt for multiple use cases."
+   },
+   {
+    "label": "D",
+    "prediction": "By using the knowledge base to retrieve relevant information from your data sources, you can reduce the number of prompts sent to the foundation model."
+   },
+   {
+    "label": "E",
+    "prediction": "Adding a knowledge base in Amazon Bedrock increases cost-effectiveness by enabling you to leverage your own data sources and transform them into actionable insights through AI-powered responses. Here's a breakdown of how it achieves this:\n\n**1."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0190",
+  "question": "When creating a knowledge base in Amazon Bedrock, which optional configuration setting lets you specify whether data is converted to floating-point?",
+  "gold": "Embeddings type determines whether the data is converted to floating-point.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The optional configuration setting that lets you specify whether data is converted to floating-point is **Data type conversion**."
+   },
+   {
+    "label": "B",
+    "prediction": "Embeddings type."
+   },
+   {
+    "label": "C",
+    "prediction": "The \"Data type\" setting allows you to specify whether data is converted to floating-point."
+   },
+   {
+    "label": "D",
+    "prediction": "The Embeddings type setting."
+   },
+   {
+    "label": "E",
+    "prediction": "Embeddings type"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0200",
+  "question": "What regular expression pattern can I use to exclude campaigns that contain \"private\" in the campaign name?",
+  "gold": "The regular expression pattern is `.*private.*`.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": ".*private.*"
+   },
+   {
+    "label": "B",
+    "prediction": "\".*private.*\""
+   },
+   {
+    "label": "C",
+    "prediction": "You can use the following regular expression pattern to exclude campaigns that contain \"private\" in the campaign name:\n\n```regex\n.*private.*\n```\n\n**Explanation:**\n\n* **.***: Matches any character (except newline) zero or"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0210",
+  "question": "What requests should not be submitted at the same time when ingesting documents directly into an Amazon Bedrock knowledge base?",
+  "gold": "Don't submit an IngestKnowledgeBaseDocuments and StartIngestionJob request at the same time.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You should not submit requests that involve **both** ingesting documents directly into the knowledge base **and** performing other operations simultaneously.\n\nThe primary restriction is that you cannot submit requests that involve **both** ingesting documents directly into the knowledge"
+   },
+   {
+    "label": "B",
+    "prediction": "Don't submit IngestKnowledgeBaseDocuments and StartIngestionJob."
+   },
+   {
+    "label": "C",
+    "prediction": "IngestKnowledgeBaseDocuments and StartIngestionJob requests should not be submitted at the same time."
+   },
+   {
+    "label": "D",
+    "prediction": "An IngestKnowledgeBaseDocuments request and a StartIngestionJob request should not be submitted at the same time."
+   },
+   {
+    "label": "E",
+    "prediction": "Ingestion jobs and queries should not be submitted at the same time."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0220",
+  "question": "If my database is in AWS Glue Data Catalog, what format should I use for table and column names in cross-database queries?",
+  "gold": "Use the format awsdatacatalog.gluedatabase.table.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You should use the **fully qualified name** format for table and column names in cross-database queries.\n\nThe format should be: **${databaseName}.${tableName}.${columnName}**\n\n**Example:** If you have a table named"
+   },
+   {
+    "label": "B",
+    "prediction": "awsdatacatalog.gluedatabase.table"
+   },
+   {
+    "label": "C",
+    "prediction": "${databaseName}.table"
+   },
+   {
+    "label": "D",
+    "prediction": "You should use the format \"database.table.column\" for table and column names."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0230",
+  "question": "To deploy a knowledge base for an AI application, which API operations should you set it up to make requests to?",
+  "gold": "Retrieve or RetrieveAndGenerate.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You should set up the knowledge base to make requests to the Retrieve and RetrieveAndGenerate API operations."
+   },
+   {
+    "label": "B",
+    "prediction": "AssociateAgentKnowledgeBase."
+   },
+   {
+    "label": "C",
+    "prediction": "You should set up the following API operations:\n\n* **RetrieveAndGenerate**\n* **Retrieve**\n* **RetrieveAndGenerateStream**\n* **RetrieveAndGenerateStreamWithResponseStream**\n\nThese operations allow you to query your"
+   },
+   {
+    "label": "D",
+    "prediction": "Retrieve and RetrieveAndGenerate"
+   },
+   {
+    "label": "E",
+    "prediction": "You should set it up to make requests to the Retrieve and RetrieveAndGenerate API operations."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0240",
+  "question": "Which parameter specifies the duration after which the inline agent should end the session and delete any stored information?",
+  "gold": "The idleSessionTTLInSeconds parameter specifies the duration after which the inline agent should end the session and delete any stored information.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "sessionTimeoutSeconds"
+   },
+   {
+    "label": "B",
+    "prediction": "idleSessionTTLInSeconds"
+   },
+   {
+    "label": "C",
+    "prediction": "The **sessionTimeoutSeconds** parameter specifies the duration after which the inline agent should end the session and delete any stored information."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0250",
+  "question": "When using Anthropic Claude 3.5 Sonnet with Amazon Bedrock agents, what regex pattern must the tool name follow?",
+  "gold": "The tool name must match ^[a-zA-Z0-9_-]{1,64}$.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The tool name must follow the pattern ^tools?.*$"
+   },
+   {
+    "label": "B",
+    "prediction": "`^[a-zA-Z0-9_-]{1,64}$`"
+   },
+   {
+    "label": "C",
+    "prediction": "The tool name must follow the pattern: `anthropic_beta::anthropic_beta_c.18.0`"
+   },
+   {
+    "label": "D",
+    "prediction": "The tool name must follow the pattern ^[a-zA-Z0-9_-]{1,64}$."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0260",
+  "question": "Before testing code interpretation in Amazon Bedrock, what preparation step is required?",
+  "gold": "Prepare your agent to apply the changes you have just made.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Prepare agent to apply changes."
+   },
+   {
+    "label": "B",
+    "prediction": "You must prepare your agent to apply the changes you've just made."
+   },
+   {
+    "label": "C",
+    "prediction": "You must prepare your agent before testing code interpretation."
+   },
+   {
+    "label": "D",
+    "prediction": "You need to create a knowledge base in Amazon Bedrock Knowledge Bases before testing code interpretation."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0270",
+  "question": "Which models have the pre-processing step enabled by default in the agent sequence?",
+  "gold": "Anthropic Claude V2.x and Anthropic Claude Instant have pre-processing enabled by default.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The pre-processing step is enabled by default for all models."
+   },
+   {
+    "label": "B",
+    "prediction": "Anthropic Claude 3 Sonnet and Anthropic Claude 3.5 Sonnet models have the pre-processing step enabled by default."
+   },
+   {
+    "label": "C",
+    "prediction": "The models with the pre-processing step enabled by default are: **Anthropic Claude 3 Haiku**, **Anthropic Claude 3 Opus**, and **Anthropic Claude 3 Sonnet**."
+   },
+   {
+    "label": "D",
+    "prediction": "Anthropic Claude 3 Sonnet and Anthropic Claude 3.5 Sonnet"
+   },
+   {
+    "label": "E",
+    "prediction": "All models."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0280",
+  "question": "What log level is configured for the logger in the parser Lambda function?",
+  "gold": "The logger level is set to INFO.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "INFO"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0290",
+  "question": "What is the configuration of the example Amazon Bedrock Agent?",
+  "gold": "The agent has only one knowledge base, uses default prompts, has no action group, and user input is disabled.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "User input enabled."
+   },
+   {
+    "label": "B",
+    "prediction": "The configuration of the example Amazon Bedrock Agent is:\n- The agent is named \"InsuranceAgent\"\n- The agent's description is \"Insurance agent that helps users with insurance claims\"\n- The agent's foundation model is"
+   },
+   {
+    "label": "C",
+    "prediction": "The configuration of the example Amazon Bedrock Agent is to create an agent that can help users with their insurance claims."
+   },
+   {
+    "label": "D",
+    "prediction": "The example Amazon Bedrock Agent is configured with a single action group that calls an AskUser action."
+   },
+   {
+    "label": "E",
+    "prediction": "The configuration of the example Amazon Bedrock Agent involves several key components:\n\n* **AgentName:** The name of the agent (e.g., \"MyAgent\")\n* **AgentResourceRoleArn:** The ARN of the IAM role"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0300",
+  "question": "In an Amazon Bedrock flow, what should you include downstream after an iterator node?",
+  "gold": "Include a collector node downstream after you've sent the output through the nodes that you need.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "A collector node"
+   },
+   {
+    "label": "B",
+    "prediction": "You should include a **Collector** node downstream after an iterator node."
+   },
+   {
+    "label": "C",
+    "prediction": "Collector node."
+   },
+   {
+    "label": "D",
+    "prediction": "You should include a downstream node after the iterator node."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0310",
+  "question": "What image file formats are required for the image-ref files in the training data?",
+  "gold": "The images must be in JPEG or PNG format.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "JPEG or PNG format"
+   },
+   {
+    "label": "B",
+    "prediction": "The image-ref files must be in **JPEG** or **PNG** format."
+   },
+   {
+    "label": "C",
+    "prediction": "JPEG or PNG"
+   },
+   {
+    "label": "D",
+    "prediction": "JPEG or PNG."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0320",
+  "question": "Can I share Amazon Titan Image Generator G1 V1 in the Asia Pacific (Sydney) region?",
+  "gold": "No, Amazon Titan Image Generator G1 V1 is not available for sharing in Asia Pacific (Sydney).",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Yes, you can share Amazon Titan Image Generator G1 V1 in the Asia Pacific (Sydney) region."
+   },
+   {
+    "label": "B",
+    "prediction": "Yes"
+   },
+   {
+    "label": "C",
+    "prediction": "No"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0330",
+  "question": "Which reserved special token corresponds to token ID 128116?",
+  "gold": "Token ID 128116 has the content <|reserved_special_token_108|>.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "[control_111]"
+   },
+   {
+    "label": "B",
+    "prediction": "<|reserved_special_token_242|>"
+   },
+   {
+    "label": "C",
+    "prediction": "<|reserved_special_token_108|>"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0340",
+  "question": "What is the model_max_length value in the tokenizer configuration for a Llama 3.0 Text model?",
+  "gold": "The model_max_length value is 131072.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "131072"
+   },
+   {
+    "label": "B",
+    "prediction": "4096"
+   },
+   {
+    "label": "C",
+    "prediction": "8192"
+   },
+   {
+    "label": "D",
+    "prediction": "512"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0350",
+  "question": "Which identifier is associated with the content [control_523]?",
+  "gold": "The identifier associated with [control_523] is 525.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "control_523"
+   },
+   {
+    "label": "B",
+    "prediction": "[control_523]"
+   },
+   {
+    "label": "C",
+    "prediction": "[control_521]"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0360",
+  "question": "How should variations be included for fields with predefined value sets?",
+  "gold": "Include the variations in quotation marks as shown in the example.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Variations should be included as a list of the predefined values."
+   },
+   {
+    "label": "B",
+    "prediction": "Use arrays/tables for multi-valued fields."
+   },
+   {
+    "label": "C",
+    "prediction": "Variations should be included for fields with predefined value sets."
+   },
+   {
+    "label": "D",
+    "prediction": "The question asks how variations should be included for fields with predefined value sets."
+   },
+   {
+    "label": "E",
+    "prediction": "Variations should be included as distinct options that users can select from, rather than as separate fields. This approach ensures that the system can handle predefined value sets effectively and provides a more user-friendly interface."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0370",
+  "question": "What AWS CLI command checks the status of a Provisioned Throughput with the provisioned model ID MyPT?",
+  "gold": "aws bedrock get-provisioned-model-throughput --provisioned-model-id MyPT",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "aws bedrock get-provisioned-model-throughput --provisioned-model-id MyPT"
+   },
+   {
+    "label": "B",
+    "prediction": "`aws bedrock get-provisioned-model-throughput --provisioned-model-id MyPT`"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0380",
+  "question": "When enabling Amazon Bedrock Flows and Prompt management, what policy should I use to replace the current provisioning role policy?",
+  "gold": "You should replace the current policy with the policy at Permissions to manage Amazon Bedrock Studio user resources.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "AmazonBedrockFullAccess"
+   },
+   {
+    "label": "B",
+    "prediction": "The Amazon Bedrock Studio permissions policy."
+   },
+   {
+    "label": "C",
+    "prediction": "The policy at Permissions to manage Amazon Bedrock Studio user resources"
+   },
+   {
+    "label": "D",
+    "prediction": "You should use the **AmazonBedrockFullAccess** managed policy to replace the current provisioning role policy."
+   },
+   {
+    "label": "E",
+    "prediction": "Replace with policy to manage Amazon Bedrock Studio user resources."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0390",
+  "question": "What does AWS recommend for centralized access management?",
+  "gold": "AWS recommends using AWS IAM Identity Center for centralized access management.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "IAM Identity Center or IAM."
+   },
+   {
+    "label": "B",
+    "prediction": "AWS IAM Identity Center"
+   },
+   {
+    "label": "C",
+    "prediction": "AWS recommends using **AWS Single Sign-On (AWS SSO)** for centralized access management."
+   },
+   {
+    "label": "D",
+    "prediction": "AWS recommends using AWS IAM Identity Center for centralized access management."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0400",
+  "question": "What permissions were added to the AmazonBedrockFullAccess managed policy in the December 4, 2024 update?",
+  "gold": "It grants permissions to create, read, update, and delete Amazon Bedrock Marketplace resources, and to manage the underlying Amazon SageMaker AI resources.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The permissions added to the AmazonBedrockFullAccess managed policy on December 4, 2024, included the ability to **create and manage Amazon Bedrock resources** and **manage Amazon Bedrock Studio resources**."
+   },
+   {
+    "label": "B",
+    "prediction": "Permissions to manage the underlying Amazon SageMaker AI resources"
+   },
+   {
+    "label": "C",
+    "prediction": "Permissions for Amazon Bedrock Marketplace"
+   },
+   {
+    "label": "D",
+    "prediction": "Create, read, update, delete Amazon Bedrock resources."
+   },
+   {
+    "label": "E",
+    "prediction": "Permissions to create, read, update, and delete Amazon Bedrock Marketplace resources"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0410",
+  "question": "Where can I check if Amazon Bedrock supports resource-based policies or access control lists?",
+  "gold": "See How Amazon Bedrock works with IAM.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "In the Amazon Bedrock User Guide"
+   },
+   {
+    "label": "B",
+    "prediction": "No."
+   },
+   {
+    "label": "C",
+    "prediction": "You can check this information in the **Amazon Bedrock User Guide** under the section titled \"Service Authorization.\" Specifically, you should look for the \"Service Authorization\" section and check the \"Resource-based policies and access control lists\" subsection"
+   },
+   {
+    "label": "D",
+    "prediction": "In the Service Authorization Reference."
+   },
+   {
+    "label": "E",
+    "prediction": "In the Amazon Bedrock endpoints and quotas documentation"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0420",
+  "question": "When creating an EventBridge rule for Amazon Bedrock, what do I select in the Creation method section to get started?",
+  "gold": "Select Use pattern from, choose Amazon Bedrock as the AWS service, and choose the Event type that you want to capture.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "I select Create rule."
+   },
+   {
+    "label": "B",
+    "prediction": "Amazon Bedrock."
+   },
+   {
+    "label": "C",
+    "prediction": "Use pattern"
+   },
+   {
+    "label": "D",
+    "prediction": "You should select **Create a rule** in the Creation method section."
+   },
+   {
+    "label": "E",
+    "prediction": "I select Use pattern."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0430",
+  "question": "In the provided Go code, which model ID is specified for the Bedrock Runtime client?",
+  "gold": "The model ID is anthropic.claude-v2.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The model ID specified is \"mistral.mistral-large-2402-v1:0\"."
+   },
+   {
+    "label": "B",
+    "prediction": "amazon.titan-text-premier-v1:0"
+   },
+   {
+    "label": "C",
+    "prediction": "`modelId` is specified."
+   },
+   {
+    "label": "D",
+    "prediction": "anthropic.claude-3-haiku-20240307-v1:0"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0440",
+  "question": "In the AWS SDK for Java example for Amazon Titan Text, what method is called from the main method to use the Converse API?",
+  "gold": "The Java example calls converseAsync() from its main method.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "converse()"
+   },
+   {
+    "label": "B",
+    "prediction": "The method called from the main method is **converse()**."
+   },
+   {
+    "label": "C",
+    "prediction": "`Converse().getMessage()`"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0450",
+  "question": "What URL is used as the endpoint for the weather forecast API in the code?",
+  "gold": "The endpoint URL is https://api.open-meteo.com/v1/forecast.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "https://api.open-meteo.com/v1/forecast"
+   },
+   {
+    "label": "B",
+    "prediction": "https://api.weatherapi.com/\n\nThe code uses the endpoint \"https://api.weatherapi.com/\" as the base URL for the weather forecast API."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0460",
+  "question": "Which API method is referenced for calling Amazon Bedrock models in the AWS SDK for Java 2.x?",
+  "gold": "InvokeModel is the API method referenced for invoking models in the AWS SDK for Java 2.x.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Converse"
+   },
+   {
+    "label": "B",
+    "prediction": "`AmazonBedrockRuntimeClient`"
+   },
+   {
+    "label": "C",
+    "prediction": "InvokeModel"
+   },
+   {
+    "label": "D",
+    "prediction": "The **InvokeModel** method is referenced for calling Amazon Bedrock models in the AWS SDK for Java 2.x."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0470",
+  "question": "What prefix must an Amazon Bedrock agent's execution role name have?",
+  "gold": "It must be prefixed by `AmazonBedrockExecutionRoleForAgents_`.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "`AmazonBedrockExecutionRoleForAgents_`"
+   },
+   {
+    "label": "B",
+    "prediction": "AmazonBedrockAgent"
+   },
+   {
+    "label": "C",
+    "prediction": "AmazonBedrockExecutionRoleForAg"
+   },
+   {
+    "label": "D",
+    "prediction": "The prefix must be **AmazonBedrockExecutionRoleForAgent**."
+   },
+   {
+    "label": "E",
+    "prediction": "AmazonBedrockExecutionRoleForAgents_"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0480",
+  "question": "What new capability does AWS PrivateLink support enable for Amazon Bedrock Agents?",
+  "gold": "You can now use AWS PrivateLink to create interface VPC endpoints for the Amazon Bedrock Agents Build-time service.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "AWS PrivateLink enables you to create a private interface endpoint for Amazon Bedrock Agents, allowing you to access them securely without traversing the public internet."
+   },
+   {
+    "label": "B",
+    "prediction": "AWS PrivateLink support allows you to create interface VPC endpoints for the Amazon Bedrock Agents build-time service."
+   },
+   {
+    "label": "C",
+    "prediction": "AWS PrivateLink support for Amazon Bedrock Agents"
+   },
+   {
+    "label": "D",
+    "prediction": "Support for interface endpoints for Amazon Bedrock Agents."
+   },
+   {
+    "label": "E",
+    "prediction": "AWS PrivateLink enables Amazon Bedrock Agents to be accessed privately."
+   }
+  ]
+ }
+]

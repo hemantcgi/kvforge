@@ -1,0 +1,1138 @@
+[
+ {
+  "fact_id": "f0004",
+  "question": "Which topic appears immediately after Security?",
+  "gold": "Data protection appears immediately after Security.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The topic that appears immediately after Security is **Data**."
+   },
+   {
+    "label": "B",
+    "prediction": "Investing"
+   },
+   {
+    "label": "C",
+    "prediction": "Amazon Bedrock"
+   },
+   {
+    "label": "D",
+    "prediction": "Data protection"
+   },
+   {
+    "label": "E",
+    "prediction": "Privacy"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0014",
+  "question": "Does the Amazon Titan Multimodal Embeddings G1 model support streaming inference?",
+  "gold": "No, streaming inference is not supported for Amazon Titan Multimodal Embeddings G1.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "No"
+   },
+   {
+    "label": "B",
+    "prediction": "Yes"
+   },
+   {
+    "label": "C",
+    "prediction": "Yes, the Amazon Titan Multimodal Embeddings G1 model supports streaming inference."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0024",
+  "question": "Which Anthropic Claude APIs can you use to send inference requests through Amazon Bedrock?",
+  "gold": "Anthropic Claude Text Completions API or Anthropic Claude Messages API.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You can use the following Anthropic Claude APIs to send inference requests through Amazon Bedrock:\n\n* **Anthropic Claude 2 (Claude 2)**\n* **Anthropic Claude 2.1 (Claude 2.1)**"
+   },
+   {
+    "label": "B",
+    "prediction": "Converse API, Invoke Model API."
+   },
+   {
+    "label": "C",
+    "prediction": "You can use the Anthropic Claude Text Completions API or Anthropic Claude Messages API inference requests."
+   },
+   {
+    "label": "D",
+    "prediction": "Bedrock's Converse API or the Invoke Model API"
+   },
+   {
+    "label": "E",
+    "prediction": "Anthropic Claude Text Completions API or Anthropic Claude Messages API"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0034",
+  "question": "Which embedding types are listed in the search_document example?",
+  "gold": "The embedding types are int8 and float.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "int8, float"
+   },
+   {
+    "label": "B",
+    "prediction": "int8 and float"
+   },
+   {
+    "label": "C",
+    "prediction": "The embedding types listed are: **binary**, **float**, and **int8**."
+   },
+   {
+    "label": "D",
+    "prediction": "binary and float"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0044",
+  "question": "What are the possible finish_reasons values returned by the Stable Image Core text-to-image model?",
+  "gold": "Current possible values are 'Filter reason: prompt', 'Filter reason: output image', 'Filter reason: input image', 'Inference error', and null.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The possible finish_reasons values returned by the Stable Image Core text-to-image model are: **\"error\"** and **\"tool_calls\"**."
+   },
+   {
+    "label": "B",
+    "prediction": "The possible finish_reasons values are: \"error\", \"timeout\", \"unknown\", and \"success\"."
+   },
+   {
+    "label": "C",
+    "prediction": "The possible finish_reasons values are: \"Filter reason: prompt\", \"Filter reason: output image\", \"Filter reason: input image\", \"Inference error\", and null."
+   },
+   {
+    "label": "D",
+    "prediction": "The possible finish_reasons values are \"Filter reason: prompt\", \"Filter reason: output image\", \"Filter reason: input image\", \"Inference error\", and null."
+   },
+   {
+    "label": "E",
+    "prediction": "\"Filter reason: prompt\", \"Filter reason: output image\", \"Filter reason: input image\", \"Inference error\""
+   }
+  ]
+ },
+ {
+  "fact_id": "f0054",
+  "question": "What keyword in a hub content summary's search keywords indicates that a model has the Bedrock console capability?",
+  "gold": "@capability:bedrock_console",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "bedrock"
+   },
+   {
+    "label": "B",
+    "prediction": "`@capability:bedrock_console`"
+   },
+   {
+    "label": "C",
+    "prediction": "@capability:bedrock_console"
+   },
+   {
+    "label": "D",
+    "prediction": "bedrock-console"
+   },
+   {
+    "label": "E",
+    "prediction": "The keyword \"bedrock_console\" in the HubContentSearchKeywords field indicates that a model has the Bedrock console capability."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0064",
+  "question": "When sending a document in an Amazon Bedrock Converse request, how must the document bytes be passed?",
+  "gold": "The raw bytes must be encoded in base64.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The document bytes must be passed as a **byte array** in the request."
+   },
+   {
+    "label": "B",
+    "prediction": "Pass raw bytes, encoded in base64."
+   },
+   {
+    "label": "C",
+    "prediction": "The document bytes must be passed as raw bytes encoded in base64."
+   },
+   {
+    "label": "D",
+    "prediction": "The document bytes must be passed as a base64-encoded string."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0074",
+  "question": "How can I modify prompt caching behavior when calling the InvokeModel API?",
+  "gold": "Set the explicitPromptCaching parameter to either enabled or disabled.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "I can modify prompt caching behavior by setting the explicitPromptCaching parameter to either enabled or disabled."
+   },
+   {
+    "label": "B",
+    "prediction": "You can modify prompt caching behavior by setting the promptCachingState field to ENABLED or DISABLED."
+   },
+   {
+    "label": "C",
+    "prediction": "Set `explicitPromptCaching` parameter."
+   },
+   {
+    "label": "D",
+    "prediction": "You can modify prompt caching behavior when calling the InvokeModel API by setting the `promptCachingState` parameter to either `ENABLED` or `DISABLED`.\n\nHere's a breakdown of how to do it:\n\n### 1. Enabling"
+   },
+   {
+    "label": "E",
+    "prediction": "You can modify prompt caching behavior by setting the explicitPromptCaching parameter to either enabled or disabled."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0084",
+  "question": "In the commercial email example, what savings and booking deadline are mentioned for the limited-time offer?",
+  "gold": "Customers can save up to 35% of their total expense when they make reservations within two days.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Customers can save up to 35% of their total expense when they make reservations within two days."
+   },
+   {
+    "label": "B",
+    "prediction": "A 20% discount and a booking deadline of October 31st"
+   },
+   {
+    "label": "C",
+    "prediction": "The savings mentioned are **20% off** and the booking deadline is **October 31st**."
+   },
+   {
+    "label": "D",
+    "prediction": "Save 35%, book within two days."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0094",
+  "question": "Which AWS Regions support prompt optimization in Amazon Bedrock?",
+  "gold": "US East (N. Virginia), US West (Oregon), Asia Pacific (Mumbai), Asia Pacific (Sydney), Canada (Central), Europe (Frankfurt), Europe (Ireland) (Gated), Europe (London), Europe (Paris), South America (S\u00e3o Paulo).",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "US East (N. Virginia), US West (Oregon), Asia Pacific (Mumbai), Asia Pacific (Sydney), Canada (Central), Europe (Frankfurt), Europe (Ireland) (Gated), Europe (London), Europe (Paris), South"
+   },
+   {
+    "label": "B",
+    "prediction": "Amazon Bedrock prompt optimization is currently available in **us-east-1** and **us-west-2**."
+   },
+   {
+    "label": "C",
+    "prediction": "US East (N. Virginia), US West (Oregon), AWS GovCloud (US-West), and Asia Pacific (Mumbai)"
+   },
+   {
+    "label": "D",
+    "prediction": "US East (N. Virginia), US West (Oregon), Asia Pacific (Mumbai), Asia Pacific (Sydney), Canada (Central), Europe (Frankfurt), Europe (Ireland) (Gated), Europe (London), and Europe (Paris)"
+   },
+   {
+    "label": "E",
+    "prediction": "US East (N. Virginia), US West (Oregon), Asia Pacific (Tokyo), Asia Pacific (Mumbai), Asia Pacific (Singapore), Canada (Central), Europe (Frankfurt), Europe (Ireland), Europe (London), and South America ("
+   }
+  ]
+ },
+ {
+  "fact_id": "f0104",
+  "question": "According to Amazon Bedrock Guardrails, what entity type is recognized in the phrase \"I am 40 years old\"?",
+  "gold": "AGE; it recognizes \"40 years\" as an age.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "PERSON"
+   },
+   {
+    "label": "B",
+    "prediction": "Age"
+   },
+   {
+    "label": "C",
+    "prediction": "AGE"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0114",
+  "question": "In an Amazon Bedrock guardrail trace, what fields are included for each topic in the topicPolicy?",
+  "gold": "Each topic includes name, type, and action.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The fields included for each topic in the topicPolicy section of a guardrail trace are:\n\n* **name:** The name of the topic\n* **type:** The type of the topic (which can be \"INPUT_TEXT\" or"
+   },
+   {
+    "label": "B",
+    "prediction": "name, type, and action"
+   },
+   {
+    "label": "C",
+    "prediction": "name, type, action"
+   },
+   {
+    "label": "D",
+    "prediction": "The topicPolicy includes fields for each topic, including name, type, and action."
+   },
+   {
+    "label": "E",
+    "prediction": "The name of the topic policy, type (which specifies whether to deny the topic), and action (which specifies that the topic was blocked)."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0124",
+  "question": "Which five domains does the BOLD dataset focus on when evaluating fairness in general text generation?",
+  "gold": "Profession, gender, race, religious ideologies, and political ideologies.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The five domains are: **gender, race, religion, and political ideology**, plus **sexual content**."
+   },
+   {
+    "label": "B",
+    "prediction": "Profession, gender, race, religious ideologies, and political ideologies"
+   },
+   {
+    "label": "C",
+    "prediction": "Profession, gender, race, religious ideologies, and political ideologies."
+   },
+   {
+    "label": "D",
+    "prediction": "The BOLD dataset focuses on five domains: professional, political, religious, social, and gender."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0134",
+  "question": "If a question directs me to answer under a particular set of assumptions, how should I treat those assumptions when evaluating the response?",
+  "gold": "Take those assumptions as the basis for argument, even if they are not true.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You should treat those assumptions as **given conditions** and evaluate the response based on whether it logically follows from those assumptions.\n\nHere's a breakdown of how to approach this:\n\n1. **Accept the Assumptions as Truth:** You must"
+   },
+   {
+    "label": "B",
+    "prediction": "I should take those assumptions as the basis for argument, even if they are not true."
+   },
+   {
+    "label": "C",
+    "prediction": "I should accept those assumptions as the basis for evaluation, even if they are not true in reality."
+   },
+   {
+    "label": "D",
+    "prediction": "Take assumptions as basis."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0144",
+  "question": "What section number in the Amazon Bedrock User Guide covers evaluator prompts?",
+  "gold": "Evaluator prompts 710.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Explanation: The provided context is a set of IAM policy requirements and documentation snippets from the Amazon Bedrock User Guide. It does not contain a section number that specifically covers \"evaluator prompts.\"\nAnswer: not helpful at all"
+   },
+   {
+    "label": "B",
+    "prediction": "Evaluator prompts 784"
+   },
+   {
+    "label": "C",
+    "prediction": "Evaluator prompts 794"
+   },
+   {
+    "label": "D",
+    "prediction": "Section 794"
+   },
+   {
+    "label": "E",
+    "prediction": "Section 788 covers evaluator prompts."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0154",
+  "question": "What qualifies as a refusal in the model response evaluation?",
+  "gold": "A response counts as a refusal if it directly declines to answer the user prompt or declines with an explanation.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "A refusal is defined as a response that either directly declines to answer the prompt or declines to answer while providing a justification. It's important to note that if a response initially declines but then provides an answer, it should not be classified as"
+   },
+   {
+    "label": "B",
+    "prediction": "A refusal occurs when the response directly declines to answer the prompt or declines to answer with an explanation."
+   },
+   {
+    "label": "C",
+    "prediction": "Directly declines or rejects the request with reasons."
+   },
+   {
+    "label": "D",
+    "prediction": "A response qualifies as a refusal if it directly declines to answer the user prompt, or if it declines the user prompt with an explanation."
+   },
+   {
+    "label": "E",
+    "prediction": "A refusal occurs when the model refuses to address the request in the user prompt."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0164",
+  "question": "In Amazon Bedrock evaluator prompts, what are the valid answer options for the <answer> tag?",
+  "gold": "The valid options are Not at all, Not generally, Neutral/Mixed, Generally yes, and Yes.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Explanation: The valid answer options for the `<answer>` tag are `Not at all`, `Not generally`, `Neutral/Mixed`, `Generally yes`, `Yes`.\nAnswer: Not at all, Not generally, Neutral/Mixed,"
+   },
+   {
+    "label": "B",
+    "prediction": "The valid answer options are: `Not at all`, `Not generally`, `Neutral/Mixed`, `Generally yes`, and `Yes`."
+   },
+   {
+    "label": "C",
+    "prediction": "The valid answer options for the <answer> tag are:\n- `Not at all`\n- `Not generally`\n- `Neutral/Mixed`\n- `Generally yes`\n- `Yes`"
+   },
+   {
+    "label": "D",
+    "prediction": "The valid answer options are: Not at all, Not generally, Neutral/Mixed, Generally yes, Yes."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0174",
+  "question": "What should I check if my Amazon Bedrock model evaluation job has fewer responses than expected?",
+  "gold": "Check the data output file in your Amazon S3 bucket; the prompt may have caused a model error or a worker declined to respond.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You should check the following things if your Amazon Bedrock model evaluation job has fewer responses than expected:\n\n1. **Data Ingestion Status:** Verify that all your datasets have been successfully ingested and are ready for evaluation.\n2. **"
+   },
+   {
+    "label": "B",
+    "prediction": "I should check the data output file in my Amazon S3 bucket."
+   },
+   {
+    "label": "C",
+    "prediction": "I should check the status of the job."
+   },
+   {
+    "label": "D",
+    "prediction": "Check the data output file in S3."
+   },
+   {
+    "label": "E",
+    "prediction": "You should check the data output file in your Amazon S3 bucket."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0184",
+  "question": "In Amazon Bedrock, when selecting a pre-defined chunking strategy, what must you provide along with your selection?",
+  "gold": "A reference to your Lambda function and S3 bucket.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You must provide a chunkingConfiguration along with your selection."
+   },
+   {
+    "label": "B",
+    "prediction": "You must provide the chunkingConfiguration field in the VectorIngestionConfiguration."
+   },
+   {
+    "label": "C",
+    "prediction": "You must provide a name for the chunking strategy."
+   },
+   {
+    "label": "D",
+    "prediction": "Provide configuration."
+   },
+   {
+    "label": "E",
+    "prediction": "You must provide a **description** along with your selection."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0194",
+  "question": "In the example AWS CLI command for creating a knowledge base, what maxTokens value is used for fixed-size chunking?",
+  "gold": "The fixed-size chunking configuration sets maxTokens to 100 and overlapPercentage to 10.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "300 tokens."
+   },
+   {
+    "label": "B",
+    "prediction": "100"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0204",
+  "question": "When creating a knowledge base, what happens to vector embeddings stored in the vector store under the default data deletion policy?",
+  "gold": "The vector embeddings for your data source are deleted by default, unless you choose to retain the vector store data.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Under the default data deletion policy, vector embeddings stored in the vector store are **deleted** when the data source is deleted."
+   },
+   {
+    "label": "B",
+    "prediction": "They are deleted by default."
+   },
+   {
+    "label": "C",
+    "prediction": "The vector embeddings are deleted."
+   },
+   {
+    "label": "D",
+    "prediction": "They are deleted."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0214",
+  "question": "What is the first step when updating an Amazon Bedrock data source in the console?",
+  "gold": "Sign in to the AWS Management Console using an IAM role with Amazon Bedrock permissions, then open the Amazon Bedrock console at https://console.aws.amazon.com/bedrock/.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Sign in to the AWS Management Console using an IAM role with Amazon Bedrock permissions, and open the Amazon Bedrock console."
+   },
+   {
+    "label": "B",
+    "prediction": "Sign in to the AWS Management Console using an IAM role with Amazon Bedrock permissions and open the Amazon Bedrock console."
+   },
+   {
+    "label": "C",
+    "prediction": "Sign in to AWS Management Console."
+   },
+   {
+    "label": "D",
+    "prediction": "The first step is to **select the data source you want to update** from the Data source section."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0224",
+  "question": "If the number of source chunks exceeds what can fit in the response, what field is returned?",
+  "gold": "The nextToken field is returned, and you use that value in another request to return the next batch of results.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "retrievalResults"
+   },
+   {
+    "label": "B",
+    "prediction": "The **nextToken** field is returned."
+   },
+   {
+    "label": "C",
+    "prediction": "The nextToken field is returned."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0234",
+  "question": "Which actions must the Amazon Bedrock Knowledge Bases service role have permissions to use in order to rerank sources during retrieval?",
+  "gold": "The service role needs permissions to use the bedrock:Rerank and bedrock:InvokeModel actions.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "bedrock:Rerank"
+   },
+   {
+    "label": "B",
+    "prediction": "bedrock:Rerank and bedrock:InvokeModel"
+   },
+   {
+    "label": "C",
+    "prediction": "The Amazon Bedrock Knowledge Bases service role must have permissions to use the reranking models that you select."
+   },
+   {
+    "label": "D",
+    "prediction": "The Amazon Bedrock Knowledge Bases service role must have permissions to use the following actions:\n\n* **bedrock:Rerank** - This action allows the service role to rerank sources during retrieval.\n* **bedrock:Retrieve"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0244",
+  "question": "What optional fields can be defined within each property of an action group schema?",
+  "gold": "Each property can include optional type and description fields.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "`required` and `schema`."
+   },
+   {
+    "label": "B",
+    "prediction": "The optional fields that can be defined within each property of an action group schema are description, type, and required."
+   },
+   {
+    "label": "C",
+    "prediction": "The optional fields are:\n- description: A string field that provides a description of the parameter.\n- required: A boolean field that indicates whether the parameter is required.\n- examples: A string field that provides examples of the parameter"
+   },
+   {
+    "label": "D",
+    "prediction": "The optional fields that can be defined within each property of an action group schema are **description** and **required** (though required is typically used to mark properties that must be present, not optional fields themselves).\n\nThe **description** field"
+   },
+   {
+    "label": "E",
+    "prediction": "Each property can optionally contain a description field."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0254",
+  "question": "Which tools or interfaces can I use to remove a collaborator agent from its supervisor agent in Amazon Bedrock?",
+  "gold": "You can disassociate one or more collaborator agents from the supervisor agent using the Amazon Bedrock console, APIs, AWS CLI, or AWS SDK.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The Amazon Bedrock console."
+   },
+   {
+    "label": "B",
+    "prediction": "The Amazon Bedrock console or the Amazon Bedrock API"
+   },
+   {
+    "label": "C",
+    "prediction": "Console, APIs, AWS CLI, AWS SDK."
+   },
+   {
+    "label": "D",
+    "prediction": "You can remove a collaborator agent from its supervisor agent using the Amazon Bedrock console or the API.\n\nHere's a breakdown of the available methods:\n\n**1. Amazon Bedrock Console (Recommended for visual users)**\n\n* **"
+   },
+   {
+    "label": "E",
+    "prediction": "I can use the Amazon Bedrock console, APIs, AWS CLI, or AWS SDK."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0264",
+  "question": "In an Amazon Bedrock TracePart object, what is the purpose of the collaboratorName field?",
+  "gold": "It contains the name of the collaborator agent if multi-agent collaboration is enabled.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The collaboratorName field is used to specify an alternate name for the collaborator agent."
+   },
+   {
+    "label": "B",
+    "prediction": "To specify an alternate name for the collaborator agent."
+   },
+   {
+    "label": "C",
+    "prediction": "The collaboratorName field is used to identify the collaborator or agent that is being invoked in the trace."
+   },
+   {
+    "label": "D",
+    "prediction": "The collaboratorName field is used to identify the collaborator agent that the supervisor agent is collaborating with."
+   },
+   {
+    "label": "E",
+    "prediction": "Alternate name for collaborator agent."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0274",
+  "question": "Besides medical expenses, what does personal injury protection (PIP) typically cover?",
+  "gold": "PIP typically covers income continuation, child care, loss of services, and funerals.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Lost wages"
+   },
+   {
+    "label": "B",
+    "prediction": "Personal injury protection (PIP) typically covers medical expenses for injuries caused by an accident."
+   },
+   {
+    "label": "C",
+    "prediction": "Income continuation, child care, loss of services, and funerals."
+   },
+   {
+    "label": "D",
+    "prediction": "Medical expenses, lost income, childcare, and funerals."
+   },
+   {
+    "label": "E",
+    "prediction": "Personal injury protection (PIP) typically covers lost wages, medical expenses, and funeral expenses."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0284",
+  "question": "In the Lambda function, what value is assigned to the promptType key in the parsed_response dictionary?",
+  "gold": "The promptType is set to KNOWLEDGE_BASE_RESPONSE_GENERATION.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The value assigned to the promptType key is \"ORCHESTRATION\"."
+   },
+   {
+    "label": "B",
+    "prediction": "The value \"ORCHESTRATION\" is assigned to the promptType key."
+   },
+   {
+    "label": "C",
+    "prediction": "ORCHESTRATION"
+   },
+   {
+    "label": "D",
+    "prediction": "\"ORCHESTRATION\""
+   }
+  ]
+ },
+ {
+  "fact_id": "f0294",
+  "question": "When defining an agent FlowNode in Amazon Bedrock, what is the name of the output field that contains the agent's response?",
+  "gold": "The output field is named agentResponse and its type is String.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "agentResponse"
+   },
+   {
+    "label": "B",
+    "prediction": "The name of the output field that contains the agent's response is **agent_response**."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0304",
+  "question": "How do you obtain the unique execution ID when starting an Amazon Bedrock flow?",
+  "gold": "You omit the executionID field in your first call to InvokeFlow, and the response includes the execution ID.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "`executionId = response['executionId']`"
+   },
+   {
+    "label": "B",
+    "prediction": "The unique execution ID is returned in the response from the InvokeFlow request."
+   },
+   {
+    "label": "C",
+    "prediction": "You obtain the unique execution ID by calling the **CreateFlowAlias** operation and including a **clientToken** parameter in your request. The response from this operation will contain the unique execution ID that you can use for tracking and managing your flow"
+   },
+   {
+    "label": "D",
+    "prediction": "You obtain the unique execution ID when you start the flow."
+   },
+   {
+    "label": "E",
+    "prediction": "You obtain the unique execution ID by calling the client.create_flow() method."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0314",
+  "question": "After a model customization job, where does Amazon Bedrock store my customized models?",
+  "gold": "Amazon Bedrock stores your customized models in AWS-managed storage scoped to your account.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Amazon Bedrock stores your customized models in AWS-managed storage scoped to your account."
+   },
+   {
+    "label": "B",
+    "prediction": "Amazon Bedrock stores the customized models in an Amazon S3 bucket."
+   },
+   {
+    "label": "C",
+    "prediction": "AWS-managed storage."
+   },
+   {
+    "label": "D",
+    "prediction": "Amazon Bedrock stores your customized models in AWS-managed storage."
+   },
+   {
+    "label": "E",
+    "prediction": "Amazon Bedrock stores your customized models in Amazon S3."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0324",
+  "question": "Which Amazon Bedrock features cannot be used with Custom Model Import?",
+  "gold": "Batch inference and AWS CloudFormation.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Amazon Bedrock Agents and Amazon Bedrock Knowledge Bases cannot be used with Custom Model Import."
+   },
+   {
+    "label": "B",
+    "prediction": "Amazon Bedrock Guardrails, Provisioned Throughput, and Provisioned Throughput"
+   },
+   {
+    "label": "C",
+    "prediction": "Amazon Bedrock Guardrails and Provisioned Throughput cannot be used with Custom Model Import."
+   },
+   {
+    "label": "D",
+    "prediction": "Inference calls (InvokeModel, InvokeModelWithResponseStream) cannot be used with imported models."
+   },
+   {
+    "label": "E",
+    "prediction": "The features that cannot be used with Custom Model Import are:\n\n* **Provisioned Throughput**\n* **Model Customization**\n* **Model Distillation**\n* **Model Import** (as Custom Model Import is a specific"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0334",
+  "question": "What reserved special token is assigned to token ID 128035 in the Amazon Bedrock custom model import tokenizer configuration?",
+  "gold": "Token ID 128035 contains '<|reserved_special_token_27|>'.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "<|reserved_special_token_27|>"
+   },
+   {
+    "label": "B",
+    "prediction": "<|reserved_special_token_30|>"
+   },
+   {
+    "label": "C",
+    "prediction": "[control_128]"
+   },
+   {
+    "label": "D",
+    "prediction": "<|reserved_special_token_30|>."
+   },
+   {
+    "label": "E",
+    "prediction": "<|reserved_special_token_50|>"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0344",
+  "question": "What content is mapped to token ID 128197 in the tokenizer configuration?",
+  "gold": "<|reserved_special_token_192|>",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "<|reserved_special_token_165|>"
+   },
+   {
+    "label": "B",
+    "prediction": "<|reserved_special_token_189|>"
+   },
+   {
+    "label": "C",
+    "prediction": "[control_119]"
+   },
+   {
+    "label": "D",
+    "prediction": "[control_195]"
+   },
+   {
+    "label": "E",
+    "prediction": "Not found"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0354",
+  "question": "In the Amazon Bedrock BDA output example, how many shots and scenes were detected?",
+  "gold": "The example BDA output statistics show 4 shots and 2 scenes.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The example output shows 1 shot and 1 scene."
+   },
+   {
+    "label": "B",
+    "prediction": "1 shot and 1 scene were detected."
+   },
+   {
+    "label": "C",
+    "prediction": "1 shot and 1 scene"
+   },
+   {
+    "label": "D",
+    "prediction": "Statistics: entity\\_count 7, object\\_count 3, line\\_count 2, word\\_count 9."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0364",
+  "question": "What does an Amazon Bedrock Data Automation async job return when processing completes successfully?",
+  "gold": "It returns \"COMPLETED\" along with the S3 location of the results.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The job returns a status of COMPLETE."
+   },
+   {
+    "label": "B",
+    "prediction": "An Amazon S3 URI"
+   },
+   {
+    "label": "C",
+    "prediction": "An Amazon Bedrock Data Automation async job returns a **report card** when processing completes successfully."
+   },
+   {
+    "label": "D",
+    "prediction": "Status is COMPLETE."
+   },
+   {
+    "label": "E",
+    "prediction": "A status of COMPLETE"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0374",
+  "question": "What is the maximum total pixel count allowed per image when preparing datasets for fine-tuning?",
+  "gold": "The maximum total pixels per image is 2048*2048*3.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The maximum total pixel count allowed per image is **4,096 x 4,096 pixels**."
+   },
+   {
+    "label": "B",
+    "prediction": "12,582,912"
+   },
+   {
+    "label": "C",
+    "prediction": "The maximum total pixel count allowed per image is 1,000,000 pixels."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0384",
+  "question": "Which server-side encryption options can be used for the output files that Amazon Bedrock writes to S3?",
+  "gold": "The output files are encrypted with either SSE-S3 server-side encryption or AWS KMS SSE-KMS encryption, depending on the S3 bucket configuration.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "SSE-S3 or SSE-KMS."
+   },
+   {
+    "label": "B",
+    "prediction": "SSE-S3 server-side encryption or AWS KMS SSE-KMS encryption"
+   },
+   {
+    "label": "C",
+    "prediction": "You can use either an AWS managed key or a customer managed key for server-side encryption of the output files that Amazon Bedrock writes to S3."
+   },
+   {
+    "label": "D",
+    "prediction": "AWS owned keys or customer managed keys"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0394",
+  "question": "What must your IAM permissions allow you to do to access the Amazon Bedrock console?",
+  "gold": "They must allow you to list and view details about the Amazon Bedrock resources in your AWS account.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The IAM permissions must allow you to list and view details about the Amazon Bedrock resources in your AWS account."
+   },
+   {
+    "label": "B",
+    "prediction": "Your IAM permissions must allow you to access the Amazon Bedrock console."
+   },
+   {
+    "label": "C",
+    "prediction": "List and view Amazon Bedrock resources."
+   },
+   {
+    "label": "D",
+    "prediction": "List and view details about the Amazon Bedrock resources in your AWS account"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0404",
+  "question": "What is the maximum number of service roles I can have in Amazon Bedrock?",
+  "gold": "Amazon Bedrock allows 2048 service roles.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Not specified."
+   },
+   {
+    "label": "B",
+    "prediction": "You can have up to 25 service roles in Amazon Bedrock."
+   },
+   {
+    "label": "C",
+    "prediction": "The maximum number of service roles you can have in Amazon Bedrock is **10**."
+   },
+   {
+    "label": "D",
+    "prediction": "You can have up to 10 service roles in Amazon Bedrock."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0414",
+  "question": "When configuring SSE-KMS on an S3 bucket for Amazon Bedrock, which KMS action must the key policy allow?",
+  "gold": "The KMS key policy must allow the kms:GenerateDataKey action for the bedrock.amazonaws.com service principal.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "kms:GenerateDataKey"
+   },
+   {
+    "label": "B",
+    "prediction": "The KMS action that must be allowed in the key policy is **kms:GenerateDataKey**."
+   },
+   {
+    "label": "C",
+    "prediction": "kms:Decrypt"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0424",
+  "question": "In the AWS SDK for JavaScript example for listing Amazon Bedrock foundation models, which region is used to initialize the BedrockClient?",
+  "gold": "The region is us-east-1.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "us-east-1"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0434",
+  "question": "In the Amazon Bedrock ConverseRequest example, what values are set for MaxTokens, Temperature, and TopP?",
+  "gold": "MaxTokens is set to 512, Temperature to 0.5F, and TopP to 0.9F.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "MaxTokens is set to 512, Temperature is set to 0.5, and TopP is set to 0.9"
+   },
+   {
+    "label": "B",
+    "prediction": "The values set for MaxTokens, Temperature, and TopP are:\n\n* **MaxTokens:** 512\n* **Temperature:** 0.5\n* **TopP:** 0.9"
+   },
+   {
+    "label": "C",
+    "prediction": "MaxTokens: 512, Temperature: 0.5, TopP: 0.9"
+   },
+   {
+    "label": "D",
+    "prediction": "MaxTokens: 2048, Temperature: 0.5, TopP: 0.8"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0444",
+  "question": "How can I print each text chunk as it arrives when using Amazon Bedrock's ConverseStreamResponseHandler in Java?",
+  "gold": "Use the onContentBlockDelta subscriber to retrieve chunk.delta().text() and print it with System.out.print.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "By calling System.out.print(chunk.text())"
+   },
+   {
+    "label": "B",
+    "prediction": "By using the onChunk() method to print the textChunk.delta().text()"
+   },
+   {
+    "label": "C",
+    "prediction": "You can print each text chunk as it arrives by implementing the `onChunk()` method within your handler. Here's a complete example showing how to do this:\n\n### Java Implementation Example\n\n```java\nimport software.amazon.aw"
+   },
+   {
+    "label": "D",
+    "prediction": "Use `Visitor.builder().onChunk(...)` in the handler."
+   },
+   {
+    "label": "E",
+    "prediction": "The code snippet shows how to print each text chunk from the response stream in real-time."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0454",
+  "question": "When using the Amazon Bedrock Java SDK to stream a model response, which request builder is used to create the invocation request?",
+  "gold": "InvokeModelWithResponseStreamRequest.builder() is used to create the request.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "InvokeModelWithResponseStreamRequest"
+   },
+   {
+    "label": "B",
+    "prediction": "`InvokeModelWithResponseStreamRequest`"
+   },
+   {
+    "label": "C",
+    "prediction": "The **ConverseStreamRequest** builder is used to create the invocation request."
+   },
+   {
+    "label": "D",
+    "prediction": "ConverseStreamRequest"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0464",
+  "question": "In the Java code example that calls converseStream, what inference configuration values are set for maxTokens, temperature, and topP?",
+  "gold": "maxTokens(512), temperature(0.5F), topP(0.9F).",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The inference configuration values set are:\n\n* **maxTokens:** 512\n* **temperature:** 0.5\n* **topP:** 0.9"
+   },
+   {
+    "label": "B",
+    "prediction": "maxTokens is set to 512, temperature is set to 0.5, and topP is set to 0.9"
+   },
+   {
+    "label": "C",
+    "prediction": "maxTokens: 512, temperature: 0.5F, topP: 0.9F"
+   },
+   {
+    "label": "D",
+    "prediction": "maxTokens is set to 512, temperature is set to 0.5F, and topP is set to 0.9F"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0474",
+  "question": "Which API should I call to prepare an agent when using the AWS SDK for Python (Boto3)?",
+  "gold": "PrepareAgent is the API to prepare an agent in the AWS SDK for Python (Boto3).",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You should call the **PrepareAgent** API."
+   },
+   {
+    "label": "B",
+    "prediction": "PrepareAgent"
+   }
+  ]
+ }
+]
