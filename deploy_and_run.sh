@@ -3,8 +3,8 @@ set -euo pipefail
 
 # ─── Config ───────────────────────────────────────────────────────────────────
 EC2_USER="${EC2_USER:-ubuntu}"
-EC2_HOST="${EC2_HOST:-13.221.47.200}"
-EC2_PEM="${EC2_PEM:-/Users/hemant/Downloads/RoPE/g5.x.pem}"
+EC2_HOST="${EC2_HOST:?Set EC2_HOST, e.g. export EC2_HOST=<your-ec2-ip>}"
+EC2_PEM="${EC2_PEM:?Set EC2_PEM, e.g. export EC2_PEM=~/.ssh/<your-key>.pem}"
 LOCAL_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REMOTE_REPO="~/kvforge"
 VENV="~/qdrant/venv"

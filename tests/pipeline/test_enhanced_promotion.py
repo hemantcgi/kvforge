@@ -42,9 +42,11 @@ def test_promotion_writes_file(tmp_path):
     kv_dir = Path(cfg["per_token_kv_dir"])
     files = list(kv_dir.glob(f"{chunk_id}*.npz"))
     assert len(files) == 1, "Expected one .npz file written"
-    mock_vs.update_payload.assert_called_once()
-    call_kwargs = mock_vs.update_payload.call_args[1]
-    assert "kv_token_path" in call_kwargs["payload"]
+    # Issue #10: promotion must call the real VectorStore API (set_payload,
+    # positional args), not the non-existent update_payload.
+    mock_vs.set_payload.assert_called_once()
+    collection, point_id, payload = mock_vs.set_payload.call_args[0]
+    assert "kv_token_path" in payload
 
 
 def test_promotion_skips_already_enhanced(tmp_path):
