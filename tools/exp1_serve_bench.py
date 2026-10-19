@@ -23,7 +23,7 @@ Arms:
 
 Usage (run with venv_vllm):
   venv_vllm/bin/python tools/exp1_serve_bench.py \
-      --arm rag --base-model meta-llama/Llama-3.2-3B-Instruct \
+      --arm rag --base-model google/gemma-4-E2B-it \
       --collection bedrock-userguide --n 200 --out results/exp1/uc4_rag.json
 """
 from __future__ import annotations

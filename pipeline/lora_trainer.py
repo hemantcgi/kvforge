@@ -1,4 +1,4 @@
-"""LoRA fine-tuning pipeline for Llama 3.2 3B on document chunks or Q&A pairs.
+"""LoRA fine-tuning pipeline for Gemma 4 E2B on document chunks or Q&A pairs.
 
 Supports two training modes:
 

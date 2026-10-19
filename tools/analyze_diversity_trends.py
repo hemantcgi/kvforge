@@ -28,10 +28,10 @@ Expected directory layout::
 `experiment_metadata.json` schema::
 
     {
-      "experiment_id": "uc4_bedrock_llama32_3b_10x_seed42",
+      "experiment_id": "uc4_bedrock_gemma4_e2b_10x_seed42",
       "dataset": "uc4_bedrock",
-      "model_family": "llama3",
-      "model_id": "meta-llama/Llama-3.2-3B-Instruct",
+      "model_family": "gemma4",
+      "model_id": "google/gemma-4-E2B-it",
       "diversity_level": 10,
       "seed": 42
     }

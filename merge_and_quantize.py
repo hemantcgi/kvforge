@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Merge KVForge LoRA adapter into Llama 3.2 3B base, then quantize with AWQ.
+Merge KVForge LoRA adapter into the Gemma 4 E2B base, then quantize with AWQ.
 
 Outputs:
   ./merged_fp16/   — merged base + LoRA in FP16 (used as FP16 baseline)
@@ -16,7 +16,7 @@ print("=== KVForge LoRA Merge + AWQ Quantization ===\n")
 
 VERSION_FILE   = Path("examples/usecase4_bedrock_userguide/version.json")
 CHECKPOINT_DIR = Path("examples/usecase4_bedrock_userguide/lora_checkpoints")
-BASE_MODEL     = "meta-llama/Llama-3.2-3B-Instruct"
+BASE_MODEL     = "google/gemma-4-E2B-it"  # override via env if needed; AWQ support for Gemma 4's variable-head-dim attention is unverified
 MERGED_FP16    = "./merged_fp16"
 MERGED_AWQ     = "./merged_awq"
 
