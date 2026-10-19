@@ -8,6 +8,7 @@ Outputs:
 """
 
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -16,7 +17,7 @@ print("=== KVForge LoRA Merge + AWQ Quantization ===\n")
 
 VERSION_FILE   = Path("examples/usecase4_bedrock_userguide/version.json")
 CHECKPOINT_DIR = Path("examples/usecase4_bedrock_userguide/lora_checkpoints")
-BASE_MODEL     = "google/gemma-4-E2B-it"  # override via env if needed; AWQ support for Gemma 4's variable-head-dim attention is unverified
+BASE_MODEL     = os.getenv("LLM_MODEL", "google/gemma-4-E2B-it")  # AWQ support for Gemma 4's variable-head-dim attention is unverified
 MERGED_FP16    = "./merged_fp16"
 MERGED_AWQ     = "./merged_awq"
 
