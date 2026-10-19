@@ -52,28 +52,41 @@ def main():
     miss = [c for c in chunks if not CM[c]["hit"]]
 
     # ---- raw preds (for parity + lengths) ----
+    # The full per-arm dumps are large generated data and are NOT committed (only
+    # 3-record samples live in preds/samples/; see preds/README.md). Regenerate them
+    # with tools/dump_rag_preds.py, or point --preds-dir at the EC2 backup. When the
+    # full dumps are absent, the two preds-derived fields (qgold_parity,
+    # format_parity_median_pred_words) are skipped; every grade-derived field
+    # (mechanism, R2-vs-R1, interference, DiD) is still computed.
     FILES = {a: os.path.join(preds_dir, f"phase2_preds_{a}.jsonl") for a in FILE_ARMS}
-    raw = {a: {str(json.loads(l)["chunk_id"]): json.loads(l) for l in open(FILES[a])} for a in FILES}
+    have_preds = all(os.path.exists(p) for p in FILES.values())
+    if have_preds:
+        raw = {a: {str(json.loads(l)["chunk_id"]): json.loads(l) for l in open(FILES[a])} for a in FILES}
+    else:
+        print(f"NOTE: full preds not found under {preds_dir} — skipping q/gold parity and length "
+              f"parity (grade-derived fields still computed). See preds/README.md to regenerate.")
 
     # ---- (3) q/gold parity ----
     qg = {"question_mismatch": [], "gold_mismatch": []}
-    for c in chunks:
-        qs = {raw[a][c]["question"] for a in FILES}
-        gs = {raw[a][c]["gold"] for a in FILES}
-        if len(qs) > 1:
-            qg["question_mismatch"].append(c)
-        if len(gs) > 1:
-            qg["gold_mismatch"].append(c)
-    # also check the 4 RAG/R3 arms alone (R1cb excluded) — these share dump provenance
     qg_core = {"question_mismatch": [], "gold_mismatch": []}
+    if have_preds:
+        for c in chunks:
+            qs = {raw[a][c]["question"] for a in FILES}
+            gs = {raw[a][c]["gold"] for a in FILES}
+            if len(qs) > 1:
+                qg["question_mismatch"].append(c)
+            if len(gs) > 1:
+                qg["gold_mismatch"].append(c)
+    # also check the 4 RAG/R3 arms alone (R1cb excluded) — these share dump provenance
     core = ["R0", "R1", "R2", "R3"]
-    for c in chunks:
-        if len({raw[a][c]["question"] for a in core}) > 1:
-            qg_core["question_mismatch"].append(c)
-        if len({raw[a][c]["gold"] for a in core}) > 1:
-            qg_core["gold_mismatch"].append(c)
-    print(f"(3) parity ALL5: q_mismatch={len(qg['question_mismatch'])} gold_mismatch={len(qg['gold_mismatch'])}")
-    print(f"    parity CORE4(R0/R1/R2/R3): q_mismatch={len(qg_core['question_mismatch'])} gold_mismatch={len(qg_core['gold_mismatch'])}")
+    if have_preds:
+        for c in chunks:
+            if len({raw[a][c]["question"] for a in core}) > 1:
+                qg_core["question_mismatch"].append(c)
+            if len({raw[a][c]["gold"] for a in core}) > 1:
+                qg_core["gold_mismatch"].append(c)
+        print(f"(3) parity ALL5: q_mismatch={len(qg['question_mismatch'])} gold_mismatch={len(qg['gold_mismatch'])}")
+        print(f"    parity CORE4(R0/R1/R2/R3): q_mismatch={len(qg_core['question_mismatch'])} gold_mismatch={len(qg_core['gold_mismatch'])}")
 
     def rate(cs, arm):
         return round(sum(cov[x][arm] for x in cs) / len(cs), 4)
@@ -140,26 +153,30 @@ def main():
     print(f"(B) miss|R0-fail={len(miss_R0_fails)}: R2-pass n={len(r2_pass)} R3cov={mechanism['R2_pass_R3_coverage']} "
           f"vs R2-fail n={len(r2_fail)} R3cov={mechanism['R2_fail_R3_coverage']} (all-miss R3cov={mechanism['R3_coverage_all_misses']})")
 
-    # ---- (C) length parity ----
-    def medwords(a):
-        return statistics.median(len(raw[a][c]["prediction"].split()) for c in chunks)
-    lengths = {a: int(medwords(a)) for a in FILES}
-    print(f"(C) median pred words/arm: {lengths}")
+    # ---- (C) length parity (needs full preds) ----
+    lengths = None
+    if have_preds:
+        def medwords(a):
+            return statistics.median(len(raw[a][c]["prediction"].split()) for c in chunks)
+        lengths = {a: int(medwords(a)) for a in FILES}
+        print(f"(C) median pred words/arm: {lengths}")
 
     # ---- write extended verdict ----
     v = json.load(open(args.verdict))
-    v["qgold_parity"] = {
-        "all5_question_mismatches": len(qg["question_mismatch"]),
-        "all5_gold_mismatches": len(qg["gold_mismatch"]),
-        "core4_question_mismatches": len(qg_core["question_mismatch"]),
-        "core4_gold_mismatches": len(qg_core["gold_mismatch"]),
-        "note": "core4 = R0/R1/R2/R3 share the same dump; R1cb from the prior rwscale dumper. "
-                "Any all5-only mismatch affects ONLY the R3-vs-R1cb secondary.",
-    }
+    if have_preds:
+        v["qgold_parity"] = {
+            "all5_question_mismatches": len(qg["question_mismatch"]),
+            "all5_gold_mismatches": len(qg["gold_mismatch"]),
+            "core4_question_mismatches": len(qg_core["question_mismatch"]),
+            "core4_gold_mismatches": len(qg_core["gold_mismatch"]),
+            "note": "core4 = R0/R1/R2/R3 share the same dump; R1cb from the prior rwscale dumper. "
+                    "Any all5-only mismatch affects ONLY the R3-vs-R1cb secondary.",
+        }
     v["SECONDARY_R2_vs_R1_isolates_RAFT_objective"] = r2_vs_r1
     v["R1_hit_side_interference_vs_R0"] = r1_hit_interf
     v["MECHANISM_miss_gain_source"] = mechanism
-    v["format_parity_median_pred_words"] = lengths
+    if have_preds:
+        v["format_parity_median_pred_words"] = lengths
     v["INTERACTION_R2_vs_R0_diff_in_diff"]["artifact_robustness"] = (
         "DiD lower 95% CI = 0.0618 exceeds the §9 ~0.038 recovery-source artifact bound, "
         "so the miss-concentration survives the worst-case oracle-recovery confound.")

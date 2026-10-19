@@ -40,7 +40,9 @@ def norm(s):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--preds-dir", default=os.path.join(ROOT, "results/knowledge/uc4/cojudge_phase2/preds"),
-                    help="dir holding phase2_preds_{R0,R1,R2,R3,R1cb}.jsonl")
+                    help="dir holding the FULL phase2_preds_{R0,R1,R2,R3,R1cb}.jsonl dumps "
+                         "(large, not committed — regenerate with tools/dump_rag_preds.py or use the "
+                         "EC2 backup; the committed preds/ holds only samples). See preds/README.md")
     ap.add_argument("--train", required=True,
                     help="packed RAFT training set for leak-flag computation (large; in EC2 backup)")
     ap.add_argument("--out-dir", default=os.path.join(ROOT, "results/knowledge/uc4/cojudge_phase2"),
