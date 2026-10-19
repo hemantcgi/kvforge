@@ -358,6 +358,7 @@ def answer_with_mode(
             "kv_version": h.payload.get("kv_version"),
             "kv_token_path": h.payload.get("kv_token_path"),
             "kds": h.payload.get("kds"),
+            "fkds": h.payload.get("fkds"),
             "status": h.payload.get("status", "active"),
         }
         for h in hits
@@ -758,6 +759,7 @@ def route_query(query: str, cfg: dict) -> list[dict]:
                 "kv_cache": h.payload.get("kv_cache"),
                 "kv_version": h.payload.get("kv_version"),
                 "kds": h.payload.get("kds"),
+                "fkds": h.payload.get("fkds"),
                 "cluster_id": str(cluster_id),
             }
             for h in hits
