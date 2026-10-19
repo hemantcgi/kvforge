@@ -7,7 +7,7 @@ the codebase treats vLLM as a drop-in replacement for local model.generate().
 
 Typical deployment (one server per use case / GPU):
 
-    CUDA_VISIBLE_DEVICES=3 vllm serve meta-llama/Llama-3.2-3B-Instruct \\
+    CUDA_VISIBLE_DEVICES=3 vllm serve google/gemma-4-E2B-it \\
         --enable-lora \\
         --lora-modules uc4=examples/usecase4_bedrock_userguide/lora_checkpoints/v3/ \\
         --max-lora-rank 16 \\

@@ -1,4 +1,4 @@
-"""Singleton loader for the Llama 3.2 3B language model with optional LoRA adapters.
+"""Singleton loader for the Gemma 4 E2B language model with optional LoRA adapters.
 
 Provides a thread-safe, process-level singleton for the HuggingFace model and
 tokenizer so that GPU memory is allocated only once per process.
