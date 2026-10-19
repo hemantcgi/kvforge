@@ -1,0 +1,1102 @@
+[
+ {
+  "fact_id": "f0008",
+  "question": "What is the recommended maximum duration to limit your access keys to when granting programmatic access?",
+  "gold": "Limit your access keys to 12 hours.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "1 hour"
+   },
+   {
+    "label": "B",
+    "prediction": "12 hours."
+   },
+   {
+    "label": "C",
+    "prediction": "12 hours"
+   },
+   {
+    "label": "D",
+    "prediction": "The recommended maximum duration to limit your access keys to is **12 hours**."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0018",
+  "question": "In the example code for Amazon Titan Image Generator G1, what cfgScale value is set in the request body?",
+  "gold": "The cfgScale value is set to 8.0.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "8.0"
+   },
+   {
+    "label": "B",
+    "prediction": "10"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0028",
+  "question": "When using the computer use API, what value must be set for the anthropic beta parameter?",
+  "gold": "The anthropic beta value must be computer-use-2024-10-22.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "\"computer-use-2024-10-22\""
+   },
+   {
+    "label": "B",
+    "prediction": "true"
+   },
+   {
+    "label": "C",
+    "prediction": "computer-use-2024-10-22"
+   },
+   {
+    "label": "D",
+    "prediction": "The value **\"anthropic.claude-3-haiku-20240307-v1:0\"** must be set for the anthropic beta parameter."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0038",
+  "question": "What is the max_tokens value configured in the Bedrock generate_text request?",
+  "gold": "The max_tokens value is set to 400.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "512"
+   },
+   {
+    "label": "B",
+    "prediction": "2048"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0048",
+  "question": "Which API operation can I call to set hyperparameters when submitting a fine-tuning job for an Amazon Bedrock custom model?",
+  "gold": "CreateModelCustomizationJob API operation.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You can call the **CreateModelCustomizationJob** API operation to set hyperparameters when submitting a fine-tuning job for an Amazon Bedrock custom model."
+   },
+   {
+    "label": "B",
+    "prediction": "CreateModelCustomizationJob API operation."
+   },
+   {
+    "label": "C",
+    "prediction": "CreateModelCustomizationJob API operation"
+   },
+   {
+    "label": "D",
+    "prediction": "CreateModelCustomizationJob"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0058",
+  "question": "Which Amazon Bedrock APIs should I use to submit a single prompt?",
+  "gold": "Use the InvokeModel or InvokeModelWithResponseStream API to submit a single prompt.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You should use the **InvokeModel** API to submit a single prompt."
+   },
+   {
+    "label": "B",
+    "prediction": "InvokeModel or InvokeModelWithResponseStream"
+   },
+   {
+    "label": "C",
+    "prediction": "The InvokeModel or InvokeModelWithResponseStream API"
+   },
+   {
+    "label": "D",
+    "prediction": "InvokeModel or Converse"
+   },
+   {
+    "label": "E",
+    "prediction": "InvokeModel"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0068",
+  "question": "Which model ID is used in the main entrypoint for the Anthropic Claude 3 Sonnet example?",
+  "gold": "The model ID is anthropic.claude-3-sonnet-20240229-v1:0.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "anthropic.claude-3-sonnet-20240229-v1:0"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0078",
+  "question": "How can I create an inference profile to track costs and usage for a model across multiple Regions in Amazon Bedrock?",
+  "gold": "Specify the cross region (system-defined) inference profile that defines the model and Regions to route requests.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You can create an inference profile that tracks costs and usage for a model across multiple Regions by specifying the cross region (system-defined) inference profile that defines the model and Regions to which you want the inference profile to route requests."
+   },
+   {
+    "label": "B",
+    "prediction": "You can create an inference profile to track costs and usage for a model across multiple Regions in Amazon Bedrock by following these steps:\n\n**Prerequisites:**\n\n* **Access to the AWS Management Console:** You need an IAM role with Amazon"
+   },
+   {
+    "label": "C",
+    "prediction": "You can create an inference profile to track costs and usage for a model across multiple Regions in Amazon Bedrock."
+   },
+   {
+    "label": "D",
+    "prediction": "By specifying the Regions in the inference profile"
+   },
+   {
+    "label": "E",
+    "prediction": "Specify a cross-region (system-defined) inference profile."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0088",
+  "question": "What approaches can I use to modify the instruction, task, or question part of a prompt?",
+  "gold": "Domain/input specification, task specification, and label description.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You can modify the instruction, task, or question part of the prompt by using the Prompt management interface or by editing the prompt directly in the console."
+   },
+   {
+    "label": "B",
+    "prediction": "You have several approaches to modify the instruction, task, or question part of a prompt, depending on what you want to achieve. Here are the primary methods:\n\n### 1. Direct Editing and Rewriting\nThis is the most straightforward"
+   },
+   {
+    "label": "C",
+    "prediction": "I can use the text editor to modify the instruction, task, or question part of a prompt."
+   },
+   {
+    "label": "D",
+    "prediction": "Edit in Overview, Edit in prompt builder, API, Prompt management."
+   },
+   {
+    "label": "E",
+    "prediction": "You can modify the instruction, task, or question part of the prompt."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0098",
+  "question": "If Amazon Bedrock Guardrails blocks my input prompt, will I still be charged?",
+  "gold": "Yes, if guardrails blocks the input prompt, you will be charged for the guardrail evaluation.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "No, you won't be charged for the input prompt that Amazon Bedrock Guardrails blocks."
+   },
+   {
+    "label": "B",
+    "prediction": "No, there will be no charges if guardrails blocks the input prompt."
+   },
+   {
+    "label": "C",
+    "prediction": "No, you will not be charged for the input prompt if Amazon Bedrock Guardrails blocks it."
+   },
+   {
+    "label": "D",
+    "prediction": "No, you will not be charged for the input prompt."
+   },
+   {
+    "label": "E",
+    "prediction": "Yes."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0108",
+  "question": "What prerequisites do I need to complete before using Amazon Bedrock Guardrails with my AWS account?",
+  "gold": "You must request access to the model or models you want to use with guardrails and ensure your IAM role has the necessary permissions.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Request model access, IAM permissions, and prepare guardrail components."
+   },
+   {
+    "label": "B",
+    "prediction": "To use Amazon Bedrock Guardrails with your AWS account, you need to complete the following prerequisites:\n\n1. **Access to the Amazon Bedrock console:** You need to have an AWS account with the necessary permissions to access the Amazon Bed"
+   },
+   {
+    "label": "C",
+    "prediction": "I need to set up an Amazon Bedrock Studio workspace."
+   },
+   {
+    "label": "D",
+    "prediction": "I need to request access to the model or models that I want to use with guardrails."
+   },
+   {
+    "label": "E",
+    "prediction": "I need to request access to the model or models with which I want to use guardrails, and ensure my IAM role has the necessary permissions to perform actions related to Amazon Bedrock Guardrails."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0118",
+  "question": "When testing input tagging in the guardrails test pane, what default input tag suffix should I use?",
+  "gold": "Use the default playground input tag suffix: playground.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The default input tag suffix you should use is **[INST]**."
+   },
+   {
+    "label": "B",
+    "prediction": "The default input tag suffix is \"xyz\"."
+   },
+   {
+    "label": "C",
+    "prediction": "playground"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0128",
+  "question": "What is the maximum number of models I can select for a model evaluation job in Amazon Bedrock?",
+  "gold": "Up to two models.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Two different models."
+   },
+   {
+    "label": "B",
+    "prediction": "You can select up to **5 models** for a model evaluation job in Amazon Bedrock."
+   },
+   {
+    "label": "C",
+    "prediction": "Up to 5 models"
+   },
+   {
+    "label": "D",
+    "prediction": "You can select up to 5 models for a model evaluation job."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0138",
+  "question": "In the Harmfulness evaluation metric, what numeric value indicates that a response is judged harmful?",
+  "gold": "A value of 1 indicates the response is judged harmful.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "1"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0148",
+  "question": "What example does the Amazon Bedrock User Guide give for an instruction that provides answer options?",
+  "gold": "Which of the following is the tallest mountain in Europe: K2, Mount Ararat, ...",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The example given is: \"Which of these is the best French cheese?\" with options like Brie, Camembert, or Roquefort."
+   },
+   {
+    "label": "B",
+    "prediction": "No example given."
+   },
+   {
+    "label": "C",
+    "prediction": "The example is \"Which of the following is the tallest mountain in Europe: Mount Ararat, Mount Elbrus, Mount Ka\""
+   },
+   {
+    "label": "D",
+    "prediction": "\"Which of the following is the tallest mountain in the world: Mount Everest, K2, or Mount McKinley?\""
+   },
+   {
+    "label": "E",
+    "prediction": "\"Which of the following is the tallest mountain in Europe: K2, Mount Ararat, or Mount Elbrus?\""
+   }
+  ]
+ },
+ {
+  "fact_id": "f0158",
+  "question": "What rating scale is used to grade logical coherence when evaluating Anthropic Claude 3 Haiku responses?",
+  "gold": "Responses are graded on a 5-point Likert scale and then normalized in the output and the job's report card.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "5-point Likert scale."
+   },
+   {
+    "label": "B",
+    "prediction": "A 5-point Likert scale"
+   },
+   {
+    "label": "C",
+    "prediction": "A 5-point Likert scale is used to grade logical coherence."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0168",
+  "question": "In the stereotyping evaluation, what score is assigned when a response contains a stereotype?",
+  "gold": "A response containing a stereotype receives a score of 1.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "A score of 1 is assigned when a response contains a stereotype."
+   },
+   {
+    "label": "B",
+    "prediction": "1"
+   },
+   {
+    "label": "C",
+    "prediction": "<answer>1</answer>\n<explain>If a response contains a stereotype, it receives a score of 1. If no stereotype is detected, it receives a score of 0.</explain>"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0178",
+  "question": "Which IAM role is allowed to perform kms:Decrypt when the encryption context evaluationJobArn matches an Amazon Bedrock evaluation job ARN?",
+  "gold": "The IAM role is arn:aws:iam::account-id:role/CustomerProvidedRole.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The Amazon Bedrock service role"
+   },
+   {
+    "label": "B",
+    "prediction": "The IAM role with the ARN arn:aws:iam::${account-id}:role/APICallingRole"
+   },
+   {
+    "label": "C",
+    "prediction": "The IAM role that you specify in the condition"
+   },
+   {
+    "label": "D",
+    "prediction": "Role calling CreateEvaluationJob API."
+   },
+   {
+    "label": "E",
+    "prediction": "The IAM role that is allowed to perform kms:Decrypt when the encryption context evaluationJobArn matches an Amazon Bedrock evaluation job ARN is the **Amazon Bedrock service role**."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0188",
+  "question": "What is the maximum file size allowed for JPEG and PNG images used in an Amazon Bedrock knowledge base data source?",
+  "gold": "The maximum size of .JPEG and .PNG files is 3.75 MB.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The maximum file size for JPEG and PNG images is 10 MB."
+   },
+   {
+    "label": "B",
+    "prediction": "3.75 MB."
+   },
+   {
+    "label": "C",
+    "prediction": "3.75 MB"
+   },
+   {
+    "label": "D",
+    "prediction": "The maximum file size allowed for JPEG and PNG images is **4 MB**."
+   },
+   {
+    "label": "E",
+    "prediction": "The maximum file size for .JPEG and .PNG files is 3.75 MB."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0198",
+  "question": "When configuring SharePoint App-Only authentication for Amazon Bedrock, what identifier should I copy from my Microsoft 365 account?",
+  "gold": "Your Microsoft 365 tenant ID, found in the Properties of your Microsoft Entra portal.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The client ID"
+   },
+   {
+    "label": "B",
+    "prediction": "Microsoft 365 tenant ID."
+   },
+   {
+    "label": "C",
+    "prediction": "Your Microsoft 365 tenant ID"
+   },
+   {
+    "label": "D",
+    "prediction": "You should copy the **Client ID** from your Microsoft 365 account."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0208",
+  "question": "What file conditions must be met before creating a knowledge base?",
+  "gold": "The files must be in supported formats and must not exceed the Ingestion job file size specification.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Data in supported connector."
+   },
+   {
+    "label": "B",
+    "prediction": "The file conditions must be met before creating a knowledge base."
+   },
+   {
+    "label": "C",
+    "prediction": "The file must be in the same folder as the knowledge base."
+   },
+   {
+    "label": "D",
+    "prediction": "You must have the necessary permissions to access your data source."
+   },
+   {
+    "label": "E",
+    "prediction": "The file conditions that must be met before creating a knowledge base are:\n\n* **The file must be in a supported format.**\n* **The file must be in a supported location.**\n* **The file must be in a supported"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0218",
+  "question": "What is the difference between specifying inclusions and exclusions for table and column references?",
+  "gold": "With inclusions, all other tables and columns are ignored; with exclusions, the tables and columns you specify are ignored.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Inclusions specify which tables and columns to include, while exclusions specify which tables and columns to exclude."
+   },
+   {
+    "label": "B",
+    "prediction": "The difference lies in their purpose and how they function within the system:\n\n**Inclusions (Inclusion)**\n\n* **Purpose:** Inclusions are used to **specify which tables and columns should be included** in the data source."
+   },
+   {
+    "label": "C",
+    "prediction": "When you specify inclusions, all other tables and columns are ignored. When you specify exclusions, only the tables and columns you specify are ignored."
+   },
+   {
+    "label": "D",
+    "prediction": "Inclusions include the specified tables or columns, while exclusions exclude them."
+   },
+   {
+    "label": "E",
+    "prediction": "Inclusions include specified items; exclusions omit them."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0228",
+  "question": "Which Amazon Bedrock filter operator should I use to match attributes that do not equal a value I provide?",
+  "gold": "notEquals, which supports string, number, and boolean values.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The **NotEquals** operator is the one you should use to match attributes that do not equal a value you provide."
+   },
+   {
+    "label": "B",
+    "prediction": "The NotEquals operator."
+   },
+   {
+    "label": "C",
+    "prediction": "Not equals !="
+   },
+   {
+    "label": "D",
+    "prediction": "The NotEquals operator"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0238",
+  "question": "Which AWS regions support the conversational builder in the Amazon Bedrock console?",
+  "gold": "US East (N. Virginia), US West (Oregon), Europe (Frankfurt), Asia Pacific (Sydney), and Europe (Paris).",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The conversational builder in the Amazon Bedrock console supports the following AWS regions: **US East (N. Virginia) (us-east-1)** and **US West (Oregon) (us-west-2)**."
+   },
+   {
+    "label": "B",
+    "prediction": "US East (Ohio) and Asia Pacific (Seoul)."
+   },
+   {
+    "label": "C",
+    "prediction": "US East (N. Virginia) and US West (Oregon)"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0248",
+  "question": "If I include returnControlInvocationResults in the sessionState field, what happens to the inputText field?",
+  "gold": "The inputText field is ignored.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The inputText field will be overwritten."
+   },
+   {
+    "label": "B",
+    "prediction": "inputText is ignored."
+   },
+   {
+    "label": "C",
+    "prediction": "If you include returnControlInvocationResults in the sessionState field, the inputText field will **not be overwritten or removed**. Both fields will coexist in the session state."
+   },
+   {
+    "label": "D",
+    "prediction": "The inputText field will be ignored."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0258",
+  "question": "When configuring memory for an Amazon Bedrock agent, what is the default duration for retaining conversational context?",
+  "gold": "30 days.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The default duration for retaining conversational context is 30 days."
+   },
+   {
+    "label": "B",
+    "prediction": "By default, your agent retains conversational context for 30 days."
+   },
+   {
+    "label": "C",
+    "prediction": "The default duration for retaining conversational context is **3 days**."
+   },
+   {
+    "label": "D",
+    "prediction": "30 days"
+   },
+   {
+    "label": "E",
+    "prediction": "30 days."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0268",
+  "question": "What values can the action field have in a GuardrailAssessment object?",
+  "gold": "The action field options are GUARDRAIL_INTERVENED or NONE.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The action field can have values such as BLOCKED, ANONYMIZED, or METADATA_FILTERED."
+   },
+   {
+    "label": "B",
+    "prediction": "The action field can have values of GUARDRAIL_INTERVENED or NONE."
+   },
+   {
+    "label": "C",
+    "prediction": "The action field can have values GUARDRAIL_INTERVENED or NONE."
+   },
+   {
+    "label": "D",
+    "prediction": "GUARDRAIL_INTERVENED or NONE."
+   },
+   {
+    "label": "E",
+    "prediction": "The action field can have one of three values: **BLOCKED**, **ANALYZE**, or **NONE**."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0278",
+  "question": "What happens in parse_function_call if the FUNCTION_CALL_REGEX search returns no match?",
+  "gold": "It raises ValueError(FUNCTION_CALL_STRUCTURE_REPROMPT_MESSAGE).",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Raises `ValueError(FUNCTION_CALL_STRUCTURE_REPROMPT_MESSAGE)`."
+   },
+   {
+    "label": "B",
+    "prediction": "A ValueError is raised with FUNCTION_CALL_STRUCTURE_REPROMPT_MESSAGE"
+   },
+   {
+    "label": "C",
+    "prediction": "If the FUNCTION_CALL_REGEX search returns no match, the function returns None."
+   },
+   {
+    "label": "D",
+    "prediction": "A ValueError is raised with the MISSING_API_INPUT_FOR_USER_REPROMPT_MESSAGE exception."
+   },
+   {
+    "label": "E",
+    "prediction": "It returns None"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0288",
+  "question": "What placeholder must be included in the orchestration prompt template to include prompt session attributes in the prompt sent to the FM?",
+  "gold": "$prompt_session_attributes$",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The placeholder **{{promptSessionAttributes}}** must be included in the orchestration prompt template to include prompt session attributes in the prompt sent to the FM."
+   },
+   {
+    "label": "B",
+    "prediction": "$prompt_session_attributes$"
+   },
+   {
+    "label": "C",
+    "prediction": "{{prompt_session_attributes}}"
+   },
+   {
+    "label": "D",
+    "prediction": "The $prompt_session_attributes$ placeholder must be included in the orchestration prompt template."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0298",
+  "question": "What action is returned for an item with retailPrice 11, marketPrice 12, and type meat?",
+  "gold": "The second value in action, \"buy\".",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "buy"
+   },
+   {
+    "label": "B",
+    "prediction": "The action returned is \"SELL\"."
+   },
+   {
+    "label": "C",
+    "prediction": "The action returned is \"buy\"."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0308",
+  "question": "What type of data can be used to retrain a foundation model with business documents that are not publicly available?",
+  "gold": "Private data, such as business documents, that are not publicly available for training large language models.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Business documents that are not publicly available can be used to retrain a foundation model through **private fine-tuning** or **continued pre-training** approaches.\n\nHere's a breakdown of the types of data and the process involved:"
+   },
+   {
+    "label": "B",
+    "prediction": "Private data"
+   },
+   {
+    "label": "C",
+    "prediction": "Private data can be used to retrain a foundation model."
+   },
+   {
+    "label": "D",
+    "prediction": "Private business documents."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0318",
+  "question": "When using invocation logs for model distillation, what must you provide before starting the model distillation job?",
+  "gold": "You must provide Amazon Bedrock permissions to access the logs.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You must provide the ARN of the model distillation job."
+   },
+   {
+    "label": "B",
+    "prediction": "Provide Amazon Bedrock access to invocation logs."
+   },
+   {
+    "label": "C",
+    "prediction": "You must provide Amazon Bedrock access to your invocation logs."
+   },
+   {
+    "label": "D",
+    "prediction": "You must provide the **Amazon Resource Names (ARNs)** of the invocation logs you want to use before starting the model distillation job."
+   },
+   {
+    "label": "E",
+    "prediction": "You must provide Amazon Bedrock permissions to access the logs."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0328",
+  "question": "What name should I give the IAM policy when creating it for S3 bucket access?",
+  "gold": "Name it S3BucketPolicy.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "MyFineTuningDataAccess"
+   },
+   {
+    "label": "B",
+    "prediction": "S3BucketPolicy"
+   },
+   {
+    "label": "C",
+    "prediction": "A descriptive name like \"MyS3BucketPolicy\" or \"AllowAccessToMyS3Bucket\" is recommended."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0338",
+  "question": "What token ID is assigned to <|reserved_special_token_224|>?",
+  "gold": "Token ID 128232 is assigned to <|reserved_special_token_224|>.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "224"
+   },
+   {
+    "label": "B",
+    "prediction": "128202"
+   },
+   {
+    "label": "C",
+    "prediction": "225"
+   },
+   {
+    "label": "D",
+    "prediction": "128196"
+   },
+   {
+    "label": "E",
+    "prediction": "128024"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0348",
+  "question": "What content is assigned to token ID 328 in the tokenizer configuration?",
+  "gold": "Token ID 328 has the content \"[control_326]\" and is marked as special.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "[TOOL_RESULTS]"
+   },
+   {
+    "label": "B",
+    "prediction": "\"assistant\""
+   },
+   {
+    "label": "C",
+    "prediction": "[control_326]"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0358",
+  "question": "When creating a Blueprint with the Blueprint Prompt in BDA, which data types can I choose?",
+  "gold": "You can choose Document or Image.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You can choose from the following data types: Inferred, Explicit, or None."
+   },
+   {
+    "label": "B",
+    "prediction": "Document or Image"
+   },
+   {
+    "label": "C",
+    "prediction": "Document or Image."
+   },
+   {
+    "label": "D",
+    "prediction": "When creating a Blueprint with the Blueprint Prompt in BDA, you can choose from several data types, including:\n\n* **String**\n* **Number**\n* **Boolean**\n* **Date/Time**\n* **Object"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0368",
+  "question": "What restriction applies if I want to change the model for a Provisioned Throughput that is associated with a base model?",
+  "gold": "You can't change the model for a Provisioned Throughput associated with a base model.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "You cannot change the model for a Provisioned Throughput associated with a base model."
+   },
+   {
+    "label": "B",
+    "prediction": "Can't change model."
+   },
+   {
+    "label": "C",
+    "prediction": "You cannot change the model for a Provisioned Throughput that is associated with a base model."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0378",
+  "question": "By default, which keys does Amazon Bedrock Studio use to encrypt a workspace and its created resources?",
+  "gold": "Amazon Bedrock Studio uses keys that AWS owns by default to encrypt the workspace and all created resources.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "By default, Amazon Bedrock Studio uses an AWS KMS key to encrypt a workspace and its created resources."
+   },
+   {
+    "label": "B",
+    "prediction": "AWS-owned keys."
+   },
+   {
+    "label": "C",
+    "prediction": "AWS owned keys"
+   },
+   {
+    "label": "D",
+    "prediction": "By default, Amazon Bedrock Studio encrypts the workspace and all created resources by using keys that AWS owns."
+   },
+   {
+    "label": "E",
+    "prediction": "Amazon Bedrock Studio uses a default AWS KMS key to encrypt a workspace and its created resources."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0388",
+  "question": "How can I add a second layer of encryption to my Amazon Bedrock Studio data?",
+  "gold": "Choose a customer-managed key when you create your Amazon Bedrock Studio domains.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "By choosing a customer managed key when you create your Amazon Bedrock Studio domains."
+   },
+   {
+    "label": "B",
+    "prediction": "Use a customer-managed key."
+   },
+   {
+    "label": "C",
+    "prediction": "By choosing a customer-managed key when you create your Amazon Bedrock Studio domains."
+   },
+   {
+    "label": "D",
+    "prediction": "You can add a second layer of encryption by using a customer managed key."
+   },
+   {
+    "label": "E",
+    "prediction": "Adding a second layer of encryption to your Amazon Bedrock Studio data involves using a **customer-managed key (CMK)** in conjunction with the **AWS Key Management Service (AWS KMS)**.\n\nHere is a comprehensive guide on how to"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0398",
+  "question": "What actions does the AmazonBedrockReadOnly managed policy allow?",
+  "gold": "It allows bedrock:Get* and bedrock:List* actions on all resources.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The AmazonBedrockReadOnly managed policy allows read-only actions such as GetModel, ListFoundationModels, ListCustomModels, ListCustomModels, ListCustomModelTrainingJobs, ListModelCustomizations, ListModelCustomizations, ListModelEvaluation"
+   },
+   {
+    "label": "B",
+    "prediction": "The AmazonBedrockReadOnly managed policy allows a wide range of read-only actions on Amazon Bedrock resources. These actions include:\n\n* **bedrock:Get* actions:** Allowing retrieval of various Bedrock resources (models, agents,"
+   },
+   {
+    "label": "C",
+    "prediction": "The AmazonBedrockReadOnly managed policy allows read-only actions on Amazon Bedrock resources."
+   },
+   {
+    "label": "D",
+    "prediction": "Get and List actions."
+   },
+   {
+    "label": "E",
+    "prediction": "bedrock:Get* and bedrock:List*"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0408",
+  "question": "What is the model ID for Meta Llama 3.1 70B Instruct in the listed Bedrock models?",
+  "gold": "The model ID is meta.llama3-1-70b-instruct-v1:0.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "meta.llama3-70b-instruct-v1:0"
+   },
+   {
+    "label": "B",
+    "prediction": "meta.llama3-1-70b-instruct-v1:0"
+   },
+   {
+    "label": "C",
+    "prediction": "Meta Llama 3.1 70B Instruct"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0418",
+  "question": "Which dimensions does Amazon Bedrock support for retrieving operation metrics?",
+  "gold": "Amazon Bedrock supports the ModelId dimension for all metrics, and ModelId combined with ImageSize and BucketedStep.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "ModelId, ModelId + ImageSize + BucketedStep"
+   },
+   {
+    "label": "B",
+    "prediction": "ModelId, ModelId + ImageSize + BucketedStep, and ModelId + ImageSize + BucketedStepSize"
+   },
+   {
+    "label": "C",
+    "prediction": "ModelId, ModelId + ImageSize, and ModelId + ImageSize + BucketedStep"
+   },
+   {
+    "label": "D",
+    "prediction": "Amazon Bedrock supports retrieving operation metrics across **four dimensions**:\n\n1. **Model**\n2. **Region**\n3. **Model-Invocation-Job-ID**\n4. **Model-Invocation-Job-Name**"
+   },
+   {
+    "label": "E",
+    "prediction": "Amazon Bedrock supports dimensions for retrieving operation metrics such as modelId, modelArn, and region."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0428",
+  "question": "Which Amazon Bedrock example demonstrates chaining multiple AI agents that interact with external APIs?",
+  "gold": "Find and summarize today's highest trending GitHub repository.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "The example that demonstrates chaining multiple AI agents that interact with external APIs is the **Amazon Bedrock Agents example that chains multiple AI agents together to perform complex tasks.**"
+   },
+   {
+    "label": "B",
+    "prediction": "The Amazon Bedrock Agents example demonstrates chaining multiple AI agents that interact with external APIs."
+   },
+   {
+    "label": "C",
+    "prediction": "Amazon Bedrock Agents Runtime."
+   },
+   {
+    "label": "D",
+    "prediction": "The Amazon Bedrock example that demonstrates chaining multiple AI agents that interact with external APIs."
+   },
+   {
+    "label": "E",
+    "prediction": "The example demonstrates chaining multiple AI agents that interact with external APIs."
+   }
+  ]
+ },
+ {
+  "fact_id": "f0438",
+  "question": "What is the maximum seed value allowed in the imageGenerationConfig for the Titan Image Generator?",
+  "gold": "The maximum seed value is 2,147,483,647.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "4294967295"
+   },
+   {
+    "label": "B",
+    "prediction": "The maximum seed value allowed in the imageGenerationConfig for the Titan Image Generator is **4294967295** (which is $2^{32}-1$)."
+   },
+   {
+    "label": "C",
+    "prediction": "2,147,483,647"
+   },
+   {
+    "label": "D",
+    "prediction": "2,147,483,646"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0448",
+  "question": "Which Anthropic Claude model is mentioned in the Bedrock Runtime example?",
+  "gold": "Anthropic Claude 2276.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "Claude models are mentioned."
+   },
+   {
+    "label": "B",
+    "prediction": "Anthropic Claude 2"
+   },
+   {
+    "label": "C",
+    "prediction": "Claude 3 Haiku"
+   },
+   {
+    "label": "D",
+    "prediction": "Anthropic Claude 3 Haiku"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0458",
+  "question": "In the C# code example for Amazon Bedrock, which method is used to send a request to the Bedrock Runtime and wait for the result?",
+  "gold": "client.ConverseAsync(request)",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "InvokeModelWithResponseStreamAsync"
+   },
+   {
+    "label": "B",
+    "prediction": "The method used is **InvokeModelAsync**."
+   },
+   {
+    "label": "C",
+    "prediction": "InvokeModelAsync"
+   },
+   {
+    "label": "D",
+    "prediction": "`InvokeModelWithResponseStreamAsync`"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0468",
+  "question": "Which AWS SDK command is used in the code to retrieve an individual agent after listing agent summaries?",
+  "gold": "GetAgentCommand is called with the agentId to retrieve each agent.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "GetAgentCommand"
+   },
+   {
+    "label": "B",
+    "prediction": "GetAgent"
+   }
+  ]
+ },
+ {
+  "fact_id": "f0478",
+  "question": "Which AWS SDK language reference contains the API details for InvokeFlow?",
+  "gold": "The AWS SDK for JavaScript API Reference contains the API details for InvokeFlow.",
+  "candidates": [
+   {
+    "label": "A",
+    "prediction": "AWS SDK for JavaScript API Reference"
+   },
+   {
+    "label": "B",
+    "prediction": "AWS SDK for .NET API Reference"
+   },
+   {
+    "label": "C",
+    "prediction": "AWS SDK for Python (Boto3) API Reference"
+   },
+   {
+    "label": "D",
+    "prediction": "The AWS SDK for .NET API Reference contains the API details for InvokeFlow."
+   }
+  ]
+ }
+]
