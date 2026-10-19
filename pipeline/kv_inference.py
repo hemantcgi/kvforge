@@ -52,35 +52,38 @@ def decide_inference_mode(
 ) -> str:
     """Return 'kv_injection' if all chunks are fresh, cached, and KDS/fKDS-eligible.
 
-    KDS (Knowledge Differentiation Score) and fKDS (factual KDS) eligibility are
-    conjunctive: every retrieved chunk must carry the required score at or above
-    the configured threshold.  fKDS is preferred when ``fkds_threshold`` is set;
-    otherwise the legacy ``kds_threshold`` is used.  A threshold of ``None`` (or
-    no calibrated corpus threshold) fails closed to ``text_fallback``.
+    KDS (Knowledge Differentiation Score) and fKDS (factual KDS) eligibility
+    gating applies only when a threshold is configured: when set, every
+    retrieved chunk must carry the required score at or above the threshold
+    (fKDS preferred when ``fkds_threshold`` is set, else the legacy
+    ``kds_threshold``), and a chunk lacking the score fails closed to
+    ``text_fallback``. When neither threshold is configured, freshness and a
+    present ``kv_cache`` are sufficient for ``kv_injection`` (the default).
     """
     if phase < 2:
         return "text_fallback"
-    if fkds_threshold is None and kds_threshold is None:
-        return "text_fallback"  # no calibrated threshold → fail-closed
     for chunk in chunks:
         v = chunk.get("kv_version")
         if v is None or v < current_lora_version:
             return "text_fallback"
         if chunk.get("kv_cache") is None:
             return "text_fallback"  # kv_cache missing — can't inject
+        # KDS/fKDS eligibility gating applies ONLY when a threshold is
+        # configured. With no calibrated threshold, freshness + a present
+        # kv_cache are sufficient (the long-standing default); a configured
+        # threshold then fails closed for any chunk lacking the required score.
         if fkds_threshold is not None:
             fkds = chunk.get("fkds")
             if fkds is not None and fkds >= fkds_threshold:
                 continue
-            # fKDS missing or below threshold: fall back to legacy KDS if
-            # both thresholds are configured. This keeps older chunks that
-            # only have a KDS score eligible when fKDS has not been computed.
+            # fKDS missing or below threshold: fall back to legacy KDS if it
+            # is also configured, so chunks that only have a KDS stay eligible.
             if kds_threshold is not None:
                 kds = chunk.get("kds")
                 if kds is not None and kds >= kds_threshold:
                     continue
             return "text_fallback"  # chunk lacks fKDS/KDS evidence or is ineligible
-        else:
+        elif kds_threshold is not None:
             kds = chunk.get("kds")
             if kds is None or kds < kds_threshold:
                 return "text_fallback"  # chunk lacks KDS evidence or is ineligible

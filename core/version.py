@@ -92,9 +92,11 @@ def get_phase() -> int:
     """Return the current inference phase (1, 2, or 3) from the version file.
 
     Returns:
-        Active phase integer.
+        Active phase integer. Defaults to 1 (text RAG — the most conservative
+        path) when the version file has no ``phase`` key, so inference never
+        crashes on a partially-initialised state.
     """
-    return load()["phase"]
+    return load().get("phase", 1)
 
 
 def increment_lora_version(checkpoint_path: str) -> int:

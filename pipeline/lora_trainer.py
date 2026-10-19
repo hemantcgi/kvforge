@@ -212,6 +212,16 @@ def build_sft_example(tokenizer, question: str, answer: str, max_length: int) ->
         [{"role": "user", "content": q}, {"role": "assistant", "content": answer}],
         tokenize=True, return_dict=False,
     )
+    # Answer-only masking assumes the generation prompt is a strict prefix of the
+    # full (user+assistant) rendering. This holds for standard chat templates; a
+    # template that violates it would silently mis-place the answer-loss boundary,
+    # so guard it loudly instead.
+    n = len(prompt_ids)
+    if list(full_ids[:n]) != list(prompt_ids):
+        raise ValueError(
+            "chat template does not render the generation prompt as a prefix of the "
+            "full turn; answer-only label masking would be mis-aligned"
+        )
     labels = mask_prompt_labels(prompt_ids, full_ids)
     input_ids = list(full_ids)[:max_length]
     labels = labels[:max_length]
@@ -257,14 +267,16 @@ def load_kds_into_replay_buffer(rb: ReplayBuffer, cfg: dict) -> None:
                     rb.add_kds(cid, float(payload["kds"]))
             if offset is None:
                 break
-    except Exception:
-        pass
+    except Exception as e:
+        # Non-fatal: training proceeds without the KDS feedback signal, but we
+        # must not swallow this silently (it previously hid a hard AttributeError).
+        print(f"⚠️  KDS import into replay buffer skipped: {type(e).__name__}: {e}", flush=True)
 
 
 def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
           output_dir: str, qa_texts: list[str] | None = None,
           from_base: bool = False,
-          faqs: list[dict] | None = None) -> None:
+          faqs: list[dict] | None = None, seed: int = 42) -> None:
     """Run LoRA fine-tuning and save the adapter to *output_dir*.
 
     Builds a PEFT ``LoraConfig`` from *cfg*, applies it to the base model,
@@ -391,8 +403,8 @@ def train(cfg: dict, new_chunks: list[dict], replay_chunks: list[dict],
         logging_steps=10,
         save_strategy="no",
         report_to="none",
-        seed=effective_cfg.get("lora_seed", 42),
-        data_seed=effective_cfg.get("lora_seed", 42),
+        seed=seed,
+        data_seed=seed,
     )
 
     trainer = Trainer(
@@ -502,7 +514,7 @@ def main() -> None:
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     train(cfg, new_chunks, replay_chunks, output_dir, qa_texts=qa_texts,
-          from_base=args.from_base, faqs=faqs)
+          from_base=args.from_base, faqs=faqs, seed=args.seed)
     if not args.checkpoint_dir:
         ver.increment_lora_version(output_dir)
 

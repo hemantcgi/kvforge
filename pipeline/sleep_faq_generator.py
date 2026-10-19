@@ -104,27 +104,37 @@ def _augment_with_paraphrases(faqs: list[dict], provider: str, model: str, api_k
     # Same inter-request backoff as the main generation loop (2s -> 60s on
     # repeated 429s) — this loop makes one call per FAQ with no other pacing.
     inter_delay = 2.0
+    max_429_retries = 6
     idx = 0
+    retries = 0
     while idx < len(faqs):
         faq = faqs[idx]
         question = faq.get(q_key, "")
         answer = faq.get(a_key, "")
         if not question or not answer:
             idx += 1
+            retries = 0
             continue
         try:
             prompt = _build_paraphrase_prompt(question, n_per_faq)
             raw = _call_provider(provider, model, api_key, prompt)
             inter_delay = max(2.0, inter_delay * 0.8)
         except Exception as e:
-            if "429" in str(e):
+            if "429" in str(e) and retries < max_429_retries:
+                retries += 1
                 inter_delay = min(60.0, inter_delay * 2)
-                print(f"  [paraphrase] rate-limited (429) — waiting {inter_delay:.0f}s before retry")
+                print(f"  [paraphrase] rate-limited (429) — waiting {inter_delay:.0f}s "
+                      f"before retry {retries}/{max_429_retries}")
                 _time.sleep(inter_delay)
                 continue  # retry this faq, idx unchanged
-            print(f"  [paraphrase] warning: could not paraphrase {question[:60]!r}: {e}")
+            if "429" in str(e):
+                print(f"  [paraphrase] giving up on {question[:60]!r} after {max_429_retries} rate-limit retries")
+            else:
+                print(f"  [paraphrase] warning: could not paraphrase {question[:60]!r}: {e}")
             idx += 1
+            retries = 0
             continue
+        retries = 0
         for p in _parse_paraphrase_lines(raw)[:n_per_faq]:
             augmented.append({q_key: p, a_key: answer})
         idx += 1
