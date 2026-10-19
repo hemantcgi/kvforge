@@ -25,12 +25,6 @@ datasets = [
         "parametric": [(50, 0.201, 0.022), (100, 0.207, 0.016), (200, 0.203, 0.011), (297, 0.190, 0.009)],
     },
     {
-        "name": "UC3: SQuAD 2.0",
-        "color": "#7570b3",
-        "text_rag": [(500, 0.144, 0.016), (1000, 0.161, 0.016), (2000, 0.163, 0.016)],
-        "parametric": [(500, 0.221, 0.015), (1000, 0.221, 0.015), (2000, 0.221, 0.015)],
-    },
-    {
         "name": "UC4: Bedrock User Guide",
         "color": "#e7298a",
         "text_rag": [(500, 0.219, None), (1000, 0.198, None), (2000, 0.136, None), (4000, 0.116, None), (6000, 0.109, None)],
@@ -98,7 +92,7 @@ for ds in datasets:
 from matplotlib.lines import Line2D
 custom_lines = [
     Line2D([0], [0], color="black", linewidth=2.5, marker="o", markersize=8, label="parametric (Gemma 4 fine-tuned)"),
-    Line2D([0], [0], color="black", linewidth=2, marker="x", markersize=8, linestyle="--", label="text_rag (retrieval baseline)"),
+    Line2D([0], [0], color="black", linewidth=2, marker="x", markersize=8, linestyle="--", label="Standard RAG (retrieval baseline)"),
 ]
 # Add dataset color legend
 for ds in datasets:
@@ -111,7 +105,7 @@ ax.set_xlabel("Training FAQ Pairs (N, log scale)")
 ax.set_ylabel("Factual Accuracy (FA)")
 ax.set_title(
     "Gemma 4 Crossover: Parametric vs. Text-RAG Factual Accuracy\n"
-    "Solid = parametric (fine-tuned)   ·   Dashed = text_rag (retrieval)",
+    "Solid = parametric (fine-tuned)   ·   Dashed = Standard RAG (retrieval)",
     fontsize=14, fontweight="bold", pad=18
 )
 ax.set_ylim(0.06, 0.42)
@@ -125,7 +119,7 @@ ax.set_xticklabels([str(t) for t in ticks], rotation=0)
 # Add a note about crossover regions
 ax.text(
     0.99, 0.02,
-    "Vertical dotted lines = crossover points (parametric > text_rag)",
+    "Vertical dotted lines = crossover points (parametric > Standard RAG)",
     transform=ax.transAxes, fontsize=9, ha="right", va="bottom",
     color="gray", style="italic",
 )
