@@ -2,9 +2,9 @@
 
 **KVForge** is a progressive system that transitions deployed question-answering systems from Retrieval-Augmented Generation (RAG) to **fully parametric answering** — where a fine-tuned small language model answers directly from its weights with no retrieval at all.
 
-The key result: a **2B-parameter Gemma 4** model, LoRA-fine-tuned on cloud-generated QA pairs, **matches or exceeds text-in-context RAG on factual accuracy across three of four enterprise corpora**, eliminating per-query retrieval costs.
+The key result: a small **Gemma-4-E2B** model (≈2B effective parameters), LoRA-fine-tuned on cloud-generated QA pairs, **matches or exceeds text-in-context RAG on factual accuracy across all four enterprise corpora** (biomedical QA only after extended training), eliminating per-query retrieval costs.
 
-> **Research Paper:** [KVForge: Autonomous Phase-Adaptive Question Answering with Progressive Parametric Absorption](docs/KVForge_Research_Paper.pdf)
+> **Research Paper:** [KVForge: Autonomous Phase-Adaptive Question Answering with Progressive Parametric Absorption](docs/KVForge_Research_Paper.pdf) — see the [summary below](#research-paper).
 
 ---
 
@@ -26,20 +26,33 @@ Phase transitions are gated by the **Parametric Readiness Score (PRS)** — a co
 
 ## Results: Gemma 4 Crossover Across Four Datasets
 
-KVForge was evaluated on four heterogeneous corpora using **Google Gemma-4-E2B-it** (2B parameters, 4-bit quantized), LoRA-fine-tuned on cloud-LLM-generated QA pairs. Factual Accuracy (FA) is a composite of token-F1 and LLM-judge correctness.
+KVForge was evaluated on four heterogeneous corpora using **Google Gemma-4-E2B-it** (≈2B effective / 5.1B total parameters, 4-bit NF4 quantized), LoRA-fine-tuned on cloud-LLM-generated QA pairs. Factual Accuracy (FA) is a composite of token-F1 and LLM-judge correctness.
 
 | Dataset | Corpus | Parametric FA | Text-RAG FA | Gain |
 |---------|--------|:-------------:|:-----------:|:----:|
-| UC1 Customer Support | Bitext (2,000 chunks) | **0.36** | 0.21 | **+71%** |
-| UC2 PubMedQA | Biomedical QA (2,918 chunks) | **0.23** | 0.14 | **+64%**\* |
-| UC3 SQuAD 2.0 | Reading comprehension | **0.22** | 0.16 | **+38%** |
-| UC4 Bedrock | Technical docs (2,520 chunks) | **0.23** | 0.16 | **+44%** |
+| UC1 Customer Support | [Bitext](https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset) (2,000 chunks) | **0.36** | 0.21 | **+71%** |
+| UC2 PubMedQA | [Biomedical QA](https://huggingface.co/datasets/qiaojin/PubMedQA) (2,918 chunks) | **0.23** | 0.14 | **+64%**\* |
+| UC3 SQuAD 2.0 | [Reading comprehension](https://huggingface.co/datasets/rajpurkar/squad_v2) | **0.22** | 0.16 | **+38%** |
+| UC4 Bedrock | [Technical docs](https://docs.aws.amazon.com/bedrock/latest/userguide/) (2,520 chunks) | **0.23** | 0.16 | **+44%** |
 
 \* PubMedQA required extended training (4,707 FAQ pairs, r=4, 15 epochs) to cross over; at sparse coverage parametric reverts below RAG. See the [consolidated crossover figure](docs/figures/gemma4_crossover_consolidated.png).
 
 ![Gemma 4 crossover across four datasets](docs/figures/gemma4_crossover_consolidated.png)
 
 **What this means for enterprises:** a 2B-parameter model, fine-tuned on cloud-generated QA pairs at a one-time cost of ~$50 per corpus, can match or exceed retrieval quality while eliminating per-query retrieval — all on a single commodity GPU.
+
+---
+
+## Datasets
+
+The four use-cases are reproducible from public sources. Each `examples/usecaseN_*/setup.py` downloads and prepares its dataset; see the per-use-case README for details.
+
+| Use-case | Dataset | Source |
+|----------|---------|--------|
+| UC1 — Customer Support | Bitext Customer Support | [🤗 `bitext/Bitext-customer-support-llm-chatbot-training-dataset`](https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset) |
+| UC2 — PubMedQA | PubMedQA (biomedical QA) | [🤗 `qiaojin/PubMedQA`](https://huggingface.co/datasets/qiaojin/PubMedQA) (`pqa_labeled` config) |
+| UC3 — SQuAD 2.0 | SQuAD v2 (reading comprehension) | [🤗 `rajpurkar/squad_v2`](https://huggingface.co/datasets/rajpurkar/squad_v2) |
+| UC4 — Bedrock User Guide | Amazon Bedrock User Guide (PDF, ~500 pages) | [AWS documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/) (no HuggingFace dataset) |
 
 ---
 
@@ -99,8 +112,8 @@ stateDiagram-v2
     Phase3 : low-confidence → KV inject or fallback
 
     Phase1 --> Phase2 : LoRA training complete\nPRS ≥ 0.75
-    Phase2 --> Phase3 : PRS ≥ 0.80\nfor 2 consecutive rounds
-    Phase3 --> Phase2 : PRS drops below 0.75\n(regression guard)
+    Phase2 --> Phase3 : PRS ≥ 0.75\nfor 2 consecutive rounds
+    Phase3 --> Phase2 : PRS below 0.60\nacross the stability window\n(regression guard)
 ```
 
 ### Query-Time Decision Flow
@@ -156,9 +169,10 @@ All three protocols are Python `runtime_checkable` `Protocol` classes — add a 
 kvforge/
 ├── kvforge.py          # Main CLI: init / index / search
 ├── ask.py                  # Query CLI: ask a question
+├── kvforge_portal.py       # KVForge Studio portal server (FastAPI, port 8080)
 │
 ├── core/                   # Library modules (no GPU needed)
-│   ├── config.py           # DatasourceConfig Pydantic model
+│   ├── config.py           # KVForgeConfig Pydantic model
 │   ├── kv_utils.py         # KV tensor ops
 │   ├── model_loader.py     # Thread-safe LLM singleton
 │   ├── version.py          # Phase state (version.json)
@@ -176,8 +190,8 @@ kvforge/
 │   ├── monitoring_dashboard.py  # FastAPI monitoring server
 │   └── index_and_train.py  # Full pipeline orchestrator
 │
-├── studio/                 # KVForge Studio web UI
-│   └── kvforge_portal.py   # FastAPI portal server (port 8080)
+├── studio/                 # KVForge Studio backend (served by kvforge_portal.py)
+│   └── pipeline_runner.py  # SSE subprocess runner — streams pipeline step logs
 │
 ├── embeddings/             # Pluggable embedder backends
 ├── ingestion/              # Pluggable document loaders
@@ -383,7 +397,7 @@ The dashboard shows:
 Supported values:
 | Field | Options |
 |-------|---------|
-| `vector_store` | `qdrant`, `chroma` |
+| `vector_store` | `qdrant`, `chroma`, `faiss`, `milvus`, `pinecone`, `pgvector`, `weaviate` |
 | `loader` | `pdf`, `markdown`, `jsonl`, `html`, `directory` |
 | `embedder_backend` | `fastembed`, `sentence_transformers`, `openai` |
 
@@ -400,7 +414,7 @@ Supported values:
 | `access_tracker.py` | Thread-safe hit counter; tier classification |
 | `version.py` | Atomic `version.json` I/O; phase transitions |
 | `replay_buffer.py` | SQLite-backed weighted chunk sampler |
-| `config.py` | Pydantic `DatasourceConfig` — validated config model |
+| `config.py` | Pydantic `KVForgeConfig` — validated config model |
 | `pipeline/kv_indexer.py` | Extended indexer: chunk + embed + KV compute + upsert |
 | `pipeline/kv_inference.py` | Query-time: KV inject or text fallback + stale-chunk healing |
 | `pipeline/kv_background.py` | Daemon threads: KV recompute queue + access tracker flush |
@@ -410,10 +424,10 @@ Supported values:
 | `pipeline/index_and_train.py` | Orchestrator: index → train → KV refresh → PRS → phase advance |
 | `pipeline/sleep_faq_generator.py` | Offline FAQ pre-computation from indexed chunks via cloud LLM (Gemini / Claude / OpenAI) |
 | `studio/pipeline_runner.py` | SSE subprocess runner — spawns pipeline steps, streams logs to browser |
-| `studio/kvforge_portal.py` | KVForge Studio: browser UI for the 6-step pipeline with SSE log streaming |
+| `kvforge_portal.py` | KVForge Studio: browser UI for the 6-step pipeline with SSE log streaming (FastAPI, port 8080) |
 | `ingestion/` | DocumentLoader protocol + PDF/Markdown/JSONL/HTML/Directory backends |
 | `embeddings/` | Embedder protocol + FastEmbed/SentenceTransformers/OpenAI backends |
-| `vectorstore/` | VectorStore protocol + QdrantStore/ChromaStore backends |
+| `vectorstore/` | VectorStore protocol + Qdrant / Chroma / FAISS / Milvus / Pinecone / pgvector / Weaviate backends (selected by `vector_store`) |
 | `tools/generate_faqs.py` | Heuristic FAQ generator (no API key required) |
 
 ---
@@ -450,19 +464,19 @@ If `P(no_retrieval) >= gate_threshold` (default `0.75`), the model answers direc
 
 ## Running Tests
 
-76 tests, all pass without a GPU:
+The suite has 800+ tests; the core library and pipeline tests run CPU-only (no GPU required). A handful of Studio/UI and vector-store tests need optional extras (a running portal, FAISS), and `tests/test_ab_runner.py` has a known stale-import collection error — exclude it so collection doesn't abort:
 
 ```bash
-python -m pytest tests/ -v --override-ini="addopts="
+python -m pytest tests/ --ignore=tests/test_ab_runner.py
 ```
 
 ---
 
 ## EC2 Deployment
 
-Tested on AWS g5.xlarge (4× NVIDIA A10G, 24 GB VRAM each).
+Tested on a single AWS g5.12xlarge (4× NVIDIA A10G, 24 GB VRAM each).
 
-**4-UC layout on a single g5.xlarge:**
+**4-UC layout on a single g5.12xlarge:**
 
 | Use-case | GPU | vLLM port | Monitoring port |
 |----------|-----|-----------|-----------------|
@@ -471,6 +485,18 @@ Tested on AWS g5.xlarge (4× NVIDIA A10G, 24 GB VRAM each).
 | UC3 — SQuAD | GPU 2 | 8093 | 8083 |
 | UC4 — Bedrock User Guide | GPU 3 | 8090 | 8084 |
 | KVForge Studio | — | — | **8080** |
+
+---
+
+## Research Paper
+
+**[KVForge: Autonomous Phase-Adaptive Question Answering with Progressive Parametric Absorption](docs/KVForge_Research_Paper.pdf)** — Dr. Hemant Joshi (Independent Researcher). Preprint; also available as [Markdown](docs/KVForge_Research_Paper.md).
+
+KVForge *progressively consolidates* a corpus from an external vector store into the parameters of a small language model, advancing through three PRS-gated phases — Standard RAG, KV-cache injection (per-chunk key/value tensors pre-computed at index time to skip re-encoding), and confidence-gated parametric answering (a tier-weighted LoRA loop trained on generated QA pairs and diverse rewrites of the source chunks). The system advances only once the model has demonstrably absorbed the knowledge it will be asked to recall.
+
+Across four heterogeneous corpora — customer support, biomedical QA (PubMedQA), machine reading comprehension (SQuAD 2.0), and technical documentation (Amazon Bedrock User Guide) — the parametric mode overtakes the retrieval baseline at **100–500 training QA pairs**. On a 500-question held-out set, fine-tuned parametric answering reaches factual accuracy **0.286–0.302 vs. 0.161–0.175** for retrieval, while answering **2–3× faster**.
+
+The paper's central finding is that **the decisive lever is training-signal diversity, not model capacity**: adding diverse rewrites of source chunks raises accuracy across models, and a 3.2B Llama-3.2-3B matches a 5.1B Gemma-4-E2B given the same data — so the crossover from retrieval to parameters is achievable in small, heterogeneous language models once the training signal is sufficiently diverse.
 
 ---
 
