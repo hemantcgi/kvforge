@@ -44,7 +44,7 @@ except ImportError as _e:
         f"ERROR: Missing GPU/ML dependency: {_e}\n"
         "LoRA training requires: torch, transformers, datasets, peft\n"
         "Install with: pip install torch transformers datasets peft accelerate\n"
-        "Note: LoRA training is a GPU operation — run on the EC2 instance (g5.xlarge)\n"
+        "Note: LoRA training is a GPU operation — run on the A10G GPU\n"
         "      or configure a remote GPU worker in Studio → Use Case → GPU Settings.",
         flush=True,
     )

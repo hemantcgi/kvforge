@@ -2,7 +2,7 @@
 
 Provides a self-contained REST API + HTML UI for observing one use-case
 collection.  One dashboard process per use-case (ports 8081-8084 on the
-reference EC2 deployment).
+reference A10G GPU deployment).
 
 REST endpoints
 --------------

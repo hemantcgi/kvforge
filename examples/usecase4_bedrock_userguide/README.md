@@ -188,7 +188,7 @@ python3 examples/usecase4_bedrock_userguide/eval_ab.py \
     --faq examples/usecase4_bedrock_userguide/faqs.json \
     --out ab_eval_results.json
 
-# Against EC2 dashboard + RAGAS evaluation with Gemini judge
+# Against GPU host dashboard + RAGAS evaluation with Gemini judge
 python3 examples/usecase4_bedrock_userguide/eval_ab.py \
     --faq examples/usecase4_bedrock_userguide/faqs.json \
     --dashboard http://localhost:8084 \

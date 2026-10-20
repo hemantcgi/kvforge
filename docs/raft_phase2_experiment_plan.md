@@ -1,7 +1,7 @@
 # Phase 2 — FT + RAG Complementarity (RAFT): Experiment Plan
 
 **Status:** DESIGN — pre-registration draft, NOT YET RUN. (Gated on Phase 1, now CLOSED: B placement promoted +0.123/+0.106 clean · A epochs marginal +0.040 · C relational DEAD.)
-**Owner:** Dr. Hemant Joshi. **Generator for any data:** in-session Opus via subagents (memory `c-gen-in-session`). **Compute:** single A10G EC2, one GPU job at a time.
+**Owner:** Dr. Hemant Joshi. **Generator for any data:** in-session Opus via subagents (memory `c-gen-in-session`). **Compute:** single A10G GPU host, one GPU job at a time.
 **Supersedes the sketch in** `levers_bca_experiment_design.md §7` (arms kept; this fills in the pre-registration §7 deferred).
 **Tested data layer:** `tools/raft_data.py` + `tests/test_raft_data.py` (§13).
 
@@ -66,7 +66,7 @@ Complementarity is detected as **gain on retrieval-misses**, which requires R2's
 
 ## 5. Build steps (grounded; reused vs. new)
 
-**No trainer change.** `build_sft_example` (`lora_trainer.py:204-228`) renders `[user: question] → [assistant: answer]`, answer-masked. **Pack the rendered context into the `question` field** → the whole `instruction+context+question` is the masked prompt and only the answer is trained = RAFT's loss. The RAFT set is a plain `--faqs` JSON; no edit to the freshly-synced trainer, no new EC2 sync.
+**No trainer change.** `build_sft_example` (`lora_trainer.py:204-228`) renders `[user: question] → [assistant: answer]`, answer-masked. **Pack the rendered context into the `question` field** → the whole `instruction+context+question` is the masked prompt and only the answer is trained = RAFT's loss. The RAFT set is a plain `--faqs` JSON; no edit to the freshly-synced trainer, no new GPU host sync.
 
 **5.1 Oracle-recovery + distractors** (`tools/raft_data.py`, pure logic; retrieval injected so it is GPU/Qdrant-free and unit-tested).
 - Retrieve top-k (k≈8) per 60k question from `bedrock-userguide-6154` (reuse `recall_at_k.py::score_inventory`; CPU pass, one-time, materialize `{question, retrieved_ids, retrieved_texts}`).
@@ -82,7 +82,7 @@ Complementarity is detected as **gain on retrieval-misses**, which requires R2's
 
 **5.3 Assemble** `faqs_raft.json` (standard `--faqs`: `question` = `render_prompt(...)`, `answer` = short gold). Assert leak-dedup vs eval_500 (§7); log P, distractor count, withhold fraction, recovery rate, #examples, coverage-gate numbers.
 
-**5.4 Train R2** (EC2, 1 GPU): mirror the promotion recipe exactly — all-linear r8 α16, from base, seed 42, `--config config_e2b_allLinear_r8.json`, `--faqs faqs_raft.json`, **AND `--rewrites rewrites_full_idea1.json`** (RESTORED — fixes advisor #1). R1 trained on 60k QA **plus** 61,554 chunk rewrites at full LM loss; the RAFT context sits inside the *masked* prompt so R2 takes no loss on chunk text, so without `--rewrites` R2 would know less parametrically than R1 and a weak miss-gain / low R3-vs-R1 would be an artifact. With rewrites restored, R1 and R2 differ **only in training objective** (plain QA vs RAFT-context QA). The synced trainer caps replay at 512 vs R1's 256, but only **0.58%** of rewrites exceed 256 tok and **0%** exceed 512 → negligible, R2 ≈ R1 on replay.
+**5.4 Train R2** (the GPU host, 1 GPU): mirror the promotion recipe exactly — all-linear r8 α16, from base, seed 42, `--config config_e2b_allLinear_r8.json`, `--faqs faqs_raft.json`, **AND `--rewrites rewrites_full_idea1.json`** (RESTORED — fixes advisor #1). R1 trained on 60k QA **plus** 61,554 chunk rewrites at full LM loss; the RAFT context sits inside the *masked* prompt so R2 takes no loss on chunk text, so without `--rewrites` R2 would know less parametrically than R1 and a weak miss-gain / low R3-vs-R1 would be an artifact. With rewrites restored, R1 and R2 differ **only in training objective** (plain QA vs RAFT-context QA). The synced trainer caps replay at 512 vs R1's 256, but only **0.58%** of rewrites exceed 256 tok and **0%** exceed 512 → negligible, R2 ≈ R1 on replay.
 
 **Live-run readiness (R2 launched 2026-10-17, `faqs_raft.json` md5 `0b5929b0e36b40de0df7ea38f98f9734`):**
 - **Chat-SFT answer-masked path CONFIRMED** (`🎓 Chat-SFT instruction fine-tuning: 60208 Q&A (answer-masked) + 61554 replay = 118504 examples`).
@@ -91,11 +91,11 @@ Complementarity is detected as **gain on retrieval-misses**, which requires R2's
 - **ETA ≈ 25 h** on one A10G (7,407 steps × ~12.1 s/it) — a 1-day job, not multi-day; GPU 11.4 GB / actively computing (no CPU offload).
 - **OOM pressure:** fragmentation OOM-warnings at 24 GB that the caching allocator recovered from; launched with **`PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`** (+ `setsid`/`PYTHONUNBUFFERED=1`/stdin from `/dev/null` to dodge the ssh channel-hang and stdout-buffering traps) to avoid a hard OOM (4-bit + grad-checkpointing + batch=1 already on).
 
-**5.5 RAG-mode dump** (`tools/dump_rag_preds.py`, new — EC2 `rwscale_dump_preds.py` is closed-book + EC2-only). Per 481 fact: retrieve raw top-5 (`threshold=None`), render via the shared `render_prompt` (R0/R1/R2); R3 closed-book (question only); generate at cap 48; dump `{chunk_id, arm, question, prompt, pred, retrieved_ids, hit, answer_in_context, gold}`. **Absolute `--adapter` + grep `🔌 Applying LoRA`** for R1/R2/R3 (DUMP GOTCHA); sanity-check R0 count = 481 and refusal rate.
+**5.5 RAG-mode dump** (`tools/dump_rag_preds.py`, new — the GPU host `rwscale_dump_preds.py` is closed-book + GPU-host-only). Per 481 fact: retrieve raw top-5 (`threshold=None`), render via the shared `render_prompt` (R0/R1/R2); R3 closed-book (question only); generate at cap 48; dump `{chunk_id, arm, question, prompt, pred, retrieved_ids, hit, answer_in_context, gold}`. **Absolute `--adapter` + grep `🔌 Applying LoRA`** for R1/R2/R3 (DUMP GOTCHA); sanity-check R0 count = 481 and refusal rate.
 
-**Built + validated (2026-10-18, TDD, 8 tests; EC2-staged, ready to auto-fire via `run_phase2_dump.sh` on R2 save):**
+**Built + validated (2026-10-18, TDD, 8 tests; GPU-host-staged, ready to auto-fire via `run_phase2_dump.sh` on R2 save):**
 - **Top-5 source = `recall_at_k_top5.json.retrieved_ids`** — these *are* the `threshold=None` top-5 from `bedrock-userguide-6154`, so no live Qdrant is needed at dump time and **`hit` matches the 290/191 split by construction** (verified: select_items → 481, 0 gold-chunk mismatches, 0 retrieved_ids missing from `chunks.json`, hit=290).
-- **Generate path does NOT truncate** (verified by reading EC2 `prs_evaluator._generate_parametric`): `apply_chat_template` is called with no `max_length`/`truncation`, single user turn, no injected system/"answer from knowledge" text → the full prompt (question last) reaches the model, and chat wrapping matches the trainer's chat-SFT packing.
+- **Generate path does NOT truncate** (verified by reading the GPU host `prs_evaluator._generate_parametric`): `apply_chat_template` is called with no `max_length`/`truncation`, single user turn, no injected system/"answer from knowledge" text → the full prompt (question last) reaches the model, and chat wrapping matches the trainer's chat-SFT packing.
 - **Eval-prompt lengths (base gemma-4 tokenizer, over 481):** max **1257**, p99 1232, median 811. **13/481 (2.7%) exceed the 1207 training `max_length`** → mild length-OOD for R2 on those 13 (note in verdict, not a blocker; R0/R1 are base/plain-QA so no training-length prior).
 
 **5.6 Blind co-judge + analyze** (reuse Phase-1 pipeline): all four arms' 481 preds shuffled into grouped-by-fact blind shards; uniform in-session Opus; per-fact pairwise McNemar/Wilcoxon on `coverage@0.5`.
@@ -159,7 +159,7 @@ Secondary (descriptive, same judge session): **R1 vs R0** (does the Phase-1 adap
 1. [ ] CPU retrieval pass over the 60k → `{question, retrieved_ids, retrieved_texts}` (reuse `score_inventory`).
 2. [ ] `tools/raft_data.py` build → `faqs_raft.json`; oracle-recovery rate logged; leak-dedup asserted vs eval_500.
 3. [ ] **Coverage GATE** (§3): recovered oracles cover ≥80% of 481 / ≥70% of 191 misses — else generate targeted QA and re-check. BLOCKS step 4.
-4. [ ] Train R2 on EC2 (absolute paths; confirm adapter dir; **verify SFT max_length & len(examples) in log**, §5.4).
+4. [ ] Train R2 on the GPU host (absolute paths; confirm adapter dir; **verify SFT max_length & len(examples) in log**, §5.4).
 5. [ ] `dump_rag_preds.py` R0/R1/R2 (top-5, threshold=None) + R3 (closed-book). Grep `🔌 Applying LoRA` for R1/R2/R3; R0 count=481; log refusal rate + `answer_in_context`.
 6. [ ] Blind 4-arm co-judge + analyze → McNemar overall + **diff-in-diff hit/miss interaction** + clean/leaked split.
 7. [ ] `results/knowledge/uc4/raft_phase2_verdict.json`; fill §8 results; update dashboard + memory. **Advisor-verify before durable.**

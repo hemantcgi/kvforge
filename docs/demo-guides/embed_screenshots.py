@@ -115,7 +115,7 @@ def step_gpu_connect():
       <div class="step-num">2</div>
       <div>
         <div class="step-title">Connect a Remote GPU</div>
-        <div class="step-desc">KVForge Studio can run on your laptop while the GPU work happens on a remote EC2 instance. If no GPU is detected locally, the hub shows a warning banner.</div>
+        <div class="step-desc">KVForge Studio can run on your laptop while the GPU work happens on a remote GPU host. If no GPU is detected locally, the hub shows a warning banner.</div>
       </div>
     </div>
     <div class="instructions">
@@ -125,7 +125,7 @@ def step_gpu_connect():
       <div class="instr-row"><span class="instr-icon">ℹ</span><div class="instr-text">If your GPU is local and <code>nvidia-smi</code> is in your PATH, the hub will detect it automatically and skip this step.</div></div>
     </div>
     {img("11_hub_gpu_warning", "Studio Hub showing 'No GPU Detected' warning — click 'Connect GPU' to launch the SSH wizard")}
-    {img("04_gpu_connect", "Remote GPU Connection wizard — enter host details and upload your EC2 PEM key")}
+    {img("04_gpu_connect", "Remote GPU Connection wizard — enter host details and upload your SSH key")}
     {img("05_gpu_connect_filled", "GPU connect form filled in with hostname, SSH user, and display name")}
   </div>"""
 
@@ -264,7 +264,7 @@ def build_customer_support():
     </div></div>
     <div class="instructions">
       <div class="instr-row"><span class="instr-icon">🤖</span><div class="instr-text"><strong>Model:</strong> Select <strong>Llama-3.2-3B-Instruct</strong> (4-bit). VRAM badge should show green ✓ on an A10G.</div></div>
-      <div class="instr-row"><span class="instr-icon">🖥</span><div class="instr-text"><strong>GPU:</strong> Click any free GPU card (green border). On g5.xlarge you will see one NVIDIA A10G (24 GB).</div></div>
+      <div class="instr-row"><span class="instr-icon">🖥</span><div class="instr-text"><strong>GPU:</strong> Click any free GPU card (green border). You will see your A10G GPU (24 GB).</div></div>
       <div class="instr-row"><span class="instr-icon">⚙</span><div class="instr-text"><strong>Training:</strong> Leave defaults — LoRA Rank <code>16</code>, LR <code>2e-4</code>, Epochs <code>3</code>. Set FAQ count to <code>50</code> with Cloud LLM (requires <code>GOOGLE_API_KEY</code> or <code>ANTHROPIC_API_KEY</code>).</div></div>
     </div>
   </div>

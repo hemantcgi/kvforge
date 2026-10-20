@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Full FAQ generation pipeline on EC2:
+# Full FAQ generation pipeline on the GPU host:
 #   1. Stop Llama 3.2-3B vLLM pool (frees all 4 GPUs)
 #   2. Start 4× Qwen3-4B workers (one per GPU) + round-robin router on 8090
 #   3. Pull chunks from Qdrant bedrock-user-guide collection
@@ -8,7 +8,7 @@
 #   6. Restart original Llama 3.2-3B pool for serving/training
 #
 # Run from repo root:
-#   bash scripts/generate_faqs_ec2.sh
+#   bash scripts/generate_faqs_remote.sh
 
 set -euo pipefail
 cd "$(dirname "$0")/.."

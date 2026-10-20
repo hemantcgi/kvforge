@@ -330,10 +330,10 @@ async def run_step(req: RunStepRequest, background_tasks: BackgroundTasks):
 
 @api_router.post("/uc/{uc_id}/reattach")
 async def reattach_job(uc_id: str, request: Request, background_tasks: BackgroundTasks):
-    """Reattach to an already-running nohup job on EC2 without relaunching it.
+    """Reattach to an already-running nohup job on the GPU host without relaunching it.
 
     Expects JSON body: {"job_id": "<hex>", "step": "<step>", "gpu_profile_id": "<id>"}
-    The nohup process must still be running on EC2 (log + pid files present).
+    The nohup process must still be running on the GPU host (log + pid files present).
     Creates a fresh in-memory job that tails the existing log from the start.
     """
     from studio.pipeline_runner import run_step_background

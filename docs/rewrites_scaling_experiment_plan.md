@@ -63,7 +63,7 @@ Use the existing generator `tools/gen_diversity_deepseek.py` (`--rewrites-per-ch
 
 **Train** (sequential, **one arm per GPU at a time** — see `gpu-generation-sequential` memory; 3 resident 4-bit models caused silent CPU offload):
 ```
-# per arm, on EC2 venv_gpu, from-base, rewrites appended as continuation LM text:
+# per arm, on the GPU host venv_gpu, from-base, rewrites appended as continuation LM text:
 python -m pipeline.lora_trainer --config <e2b_r64_idea1.json> \
     --faqs faqs_full_idea1.json --rewrites rewrites_N<N>.json \
     --epochs 1 --output lora_checkpoints/phase3_E2B_r64_rw_N<N>
