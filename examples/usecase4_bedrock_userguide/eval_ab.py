@@ -24,7 +24,7 @@ Usage
   python3 examples/usecase4_bedrock_userguide/eval_ab.py \
       --faq examples/usecase4_bedrock_userguide/faqs.json
 
-  # Point at EC2 dashboard
+  # Point at GPU host dashboard
   python3 examples/usecase4_bedrock_userguide/eval_ab.py \
       --faq examples/usecase4_bedrock_userguide/faqs.json \
       --dashboard http://localhost:8084

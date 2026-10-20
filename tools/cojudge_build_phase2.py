@@ -11,7 +11,7 @@ Inputs:
   --preds-dir : phase2_preds_{R0,R1,R2,R3,R1cb}.jsonl
   --train     : the packed RAFT training set (faqs_full_idea1.json / faqs_raft.json),
                 used ONLY to compute the per-fact leak flag. Large (~9.5 MB) — kept in
-                the EC2 backup, not committed. The resulting meta (with leak flags) IS
+                the GPU host backup, not committed. The resulting meta (with leak flags) IS
                 committed, so scoring does not need this file.
 
 The downstream judging step (fresh Opus grading each blind shard) is NOT
@@ -42,9 +42,9 @@ def main():
     ap.add_argument("--preds-dir", default=os.path.join(ROOT, "results/knowledge/uc4/cojudge_phase2/preds"),
                     help="dir holding the FULL phase2_preds_{R0,R1,R2,R3,R1cb}.jsonl dumps "
                          "(large, not committed — regenerate with tools/dump_rag_preds.py or use the "
-                         "EC2 backup; the committed preds/ holds only samples). See preds/README.md")
+                         "GPU host backup; the committed preds/ holds only samples). See preds/README.md")
     ap.add_argument("--train", required=True,
-                    help="packed RAFT training set for leak-flag computation (large; in EC2 backup)")
+                    help="packed RAFT training set for leak-flag computation (large; in the GPU host backup)")
     ap.add_argument("--out-dir", default=os.path.join(ROOT, "results/knowledge/uc4/cojudge_phase2"),
                     help="output dir for shards/, cojudge_p2_key.json, cojudge_p2_facts_meta.json")
     ap.add_argument("--n-shards", type=int, default=10)

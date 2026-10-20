@@ -279,17 +279,17 @@ This is supported by `model_loader.py` via the `bitsandbytes` library. Quantized
 }
 ```
 
-#### AWS instance guide
+#### GPU guide
 
-| Instance | GPU | VRAM | Max model (training) | Monthly cost (on-demand) |
-|----------|-----|:----:|:--------------------:|:------------------------:|
-| g4dn.xlarge | T4 | 16 GB | Llama-3.2-3B | ~$0.53/hr |
-| g5.xlarge | A10G | 24 GB | Mistral-7B | ~$1.01/hr |
-| g5.2xlarge | A10G | 24 GB | Mistral-7B (more RAM) | ~$1.21/hr |
-| p3.2xlarge | V100 | 16 GB | Llama-3.2-3B | ~$3.06/hr |
-| p4d.24xlarge | 8× A100 | 8×40 GB | 70B models | ~$32.77/hr |
+| GPU | VRAM | Max model (training) | Monthly cost (on-demand) |
+|-----|:----:|:--------------------:|:------------------------:|
+| T4 | 16 GB | Llama-3.2-3B | ~$0.53/hr |
+| A10G | 24 GB | Mistral-7B | ~$1.01/hr |
+| A10G | 24 GB | Mistral-7B (more RAM) | ~$1.21/hr |
+| V100 | 16 GB | Llama-3.2-3B | ~$3.06/hr |
+| 8× A100 | 8×40 GB | 70B models | ~$32.77/hr |
 
-KVForge was benchmarked on `g5.xlarge` with Llama 3.2 3B — this is the recommended starting point.
+KVForge was benchmarked on an A10G GPU with Llama 3.2 3B — this is the recommended starting point.
 
 ---
 

@@ -87,7 +87,7 @@ The repo's Gemma-4 trainer `tools/train_gemma4.py` solves this with an explicit 
 it replaces `Gemma4ClippableLinear` with its inner `nn.Linear` *in the vision/audio towers only*, then
 sets a **hardcoded** `target_modules=["q_proj","k_proj","v_proj","o_proj"]`. So attention-only is a
 hardcoded list inherited from the KV-cache phase (the paper uses q/k/v because K/V updates drive KV-tensor
-staleness) — **not** a technical bar on MLP. (`pipeline/lora_trainer.py` on EC2 solves the same multimodal
+staleness) — **not** a technical bar on MLP. (`pipeline/lora_trainer.py` on the GPU host solves the same multimodal
 problem a different way — a filter to all-`nn.Linear` leaf names + `per_layer_projection` fallback.)
 - **Gate B0 (dry-run attach, no training, ~2 min):** run `train_gemma4.py`'s unwrap, add
   `gate_proj,up_proj,down_proj` to `target_modules`, call `print_trainable_parameters`, and assert LoRA
@@ -390,11 +390,11 @@ in-session Opus, grouped-by-fact, singleton/multi tagged.
 - **† rubric caveat:** this judge session scores stricter (same C0 pred file 0.324 first session → 0.256 now,
   >~0.03 drift) — do NOT compare 0.231/0.256 to the B/A §8 absolutes. The first run's −0.071 (confounded, older
   rubric) **does not replicate** under the clean design.
-- **Trainer edits (EC2-only, `.bak` kept; never scp local→EC2):** `pipeline/lora_trainer.py` line 483
+- **Trainer edits (GPU-host-only, `.bak` kept; never scp local→GPU host):** `pipeline/lora_trainer.py` line 483
   `_chunk_max_len = 512`; line 500 (FIRST `TrainingArguments` block = QA chat-SFT path only)
   `gradient_accumulation_steps=effective_cfg.get("grad_accum_steps", 16)`. The second block (distillation, ~799)
   is untouched. **The local repo `lora_trainer.py` is a stale 256-line lineage lacking the chat-SFT path** — not
-  patched (can't mirror an edit to code that isn't there); EC2 is authoritative. One-time sync EC2→local is owed.
+  patched (can't mirror an edit to code that isn't there); the GPU host is authoritative. One-time sync GPU host→local is owed.
 
 - **Lever scoreboard (from-base):** **B placement +0.067 WORKS (dominant; promoted at full scale +0.123 / +0.106
   clean-facts)** · A epochs +0.040 marginal WORKS · **C relational DEAD (~0, diff-in-diff +0.002).** Placement is

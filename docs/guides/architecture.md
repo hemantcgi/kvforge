@@ -134,7 +134,7 @@ python -m pipeline.sleep_faq_generator \
 ## Monitoring Dashboard
 
 Each use-case exposes a per-process FastAPI dashboard (`pipeline/monitoring_dashboard.py`) at
-a dedicated port (8081–8084 on the reference EC2 deployment). Dashboards are fully independent
+a dedicated port (8081–8084 on the reference A10G GPU deployment). Dashboards are fully independent
 and read their own `config.json` and `version.json`.
 
 **Key panels:**

@@ -319,7 +319,7 @@ Each assumption is paired with the check that would expose it.
 ## 10. Dependencies
 
 ### Compute
-- 1 × EC2 `g5.xlarge` (NVIDIA A10G, 24 GB) — same box as prior runs.
+- 1 × A10G GPU (24 GB) — same box as prior runs.
 - E4B 4-bit training peaks ~10.5 GB, so two adapters run sequentially, never concurrently.
 - Disk: ~2 GB per adapter (checkpoints + final adapter); budget ~10 GB for artifacts.
 
