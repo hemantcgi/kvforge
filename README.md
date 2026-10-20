@@ -472,11 +472,11 @@ python -m pytest tests/ --ignore=tests/test_ab_runner.py
 
 ---
 
-## EC2 Deployment
+## Multi-GPU Deployment
 
-Tested on a single AWS g5.12xlarge (4× NVIDIA A10G, 24 GB VRAM each).
+Tested on a 4× NVIDIA A10G GPU host (24 GB VRAM each).
 
-**4-UC layout on a single g5.12xlarge:**
+**4-UC layout across 4× A10G GPUs:**
 
 | Use-case | GPU | vLLM port | Monitoring port |
 |----------|-----|-----------|-----------------|
