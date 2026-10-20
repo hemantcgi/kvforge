@@ -45,7 +45,7 @@ KVForge was evaluated on four heterogeneous corpora using **Google Gemma-4-E2B-i
 
 ## Datasets
 
-The four use-cases are reproducible from public sources. Each `examples/usecaseN_*/setup.py` downloads and prepares its dataset; see the per-use-case README for details.
+The four use-cases are reproducible from public sources. UC1–UC3 each provide an `examples/usecaseN_*/setup.py` that downloads and prepares its HuggingFace dataset; UC4 ships the Amazon Bedrock User Guide PDF directly under `examples/usecase4_bedrock_userguide/data/`. See the per-use-case README for details.
 
 | Use-case | Dataset | Source |
 |----------|---------|--------|
