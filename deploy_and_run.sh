@@ -2,19 +2,19 @@
 set -euo pipefail
 
 # ─── Config ───────────────────────────────────────────────────────────────────
-EC2_USER="${EC2_USER:-ubuntu}"
-EC2_HOST="${EC2_HOST:?Set EC2_HOST, e.g. export EC2_HOST=<your-ec2-ip>}"
-EC2_PEM="${EC2_PEM:?Set EC2_PEM, e.g. export EC2_PEM=~/.ssh/<your-key>.pem}"
+REMOTE_USER="${REMOTE_USER:-ubuntu}"
+GPU_HOST="${GPU_HOST:?Set GPU_HOST, e.g. export GPU_HOST=<your-gpu-host>}"
+SSH_KEY="${SSH_KEY:?Set SSH_KEY, e.g. export SSH_KEY=~/.ssh/<your-key>.pem}"
 LOCAL_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REMOTE_REPO="~/kvforge"
 VENV="~/qdrant/venv"
-SSH=(ssh -i "$EC2_PEM" -o StrictHostKeyChecking=no "$EC2_USER@$EC2_HOST")
+SSH=(ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$REMOTE_USER@$GPU_HOST")
 
 # ─── Helper ───────────────────────────────────────────────────────────────────
 log() { echo "[$(date '+%H:%M:%S')] $*"; }
 
-# ─── Step 1/7 — rsync repo to EC2 ────────────────────────────────────────────
-log "Step 1/7 — Syncing repo to EC2 ($EC2_USER@$EC2_HOST:$REMOTE_REPO) ..."
+# ─── Step 1/7 — rsync repo to the GPU host ───────────────────────────────────
+log "Step 1/7 — Syncing repo to the GPU host ($REMOTE_USER@$GPU_HOST:$REMOTE_REPO) ..."
 
 RSYNC_EXCLUDES=(
   --exclude='venv/'
@@ -27,9 +27,9 @@ RSYNC_EXCLUDES=(
   --exclude='.git/'
 )
 rsync -avz --progress "${RSYNC_EXCLUDES[@]}" \
-  -e "ssh -i $EC2_PEM -o StrictHostKeyChecking=no" \
+  -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \
   "$LOCAL_REPO/" \
-  "$EC2_USER@$EC2_HOST:$REMOTE_REPO/"
+  "$REMOTE_USER@$GPU_HOST:$REMOTE_REPO/"
 
 log "Step 1/7 — Sync complete."
 
@@ -76,7 +76,7 @@ log "Step 4/7 — UC4 weights migrated."
 # ─── Step 5/7 — Staggered launch ─────────────────────────────────────────────
 log "Step 5/7 — Staggered launch of use-case workers ..."
 
-# Ensure logs directory exists on EC2
+# Ensure logs directory exists on the GPU host
 "${SSH[@]}" "mkdir -p $REMOTE_REPO/logs"
 
 # T+0s — UC4 on GPU 3 (fast-path)
@@ -215,25 +215,25 @@ cat <<URLS
 ════════════════════════════════════════════════════════
  KVForge Multi-GPU Deployment — Access URLs
 ════════════════════════════════════════════════════════
- KVForge portal  : http://$EC2_HOST:8080
- UC1 dashboard   : http://$EC2_HOST:8081  (Customer Support)
- UC2 dashboard   : http://$EC2_HOST:8082  (PubMedQA)
- UC3 dashboard   : http://$EC2_HOST:8083  (SQuAD)
- UC4 dashboard   : http://$EC2_HOST:8084  (Bedrock User Guide)
+ KVForge portal  : http://$GPU_HOST:8080
+ UC1 dashboard   : http://$GPU_HOST:8081  (Customer Support)
+ UC2 dashboard   : http://$GPU_HOST:8082  (PubMedQA)
+ UC3 dashboard   : http://$GPU_HOST:8083  (SQuAD)
+ UC4 dashboard   : http://$GPU_HOST:8084  (Bedrock User Guide)
 
  vLLM servers (start after LoRA training completes):
-   UC1 vLLM : http://$EC2_HOST:8091  (GPU 0)
-   UC2 vLLM : http://$EC2_HOST:8092  (GPU 1)
-   UC3 vLLM : http://$EC2_HOST:8093  (GPU 2)
-   UC4 vLLM : http://$EC2_HOST:8090  (GPU 3, started in Step 5)
+   UC1 vLLM : http://$GPU_HOST:8091  (GPU 0)
+   UC2 vLLM : http://$GPU_HOST:8092  (GPU 1)
+   UC3 vLLM : http://$GPU_HOST:8093  (GPU 2)
+   UC4 vLLM : http://$GPU_HOST:8090  (GPU 3, started in Step 5)
 
 ════════════════════════════════════════════════════════
 
- Logs on EC2 at ~/kvforge/logs/:
+ Logs on the GPU host at ~/kvforge/logs/:
    uc1.log, uc2.log, uc3.log, uc4.log
    dashboard_uc{1,2,3}.log, portal.log
    vllm_uc1.log, vllm_uc2.log, vllm_uc3.log
 
- Tail a log:  ssh -i $EC2_PEM $EC2_USER@$EC2_HOST 'tail -f ~/kvforge/logs/uc1.log'
+ Tail a log:  ssh -i $SSH_KEY $REMOTE_USER@$GPU_HOST 'tail -f ~/kvforge/logs/uc1.log'
 
 URLS

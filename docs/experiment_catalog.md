@@ -4,7 +4,7 @@
 > predate the September "parametric consolidation" reframe — see **Phase 7** at the end of this
 > document for that work. Phase 6 cells still reading "(empty)" have since been filled.
 >
-> Compiled from ~188 summary.json files across EC2-A (A10G) and EC2-B (RTX PRO 4500).
+> Compiled from ~188 summary.json files across GPU host A (A10G) and GPU host B (RTX PRO 4500).
 > Model: **Google Gemma-4-E2B-it** (4-bit quantized, Llama-3.2-3B-Instruct for Phase 1 only)
 > Vector store: **Qdrant** (ChromaDB for old PubMedQA only)
 > Embedding: **bge-small-en-v1.5** (384d) — MXBAI-large ablated separately
@@ -312,7 +312,7 @@ Path B = parametric-only evaluation with diversity-augmented training.
 
 ## Log File Index
 
-### EC2-A (A10G) Logs
+### GPU host A (A10G) Logs
 
 | Log | Experiment | Date | Size |
 |:---|---|:---:|---:|
@@ -335,7 +335,7 @@ Path B = parametric-only evaluation with diversity-augmented training.
 | `ape_eval_gpu1.log` | APE calibration | Aug 6 | 17 KB |
 | `r4_e5_gpu0.log` | Rerotation E5 | Aug 6 | 1 KB |
 
-### EC2-B (RTX PRO 4500) Logs — Released
+### GPU host B (RTX PRO 4500) Logs — Released
 
 | Log | Experiment | Date | Size |
 |:---|---|:---:|---:|
@@ -431,7 +431,7 @@ an open axis.
 ## 7e. PubMedQA yes/no/maybe — E2B finetuning vs RAG (2026-09-17 → 09-18)
 
 **The headline negative result.** Corrected evaluation: all 1,000 `pqa_labeled` records,
-exact string match on `final_decision`, **no LLM judge**. Artifacts on EC2:
+exact string match on `final_decision`, **no LLM judge**. Artifacts on the GPU host:
 `results/e2b_vs_rag/`.
 
 | metric | E2B finetuning | RAG (text_rag) |
@@ -455,11 +455,11 @@ finetuned model collapses to a near-reflexive "no" (96 % on `no`, 7 % on `yes`, 
 contradicted at this scale. The defensible claim is *progressive consolidation with retrieval
 as a shrinking fallback*. Do not overstate the crossover.
 
-## 7f. Also present on EC2 (not yet fully catalogued locally)
+## 7f. Also present on the GPU host (not yet fully catalogued locally)
 
 `results/three_arm/`, `results/tiered_crossover_test/`, `results/pubmedqa_gemma4_r4_e15/`,
 `results/e2b_rejudge_lite/`, and the `eval500_*` / `idea1_*` / `rag500_*` families.
-~30 result directories exist on EC2 that are **not** in the local working copy.
+~30 result directories exist on the GPU host that are **not** in the local working copy.
 
 ## 7g. Recorded but NOT started
 

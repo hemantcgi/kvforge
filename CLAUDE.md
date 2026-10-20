@@ -136,4 +136,4 @@ Pluggable backends (Protocol-based, no ABC/inheritance):
 
 ## Deployment Context
 
-Designed for AWS EC2 g5.xlarge (NVIDIA A10G, 24GB VRAM). Multi-GPU setups run one use-case per GPU with per-UC isolation via `uc_config.json` and `CUDA_VISIBLE_DEVICES`. KVForge Studio on port 8080 manages all use-cases; per-UC monitoring dashboards run on configurable ports.
+Designed for A10G GPUs (24GB VRAM). Multi-GPU setups run one use-case per GPU with per-UC isolation via `uc_config.json` and `CUDA_VISIBLE_DEVICES`. KVForge Studio on port 8080 manages all use-cases; per-UC monitoring dashboards run on configurable ports.

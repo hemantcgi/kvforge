@@ -54,7 +54,7 @@ def main():
     # ---- raw preds (for parity + lengths) ----
     # The full per-arm dumps are large generated data and are NOT committed (only
     # 3-record samples live in preds/samples/; see preds/README.md). Regenerate them
-    # with tools/dump_rag_preds.py, or point --preds-dir at the EC2 backup. When the
+    # with tools/dump_rag_preds.py, or point --preds-dir at the GPU host backup. When the
     # full dumps are absent, the two preds-derived fields (qgold_parity,
     # format_parity_median_pred_words) are skipped; every grade-derived field
     # (mechanism, R2-vs-R1, interference, DiD) is still computed.

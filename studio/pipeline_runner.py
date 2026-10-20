@@ -281,27 +281,27 @@ def _log_path(uc_id: str, step: str | None = None) -> Path:
     return ROOT / "examples" / uc_id / "last_run.log"
 
 
-# Files to sync TO EC2 per step (relative to UC dir)
+# Files to sync TO the GPU host per step (relative to UC dir)
 _REMOTE_SYNC_TO: dict[str, list[str]] = {
     "train":    ["config.json", "faqs.json", "replay.db"],
     "prs-eval": ["config.json", "faqs.json"],
     "recompute":["config.json"],
     "index":    ["config.json"],
 }
-# Files/dirs to sync BACK from EC2 per step (relative to UC dir)
+# Files/dirs to sync BACK from the GPU host per step (relative to UC dir)
 _REMOTE_SYNC_FROM: dict[str, list[str]] = {
     "train":    ["lora_checkpoints/", "version.json", "replay.db"],
     "prs-eval": ["version.json"],
 }
-_EC2_REPO   = "/home/ubuntu/kvforge"
-_EC2_PYTHON = "/home/ubuntu/kvforge-env/bin/python"
+_REMOTE_REPO   = "/home/ubuntu/kvforge"
+_REMOTE_PYTHON = "/home/ubuntu/kvforge-env/bin/python"
 
 
 async def _run_step_remote_ssh(
     uc_id: str, step: str, job_id: str, job_manager,
     profile_id: str, _append
 ) -> None:
-    """Run a GPU pipeline step on a remote EC2 node via SSH."""
+    """Run a GPU pipeline step on a remote GPU host via SSH."""
     import subprocess as _sp
     from studio.remote_gpu import _load_profiles, _load_pkey, _get_pem, _decrypt
 
@@ -317,7 +317,7 @@ async def _run_step_remote_ssh(
     user = profile["user"]
     port = profile["port"]
     uc_local  = ROOT / "examples" / uc_id
-    uc_remote = f"{_EC2_REPO}/examples/{uc_id}"
+    uc_remote = f"{_REMOTE_REPO}/examples/{uc_id}"
 
     # Write PEM to a temp file for rsync/ssh
     import tempfile, stat
@@ -335,7 +335,7 @@ async def _run_step_remote_ssh(
         _sp.run(["ssh"] + ssh_opts + [f"{user}@{host}", f"mkdir -p {uc_remote}"],
                 capture_output=True)
 
-        # ── 2. Rsync input files to EC2 ───────────────────────────────────────
+        # ── 2. Rsync input files to the GPU host ───────────────────────────────────────
         for rel in _REMOTE_SYNC_TO.get(step, ["config.json"]):
             local_path = uc_local / rel
             if local_path.exists():
@@ -345,7 +345,7 @@ async def _run_step_remote_ssh(
 
         # ── 3. Build remote command ────────────────────────────────────────────
         remote_config = f"{uc_remote}/config.json"
-        remote_cmd = f"{_EC2_PYTHON} -m {STEP_MODULES[step]} --config {remote_config}"
+        remote_cmd = f"{_REMOTE_PYTHON} -m {STEP_MODULES[step]} --config {remote_config}"
         for arg in STEP_EXTRA_ARGS.get(step, []):
             remote_cmd += f" {arg}"
         if step == "recompute":
@@ -377,7 +377,7 @@ async def _run_step_remote_ssh(
         # Strategy: one nohup launch that writes exit code to a sentinel file.
         # A separate persistent SSH connection tails the log; a second persistent
         # connection polls the sentinel every 3 s.  If the tail channel dies we
-        # reconnect it rather than failing the job — the nohup process on EC2
+        # reconnect it rather than failing the job — the nohup process on the GPU host
         # keeps running regardless of Studio/SSH state.
         import paramiko
         pkey = _load_pkey(pem_content)
@@ -394,7 +394,7 @@ async def _run_step_remote_ssh(
 
         # Single launch with exit-code sentinel tracking.
         wrap_cmd = (
-            f"cd {_EC2_REPO} && "
+            f"cd {_REMOTE_REPO} && "
             f"nohup bash -c '{remote_cmd} > {remote_log} 2>&1; echo $? > {remote_pid}.exit' & "
             f"echo $! > {remote_pid} && echo started"
         )
@@ -434,7 +434,7 @@ async def _run_step_remote_ssh(
                 elif sout.channel.closed:
                     raise EOFError("tail channel closed")
             except Exception:
-                # Tail channel died — reconnect silently; job continues on EC2.
+                # Tail channel died — reconnect silently; job continues on the GPU host.
                 try:
                     sout.channel.close()
                     tail_client.close()
@@ -522,7 +522,7 @@ async def _run_step_remote_ssh(
                      remote_path, local_dest],
                     capture_output=True)
 
-        # After sync, restore local phase — EC2 starts fresh and doesn't track
+        # After sync, restore local phase — the GPU host starts fresh and doesn't track
         # KV indexing phase advances that happened locally.
         if "version.json" in sync_back and ver_path.exists():
             try:
@@ -588,7 +588,7 @@ async def run_step_background(
                 _append(f"[studio] error: {msg}")
                 return
 
-    # Route GPU steps to remote EC2 when a profile is selected.
+    # Route GPU steps to the remote GPU host when a profile is selected.
     # Recompute and prs-eval are excluded: they need local Qdrant access and
     # call the remote GPU via HTTP (compute worker / vLLM), not SSH.
     _LOCAL_STEPS = {"recompute", "prs-eval"}

@@ -45,7 +45,7 @@ import os
 
 from tools.exp1_workload import sample_stream, stream_stats
 
-A10G_USD_PER_HR = 1.006          # g5.xlarge on-demand
+A10G_USD_PER_HR = 1.006          # A10G on-demand
 ALPHAS = [0.0, 0.5, 0.8, 1.0, 1.2]
 VOLUMES = [10**3, 10**4, 10**5, 10**6]
 

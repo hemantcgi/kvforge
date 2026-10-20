@@ -78,13 +78,13 @@ stand the pipeline up before running full multi-fact-per-chunk extraction.
 | Arm | Base | Trained on | Weights | Notes |
 |-----|------|-----------|---------|-------|
 | `phase3_N500 … N6000` | gemma-4-E2B-it | phase-3 FAQs (`faqs_all.json`, 6,154 space ✓) | **local ✓** | the locally-runnable N-sweep; coverage-count ← `faqs_all.json:source_chunk_ids` |
-| `uc4_{1x,5x,10x}_v1` | **Llama-3.2-3B** | diversified_v1 (1x/5x/10x) | **EC2 only** (configs local, no `.safetensors`) | a clean repetition sweep, held out from `eval_500`; coverage-count ← `diversified_v1/per_chunk/` |
-| E4B / E4B+diverse ckpt-9000…15222 | gemma-4-E4B-it | diversified_v1 | **EC2 only** | headline arms |
+| `uc4_{1x,5x,10x}_v1` | **Llama-3.2-3B** | diversified_v1 (1x/5x/10x) | **GPU host only** (configs local, no `.safetensors`) | a clean repetition sweep, held out from `eval_500`; coverage-count ← `diversified_v1/per_chunk/` |
+| E4B / E4B+diverse ckpt-9000…15222 | gemma-4-E4B-it | diversified_v1 | **GPU host only** | headline arms |
 
 **Base model and S0/reader must match each S1** — comparing a Llama adapter's closed-book
 answers against a Gemma S0 baseline is meaningless. Derive S0 + the S2 reader from each
-adapter's `base_model_name_or_path`. **All GPU + Qdrant (:6333) live on EC2**, so every arm
-runs there; the "local vs EC2" distinction below is only about *which adapters are
+adapter's `base_model_name_or_path`. **All GPU + Qdrant (:6333) live on the GPU host**, so every arm
+runs there; the "local vs the GPU host" distinction below is only about *which adapters are
 materialized*, not where compute happens.
 
 Retention is reported as **lift over the matching S0** (so we don't credit facts the base
@@ -121,7 +121,7 @@ Scored per probe, then aggregated over the inventory.
   single top-k set — measure answerability, not mere presence. Threat T6.)
 - **Retention lift:** `Coverage(S1) − Coverage(S0)`, per fact and aggregate.
 - **Knowledge-coverage curve (headline artifact):** `Coverage(S1)` across the N-sweep
-  checkpoints (`phase3_N500…N6000`; or the 1x/5x/10x repetition sweep on EC2) overlaid with
+  checkpoints (`phase3_N500…N6000`; or the 1x/5x/10x repetition sweep on the GPU host) overlaid with
   the flat **`answerable@k`** ceiling from S2 — this is the only S2 quantity commensurate with
   fidelity-based coverage. **The crossover of the two curves = the knowledge-mass crossover**,
   a stronger version of the paper's per-query FA crossover. Plot **`recall@k` in a separate
@@ -162,7 +162,7 @@ Emit one joined table `results/knowledge/uc4/per_fact.jsonl`:
 2. **`eval/recall_at_k.py`** (new) — embed question (fastembed, as in `kv_inference`),
    `QdrantStore.query(collection, vector, top_k)`, test `chunk_id ∈ ids`. Add `answerable@k`
    via oracle reader. **Prereq: the 6,154-chunk UC4 collection must be indexed in Qdrant**
-   (EC2 box runs Qdrant on :6333; local may need indexing — verify first, cf. memory
+   (the GPU host runs Qdrant on :6333; local may need indexing — verify first, cf. memory
    `uc4-two-corpora`: 2,520 KV-indexed vs 6,154 QA-gen).
 3. **`eval/knowledge_probe.py`** (new) — load store via `model_loader.load(base|adapter)`,
    run `_generate_parametric` over `qa_probe` + `paraphrases`; score with `metrics.llm_judge`
@@ -218,11 +218,11 @@ check, and the three arms produce a coherent coverage profile + curve.
 
 ## 8. Scope & increments
 
-*(All runs are on EC2 — that's where the models + Qdrant live. "Materialized" = adapter
+*(All runs are on the GPU host — that's where the models + Qdrant live. "Materialized" = adapter
 weights present for that arm.)*
 
 - **Increment 0 (prereqs — no GPU). Status 2026-10-06:**
-  - (a) ✅ **RESOLVED (EC2, 2026-10-06):** `bedrock-userguide` holds only the **2,520** KV-indexed
+  - (a) ✅ **RESOLVED (the GPU host, 2026-10-06):** `bedrock-userguide` holds only the **2,520** KV-indexed
     subset, but a separate collection **`bedrock-userguide-6154` holds all 6,154 points @ dim 384**,
     and `eval_500.chunk_id` values resolve to real points there. **recall@k must target
     `bedrock-userguide-6154`, not the config default** `bedrock-userguide`. Embedder =
@@ -231,7 +231,7 @@ weights present for that arm.)*
     near-dup questions (Jaccard≥0.80), 3 exact-answer. Phase-3 arm is clean (optionally drop the
     ~5 items). T9 resolved.
   - (c) ✅ bases confirmed: `phase3_N*` → `google/gemma-4-E2B-it` (weights local);
-    `uc4_{1x,5x,10x}_v1` → `meta-llama/Llama-3.2-3B-Instruct` (weights EC2-only).
+    `uc4_{1x,5x,10x}_v1` → `meta-llama/Llama-3.2-3B-Instruct` (weights GPU-host-only).
 - **Increment 1 (cheapest materialized arm):** UC4; seed inventory = `eval_500.json`;
   S0 (base gemma-4-E2B-it) + S1 (`phase3_N6000`, E2B, **local weights**) + S2 (recall@k +
   answerable@k); single seed. Goal: stand up the pipeline, eyeball inventory quality, produce
@@ -239,13 +239,13 @@ weights present for that arm.)*
 - **Increment 2 (N-sweep curve):** full multi-fact inventory via `build_fact_inventory.py`;
   coverage curve across `phase3_N500…N6000`; per-fact attribution table (§4). Add the
   **diversified Llama `uc4_{1x,5x,10x}_v1` repetition sweep** once its weights are re-synced
-  from EC2 — it's the clean, properly-held-out H3 test.
+  from the GPU host — it's the clean, properly-held-out H3 test.
 - **Increment 3 (headline arms):** E4B, E4B+diverse ckpt-9000…15222; ≥3 seeds; extend to other
   corpora with a chunk_id-bearing eval set.
 
 ### Execution log
 
-**2026-10-06 — pipeline validated end-to-end on EC2.**
+**2026-10-06 — pipeline validated end-to-end on the GPU host.**
 
 - **S2 recall@k (full n=500, judge-free), `bedrock-userguide-6154`, bge-small, top-k:**
   **recall@5 = 0.586** (293/500), **recall@10 = 0.684** (342/500). → The retriever misses the
@@ -276,7 +276,7 @@ weights present for that arm.)*
   judge-failure-safe (drops `judge_score=None`, counts `n_judge_failed`).
 - **Judge id corrected:** the plan's `deepseek-v4-lite` is **disabled (403)** on the CodeVector
   gateway and `deepseekv4p` is **not granted**; the working judge is **`deepseek-code-h`**
-  (a reasoning model; `llm_judge` default `max_tokens=1024` is sufficient). Creds on EC2 at
+  (a reasoning model; `llm_judge` default `max_tokens=1024` is sufficient). Creds on the GPU host at
   `codevector_creds.json`. All results here are **`deepseek-code-h`-judged** — not comparable to
   any `deepseek-v4-lite`/`flash` table (judge choice swings FA ~2×).
 - **20-item content-Q validation (page-trivia excluded), real judge, 0 judge failures:**
@@ -404,11 +404,11 @@ not a confound; it would only matter for a "generalize to never-seen facts" fram
 
 - **Design (confirmed with user):** one E2B r64 / 1-epoch training pass over the 60,209 QA
   (`faqs_full_idea1.json`, `--from-base --seed 42 --replay-ratio 0` → 10 replay, negligible;
-  3,764 steps, eff. batch 16). The EC2 trainer already shuffles with `data_seed=42`, so "QA seen by
+  3,764 steps, eff. batch 16). The GPU host trainer already shuffles with `data_seed=42`, so "QA seen by
   step *s*" is a **uniform sample spanning the whole corpus** — X = QA *density*, span held ~constant
   (this is the clean volume axis the `phase3_N*` tiers and the 3-dot contrast lacked).
 - **Checkpointing:** `lora_save_steps=250` → checkpoints at steps 250…3750 = **QA ≈ 4k, 8k, …, 60k**
-  (~15 evenly-spaced points, user's choice) + the final full-epoch adapter. Required one EC2-only
+  (~15 evenly-spaced points, user's choice) + the final full-epoch adapter. Required one GPU-host-only
   trainer edit: `save_total_limit` made configurable (was hardcoded `=6`, which is why the paper's
   "six-checkpoint learning curve" kept only the last six); backup at
   `pipeline/lora_trainer.py.bak_volsweep`. Config: `config_e2b_r64_volsweep.json`.
@@ -422,7 +422,7 @@ not a confound; it would only matter for a "generalize to never-seen facts" fram
 - **Caps:** QA pool = 60,209 **unique**; 1 epoch reaches ~60k unique. If still climbing at 60k, more
   *unique* QA (beyond the pool) would be needed — only repetition/epochs remain, which tests
   consolidation, not volume. Will flag if hit.
-- **Orchestration:** `tools/volsweep_orchestrate.py` (EC2) waits for training then evals all
+- **Orchestration:** `tools/volsweep_orchestrate.py` (the GPU host) waits for training then evals all
   checkpoints → `results/knowledge/uc4/volume_curve_e2b.json` (crash-safe, partial after each arm).
   ETA ~8.5 h train + ~10 h eval ≈ **18 h**. Pending.
 
@@ -445,8 +445,8 @@ the full set vs 85 G free. Two bugs surfaced and were fixed before the eval coul
   Eval now running (PID loading E2B 4-bit, arm 1 = qa4000). ~10 h for 17 arms. Pending the curve.
 
 **2026-10-08 — VOLUME SWEEP COMPLETE (two-curve result).** Pipeline changed to **split generate →
-judge-in-session** at the user's request (judge with the Claude Code subscription, which the EC2
-gateway can't reach — it serves only `deepseek-code-h`). EC2 generated all closed-book predictions
+judge-in-session** at the user's request (judge with the Claude Code subscription, which the GPU host
+gateway can't reach — it serves only `deepseek-code-h`). The GPU host generated all closed-book predictions
 (8,658 = 18 arms × 481 held-out facts) with the tested `build_generate_fn`; judging done in-session
 by Claude judging-subagents (one per arm, exact `judge_mode="partial"` rubric). Results in
 `results/knowledge/uc4/volume_curve_e2b_claude.json` (+ raw per-arm scores in `volsweep_judge_scores/`,
