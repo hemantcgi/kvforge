@@ -503,7 +503,7 @@ The gate threshold (default 0.75) is tunable per deployment: lower thresholds in
 
 \subsection{Hardware and Setup}
 
-All experiments run on four NVIDIA A10G GPUs (24 GB VRAM each), 16 GB RAM, and 250 GB NVMe SSD, under Ubuntu 22.04 with CUDA 12.1, PyTorch 2.1, and HuggingFace Transformers 4.40. The base model is google/gemma-4-E2B-it with LoRA rank r=16 (alpha=32) under 4-bit NF4 quantization; embeddings use BAAI/bge-small-en-v1.5 (384-dim) for UC1--UC3 and mixedbread-ai/mxbai-embed-large-v1 (1,024-dim) for UC4, stored in Qdrant 1.9. Each use-case runs on a dedicated GPU (UC1: GPU 0, UC2: GPU 1, UC3: GPU 2, UC4: GPU 3) via \texttt{CUDA\_VISIBLE\_DEVICES}.
+All experiments run on a single host with four NVIDIA A10G GPUs (24 GB VRAM each), 16 GB RAM, and 250 GB NVMe SSD, under Ubuntu 22.04 with CUDA 12.1, PyTorch 2.1, and HuggingFace Transformers 4.40. The base model is google/gemma-4-E2B-it with LoRA rank r=16 (alpha=32) under 4-bit NF4 quantization; embeddings use BAAI/bge-small-en-v1.5 (384-dim) for UC1--UC3 and mixedbread-ai/mxbai-embed-large-v1 (1,024-dim) for UC4, stored in Qdrant 1.9. Each use-case runs on a dedicated GPU (UC1: GPU 0, UC2: GPU 1, UC3: GPU 2, UC4: GPU 3) via \texttt{CUDA\_VISIBLE\_DEVICES}.
 
 
 \subsection{Datasets}

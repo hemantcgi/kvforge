@@ -420,7 +420,7 @@ def fig_prs_progression():
     ax.set_ylabel("Parametric Readiness Score (PRS)", fontsize=11)
     ax.set_ylim(0.66, 0.93)
     ax.set_title("Figure 14 — PRS Progression Over Training Rounds\n"
-                 "All use-cases · 4× A10G GPU · Gemma-4-E2B-it",
+                 "All use-cases · 4× A10G GPU · Llama-3.2-3B-Instruct",
                  fontsize=12, pad=10)
     ax.legend(loc="upper left", fontsize=9, ncol=2)
     ax.grid(alpha=0.25, zorder=0)

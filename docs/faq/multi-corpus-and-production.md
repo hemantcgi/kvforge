@@ -289,7 +289,7 @@ This is supported by `model_loader.py` via the `bitsandbytes` library. Quantized
 | V100 | 16 GB | Llama-3.2-3B | ~$3.06/hr |
 | 8× A100 | 8×40 GB | 70B models | ~$32.77/hr |
 
-KVForge was benchmarked on an A10G GPU — this is the recommended starting point.
+KVForge was benchmarked on an A10G GPU with Llama 3.2 3B — this is the recommended starting point.
 
 ---
 
