@@ -11,7 +11,7 @@ GitHub: [https://github.com/hemantcgi/kvforge](https://github.com/hemantcgi/kvfo
 
 ## Abstract
 
-Retrieval-Augmented Generation (RAG) grounds language-model answers in external knowledge but keeps that knowledge outside the model's weights, re-fetching and re-encoding the same context on every query. We study **progressive parametric absorption**: fine-tuning a small language model (SLM) on a corpus until it can answer an increasing share of queries *from its weights*, with retrieval retained as a fallback. Our central result is about the training signal, not the system: **diversity of the training signal, not model capacity, is the dominant lever.** In matched-rank 2×2 ablations on a 500-question held-out set (one corpus, single judge), adding diverse rewrites of source chunks to a fixed question–answer pool raises held-out factual accuracy by +0.030 to +0.042, three-to-five times the effect of a 180× increase in question volume (+0.009, within noise), and the effect transfers to a second architecture — a 3.2B Llama-3.2-3B reaches parity (0.254) with a 5.1B Gemma-4-E2B (0.249) on the identical recipe (comparison on total parameters; the Gemma models are ~2.3B/~4.5B *effective*). Two pre-registered, blind-judged studies sharpen the picture: among LoRA training-configuration choices, adapter **placement** (all linear layers vs. attention-only, at matched parameter budget) is the dominant retention lever (+0.067 in a two-seed blind pilot, per-fact Wilcoxon p=0.0001; +0.123 full-scale and +0.106 on leak-removed facts in a single-seed promotion), while added exposure is marginal and cross-chunk relational structure is inert; and a RAFT-trained generator **complements** retrieval precisely where retrieval fails (difference-in-differences interaction +0.135, 95% CI [+0.062, +0.206]).
+Retrieval-Augmented Generation (RAG) grounds language-model answers in external knowledge but keeps that knowledge outside the model's weights, re-fetching and re-encoding the same context on every query. We study **progressive parametric absorption**: fine-tuning a small language model (SLM) on a corpus until it can answer an increasing share of queries *from its weights*, with retrieval retained as a fallback. Our central result is about the training signal, not the system: **diversity of the training signal, not model capacity, is the dominant lever.** In matched-rank 2×2 ablations on a 500-question held-out set (one corpus, single judge), adding diverse rewrites of source chunks to a fixed question–answer pool raises held-out factual accuracy by +0.030 to +0.042, versus a non-significant +0.009 from a 180× increase in question volume, and the effect transfers to a second architecture — a 3.2B Llama-3.2-3B reaches parity (0.254) with a 5.1B Gemma-4-E2B (0.249) on the identical recipe (comparison on total parameters; the Gemma models are ~2.3B/~4.5B *effective*). Two pre-registered, blind-judged studies sharpen the picture: among LoRA training-configuration choices, adapter **placement** (all linear layers vs. attention-only, at matched parameter budget) is the dominant retention lever (+0.067 in a two-seed blind pilot, per-fact Wilcoxon p=0.0001; +0.123 full-scale and +0.106 on leak-removed facts in a single-seed promotion), while added exposure is marginal and cross-chunk relational structure is inert; and a RAFT-trained generator **complements** retrieval precisely where retrieval fails (difference-in-differences interaction +0.135, 95% CI [+0.062, +0.206]).
 
 These findings are produced on **KVForge**, a platform that advances an SLM-backed QA deployment through three phases — standard RAG; per-chunk KV-cache injection; and confidence-gated parametric answering — under an automatic gating heuristic. We report KVForge's engineering honestly: the parametric phase (Phase 3) is where the results above live; the KV-injection phase (Phase 2), in its current mean-pooled form, is a **characterized negative result** consistent with the KV-reuse literature, not a validated speedup. We do not claim superiority over any external system: this paper reports no head-to-head comparison under matched hardware, base model, and query set, and we scope every claim accordingly.
 
@@ -39,7 +39,7 @@ An automatic gating heuristic (the Parametric Readiness Score, PRS; §4.7) drive
 
 Ordered by the strength of the evidence behind them:
 
-1. **Training-signal diversity is the dominant lever for parametric absorption** (§5.3–§5.6). On a 500-question held-out set with a single fixed judge, diverse chunk-rewrites beat a 180× increase in QA volume by 3–5×, and the effect transfers to a second architecture (Llama-3.2-3B reaches parity with the larger Gemma-4-E2B). Model capacity, rank-matched, is a real but secondary lever (+0.025 to +0.037).
+1. **Training-signal diversity is the dominant lever for parametric absorption** (§5.3–§5.6). On a 500-question held-out set with a single fixed judge, diverse chunk-rewrites add +0.030–0.042, versus a non-significant +0.009 from a 180× increase in QA volume, and the effect transfers to a second architecture (Llama-3.2-3B reaches parity with the larger Gemma-4-E2B). Model capacity, rank-matched, is a real but secondary lever (+0.025 to +0.037).
 2. **LoRA placement is the dominant training-configuration lever for parametric retention** (§5.7): a pre-registered, blind, same-session-judged study finds all-linear placement beats attention-only at matched parameter budget (+0.067 two-seed pilot, p=0.0001; +0.123 full-scale and +0.106 on leak-removed facts, single-seed), with exposure marginal and relational structure inert.
 3. **Fine-tuning complements retrieval where retrieval fails** (§5.8): a pre-registered RAFT study shows the fine-tuned-plus-retrieval gain concentrates on retrieval-misses (DiD interaction +0.135, 95% CI [+0.062, +0.206]).
 4. **KVForge, an open platform** for progressive parametric absorption (§4), reported with an honest engineering accounting — including a characterized negative result for mean-pooled KV injection and a corpus-dependent amortized-cost analysis (§5.9) that tempers naive latency claims.
@@ -186,6 +186,7 @@ PRS = 0.5 × accuracy_ratio + 0.3 × calibration + 0.2 × consistency
 - **consistency** = mean pairwise cosine over three samples at T=0.7.
 
 ![Figure 4: PRS component contribution breakdown for UC4, Round 3.](figures/fig05a_prs_waterfall.png)
+
 ![Figure 5: PRS component scores across the four use cases.](figures/fig05b_prs_scores.png)
 
 **Thresholds (matching the implementation in `core/version.py`).** The system advances Phase 1→2 when PRS first reaches **0.75**, and Phase 2→3 when PRS holds **≥ 0.75 for two consecutive rounds**; a regression guard reverts to Phase 2 if PRS falls **below 0.60** across the stability window. (V1 of this paper reported 0.80/0.75; those values did not match the code and are corrected here.)
@@ -202,7 +203,7 @@ Three lightweight signals — token entropy, hedging-phrase detection, and query
 
 ## 5. Experimental Evaluation
 
-**Reading guide.** This section leads with the paper's strongest evidence — the training-signal and configuration studies on UC4 at n=500 with a single fixed judge (§5.3–§5.8) — then reports the broader but weaker cross-corpus crossover (§5.10) and the Phase-2 negative result (§5.9) honestly. **Metrics are not interchangeable across subsections**: three families appear (cosine-PRS; `deepseek`-judged factual accuracy, FA; blind coverage@0.5), on different scales and judges, and only within-subsection, within-judge deltas are meaningful. Appendix B tabulates every metric/judge pairing.
+**Reading guide.** This section leads with the paper's strongest evidence — the training-signal and configuration studies on UC4 at n=500 with a single fixed judge (§5.3–§5.8) — then reports the broader but weaker cross-corpus crossover (§5.10) and the Phase-2 negative result (§5.9) honestly. **Metrics are not interchangeable across subsections**: three metric families appear (cosine-PRS; `deepseek`-judged factual accuracy, FA; blind coverage@0.5) across the two evaluation regimes of §5.2, on different scales and judges, and only within-subsection, within-judge deltas are meaningful. Appendix B enumerates all five metric×judge pairings.
 
 ### 5.1 Setup
 
@@ -212,7 +213,7 @@ Experiments run on a single four-GPU host (4× NVIDIA A10G, 24 GB each), Ubuntu 
 
 Four corpora: **UC1** customer support (Bitext, 2,000 chunks), **UC2** PubMedQA [15] (2,918), **UC3** SQuAD 2.0 [16] (2,000), **UC4** Amazon Bedrock User Guide (2,520; expanded 6,154-chunk index for the n=500 work). Two evaluation regimes are used and must not be conflated:
 
-- **PRS (cosine), §5.3-equivalent readiness** — the gating heuristic of §4.7.
+- **PRS (cosine) — readiness heuristic** — the gating heuristic of §4.7.
 - **Held-out factual accuracy (FA), judge-scored** — the scientific metric. The primary, best-powered FA evaluation is a **500-question UC4 held-out set** under a single judge (`deepseek-v4-lite` via CodeVector), with reported standard errors.
 
 ### 5.3 The Data Lever: Diverse Rewrites Beat QA Volume and Capacity (UC4, n=500)
@@ -230,11 +231,11 @@ The central question is what controls parametric absorption. We fix the held-out
 | E4B | r64, 60k QA | 0.244 ± 0.011 | 1.55 |
 | E4B | r64, 60k QA + rewrites | **0.286** (mean; checkpoints 0.275–0.302) | 1.64 |
 
-![Figure 11: UC4 n=500 held-out FA per arm, sorted descending.](figures/fig_e2b_comparison_accuracy.png)
+![Figure 7: UC4 n=500 held-out FA per arm, sorted descending.](figures/fig_e2b_comparison_accuracy.png)
 
 Four findings:
 
-- **Rewrites are the active lever.** At matched r=64 and 60k QA, adding 61,554 diverse rewrites lifts FA by **+0.030 (E2B: 0.219→0.249)** and **+0.042 (E4B: 0.244→0.286)** — three-to-five times the entire QA-volume effect. E2B-with-rewrites (0.249) reaches the *larger* model's QA-only level (0.244).
+- **Rewrites are the active lever.** At matched r=64 and 60k QA, adding 61,554 diverse rewrites lifts FA by **+0.030 (E2B: 0.219→0.249)** and **+0.042 (E4B: 0.244→0.286)** — while the entire QA-volume effect is a non-significant +0.009. E2B-with-rewrites (0.249) reaches the *larger* model's QA-only level (0.244).
 - **QA volume is nearly inert.** Raising E4B QA from 337 to 60,209 (no rewrites) moves FA +0.009 (0.235→0.244), within noise.
 - **Capacity, rank-matched, is modest.** E2B→E4B gains +0.025 (QA-only) and +0.037 (with rewrites). The naive E2B→E4B gap of +0.088 read directly from the table conflates capacity with adapter rank (E2B r16 vs E4B r64); moving E2B from r16 to r64 (0.147→0.219) alone recovers +0.072, of which ≤0.009 is QA volume. **Rank matching is essential** — without it, "capacity" is overstated ~3×.
 - **The learning curve plateaus early.** Across six checkpoints of the E4B+rewrites run FA is 0.278, 0.275, 0.288, 0.280, 0.302, 0.295 — flat-to-slightly-rising, realized well before the corpus is consumed.
@@ -314,7 +315,7 @@ We report Phase 2's status plainly. The mean-pool injection scheme (§4.2) is, b
 
 The strongest results above are UC4-only. To gauge breadth we report the earlier four-corpus crossover study — but flag its weaker footing: single seed, small held-out sets (n=76/50–297/200/89), and an earlier judge (`deepseek-v4-flash`, now unreachable) **not comparable** to §5.3's `deepseek-v4-lite`. These numbers are **preliminary evidence of breadth, not a validated cross-corpus claim.**
 
-| Corpus | N | RAG FA | Param FA | Crossover |
+| Corpus | N (operating point) | RAG FA | Param FA | Crossover |
 |--------|---:|:---:|:---:|:---:|
 | UC1 Customer Support | 200 | 0.215 | 0.360 | yes |
 | UC1 | 1000 | 0.192 | 0.356 | yes* |
@@ -326,9 +327,9 @@ The strongest results above are UC4-only. To gauge breadth we report the earlier
 | UC4 Bedrock | 500 | 0.219 | 0.234 | yes |
 | UC4 | 6000 | 0.109 | 0.234 | yes* |
 
-(* = each dataset's highest N.) All four corpora reach crossover at 100–500 QA pairs, and on UC4 the margin widens as Standard-RAG FA declines (0.22→0.11) while parametric holds ~0.23. **But** UC2's crossover stays within 0.02 FA (noise), and FA is modest throughout (0.11–0.36), so crossover denotes *relative* superiority over a baseline whose own held-out FA is low — see §5.11. We now treat UC1/UC2/UC3 crossover as suggestive pending the same n=500, single-judge, seeded treatment UC4 received.
+(* = each dataset's highest N; N is a per-corpus operating point, not a training-QA-volume axis.) On UC4 the margin widens as Standard-RAG FA declines at larger N (0.22→0.11) while parametric holds ~0.23. **But** UC2's crossover stays within 0.02 FA (noise), and FA is modest throughout (0.11–0.36), so crossover denotes *relative* superiority over a baseline whose own held-out FA is low — see §5.11. We now treat UC1/UC2/UC3 crossover as suggestive pending the same n=500, single-judge, seeded treatment UC4 received.
 
-![Figure 10: Gemma-4 crossover — parametric vs Standard RAG FA vs training QA pairs (N), all four corpora.](figures/gemma4_crossover_consolidated.png)
+![Figure 8: Gemma-4 crossover — parametric vs Standard RAG FA vs N (per-corpus operating point), for UC1, UC2 and UC4.](figures/gemma4_crossover_consolidated.png)
 
 ### 5.11 On the Retrieval Baseline (M1)
 
@@ -376,7 +377,7 @@ Phase 3 answers a self-selected, confidence-gated subset, so this table characte
 
 ### 6.1 Training-Signal Diversity as the Primary Lever
 
-The consistent result across §5.3, §5.6, and §5.7 is that **how the training signal is constructed dominates model capacity.** Diverse rewrites beat a 180× QA-volume increase by 3–5× (§5.3); a 3.2B model matches a 5.1B one (total params) on the same recipe (§5.6); and, holding data fixed, adapter *placement* moves retention far more than exposure or relational structure (§5.7). For practitioners targeting parametric corpus absorption in SLMs, the actionable ordering is: **data diversity and adapter placement first; model scale and training duration second.**
+The consistent result across §5.3, §5.6, and §5.7 is that **how the training signal is constructed dominates model capacity.** Diverse rewrites add +0.030–0.042 versus a non-significant +0.009 from a 180× QA-volume increase (§5.3); a 3.2B model matches a 5.1B one (total params) on the same recipe (§5.6); and, holding data fixed, adapter *placement* moves retention far more than exposure or relational structure (§5.7). For practitioners targeting parametric corpus absorption in SLMs, the actionable ordering is: **data diversity and adapter placement first; model scale and training duration second.**
 
 ### 6.2 Corpus Heterogeneity and the PRS/FA Gap
 
@@ -384,7 +385,7 @@ PRS (cosine; measured on Gemma-4-E4B — see the §5.1 attribution note) spreads
 
 ### 6.3 What "Crossover" Means Here
 
-Crossover denotes *relative* superiority over a retrieval baseline whose own held-out FA is modest (0.11–0.23, §5.11), not absolute correctness (parametric FA tops out ~0.30). It is nonetheless the operationally relevant threshold for Phase-3 gating. The strongest crossover evidence is UC4 at n=500 (§5.3); the four-corpus breadth (§5.10) is preliminary.
+Crossover denotes *relative* superiority over a retrieval baseline whose own held-out FA is modest (0.161–0.175, §5.11), not absolute correctness (parametric FA tops out ~0.30). It is nonetheless the operationally relevant threshold for Phase-3 gating. The strongest crossover evidence is UC4 at n=500 (§5.3); the four-corpus breadth (§5.10) is preliminary.
 
 ### 6.4 KV Staleness
 
@@ -415,7 +416,7 @@ We separate what *is* established from what remains, and bucket the open items b
 
 ## 7. Conclusion
 
-We studied progressive parametric absorption — fine-tuning a small language model to answer a corpus from its weights, with retrieval as fallback — and found that the controlling variable is the training signal, not model scale. On a 500-question held-out set with a single fixed judge, diverse chunk-rewrites beat a 180× increase in question volume by three-to-five times, the effect transfers to a second architecture (a 3.2B Llama matches a 5.1B Gemma at matched recipe, on total-parameter counts), and capacity is a real but secondary, rank-confounded lever. Two pre-registered, blind-judged studies add that LoRA **placement** is the dominant training-configuration lever and that RAFT fine-tuning **complements** retrieval precisely where retrieval fails. These results are produced on **KVForge**, an open platform for the three-phase progression, which we report with an honest engineering accounting — a characterized negative result for mean-pooled KV injection, and a corpus-dependent amortized-cost analysis showing parametric answering pays off only at high query volume on favorable corpora.
+We studied progressive parametric absorption — fine-tuning a small language model to answer a corpus from its weights, with retrieval as fallback — and found that the controlling variable is the training signal, not model scale. On a 500-question held-out set with a single fixed judge, diverse chunk-rewrites add +0.030–0.042 while a 180× increase in question volume adds a non-significant +0.009, the effect transfers to a second architecture (a 3.2B Llama matches a 5.1B Gemma at matched recipe, on total-parameter counts), and capacity is a real but secondary, rank-confounded lever. Two pre-registered, blind-judged studies add that LoRA **placement** is the dominant training-configuration lever and that RAFT fine-tuning **complements** retrieval precisely where retrieval fails. These results are produced on **KVForge**, an open platform for the three-phase progression, which we report with an honest engineering accounting — a characterized negative result for mean-pooled KV injection, and a corpus-dependent amortized-cost analysis showing parametric answering pays off only at high query volume on favorable corpora.
 
 We do not claim superiority over any external system under matched conditions; establishing that, growing the strong studies beyond one corpus, and correcting Phase 2 are the primary steps before these findings should be treated as validated rather than well-characterized. The paper's value is in what it pins down carefully: *for small-model corpus absorption, invest in training-signal diversity and adapter placement before model scale.*
 
