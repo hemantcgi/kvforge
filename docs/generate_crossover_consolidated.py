@@ -101,7 +101,7 @@ for ds in datasets:
 ax.legend(handles=custom_lines, loc="upper left", framealpha=0.92, ncol=1)
 
 ax.set_xscale("log")
-ax.set_xlabel("Retrieval-Index Size (N chunks, log scale)")
+ax.set_xlabel("N (per-corpus operating point, log scale)")
 ax.set_ylabel("Factual Accuracy (FA)")
 ax.set_title(
     "Gemma 4 Crossover: Parametric vs. Text-RAG Factual Accuracy\n"

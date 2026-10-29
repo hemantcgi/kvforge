@@ -315,7 +315,7 @@ We report Phase 2's status plainly. The mean-pool injection scheme (§4.2) is, b
 
 The strongest results above are UC4-only. To gauge breadth we report the earlier four-corpus crossover study — but flag its weaker footing: single seed, small held-out sets (n=76/50–297/200/89), and an earlier judge (`deepseek-v4-flash`, now unreachable) **not comparable** to §5.3's `deepseek-v4-lite`. These numbers are **preliminary evidence of breadth, not a validated cross-corpus claim.**
 
-| Corpus | Index N (chunks) | RAG FA | Param FA | Crossover |
+| Corpus | N (operating point) | RAG FA | Param FA | Crossover |
 |--------|---:|:---:|:---:|:---:|
 | UC1 Customer Support | 200 | 0.215 | 0.360 | yes |
 | UC1 | 1000 | 0.192 | 0.356 | yes* |
@@ -327,9 +327,9 @@ The strongest results above are UC4-only. To gauge breadth we report the earlier
 | UC4 Bedrock | 500 | 0.219 | 0.234 | yes |
 | UC4 | 6000 | 0.109 | 0.234 | yes* |
 
-(* = each dataset's highest N, where N is the retrieval-index size in indexed chunks — **not** the training-QA count; every parametric arm here is the same ~337-QA adapter re-evaluated at each index tier, so the parametric line is flat by construction.) All four corpora show parametric ≥ Standard RAG across index sizes, and on UC4 the margin widens as Standard-RAG FA declines with a larger index (0.22→0.11) while parametric holds ~0.23. **But** UC2's crossover stays within 0.02 FA (noise), and FA is modest throughout (0.11–0.36), so crossover denotes *relative* superiority over a baseline whose own held-out FA is low — see §5.11. We now treat UC1/UC2/UC3 crossover as suggestive pending the same n=500, single-judge, seeded treatment UC4 received.
+(* = each dataset's highest N.) **N is not a training-data-volume axis.** For every corpus the LoRA adapter is trained on a single fixed FAQ set held constant across the N values (verified from the training logs: UC1 `faqs.json`, UC2 `faqs_300.json`, UC4 `faqs_train.json`; adapters at different N differ only by seed), so the near-flat parametric curve reflects *constant training*, not insensitivity to data volume. What N indexes differs by corpus and is not cleanly recoverable from the surviving records — a retrieval/corpus tier for UC4 (chunks selected by `create_size_tiers`), a held-out eval-set size for UC2 (its N = 50–297 matches the held-out sizes above, not its adapter tiers) — so this table should be read only as parametric-vs-RAG at several per-corpus operating points, **not** as a volume sweep. On UC4 the margin widens as Standard-RAG FA declines at larger N (0.22→0.11) while parametric holds ~0.23. **But** UC2's crossover stays within 0.02 FA (noise), and FA is modest throughout (0.11–0.36), so crossover denotes *relative* superiority over a baseline whose own held-out FA is low — see §5.11. We now treat UC1/UC2/UC3 crossover as suggestive pending the same n=500, single-judge, seeded treatment UC4 received.
 
-![Figure 8: Gemma-4 crossover — parametric vs Standard RAG FA vs retrieval-index size (N indexed chunks; the parametric arm is one fixed ~337-QA adapter re-evaluated at each tier), all four corpora.](figures/gemma4_crossover_consolidated.png)
+![Figure 8: Gemma-4 crossover — parametric vs Standard RAG FA across per-corpus operating points (N; a retrieval/corpus tier for UC4, a held-out eval size for UC2 — see §5.10 — with training held constant across N). Shown for UC1, UC2, UC4 (UC3 omitted from this plot; see table).](figures/gemma4_crossover_consolidated.png)
 
 ### 5.11 On the Retrieval Baseline (M1)
 

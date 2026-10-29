@@ -86,7 +86,7 @@ for ax, (name, data) in zip(axes, datasets.items()):
             ax.axvspan(x_start, x_end, alpha=0.06, color=COLOR_CR)
 
     ax.set_title(name, fontweight="bold")
-    ax.set_xlabel("Retrieval-Index Size (N chunks)")
+    ax.set_xlabel("N (per-corpus operating point)")
     ax.set_ylabel("Factual Accuracy (FA)")
     ax.set_ylim(0.05, 0.42)
     ax.legend(loc="best", framealpha=0.9)
