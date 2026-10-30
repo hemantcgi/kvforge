@@ -2,7 +2,6 @@
 
 **Dr. Hemant Joshi**  
 Independent Researcher  
-  
 GitHub: [https://github.com/hemantcgi/kvforge](https://github.com/hemantcgi/kvforge)
 
 ---
@@ -719,4 +718,3 @@ The author thanks the Qdrant, HuggingFace, vLLM, and FastEmbed teams for their o
 ---
 
 **GitHub:** [https://github.com/hemantcgi/kvforge](https://github.com/hemantcgi/kvforge) · **License:** MIT  
-**Author contact:** 

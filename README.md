@@ -4,7 +4,7 @@
 
 The key result: a small **Gemma-4-E2B** model (≈2B effective parameters), LoRA-fine-tuned on cloud-generated QA pairs, **matches or exceeds text-in-context RAG on factual accuracy across all four enterprise corpora** (biomedical QA only after extended training), eliminating per-query retrieval costs.
 
-> **Research Paper:** [KVForge: Autonomous Phase-Adaptive Question Answering with Progressive Parametric Absorption](docs/KVForge_Research_Paper.pdf) — see the [summary below](#research-paper).
+> **Research Paper (latest):** [KVForge: Progressive Parametric Absorption in Small Language Models](docs/KVForge_Research_Paper_V3.pdf) — humanized standalone edition ([PDF](docs/KVForge_Research_Paper_V3.pdf) · [Markdown](docs/KVForge_Research_Paper_V3.md)); see the [summary below](#research-paper).
 
 ---
 
@@ -36,6 +36,8 @@ KVForge was evaluated on four heterogeneous corpora using **Google Gemma-4-E2B-i
 | UC4 Bedrock | [Technical docs](https://docs.aws.amazon.com/bedrock/latest/userguide/) (2,520 chunks) | **0.23** | 0.16 | **+44%** |
 
 \* PubMedQA required extended training (4,707 FAQ pairs, r=4, 15 epochs) to cross over; at sparse coverage parametric reverts below RAG. See the [consolidated crossover figure](docs/figures/gemma4_crossover_consolidated.png).
+
+> **Note:** these per-dataset crossover figures are the paper's **preliminary** small-N, single-seed cross-corpus result (V3 §5.10). The headline accuracy numbers (parametric 0.286 vs retrieval 0.161–0.175) come from the clean n=500 UC4 evaluation (§5.3).
 
 ![Gemma 4 crossover across four datasets](docs/figures/gemma4_crossover_consolidated.png)
 
@@ -490,13 +492,22 @@ Tested on a 4× NVIDIA A10G GPU host (24 GB VRAM each).
 
 ## Research Paper
 
-**[KVForge: Autonomous Phase-Adaptive Question Answering with Progressive Parametric Absorption](docs/KVForge_Research_Paper.pdf)** — Dr. Hemant Joshi (Independent Researcher). Preprint; also available as [Markdown](docs/KVForge_Research_Paper.md).
+**[KVForge: Progressive Parametric Absorption in Small Language Models](docs/KVForge_Research_Paper_V3.pdf)** — Dr. Hemant Joshi (Independent Researcher). Latest **humanized standalone edition** — [PDF](docs/KVForge_Research_Paper_V3.pdf) · [Markdown](docs/KVForge_Research_Paper_V3.md). A longer two-column edition is also in the repo ([docs/KVForge_Research_Paper.pdf](docs/KVForge_Research_Paper.pdf)).
 
 KVForge *progressively consolidates* a corpus from an external vector store into the parameters of a small language model, advancing through three PRS-gated phases — Standard RAG, KV-cache injection (per-chunk key/value tensors pre-computed at index time to skip re-encoding), and confidence-gated parametric answering (a tier-weighted LoRA loop trained on generated QA pairs and diverse rewrites of the source chunks). The system advances only once the model has demonstrably absorbed the knowledge it will be asked to recall.
 
-Across four heterogeneous corpora — customer support, biomedical QA (PubMedQA), machine reading comprehension (SQuAD 2.0), and technical documentation (Amazon Bedrock User Guide) — the parametric mode overtakes the retrieval baseline at **100–500 training QA pairs**. On a 500-question held-out set, fine-tuned parametric answering reaches factual accuracy **0.286–0.302 vs. 0.161–0.175** for retrieval, while answering **2–3× faster**.
+Across four heterogeneous corpora — customer support, biomedical QA (PubMedQA), machine reading comprehension (SQuAD 2.0), and technical documentation (Amazon Bedrock User Guide) — fine-tuned parametric answering overtakes the retrieval baseline. On a clean 500-question held-out set (UC4), it reaches factual accuracy **0.286** (range 0.275–0.302 across checkpoints) versus **0.161–0.175** for untrained retrieval, while answering **2–3× faster**. The broader cross-corpus crossover at small training sizes is reported as a preliminary, single-seed result.
 
 The paper's central finding is that **the decisive lever is training-signal diversity, not model capacity**: adding diverse rewrites of source chunks raises accuracy across models, and a 3.2B Llama-3.2-3B matches a 5.1B Gemma-4-E2B given the same data — so the crossover from retrieval to parameters is achievable in small, heterogeneous language models once the training signal is sufficiently diverse.
+
+**Key findings (V3):**
+
+- **Rewrites — not QA volume or scale — are the active lever.** At matched rank and 60k QA (UC4, n=500), adding diverse chunk rewrites lifts factual accuracy by +0.030 (E2B) / +0.042 (E4B), while raising QA from 337 to 60k alone moves it only +0.009; rank-matched capacity (E2B→E4B) adds just +0.025–0.037 (§5.3).
+- **Architecture-agnostic.** With the same recipe, Llama-3.2-3B (3.2B) reaches 0.254 — matching the 5.1B Gemma-E2B (0.249) and within ~0.03 of the 7.49B E4B (0.286) (§5.6).
+- **Adapter placement is the dominant retention lever.** LoRA on all linear layers vs. attention-only yields +0.067 `coverage@0.5` (two paired seeds, Wilcoxon p = 0.0001; +0.106 on the leak-removed subset). Exposure (1→3 epochs) is marginal (+0.040); cross-chunk relational structure is inert (≈0) (§5.7).
+- **Fine-tuning complements retrieval (RAFT).** A RAFT-trained generator with top-5 retrieval reaches `coverage@0.5` 0.809 vs 0.728 for base-model RAG; the gain concentrates on retrieval *misses* (difference-in-differences +0.135, 95% CI [0.062, 0.206]) (§5.8).
+
+*Caveats (§6.5):* no external-system baseline under matched conditions; absolute accuracies are modest (0.15–0.30); ~15–20% of held-out facts still leak as substrings into the 60k training set; most results are single-seed outside the §5.7 levers and §5.8 RAFT study. Metrics differ by section — factual accuracy (§5.3/§5.6) and `coverage@0.5` (§5.7/§5.8) are **not** directly comparable.
 
 ---
 
