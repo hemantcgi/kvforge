@@ -4,7 +4,7 @@
 
 The key result: a small **Gemma-4-E2B** model (≈2B effective parameters), LoRA-fine-tuned on cloud-generated QA pairs, **matches or exceeds text-in-context RAG on factual accuracy across all four enterprise corpora** (biomedical QA only after extended training), eliminating per-query retrieval costs.
 
-> **Research Paper:** [KVForge: Autonomous Phase-Adaptive Question Answering with Progressive Parametric Absorption](docs/KVForge_Research_Paper.pdf) — see the [summary below](#research-paper).
+> **Research Paper (latest):** [KVForge: Progressive Parametric Absorption in Small Language Models](docs/KVForge_Research_Paper_V3.md) — humanized standalone edition; see the [summary below](#research-paper). The complete two-column paper with appendices is the [formatted PDF](docs/KVForge_Research_Paper.pdf).
 
 ---
 
@@ -490,11 +490,11 @@ Tested on a 4× NVIDIA A10G GPU host (24 GB VRAM each).
 
 ## Research Paper
 
-**[KVForge: Autonomous Phase-Adaptive Question Answering with Progressive Parametric Absorption](docs/KVForge_Research_Paper.pdf)** — Dr. Hemant Joshi (Independent Researcher). Preprint; also available as [Markdown](docs/KVForge_Research_Paper.md).
+**[KVForge: Progressive Parametric Absorption in Small Language Models](docs/KVForge_Research_Paper_V3.md)** — Dr. Hemant Joshi (Independent Researcher). Latest **humanized standalone edition** (Markdown). The complete two-column paper with appendices is available as a [formatted PDF](docs/KVForge_Research_Paper.pdf).
 
 KVForge *progressively consolidates* a corpus from an external vector store into the parameters of a small language model, advancing through three PRS-gated phases — Standard RAG, KV-cache injection (per-chunk key/value tensors pre-computed at index time to skip re-encoding), and confidence-gated parametric answering (a tier-weighted LoRA loop trained on generated QA pairs and diverse rewrites of the source chunks). The system advances only once the model has demonstrably absorbed the knowledge it will be asked to recall.
 
-Across four heterogeneous corpora — customer support, biomedical QA (PubMedQA), machine reading comprehension (SQuAD 2.0), and technical documentation (Amazon Bedrock User Guide) — the parametric mode overtakes the retrieval baseline at **100–500 training QA pairs**. On a 500-question held-out set, fine-tuned parametric answering reaches factual accuracy **0.286–0.302 vs. 0.161–0.175** for retrieval, while answering **2–3× faster**.
+Across four heterogeneous corpora — customer support, biomedical QA (PubMedQA), machine reading comprehension (SQuAD 2.0), and technical documentation (Amazon Bedrock User Guide) — fine-tuned parametric answering overtakes the retrieval baseline. On a clean 500-question held-out set (UC4), it reaches factual accuracy **0.286** (range 0.275–0.302 across checkpoints) versus **0.161–0.175** for untrained retrieval, while answering **2–3× faster**. The broader cross-corpus crossover at small training sizes is reported as a preliminary, single-seed result.
 
 The paper's central finding is that **the decisive lever is training-signal diversity, not model capacity**: adding diverse rewrites of source chunks raises accuracy across models, and a 3.2B Llama-3.2-3B matches a 5.1B Gemma-4-E2B given the same data — so the crossover from retrieval to parameters is achievable in small, heterogeneous language models once the training signal is sufficiently diverse.
 

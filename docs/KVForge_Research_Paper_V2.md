@@ -2,7 +2,6 @@
 
 **Dr. Hemant Joshi**  
 Independent Researcher  
-hemant@flotorch.ai  
 GitHub: [https://github.com/hemantcgi/kvforge](https://github.com/hemantcgi/kvforge)
 
 > **Draft V2.** This revision re-scopes the paper around the empirical findings it can defend with the measurements already in hand, demotes unvalidated system claims to clearly-labelled status, and lists the experiments that would validate the remaining claims as explicit, currently-deferred follow-up work. A per-change map against V1 is in **Appendix A**; metric and judge provenance is in **Appendix B**. Numbers in this draft trace either to a V1 result or to a named file under `results/`.
@@ -557,4 +556,3 @@ Each review item is marked **done** (addressed by re-scoping/correction in this 
 ---
 
 **GitHub:** [https://github.com/hemantcgi/kvforge](https://github.com/hemantcgi/kvforge) · **License:** MIT  
-**Author contact:** hemant@flotorch.ai
