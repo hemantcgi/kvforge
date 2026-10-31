@@ -1,0 +1,869 @@
+\pdfoutput=1
+\documentclass[10pt,twocolumn]{article}
+
+\usepackage[margin=0.72in,columnsep=0.26in,top=0.85in,bottom=0.85in]{geometry}
+\usepackage[T1]{fontenc}
+\IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}  % scalable fonts (Type1 embed; needed for microtype)
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\IfFileExists{microtype.sty}{\usepackage{microtype}}{}
+\usepackage[font=small,labelfont=bf,skip=4pt]{caption}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage{hyperref}
+\definecolor{linkblue}{RGB}{25,85,155}
+\hypersetup{colorlinks=true,linkcolor=linkblue,citecolor=linkblue,urlcolor=linkblue,
+  pdftitle={KVForge: Progressive Parametric Absorption in Small Language Models},
+  pdfauthor={Hemant Joshi}}
+
+% auto-width left-aligned wrapping column for tabularx
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+
+% pandoc helpers (we do not use pandoc's standalone template)
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\providecommand{\passthrough}[1]{#1}
+
+% Unicode in the source -> pdfLaTeX, via inputenc (portable; no newunicodechar).
+\DeclareUnicodeCharacter{00A7}{\S}
+\DeclareUnicodeCharacter{00D7}{\ensuremath{\times}}
+\DeclareUnicodeCharacter{00B7}{\ensuremath{\cdot}}
+\DeclareUnicodeCharacter{2192}{\ensuremath{\rightarrow}}
+\DeclareUnicodeCharacter{0394}{\ensuremath{\Delta}}
+\DeclareUnicodeCharacter{2248}{\ensuremath{\approx}}
+\DeclareUnicodeCharacter{00B1}{\ensuremath{\pm}}
+\DeclareUnicodeCharacter{2212}{\ensuremath{-}}
+\DeclareUnicodeCharacter{2013}{\textendash}
+\DeclareUnicodeCharacter{2014}{\textemdash}
+\DeclareUnicodeCharacter{2265}{\ensuremath{\geq}}
+\DeclareUnicodeCharacter{2264}{\ensuremath{\leq}}
+\DeclareUnicodeCharacter{226A}{\ensuremath{\ll}}
+\DeclareUnicodeCharacter{2261}{\ensuremath{\equiv}}
+\DeclareUnicodeCharacter{2208}{\ensuremath{\in}}
+\DeclareUnicodeCharacter{03C7}{\ensuremath{\chi}}
+\DeclareUnicodeCharacter{03B1}{\ensuremath{\alpha}}
+\DeclareUnicodeCharacter{03B5}{\ensuremath{\varepsilon}}
+\DeclareUnicodeCharacter{211D}{\ensuremath{\mathbb{R}}}
+\DeclareUnicodeCharacter{221A}{\ensuremath{\surd}}
+\DeclareUnicodeCharacter{00B2}{\textsuperscript{2}}
+\DeclareUnicodeCharacter{2074}{\textsuperscript{4}}
+\DeclareUnicodeCharacter{2075}{\textsuperscript{5}}
+\DeclareUnicodeCharacter{2077}{\textsuperscript{7}}
+\DeclareUnicodeCharacter{207B}{\textsuperscript{\ensuremath{-}}}
+\DeclareUnicodeCharacter{2080}{\textsubscript{0}}
+\DeclareUnicodeCharacter{1D40}{\textsuperscript{\textsf{T}}}
+\DeclareUnicodeCharacter{00E0}{\`a}
+
+\graphicspath{{figures/}}
+\setlength{\emergencystretch}{2em}
+\hyphenation{par-a-met-ric re-triev-al}
+
+% --- vertical-spacing & float tuning (two-column) ---
+% twocolumn defaults to \flushbottom, which stretches inter-paragraph glue to
+% bottom-align columns; \raggedbottom removes those gaps (natural ragged bottoms).
+\raggedbottom
+
+% compact section/subsection headings: \large/\normalsize instead of \Large/\large,
+% smaller skips -> no stranded headings, long 5.x titles stay on one line.
+\makeatletter
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+  {-2.2ex \@plus -.5ex \@minus -.2ex}{1.0ex \@plus .2ex}%
+  {\normalfont\large\bfseries}}
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
+  {-1.8ex \@plus -.5ex \@minus -.2ex}{0.6ex \@plus .2ex}%
+  {\normalfont\normalsize\bfseries}}
+% top-align any unavoidable float page instead of vertically centering it
+\setlength\@fptop{0pt}
+\setlength\@dblfptop{0pt}
+\makeatother
+
+% keep floats close to their text (defaults are ~20pt)
+\setlength{\textfloatsep}{9pt plus 2pt minus 2pt}
+\setlength{\dbltextfloatsep}{9pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\dblfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{9pt plus 2pt minus 2pt}
+
+% float placement fractions (allow fuller top floats, keep some text per page)
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{5}
+\setcounter{dbltopnumber}{3}
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.70}
+\renewcommand{\textfraction}{0.10}
+\renewcommand{\floatpagefraction}{0.75}
+\renewcommand{\dbltopfraction}{0.85}
+\renewcommand{\dblfloatpagefraction}{0.65}
+
+\begin{document}
+\twocolumn[{%
+\begin{center}
+{\LARGE\bfseries KVForge: Progressive Parametric Absorption\\[2pt] in Small Language Models\par}
+\vspace{0.6em}
+{\itshape Training-signal diversity, not scale, drives the crossover from retrieval to parameters.\par}
+\vspace{0.9em}
+{\large Dr.~Hemant Joshi\par}\vspace{0.25em}
+{Independent Researcher \quad\textbullet\quad \url{https://github.com/hemantcgi/kvforge}\par}
+\end{center}
+\vspace{0.7em}
+\begin{minipage}{\textwidth}
+{\small\noindent\textbf{Abstract.}\quad Retrieval-Augmented Generation (RAG) grounds language-model answers in external knowledge but keeps that knowledge outside the model's weights, re-fetching and re-encoding the same context on every query. We study \textbf{progressive parametric absorption}: fine-tuning a small language model (SLM) on a corpus until it can answer an increasing share of queries \emph{from its weights}, with retrieval retained as a fallback. \textbf{Diversity of the training signal, not model capacity, is the dominant lever.} In matched-rank 2×2 ablations on a 500-question held-out set (one corpus, single judge), adding diverse rewrites of source chunks to a fixed question--answer pool raises held-out factual accuracy by +0.030 to +0.042, versus a non-significant +0.009 from a 180× increase in question volume, and the effect transfers to a second architecture: a 3.2B Llama-3.2-3B reaches parity (0.254) with a 5.1B Gemma-4-E2B (0.249) on the identical recipe (comparison on total parameters; the Gemma models are \textasciitilde2.3B/\textasciitilde4.5B \emph{effective}). Two pre-registered, blind-judged studies sharpen the picture: among LoRA training-configuration choices, adapter \textbf{placement} (all linear layers vs.~attention-only, at matched parameter budget) is the dominant retention lever (+0.067 in a two-seed blind pilot, per-fact Wilcoxon p=0.0001; +0.123 full-scale and +0.106 on leak-removed facts in a single-seed promotion), while added exposure is marginal and cross-chunk relational structure is inert; and a RAFT-trained generator \textbf{complements} retrieval precisely where retrieval fails (difference-in-differences interaction +0.135, 95\% CI {[}+0.062, +0.206{]}).
+
+These findings are produced on \textbf{KVForge}, a platform that advances an SLM-backed QA deployment through three phases under an automatic gating heuristic: standard RAG, per-chunk KV-cache injection, and confidence-gated parametric answering. The results above live in the parametric phase (Phase 3). The KV-injection phase (Phase 2), in its current mean-pooled form, is a \textbf{characterized negative result} consistent with the KV-reuse literature, not a validated speedup. This paper reports no head-to-head comparison against an external system under matched hardware, base model, and query set.\par}
+\end{minipage}
+\vspace{1.3em}
+}]
+
+\hypertarget{introduction}{%
+\section{Introduction}\label{introduction}}
+
+Large language models are strong on knowledge-intensive tasks but suffer from hallucination and knowledge staleness. Retrieval-Augmented Generation {[}1{]} addresses both by supplying retrieved context at query time, decoupling the knowledge base from model parameters. Standard RAG, however, pays a re-encoding cost on \emph{every} query: for a query retrieving five 600-token chunks, a \textasciitilde2B-effective-parameter transformer executes a full forward pass over \textasciitilde3,000 context tokens before emitting a single output token, every time, even for chunks retrieved thousands of times before.
+
+This paper asks a narrower and more answerable question than ``can we build a better RAG system'': \textbf{under what conditions can a small language model absorb a corpus into its weights well enough to answer from parameters, and what actually controls that?} We approach it empirically, and the answer is not the one the scaling intuition predicts. Across matched-rank ablations, a cross-architecture transfer, and two pre-registered studies, the controlling variable is the \emph{diversity and configuration of the training signal}, not model capacity.
+
+We develop and release \textbf{KVForge} as the platform for these experiments. KVForge organizes an SLM-backed deployment into three phases:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Phase 1: Standard RAG.} Retrieval; chunks rendered as text in context. No pre-computation.
+\item
+  \textbf{Phase 2: KV injection.} Pre-computed per-chunk key-value tensors are injected into the model's \texttt{past\_key\_values}, intended to skip re-encoding. \emph{In its current mean-pooled form this phase is a negative result (§3.1, §5.9); it carries none of the paper's positive claims.}
+\item
+  \textbf{Phase 3: Parametric answering.} After LoRA fine-tuning concentrates corpus knowledge into weights, a confidence gate routes high-confidence queries to retrieval-free generation, with KV-injection/RAG as fallback.
+\end{itemize}
+
+An automatic gating heuristic (the Parametric Readiness Score, PRS; §4.7) drives phase transitions. \textbf{PRS is an engineering gate, not a scientific accuracy metric.} All factual claims in this paper use held-out, judge-scored metrics (§5), and we show where PRS and factual accuracy diverge rather than assuming they agree.
+
+\textbf{Figure 1} illustrates the phase state machine.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.92\textwidth]{fig1_state_machine.pdf}
+\caption{KVForge phase-transition state machine. A phase advances when PRS $\geq 0.75$ (two consecutive rounds for the Phase~2$\rightarrow$3 transition); a regression guard reverts the phase when PRS $< 0.60$. The Phase~2$\rightarrow$1 edge is the stale-KV fallback.}
+\label{fig:state-machine}
+\end{figure*}
+
+\hypertarget{contributions}{%
+\subsection*{Contributions}\label{contributions}}
+
+Ordered by the strength of the evidence behind them:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Training-signal diversity is the dominant lever for parametric absorption} (§5.3, §5.6). On a 500-question held-out set with a single fixed judge, diverse chunk-rewrites add +0.030--0.042, versus a non-significant +0.009 from a 180× increase in QA volume, and the effect transfers to a second architecture (Llama-3.2-3B reaches parity with the larger Gemma-4-E2B). Model capacity, rank-matched, is a real but secondary lever (+0.025 to +0.037).
+\item
+  \textbf{LoRA placement is the dominant training-configuration lever for parametric retention} (§5.7): a pre-registered, blind, same-session-judged study finds all-linear placement beats attention-only at matched parameter budget (+0.067 two-seed pilot, p=0.0001; +0.123 full-scale and +0.106 on leak-removed facts, single-seed), with exposure marginal and relational structure inert.
+\item
+  \textbf{Fine-tuning complements retrieval where retrieval fails} (§5.8): a pre-registered RAFT study shows the fine-tuned-plus-retrieval gain concentrates on retrieval-misses (DiD interaction +0.135, 95\% CI {[}+0.062, +0.206{]}).
+\item
+  \textbf{KVForge, an open platform} for progressive parametric absorption (§4), including a characterized negative result for mean-pooled KV injection (§5.9) and a corpus-dependent amortized-cost analysis (§5.13) that tempers naive latency claims.
+\end{enumerate}
+
+The evidence has three limits: there is no comparison against any external system under matched conditions; the retrieval baseline is of characterized but modest quality; and strong per-corpus generality is shown for only one corpus (§6.5).
+
+\hypertarget{background}{%
+\section{Background}\label{background}}
+
+\hypertarget{transformer-attention-and-the-kv-cache}{%
+\subsection{Transformer Attention and the KV Cache}\label{transformer-attention-and-the-kv-cache}}
+
+Scaled dot-product attention {[}2{]} for query \textbf{Q}, key \textbf{K}, value \textbf{V} is \texttt{Attention(Q,K,V)\ =\ softmax(QKᵀ/√d\_k)·V}. During autoregressive generation the model caches the \textbf{K} and \textbf{V} projections of processed tokens. For one decoder layer with \emph{n\_h} KV heads of dimension \emph{d\_h} and sequence length \emph{L}, the cache occupies \texttt{2\ ×\ L\ ×\ n\_h\ ×\ d\_h\ ×\ sizeof(dtype)} bytes. Standard RAG rebuilds this cache per query; KVForge pre-builds it per chunk at index time.
+
+\hypertarget{low-rank-adaptation-lora}{%
+\subsection{Low-Rank Adaptation (LoRA)}\label{low-rank-adaptation-lora}}
+
+LoRA {[}4{]} adapts a frozen weight $\mathbf{W_0}\in\mathbb{R}^{d\times k}$ as \texttt{W\ =\ W₀\ +\ BA}, with $\mathbf{B}\in\mathbb{R}^{d\times r}$, $\mathbf{A}\in\mathbb{R}^{r\times k}$, $r\ll\min(d,k)$. KVForge's \emph{default} Phase-3 adapter targets \texttt{q\_proj,\ k\_proj,\ v\_proj}; §5.7 shows that extending placement to all linear layers (including MLP) at a matched parameter budget is the single most important configuration choice. Because adapting \textbf{K}/\textbf{V} projections invalidates stored KV tensors, each chunk carries a \texttt{kv\_version} field.
+
+\hypertarget{kv-cache-quantization}{%
+\subsection{KV Cache Quantization}\label{kv-cache-quantization}}
+
+Keys and values have different statistical properties: keys exhibit high inter-channel variance (favoring column-wise quantization), values smoother distributions (favoring group quantization) {[}18, 19{]}.
+
+\hypertarget{retrieval-augmented-generation}{%
+\subsection{Retrieval-Augmented Generation}\label{retrieval-augmented-generation}}
+
+Lewis et al.~{[}1{]} combined a non-parametric index with a parametric generator. KVForge's distinct position is to progressively \emph{eliminate} retrieval for queries the model has absorbed, while retaining it as a fallback.
+
+\hypertarget{related-work}{%
+\section{Related Work}\label{related-work}}
+
+\hypertarget{kv-cache-reuse-prefix-caching-and-why-phase-2-is-a-known-negative}{%
+\subsection{KV Cache Reuse, Prefix Caching, and Why Phase 2 Is a Known-Negative}\label{kv-cache-reuse-prefix-caching-and-why-phase-2-is-a-known-negative}}
+
+\textbf{PromptCache} {[}6{]} reuses KV across queries sharing a prompt prefix; it is session-scoped and lost on restart. \textbf{PagedAttention/vLLM} {[}3{]} manage KV memory within a server process. \textbf{SGLang} {[}7{]} gives a radix-tree prefix cache for shared prompts. These target prompt-prefix sharing; KVForge's Phase 2 targets independent document chunks that share no prefix.
+
+\textbf{TurboRAG} {[}34{]} is the closest published system to Phase 2: it precomputes and stores per-chunk KV caches offline and retrieves them to skip prefill. Critically, TurboRAG's own analysis shows that naively concatenating independently-precomputed per-chunk KV produces an inconsistent attention mask and position IDs relative to a true joint prefill, and corrects this with an explicit independent attention mask \emph{and} targeted fine-tuning (up to 9.4×, average 8.6× TTFT reduction, ``comparable performance''). \textbf{APE} {[}38{]} independently confirms that parallel-encoding independently-cached segments causes ``a significant performance drop'' absent shared-prefix design plus adaptive-temperature and attention-scaling corrections. \textbf{CacheBlend} {[}20{]} fuses multiple non-prefix KV caches by selectively recomputing the \textasciitilde10--15\% highest-deviation tokens (2.2--3.3× TTFT, quality within ≤0.02 F1/ROUGE-L). \textbf{RAGCache} {[}39{]}, \textbf{EPIC} {[}35{]}, and \textbf{Block-Attention} address serving-layer position-independent caching.
+
+KVForge's Phase 2 applies \textbf{none} of these corrections: it injects mean-pooled (or full-token) KV into \texttt{past\_key\_values} with no attention-mask or position-ID realignment and no compensating fine-tuning. We therefore treat Phase 2's current design as a \textbf{known-negative baseline going in}, not a contribution: the realignment/fine-tuning fixes above are the open engineering task Phase 2 has not implemented, and §5.9 reports its status accordingly.
+
+\textbf{Mean-pooled KV injection specifically is unsupported by the KV-merging literature.} That field merges only a few similar/adjacent tokens with \emph{weighted} schemes: \textbf{CaM} {[}40{]} reports perturbation escalating with compression; \textbf{KeepKV} {[}42{]} avoids direct averaging; \textbf{KVMerger} {[}41{]} merges only similar clusters. The one literal mean-pool precedent, \textbf{GQA} {[}43{]}, pools across the \emph{head} dimension and requires \textasciitilde5\% uptraining to recover quality. No source supports a \emph{frozen} transformer attending usefully to a single mean-pooled per-layer vector it never trained on. KVForge's current mean-pool scheme is exactly this unsupported case; we present it as a diagnostic of why naive pooling fails.
+
+\textbf{Durable KV storage is also not novel.} \textbf{CachedAttention/AttentionStore} {[}36{]}, \textbf{Mooncake} {[}37{]}, and \textbf{LMCache} {[}33{]} all persist KV across tiers. We therefore do \textbf{not} claim ``first durable KV store.'' The narrower, defensible architectural distinction is co-locating per-chunk KV \emph{inside the same vector-database record as the chunk's embedding} and coupling that with an automatic PRS-gated three-phase progression, a modest distinction. \textbf{LMCache} {[}33{]} (persistent tiered KV offload, CacheBlend fusion; vendor-reported 1.9--8.1× TTFT, 2.3--14× throughput on 8×H100) is the nearest production analog to Phase 2; like KVForge it has no parametric tier, but unlike KVForge it implements fusion correctly.
+
+\hypertarget{rag-systems-and-dense-retrieval}{%
+\subsection{RAG Systems and Dense Retrieval}\label{rag-systems-and-dense-retrieval}}
+
+\textbf{DPR} {[}5{]} (dual encoders), \textbf{ColBERT} {[}17{]} (late interaction), \textbf{RETRO} {[}8{]} (index-time chunk encodings), \textbf{FiD} {[}21{]} (independent passage encoding, decoder fusion). KVForge extends the pre-computation direction by storing KV tensors rather than encoder states, for any decoder-only model, and adds the progressive design.
+
+\hypertarget{lora-and-peft}{%
+\subsection{LoRA and PEFT}\label{lora-and-peft}}
+
+\textbf{QLoRA} {[}9{]} enables 4-bit quantized LoRA; KVForge uses \texttt{bitsandbytes} NF4. Continual LoRA risks catastrophic forgetting {[}13{]}; KVForge's tier-weighted replay buffer (hot chunks 8× weight) is a lightweight proxy for Elastic Weight Consolidation {[}22{]}.
+
+\hypertarget{calibration-and-uncertainty}{%
+\subsection{Calibration and Uncertainty}\label{calibration-and-uncertainty}}
+
+\textbf{Guo et al.} {[}10{]} (temperature scaling), \textbf{Self-Consistency} {[}11{]}, \textbf{Semantic Entropy} {[}12{]}. KVForge's PRS uses a lighter self-report + three-sample-consistency proxy; §4.7 and §5 treat PRS as a gate, not a calibrated accuracy estimate.
+
+\hypertarget{kv-cache-compression}{%
+\subsection{KV Cache Compression}\label{kv-cache-compression}}
+
+\textbf{KVQuant} {[}18{]}, \textbf{KIVI} {[}19{]}, \textbf{QJL} {[}23{]}.
+
+\hypertarget{continual-learning}{%
+\subsection{Continual Learning}\label{continual-learning}}
+
+Replay-based methods dominate practical continual learning {[}24{]}; KVForge's tier signal (retrieval frequency) is a domain-specific prioritization unavailable to general methods.
+
+\hypertarget{cache-augmented-generation}{%
+\subsection{Cache-Augmented Generation}\label{cache-augmented-generation}}
+
+\textbf{CAG} {[}25{]} preloads a bounded knowledge base into context and precomputes one global KV cache, answering with no retrieval, closest to KVForge's overall premise, but defined only for corpora that fit a single context window. KVForge targets the complementary large-corpus regime (UC1--UC4: 2,000--2,918 chunks) via per-chunk storage and per-chunk staleness tracking. The two have \textbf{not} been measured against each other under a shared corpus size, a comparison we flag as future work (§6.5).
+
+\hypertarget{retrieval-augmented-fine-tuning-and-parametric-rag}{%
+\subsection{Retrieval-Augmented Fine-Tuning and Parametric RAG}\label{retrieval-augmented-fine-tuning-and-parametric-rag}}
+
+\textbf{RAFT} {[}26{]} fine-tunes a model to use retrieved context (with distractors) and still retrieves at every query. \textbf{Parametric RAG} (Su et al.~{[}27{]}) encodes evidence into trainable parameters; a re-examination by Tang et al.~{[}44{]} finds parametric encoding does not consistently beat token-based RAG and that a hybrid wins, directly supporting KVForge's choice to \emph{gate} between parametric and retrieval rather than eliminate retrieval. Section~5.8 tests this complementarity directly.
+
+\hypertarget{knowledge-editing}{%
+\subsection{Knowledge Editing}\label{knowledge-editing}}
+
+\textbf{ROME} {[}28{]} and \textbf{MEMIT} {[}29{]} perform surgical closed-form edits at mid-layer MLPs for discrete factual triples (CounterFact-style). KVForge's LoRA-plus-replay loop adapts to open-ended corpus text and is evaluated end-to-end; neither editing line has a retrieval-fallback confidence gate.
+
+\hypertarget{confidence-gated-adaptive-retrieval}{%
+\subsection{Confidence-Gated Adaptive Retrieval}\label{confidence-gated-adaptive-retrieval}}
+
+\textbf{Self-RAG} {[}30{]} (reflection tokens), \textbf{SKR} {[}31{]} (self-knowledge), \textbf{Adaptive-RAG} {[}32{]} (complexity classifier) all decide per-query among retrieval strategies, but none fall back to a KV-injection tier or use a composite calibration-and-consistency gate. Whether KVForge's composite gate is more reliable than these single-signal gates is \textbf{not measured here} and would require running all gates on one base model and corpus.
+
+\hypertarget{the-kvforge-platform}{%
+\section{The KVForge Platform}\label{the-kvforge-platform}}
+
+\hypertarget{architecture-overview}{%
+\subsection{Architecture Overview}\label{architecture-overview}}
+
+Pipeline sequence:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Phase 1:} Index → KV pre-compute
+\item
+  \textbf{Phase 2:} Sleep-time FAQ gen → LoRA train → KV recompute → PRS eval
+\item
+  \textbf{Phase 3:} LoRA train (round 2) → KV recompute → PRS eval
+\end{itemize}
+
+Each PRS eval closes a loop: if the gate threshold is unmet, the system generates more FAQs and trains another round. State is stored atomically per corpus in \texttt{version.json} (temp-file rename):
+
+{\footnotesize
+\begin{verbatim}
+{
+  "current_lora_version": 4,
+  "checkpoint_path": "lora_checkpoints/v4/",
+  "phase": 3,
+  "prs_history": [
+    {"round": 1, "prs": 0.727},
+    {"round": 2, "prs": 0.783},
+    {"round": 3, "prs": 0.863}],
+  "known_good_queries": [...]
+}
+\end{verbatim}
+}
+
+\hypertarget{indexing-and-kv-pre-computation}{%
+\subsection{Indexing and KV Pre-computation}\label{indexing-and-kv-pre-computation}}
+
+Each chunk is (1) embedded (default BAAI/bge-small-en-v1.5, 384-dim; UC4: mixedbread-ai/mxbai-embed-large-v1, 1024-dim) and upserted with payload \texttt{\{text,\ page,\ source\_file,\ access\_count,\ kv\_version,\ tier\}}; then (2) tokenized (≤512 tokens) and passed through the LLM to materialize \texttt{past\_key\_values}. Per-layer tensors \texttt{{[}1,\ n\_kv\_heads,\ seq\_len,\ head\_dim{]}} are mean-pooled over the sequence dimension, stacked to \texttt{{[}L,\ 2,\ H,\ d\_h{]}}, serialized to float16, and stored base64 in the payload. For Gemma-4-E2B (35 layers, 1 KV head, head\_dim 256): \texttt{35\ ×\ 2\ ×\ 1\ ×\ 256\ ×\ 2\ =\ 35,840\ bytes\ ≈\ 36\ KB/chunk}; \textasciitilde90 MB for UC4's 2,520 chunks. \emph{The mean-pool step is the source of the Phase-2 negative result (§3.1, §5.9).}
+
+\hypertarget{query-time-inference-phase-1-vs-phase-2}{%
+\subsection{Query-Time Inference: Phase 1 vs Phase 2}\label{query-time-inference-phase-1-vs-phase-2}}
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig2_phase_flow.pdf}
+\caption{KVForge phase progression: Standard RAG $\rightarrow$ per-chunk KV-cache injection $\rightarrow$ confidence-gated parametric answering. Corresponding pipeline steps are vertically aligned across the three panels; shaded boxes mark the step that distinguishes each phase.}
+\label{fig:phase-flow}
+\end{figure*}
+
+At query time the module (1) embeds the query, retrieves top-K; (2) compares each chunk's \texttt{kv\_version} to \texttt{current\_lora\_version}; (3) if \textbf{all} fresh, injects KV; (4) if \textbf{any} stale, falls back to Phase-1 RAG for the whole query and enqueues stale chunks for background recompute. The all-or-nothing rule prevents mixing tensors across LoRA versions.
+
+\hypertarget{sleep-time-faq-generation}{%
+\subsection{Sleep-Time FAQ Generation}\label{sleep-time-faq-generation}}
+
+Before each LoRA round, \texttt{sleep\_faq\_generator} queries a cloud LLM (Gemini 2.5 Flash, Claude, or GPT-4.1) for N diverse QA pairs per chunk (sleep-time compute {[}14{]}). With tier weighting, \textasciitilde50\% of a 50-question budget targets the top-15\% hot chunks.
+
+\hypertarget{tier-weighted-replay-buffer}{%
+\subsection{Tier-Weighted Replay Buffer}\label{tier-weighted-replay-buffer}}
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig3_tier_weights.pdf}
+\caption{Tier-weighted replay buffer. Left: per-tier sampling weights. Right: the expected mini-batch composition at a 20\% replay fraction, which reflects tier \emph{population} sizes as well as the weights (all factual experiments here use the uniform \texttt{frozen} setting; \S4.5).}
+\label{fig:tier-weights}
+\end{figure*}
+
+\begin{table}[!htbp]
+\centering
+\caption{Replay-buffer tiers and sampling weights (\S4.5).}
+\label{tab:tiers}
+\small
+\begin{tabularx}{\columnwidth}{@{}l L c@{}}
+\toprule
+Tier & Condition & Weight \\
+\midrule
+hot & Top 15\% by access count, accessed $<$ 7 days & 8 \\
+warm & Next 50\%, accessed $<$ 30 days & 4 \\
+cold & Remaining accessed chunks & 2 \\
+frozen & Never accessed & 1 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The SQLite buffer evicts lowest-tier/oldest entries past a 5,000-chunk cap. \textbf{Note:} all factual experiments here were run at \texttt{tier=frozen} (uniform weighting); the tier system's \emph{quality} effect is therefore not evaluated and is deferred.
+
+\hypertarget{lora-fine-tuning-loop}{%
+\subsection{LoRA Fine-Tuning Loop}\label{lora-fine-tuning-loop}}
+
+Default config: targets \texttt{q\_proj/k\_proj/v\_proj} (but see §5.7, all-linear is better), r=16/α=32, 4-bit NF4 (QLoRA {[}9{]}), 20\% replay fraction, 3 epochs/round. After training, \texttt{kv\_version} increments, invalidating stored KV and triggering tier-ordered recompute (hot chunks first, \textasciitilde76 s).
+
+\hypertarget{parametric-readiness-score-prs-an-engineering-gate-not-an-accuracy-metric}{%
+\subsection{Parametric Readiness Score (PRS): an Engineering Gate, Not an Accuracy Metric}\label{parametric-readiness-score-prs-an-engineering-gate-not-an-accuracy-metric}}
+
+PRS gates autonomous phase advancement:
+
+{\footnotesize
+\begin{verbatim}
+PRS = 0.5 * accuracy_ratio
+    + 0.3 * calibration
+    + 0.2 * consistency
+\end{verbatim}
+}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{accuracy\_ratio} = \texttt{min(\ sim(param\_ans,\ gt)\ /\ (sim(rag\_ans,\ gt)\ +\ ε),\ 1.0\ )}, cosine-based, \emph{relative} to the RAG answer.
+\item
+  \textbf{calibration} = \texttt{1\ −\ \textbar{}self\_confidence\_norm\ −\ sim(param\_ans,\ gt)\textbar{}}.
+\item
+  \textbf{consistency} = mean pairwise cosine over three samples at T=0.7.
+\end{itemize}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\columnwidth]{fig4_prs_breakdown.pdf}
+\caption{PRS component contribution breakdown for UC4, Round~3. Each bar is score~$\times$~weight (weights 0.50 / 0.30 / 0.20).}
+\label{fig:prs-breakdown}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\columnwidth]{fig5_prs_scores.pdf}
+\caption{PRS component scores (accuracy, calibration, consistency) across the four use cases.}
+\label{fig:prs-scores}
+\end{figure}
+
+\textbf{Thresholds (matching the implementation in \texttt{core/version.py}).} The system advances Phase 1→2 when PRS first reaches \textbf{0.75}, and Phase 2→3 when PRS holds \textbf{≥ 0.75 for two consecutive rounds}; a regression guard reverts to Phase 2 if PRS falls \textbf{below 0.60} across the stability window.
+
+\textbf{Critical caveat.} PRS is a cosine-based \emph{readiness heuristic}, not a factual-accuracy guarantee. Section~5 shows exactly where PRS (cosine, §5.2) and judge-scored factual accuracy (§5.3+) diverge. Validating whether PRS correlates with held-out factual accuracy, and if not, replacing its accuracy term with a judge-scored one, is listed as follow-up work (§6.5). After each round, FAQs with \texttt{accuracy\_ratio\ ≥\ 0.85} seed \texttt{known\_good\_queries} for the Phase-3 gate.
+
+\hypertarget{phase-3-confidence-gate}{%
+\subsection{Phase 3 Confidence Gate}\label{phase-3-confidence-gate}}
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig6_confidence_gate.png}
+\caption{Phase-3 confidence gate. Left: the three signal weights for $P(\text{no\_retrieval})$. Right: the decision surface at fixed hedging $=0.10$; the contour marks the 0.75 gate threshold (green region routes to Phase~3, orange falls back to Phase~2).}
+\label{fig:confidence-gate}
+\end{figure*}
+
+Three lightweight signals (token entropy, hedging-phrase detection, and query similarity to known-good queries) route high-confidence queries to parametric generation (default threshold 0.75), else fall back. Lower thresholds raise Phase-3 utilization at higher hallucination risk; the gate should not rely on self-reported confidence alone in production.
+
+\hypertarget{experimental-evaluation}{%
+\section{Experimental Evaluation}\label{experimental-evaluation}}
+
+\textbf{Reading guide.} This section leads with the paper's strongest evidence, the training-signal and configuration studies (§§5.3--5.8): the UC4 n=500 single-judge data-lever and architecture-transfer ablations (§5.3, §5.6; §5.4 characterizes the held-out set's residual leak, and the n=89 precursors of §5.5 are reported only for continuity), and the pre-registered, blind same-session-judged placement and RAFT studies (§§5.7--5.8). It then reports the Phase-2 negative result (§5.9) and the broader but weaker cross-corpus crossover (§5.10). \textbf{Metrics are not interchangeable across subsections:} three metric families appear (cosine-PRS; \texttt{deepseek}-judged factual accuracy, FA; blind coverage@0.5) across the two evaluation regimes of §5.2, on different scales and judges, and only within-subsection, within-judge deltas are meaningful. Appendix B enumerates all five metric×judge pairings.
+
+\hypertarget{setup}{%
+\subsection{Setup}\label{setup}}
+
+Experiments run on a single four-GPU host (4× NVIDIA A10G, 24 GB each), Ubuntu 22.04, CUDA 12.1, PyTorch 2.1, Transformers 4.40; vector store Qdrant 1.9. Base models: \textbf{Gemma-4-E2B-it} (5.1B total / \textasciitilde2.3B effective) and its sibling \textbf{Gemma-4-E4B-it} (7.49B total / \textasciitilde4.5B effective); the architecture-transfer arm uses \textbf{Llama-3.2-3B-Instruct} (3.2B). Embeddings: bge-small-en-v1.5 (UC1--UC3), mxbai-embed-large-v1 (UC4). LoRA defaults r=16/α=32 (per-experiment ranks stated inline). \textbf{Base model per experiment family.} The data-lever ablations (§5.3) label E2B or E4B per table row; the placement and RAFT studies (§§5.7--5.8) use \textbf{Gemma-4-E2B}; the architecture-transfer arm (§5.6) uses \textbf{Llama-3.2-3B}. The cosine-PRS readiness figures (the \texttt{version.json} example in §4.1 and the 0.755--0.863 spread in §6.2) were produced on \textbf{Gemma-4-E4B}. We flag a reproducibility caveat here: the original run logs for those early PRS experiments are no longer available, so that base-model attribution is the authors' record rather than a log-verified fact (§6.5). The four-corpus crossover table (§5.10) used the Gemma-4 family; which variant (E2B or E4B) is not confirmed in the surviving records, so we do not specify it.
+
+\hypertarget{datasets-and-the-two-evaluation-regimes}{%
+\subsection{Datasets and the Two Evaluation Regimes}\label{datasets-and-the-two-evaluation-regimes}}
+
+Four corpora: \textbf{UC1} customer support (Bitext, 2,000 chunks), \textbf{UC2} PubMedQA {[}15{]} (2,918), \textbf{UC3} SQuAD 2.0 {[}16{]} (2,000), \textbf{UC4} Amazon Bedrock User Guide (2,520; expanded 6,154-chunk index for the n=500 work). Two evaluation regimes are used and must not be conflated:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{PRS (cosine), readiness heuristic:} the gating heuristic of §4.7.
+\item
+  \textbf{Held-out factual accuracy (FA), judge-scored:} the scientific metric. The primary, best-powered FA evaluation is a \textbf{500-question UC4 held-out set} under a single judge (\texttt{deepseek-v4-lite} via CodeVector), with reported standard errors.
+\end{itemize}
+
+\hypertarget{the-data-lever-diverse-rewrites-beat-qa-volume-and-capacity-uc4-n500}{%
+\subsection{The Data Lever: Diverse Rewrites Beat QA Volume and Capacity (UC4, n=500)}\label{the-data-lever-diverse-rewrites-beat-qa-volume-and-capacity-uc4-n500}}
+
+The central question is what controls parametric absorption. We fix the held-out set (500 UC4 questions), the judge (\texttt{deepseek-v4-lite}), and the generation budget (adaptive ≈30--40 tokens; see §5.3.1), and vary base model (E2B/E4B/Llama), adapter rank, QA volume, and the presence of diverse chunk-rewrites. We also add, per model, a \textbf{Standard-RAG baseline} (untrained base model + Qdrant top-5 over the 6,154-chunk index) to establish the Phase-1 ceiling each trained arm must beat.
+
+\begin{table}[!htbp]
+\centering
+\caption{UC4 $n{=}500$ held-out factual accuracy and p50 latency, by model and training signal.}
+\label{tab:uc4-fa}
+\small
+\begin{tabularx}{\columnwidth}{@{}l L r r@{}}
+\toprule
+Model & Training signal & FA & Lat.\,(s) \\
+\midrule
+E2B & RAG (untrained) & 0.175\,$\pm$\,0.011 & 3.19 \\
+E4B & RAG (untrained) & 0.161\,$\pm$\,0.010 & 3.48 \\
+E2B & r16, 337 QA & 0.147\,$\pm$\,0.007 & 3.92 \\
+E4B & r64, 337 QA & 0.235\,$\pm$\,0.009 & 2.99 \\
+E2B & r64, 60k QA & 0.219\,$\pm$\,0.011 & 1.23 \\
+E2B & r64, 60k QA + rewrites & 0.249\,$\pm$\,0.012 & 1.31 \\
+E4B & r64, 60k QA & 0.244\,$\pm$\,0.011 & 1.55 \\
+E4B & r64, 60k QA + rewrites & \textbf{0.286}\textsuperscript{a} & 1.64 \\
+\bottomrule
+\end{tabularx}\\[2pt]
+{\footnotesize \textsuperscript{a}\,mean; checkpoints 0.275--0.302.}
+\end{table}
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig7_e2b_accuracy.pdf}
+\caption{UC4 $n{=}500$ held-out factual accuracy per arm (FA $= 0.5\cdot$token-F1 $+\, 0.5\cdot$LLM-judge; judge: \texttt{deepseek-v4-lite}), sorted descending. Error bars are $\pm 1$ SEM.}
+\label{fig:e2b-accuracy}
+\end{figure*}
+
+Four findings:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Rewrites are the active lever.} At matched r=64 and 60k QA, adding 61,554 diverse rewrites lifts FA by \textbf{+0.030 (E2B: 0.219→0.249)} and \textbf{+0.042 (E4B: 0.244→0.286)}, while the entire QA-volume effect is a non-significant +0.009. E2B-with-rewrites (0.249) reaches the \emph{larger} model's QA-only level (0.244).
+\item
+  \textbf{QA volume is nearly inert.} Raising E4B QA from 337 to 60,209 (no rewrites) moves FA +0.009 (0.235→0.244), within noise.
+\item
+  \textbf{Capacity, rank-matched, is modest.} E2B→E4B gains +0.025 (QA-only) and +0.037 (with rewrites). The naive E2B→E4B gap of +0.088 read directly from the table conflates capacity with adapter rank (E2B r16 vs E4B r64); moving E2B from r16 to r64 (0.147→0.219) alone recovers +0.072, of which ≤0.009 is QA volume. \textbf{Rank matching is essential:} without it, ``capacity'' is overstated \textasciitilde3×.
+\item
+  \textbf{The learning curve plateaus early.} Across six checkpoints of the E4B+rewrites run FA is 0.278, 0.275, 0.288, 0.280, 0.302, 0.295, flat-to-slightly-rising, realized well before the corpus is consumed.
+\end{itemize}
+
+\textbf{Headline-number convention.} We report the E4B+rewrites result as its \textbf{six-checkpoint mean, 0.286}, not the best single checkpoint (0.302). Because checkpoints were scored on the evaluation set, reporting the max would be test-set selection; where a single number is needed we use the mean (0.286) or the final checkpoint (0.295), stated explicitly.
+
+\hypertarget{corrected-generation-budget}{%
+\subsubsection{Corrected generation budget}\label{corrected-generation-budget}}
+
+The earlier n=89 evaluations (§5.5) ran \texttt{\_generate\_parametric} at a fixed \texttt{max\_new\_tokens=256}, ignoring the harness's adaptive budget; open-ended questions rambled to 256 tokens, slowing evaluation \textasciitilde5× and deflating token-F1 (a correct fact buried in 200 words scores near zero against a 10-word reference). Passing the adaptive budget (≈30--40 tokens) dropped answer length to 7.7--26 words. \textbf{This shifts absolute FA}, so n=500 values are not comparable to the n=89 figures of §5.5.
+
+\hypertarget{the-held-out-set-and-its-residual-leak}{%
+\subsection{The Held-Out Set and Its Residual Leak}\label{the-held-out-set-and-its-residual-leak}}
+
+The 500-question set was built by sampling 795 chunks evenly across the 6,154-chunk UC4 corpus and generating one short (≤30-word), fact-grounded QA pair per chunk with \texttt{deepseekv4p}, then deduplicating against both the 89-question set \emph{and} the 60,209 training pairs. \textbf{Dedup criterion:} exact normalized-question and normalized-answer match plus token-set Jaccard ≥ 0.80 for near-duplicate \emph{questions}, retaining 500 pairs with zero exact question/answer overlap across 500 distinct source chunks. Answer-level dedup was essential: seeding the generator on training chunks reproduced a training item verbatim on the first probe, so question-only filtering would have leaked facts.
+
+\textbf{Residual leak and its direction.} Exact/Jaccard-0.80 dedup does \textbf{not} remove paraphrastic fact overlap. In the independent placement study (§5.7), splitting its 481-fact probe set by whether a near-duplicate appears in the 60k QA finds \textbf{15.6\% leaked} (the one directly-measured figure); substring-level overlap below the Jaccard-0.80 threshold is plausibly higher but is not measured here. Leakage favors the \emph{trained} arm over the \emph{untrained RAG} baseline, so the §5.3 trained-vs-RAG margins are \textbf{upper bounds}: at least \textasciitilde0.156 of facts reflect recall of near-seen pairs rather than generalization. Section~5.7 shows the placement effect survives leak removal (below); we have \textbf{not} re-run the §5.3 trained-vs-RAG comparison on a leak-removed subset, and flag it as CPU-feasible follow-up (§6.5).
+
+\hypertarget{smaller-sample-precursors-n89-reported-for-continuity-only}{%
+\subsection{Smaller-Sample Precursors (n=89): Reported for Continuity Only}\label{smaller-sample-precursors-n89-reported-for-continuity-only}}
+
+The n=89 UC4 evaluations that motivated the n=500 work: the E2B→E4B scale-up gave +0.035 FA (t=1.66, p≈0.05, under-powered), and the diverse-corpus arm reached 0.235 vs 0.155 (E4B QA-only) / 0.120 (E2B). These are superseded by §5.3 (5.6× the sample size, corrected generation) and are retained only to document the trajectory; their absolute values are not comparable to §5.3.
+
+\hypertarget{architecture-transfer-the-rewrite-lever-on-a-second-family-single-seed}{%
+\subsection{Architecture Transfer: The Rewrite Lever on a Second Family (Single Seed)}\label{architecture-transfer-the-rewrite-lever-on-a-second-family-single-seed}}
+
+To test whether the rewrite lever is Gemma-specific, we ran the identical recipe (r=64, 1 epoch, 60,209 QA + 61,554 rewrites) on \textbf{Llama-3.2-3B-Instruct} (a different family, \emph{smaller} than both Gemma arms), same 500-question set, same judge.
+
+\begin{table*}[!t]
+\centering
+\caption{Architecture transfer on the identical 60k-QA\,$+$\,rewrites recipe (UC4, $n{=}500$). A 3.2B Llama reaches parity with the larger Gemma models.}
+\label{tab:transfer}
+\small
+\begin{tabular}{@{}l r r r r r@{}}
+\toprule
+Model & Params & FA ($n{=}500$) & token-F1 & LLM-judge & Latency p50 (s) \\
+\midrule
+gemma-4-E4B-it & 7.49B & 0.286 (0.275--0.302) & 0.314 & 0.259 & 1.64 \\
+\textbf{Llama-3.2-3B-Instruct} & \textbf{3.2B} & \textbf{0.254\,$\pm$\,0.012} & \textbf{0.312} & \textbf{0.196} & \textbf{1.47} \\
+gemma-4-E2B-it & 5.1B & 0.249\,$\pm$\,0.012 & 0.290 & 0.208 & 1.31 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Llama-3.2-3B (3.2B) reaches \textbf{0.254}, slightly above the 5.1B E2B (0.249) and within \textasciitilde0.03 of E4B. \textbf{The rewrite lever transfers to a second architecture.} It is a single-seed result on one additional family, and generalizing beyond that requires more seeds and families (§6.5). It does establish that a 2.3× \emph{total}-parameter range (3.2B→7.49B) separates only 0.249--0.286 FA at matched recipe, reinforcing data-diversity over scale. (We frame the Llama-vs-Gemma parity on total parameters; on \emph{effective} parameters the 3.2B dense Llama is larger than E2B's \textasciitilde2.3B, so the parity claim is a total-parameter statement, not an effective-parameter one.)
+
+\hypertarget{training-configuration-levers-placement-exposure-structure-pre-registered}{%
+\subsection{Training-Configuration Levers: Placement, Exposure, Structure (Pre-Registered)}\label{training-configuration-levers-placement-exposure-structure-pre-registered}}
+
+We next ask which \emph{training-configuration} levers move pure-parametric fact retention, under a pre-registered design that fixes the decision rule before each run. Metric: \texttt{coverage@0.5\ =\ (CORRECT+PARTIAL)/481} on 481 held-out single-fact probes. Treatment and control predictions are shuffled into one shard and scored \textbf{blind, in the same judging session}, removing the \textasciitilde0.03 cross-session judge drift that inflated an early non-blind estimate. \textbf{Only within-session treatment−control deltas are interpreted} (the rubric differs from §5.3's FA and drifts between sessions). Pre-registered bands: WORKS if Δ≥+0.040 and χ²≥3.84; DEAD if Δ≤+0.012; else AMBIGUOUS → paired second seed.
+
+\textbf{(B) Placement works and dominates.} All-linear placement (r=8, α=16; 12.1M trainable) vs.~attention-only \texttt{q/k/v} (r=64; 12.48M, matched budget) raised coverage 0.250→0.316, \textbf{Δ=+0.067} across two paired seeds (per-fact Wilcoxon z=3.92, p=0.0001). Promoted to the full 60,209-QA-from-base regime and co-judged blind against the \texttt{q/k/v} r=64 incumbent on identical data: \textbf{0.462 vs 0.339, Δ=+0.123} (McNemar χ²=29.25, p\textless0.0001).
+
+\begin{table*}[!t]
+\centering
+\caption{Adapter-placement contrast (all-linear layers vs attention-only, at matched parameter budget) on coverage@0.5.}
+\label{tab:placement}
+\small
+\begin{tabular}{@{}l r r r l@{}}
+\toprule
+Placement contrast & control & treatment & $\Delta$ & test \\
+\midrule
+Pilot (2-seed, blind) & 0.250 & 0.316 & \textbf{+0.067} & Wilcoxon $p{=}0.0001$ \\
+Full scale (60k from base, single-seed) & 0.339 & 0.462 & \textbf{+0.123} & McNemar $\chi^2{=}29.25$, $p{<}0.0001$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\textbf{Not a memorization artifact.} Splitting the 481 facts by leak (15.6\% leaked), the gain holds on the \textbf{non-leaked} subset (n=406, \textbf{Δ=+0.106}) and is larger on the leaked subset (n=75, Δ=+0.213): placement improves genuine generalization. (The full-scale +0.123 is a single-seed, descriptive promotion outcome in a different regime/judge from the pilot, not evidence the effect ``scales with data.'')
+
+\textbf{(A) Exposure is marginal.} Three epochs vs.~one landed at \textbf{Δ=+0.0405} (two paired seeds; pooled McNemar χ²=7.11, p\textless0.01), barely clearing the WORKS line, far below placement.
+
+\textbf{(C) Relational structure is dead.} A first relational run appeared to hurt (Δ=−0.071) but was confounded three ways (256-token truncation dropping 14.3\% of relational tokens; fewer optimizer steps; unmatched singleton controls). A clean re-run (512-token cap, step-matched via gradient accumulation, 74 identical-text singletons) did not replicate the deficit: \textbf{C1 0.231 vs C0 0.256, Δ=−0.025, n.s.} A difference-in-differences subtracting the identical-text singleton gap isolates the structure-specific effect at \textbf{+0.002 ≈ 0}. Cross-chunk relational linking adds essentially nothing over plain paraphrase.
+
+\textbf{Scoreboard:} placement dominates (+0.123 full-scale, +0.106 non-leaked), exposure marginal (+0.040), structure inert. This protocol carries \textbf{no judged RAG arm} (its only retrieval number, recall@5=0.586, is a retrieval metric, not an answer score), so whether this parametric recall sits above or below a retrieval ceiling is answered next.
+
+\hypertarget{ft-rag-complementarity-via-raft-pre-registered-confirmed}{%
+\subsection{FT + RAG Complementarity via RAFT (Pre-Registered, Confirmed)}\label{ft-rag-complementarity-via-raft-pre-registered-confirmed}}
+
+Does a fine-tuned generator \emph{complement} retrieval rather than duplicate it? Following RAFT {[}26{]}, a generator is trained on \texttt{(question,\ context\ =\ oracle\ +\ distractors,\ answer)} with the oracle withheld on a fraction to force parametric fallback (effective oracle-in-context ≈0.56; oracle recovered by verbatim-then-overlap matching, hand-validated 90\% precision). All arms use one shared prompt, a 48-token cap, and raw top-5 retrieval. ``Retrieval hit'' ≡ gold chunk ∈ top-5 ≡ \textbf{290/481 facts (0.603)} under this protocol, reported \emph{separately} from §5.7's recall@5=0.586 (different protocol). Arms: R0 base+top-5; R1 all-linear-QA FT+top-5; R2 RAFT FT+top-5; R3 RAFT closed-book; R1cb plain-QA FT closed-book. Pre-registered discriminating test: complementarity predicts the R2-over-R0 gain concentrates on retrieval-misses (a DiD interaction).
+
+\begin{table}[!htbp]
+\centering
+\caption{RAFT complementarity: coverage@0.5 overall and split by retrieval hit/miss (UC4, 481 probes). bl.\ = borderline.}
+\label{tab:raft}
+\small
+\begin{tabularx}{\columnwidth}{@{}l L r r r@{}}
+\toprule
+Arm & Generator & all & hit & miss \\
+    &           &     & \scriptsize(290) & \scriptsize(191) \\
+\midrule
+R0 & base $+$ top-5 RAG & 0.728 & 0.934 & 0.414 \\
+R1 & plain-QA FT $+$ top-5 RAG & 0.730 & 0.834 & 0.571 \\
+\textbf{R2} & \textbf{RAFT FT $+$ top-5 RAG} & \textbf{0.809} & \textbf{0.962} & \textbf{0.576} \\
+R3 & RAFT, closed-book & 0.462 & 0.455 & 0.471 \\
+R1cb & plain-QA FT, closed-book & 0.528 & 0.521 & 0.539 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\textbf{Primary (pre-registered), confirmed.} R2 beats plain RAG, \textbf{0.809 vs 0.728, Δ=+0.081} (McNemar χ²=22.2, p≈0; Wilcoxon p=1.5×10⁻⁷). The gain concentrates on misses exactly as predicted: Δ\_hit=+0.028, Δ\_miss=+0.162; the DiD interaction \textbf{Δ\_miss−Δ\_hit=+0.135}, stratified-bootstrap 95\% CI \textbf{{[}+0.062, +0.206{]}} (p=3×10⁻⁴), excluding zero. On the leak-removed clean subset (n=406) it holds at \textbf{Δ=+0.071} (McNemar χ²=14.8, p\textless10⁻⁴), and the DiD lower CI (0.062) exceeds the \textasciitilde0.038 worst-case recovery-artifact bound.
+
+\textbf{Mechanism: parametric fallback, tested directly.} Among the 112 misses the base fails, the RAFT model answers closed-book (R3) on \textbf{68\% of the 38 facts R2 rescues} but only \textbf{24\% of the 74 it still fails}, a \textasciitilde3× enrichment, not better distractor-reading (only 2 of 38 rescued facts had the gold answer in a non-gold retrieved chunk).
+
+\textbf{What RAFT uniquely adds (exploratory, post-hoc).} Comparing R2 to R1 (both FT on the same 60k): the miss-side knowledge is \emph{not} RAFT-specific (R1 already 0.571 ≈ R2's 0.576): it comes from the 60k. What plain-QA FT \emph{also} does is interfere with grounded reading (R1 drops R0's 0.934→0.834 on hits); the RAFT objective removes that interference (R2 restores hits to 0.962). Read this way, RAFT's distinctive value against a FT-and-retrieving baseline is \emph{keeping fine-tuning from degrading use of the retrieved passage}, not injecting knowledge. Caveats keep this exploratory: R1+top-5 is itself length-OOD, and the arms are not exactly matched (R2 dropped 3,258 long packed examples).
+
+\textbf{Validity.} All five arms judged blind in one session (481×5 → 1,967 unique judgments; zero blindness breaches on audit). Session-to-session rubric drift measured here at +0.067 on byte-identical R1cb text, so absolute coverage is session-relative.
+
+\hypertarget{phase-2-kv-injection-a-characterized-negative-result}{%
+\subsection{Phase 2 (KV Injection): A Characterized Negative Result}\label{phase-2-kv-injection-a-characterized-negative-result}}
+
+The mean-pool injection scheme (§4.2) is, by the analysis of §3.1 (TurboRAG, APE, CacheBlend, CaM/GQA), expected to degrade quality without position/attention realignment or compensating fine-tuning, none of which Phase 2 implements. Consistent with that, Phase-2 factual quality was spot-checked on only UC3 and UC4 and is \textbf{not} reported as a validated speedup; the parametric crossover of §5.10 is measured against \textbf{Standard RAG (Phase 1)} and does \textbf{not} depend on Phase 2. Phase 2 is therefore excluded from the system's value proposition. Implementing a cited correction (independent attention mask + position-ID realignment, à la TurboRAG/APE) and measuring whether Phase 2 can reach Standard-RAG quality at a real matched-workload speedup is the single highest-value follow-up to convert this negative result into a positive one (§6.5).
+
+\hypertarget{cross-corpus-crossover-preliminary-small-n-single-seed-earlier-judge}{%
+\subsection{Cross-Corpus Crossover (Preliminary: Small-N, Single-Seed, Earlier Judge)}\label{cross-corpus-crossover-preliminary-small-n-single-seed-earlier-judge}}
+
+The strongest results above are UC4-only. To gauge breadth we report the earlier four-corpus crossover study, but flag its weaker footing: single seed, small held-out sets (n=76/50--297/200/89), and an earlier judge (\texttt{deepseek-v4-flash}, now unreachable) \textbf{not comparable} to §5.3's \texttt{deepseek-v4-lite}. These numbers are \textbf{preliminary evidence of breadth, not a validated cross-corpus claim.}
+
+\begin{table}[!htbp]
+\centering
+\caption{Cross-corpus crossover (preliminary; small-$N$, single-seed, earlier judge). $^\ast$ marks the larger operating point per corpus; bl.\ = borderline.}
+\label{tab:crossover-tab}
+\small
+\begin{tabularx}{\columnwidth}{@{}L r c c c@{}}
+\toprule
+Corpus & $N$ & RAG FA & Par.\ FA & Cross. \\
+\midrule
+UC1 Customer Support & 200 & 0.215 & 0.360 & yes \\
+UC1 & 1000 & 0.192 & 0.356 & yes$^\ast$ \\
+UC2 PubMedQA & 50 & 0.229 & 0.201 & no \\
+UC2 & 100 & 0.191 & 0.207 & yes (bl.) \\
+UC2 & 297 & 0.195 & 0.190 & bl.$^\ast$ \\
+UC3 SQuAD 2.0 & 500 & 0.144 & 0.221 & yes \\
+UC3 & 2000 & 0.163 & 0.221 & yes$^\ast$ \\
+UC4 Bedrock & 500 & 0.219 & 0.234 & yes \\
+UC4 & 6000 & 0.109 & 0.234 & yes$^\ast$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+(* = each dataset's highest N; N is a per-corpus operating point, not a training-QA-volume axis.) On UC4 the margin widens as Standard-RAG FA declines at larger N (0.22→0.11) while parametric holds \textasciitilde0.23. \textbf{But} UC2's crossover stays within 0.02 FA (noise), and FA is modest throughout (0.11--0.36), so crossover denotes \emph{relative} superiority over a baseline whose own held-out FA is low; see §5.11. We treat UC1/UC2/UC3 crossover as suggestive pending the same n=500, single-judge, seeded treatment UC4 received.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig8_crossover.png}
+\caption{Gemma-4 crossover: parametric (solid) vs Standard RAG (dashed) factual accuracy versus per-corpus operating point $N$ (log scale), for UC1, UC2 and UC4. Preliminary: small-$N$, single-seed, earlier judge (\S5.10).}
+\label{fig:crossover}
+\end{figure*}
+
+\hypertarget{on-the-retrieval-baseline}{%
+\subsection{On the Retrieval Baseline}\label{on-the-retrieval-baseline}}
+
+The crossover and trained-vs-RAG comparisons are only as meaningful as the retrieval baseline is competent. We characterize it from existing measurements rather than assert it: top-5 retrieval recovers the gold chunk for \textbf{0.603} of UC4 facts (§5.8 protocol) and recall@5 = \textbf{0.586} (§5.7 protocol); untrained-base-model RAG FA is \textbf{0.161--0.175} (§5.3). These are \emph{modest}, and we do not claim the baseline is strongly tuned: no chunk-size/top-k/reader-prompt sweep was run. Consequently, ``parametric overtakes retrieval'' should be read as \textbf{superiority over a retrieval baseline of characterized, modest quality}, not over a competitively-tuned RAG system. Producing a tuned RAG baseline (chunking/top-k/reader sweep) under matched conditions is a primary validation step (§6.5); it was not run under the compute constraints of this work.
+
+\hypertarget{pipeline-timing-uc4-reference-run}{%
+\subsection{Pipeline Timing (UC4 Reference Run)}\label{pipeline-timing-uc4-reference-run}}
+
+\begin{table}[!htbp]
+\centering
+\caption{Pipeline timing for one consolidation round (UC4 reference run).}
+\label{tab:timing}
+\small
+\begin{tabularx}{\columnwidth}{@{}L c@{}}
+\toprule
+Step & Duration \\
+\midrule
+Chunk $+$ embed $+$ upsert (2,520 chunks) & $\sim$45 s \\
+KV tensor computation (0.20 s/chunk) & $\sim$498 s \\
+LoRA training (3 epochs, 474 steps) & (step-bound) \\
+KV recompute after adapter update & $\sim$510 s \\
+PRS evaluation (50 FAQs) & $\sim$90 s \\
+\textbf{Total (one round)} & \textbf{$\sim$20 min} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Indexing is dominated by KV pre-computation (one forward pass per chunk). Every LoRA update invalidates all stored KV; full recompute adds \textasciitilde8.5 min to a \textasciitilde20-min round (42\% overhead), mitigated by tier-ordered recompute (hot chunks first, \textasciitilde76 s).
+
+\hypertarget{amortized-cost-latency-does-not-imply-cheaper}{%
+\subsection{Amortized Cost: Latency Does Not Imply Cheaper}\label{amortized-cost-latency-does-not-imply-cheaper}}
+
+The raw latency gap invites a ``2--3× faster'' reading. Two corrections are warranted. \textbf{(i) The wall-clock latency gap (§5.3: parametric p50 1.2--1.6 s vs RAG 3.2--3.5 s; p95 ≈2.7--3.8 s vs ≈30 s) is confounded by output length:} parametric arms used a short generation cap while the RAG baseline generated long answers, so the p95≈30 s RAG tail reflects generation length, not retrieval. A matched-output-budget latency comparison was not run (compute-constrained) and is required to attribute the gap to architecture. \textbf{(ii) Lower per-query latency does not translate to lower cost except at high volume on favorable corpora.} From the amortized cost model (\texttt{results/exp1/uc4\_costmodel\_measured.json}, \texttt{uc1\_costmodel\_measured.json}; A10G at \$1.006/GPU-hr, KV cost included):
+
+\begin{table*}[!t]
+\centering
+\caption{Amortized cost per query and break-even points. The prefix-cached break-even is repeat-rate dependent.}
+\label{tab:cost}
+\small
+\begin{tabularx}{\textwidth}{@{}l r r L L@{}}
+\toprule
+Corpus & Parametric \$/query & Plain-RAG \$/query & Break-even vs plain RAG & Break-even vs \emph{measured} prefix-cached RAG \\
+\midrule
+UC4 & $2.33\times10^{-5}$ & $6.31\times10^{-5}$ & \textbf{$\sim$35,149 queries} & \textbf{$\sim$36k--140k queries} (repeat-rate dependent) \\
+UC1 & $6.78\times10^{-5}$ & $4.67\times10^{-5}$ & \textbf{never} & \textbf{never} \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+For UC4, parametric answering is cheaper per query but only amortizes its one-time training/recompute cost (\textasciitilde\$1.42 index-time; \texttt{par\_one\_time\_s≈5068}) after \textbf{\textasciitilde35k queries} vs.~plain RAG; its cost per 1M queries falls from \$1,440 (at 1k lifetime queries) to \$25 (at 1M) vs.~plain RAG's roughly flat \textasciitilde\$63--80. Against a \emph{prefix-cached} RAG baseline the picture is corpus- and repeat-rate-dependent: using the file's \textbf{measured} cached costs (\texttt{vs\_prefix\_cached\_rag\_measured}), UC4 parametric still breaks even, but only beyond \textbf{\textasciitilde36,191 queries} (low query-repeat, α=0.0) rising to \textbf{\textasciitilde139,733} (high-repeat, α=1.2), while UC1 \textbf{never} breaks even against cached RAG at any measured repeat rate (its per-query parametric cost 6.78×10⁻⁵ exceeds every measured cached cost). (The files also carry an \emph{idealized} flag \texttt{parametric\_can\_beat\_cached\_rag=false}, but that rests on a proxy the file itself flags for direct measurement: it sets cached-repeat cost equal to the parametric per-query cost by construction, so we report the measured break-even above instead.) \textbf{The economic claim is therefore corpus- and volume-dependent amortization, not a blanket speedup/cost win:} parametric absorption pays for itself at high query volume on favorable-structure corpora (UC4) and does not on others (UC1).
+
+\hypertarget{operational-comparison-characterization-not-a-benchmark}{%
+\subsection{Operational Comparison (Characterization, Not a Benchmark)}\label{operational-comparison-characterization-not-a-benchmark}}
+
+\begin{table}[!htbp]
+\centering
+\caption{Operational comparison of Standard RAG vs KVForge Phase~3 (characterization, not a benchmark).}
+\label{tab:ops}
+\small
+\begin{tabularx}{\columnwidth}{@{}L l L@{}}
+\toprule
+Dimension & Std.\ RAG & KVForge Phase~3 \\
+\midrule
+Re-encoding & Always & Never (parametric path) \\
+Updatable & Yes & Yes (recompute) \\
+OOD queries & Yes & Yes (gated fallback) \\
+GPU at inference & Yes & Potentially no \\
+Training & No & Yes ($\sim$20 min/round) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Phase 3 answers a self-selected, confidence-gated subset, so this table characterizes pipeline behavior, not a matched head-to-head benchmark (§6.5).
+
+\hypertarget{discussion}{%
+\section{Discussion}\label{discussion}}
+
+\hypertarget{training-signal-diversity-as-the-primary-lever}{%
+\subsection{Training-Signal Diversity as the Primary Lever}\label{training-signal-diversity-as-the-primary-lever}}
+
+The consistent result across §5.3, §5.6, and §5.7 is that \textbf{how the training signal is constructed dominates model capacity.} Diverse rewrites add +0.030--0.042 versus a non-significant +0.009 from a 180× QA-volume increase (§5.3); a 3.2B model matches a 5.1B one (total params) on the same recipe (§5.6); and, holding data fixed, adapter \emph{placement} moves retention far more than exposure or relational structure (§5.7). For practitioners targeting parametric corpus absorption in SLMs, the actionable ordering is: \textbf{data diversity and adapter placement first; model scale and training duration second.}
+
+\hypertarget{corpus-heterogeneity-and-the-prsfa-gap}{%
+\subsection{Corpus Heterogeneity and the PRS/FA Gap}\label{corpus-heterogeneity-and-the-prsfa-gap}}
+
+PRS (cosine; measured on Gemma-4-E4B, see the §5.1 attribution note) spreads 0.755--0.863 across corpora and correlates with structure (fact-dense UC2/UC4 high; paraphrastic UC1 low). But PRS and judge-scored FA do not move together: UC1 has the \emph{lowest} PRS yet the \emph{highest} small-N parametric FA (0.36, §5.10), because cosine penalizes customer-support paraphrase that the judge accepts. This divergence is why we treat PRS as a gate, not a result, and why a factual-metric-based PRS variant is listed as follow-up (§6.5).
+
+\hypertarget{what-crossover-means-here}{%
+\subsection{What ``Crossover'' Means Here}\label{what-crossover-means-here}}
+
+Crossover denotes \emph{relative} superiority over a retrieval baseline whose own held-out FA is modest (0.161--0.175, §5.11), not absolute correctness (parametric FA tops out \textasciitilde0.30). It is nonetheless the operationally relevant threshold for Phase-3 gating. The strongest crossover evidence is UC4 at n=500 (§5.3); the four-corpus breadth (§5.10) is preliminary.
+
+\hypertarget{kv-staleness}{%
+\subsection{KV Staleness}\label{kv-staleness}}
+
+Every LoRA update invalidates all stored KV (42\% recompute overhead for UC4). Mitigations: incremental recompute above a LoRA-delta threshold; larger rank to reach thresholds in fewer rounds.
+
+\begin{table*}[!t]
+\centering
+\caption{Metric and judge provenance (Appendix~B).}
+\label{tab:provenance}
+\small
+\begin{tabularx}{\textwidth}{@{}L l L L L@{}}
+\toprule
+Metric & Scale & Where used & Judge & Comparable across sections? \\
+\midrule
+PRS (cosine composite) & 0--1 readiness & \S4.1 example, \S4.7 definition, \S6.2 & cosine to ground truth (no LLM judge) & gate only; \textbf{not} an accuracy metric \\
+FA, $n{=}89$ & 0--1 & \S5.5 (precursor) & \texttt{deepseek-v4-flash} (unreachable) & \textbf{no}, superseded by $n{=}500$ \\
+FA, $n{=}500$ & 0--1 & \S5.3, \S5.6 (UC4) & \texttt{deepseek-v4-lite} (CodeVector) & within-table only \\
+FA, small-$N$ crossover & 0--1 & \S5.10 (four corpora, $n{=}76/50$--$297/200/89$) & \texttt{deepseek-v4-flash} (unreachable) & \textbf{preliminary}, not comparable to lite-judge rows \\
+coverage@0.5 & 0--1 & \S5.7, \S5.8 & blind same-session reconstructed rubric & within-session deltas only (drift $\sim$0.03--0.067) \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\hypertarget{limitations-and-the-validation-roadmap}{%
+\subsection{Limitations and the Validation Roadmap}\label{limitations-and-the-validation-roadmap}}
+
+We separate what \emph{is} established from what remains, and bucket the open items by whether they need new accelerated compute. (This work was produced under a compute constraint that precluded new training/generation runs; items needing them are marked accordingly.)
+
+\textbf{Established in this paper} (with the caveats stated inline): the data-diversity lever, the architecture transfer (single-seed), the placement lever, and the RAFT complementarity result, all on UC4, with reported CIs, named judge, pre-registration where stated, and leak-removed subsets.
+
+\textbf{Primary open items (require new accelerated compute):}
+1. \textbf{A competently-tuned external/retrieval baseline under matched conditions}: chunk-size/top-k/reader-prompt sweep for RAG, and at least one external system (e.g., CAG for the bounded-corpus regime, or a TurboRAG/CacheBlend Phase-2 analog) under matched hardware, base model, and query set. Without this, neither speedups nor quality can be judged against the state of the art.
+2. \textbf{Multi-corpus generalization of the strong studies}: run the §5.3/§5.7 ablations on ≥1 corpus beyond UC4, and re-run UC1/UC2/UC3 crossover at n=500 with the single judge and multiple seeds.
+3. \textbf{Matched-output-budget latency}: re-measure §5.3 latency at equal generation budgets to separate architectural latency from the output-length confound (the amortized-cost analysis of §5.13 already provides the volume-dependent economic picture).
+4. \textbf{Phase-2 correction}: implement position/attention realignment (TurboRAG/APE) and test whether KV injection reaches Standard-RAG quality at a real matched-workload speedup.
+5. \textbf{Multi-seed variance} for every headline number currently at a single seed (§5.6, the full-scale §5.7 promotion).
+
+\textbf{CPU-feasible open items (no accelerated compute needed):}
+6. \textbf{Leak-removed re-scoring of the §5.3 trained-vs-RAG comparison}, using the §5.7 leak split, from saved generations.
+7. \textbf{PRS-vs-FA correlation}: quantify how well cosine-PRS predicts held-out judge-FA from existing per-corpus runs; if weak, define and report a factual-metric-based PRS.
+8. \textbf{Human validation of the LLM judge}: annotate a sample of judged answers and report agreement, anchoring the judge-FA metric.
+9. \textbf{Base-model attribution}: the per-family mapping is stated in §5.1: data-lever E2B/E4B (labeled per row), placement/RAFT E2B, transfer Llama-3.2-3B, PRS readiness (§4.1/§6.2) E4B, §5.10 crossover ``Gemma-4 family'' (variant unspecified). The PRS-readiness attribution rests on the authors' record because its original run logs are no longer available (above); it cannot be independently re-confirmed.
+
+\textbf{Reproducibility.} The repository is public at github.com/hemantcgi/kvforge. The remaining step is archiving a tagged release at a permanent versioned identifier (e.g., a Zenodo DOI tied to the exact commit) and publishing the exact judge model, prompt, and rubric (Appendix B), so results are reproducible independent of ephemeral hosted judges. One attribution we cannot currently back with artifacts: the cosine-PRS readiness figures (§4.1, §6.2) were produced on Gemma-4-E4B per the authors' record, but the original run logs for those early experiments are no longer available, so that base-model attribution is not independently verifiable and should be read as the authors' record.
+
+\hypertarget{conclusion}{%
+\section{Conclusion}\label{conclusion}}
+
+We studied progressive parametric absorption, fine-tuning a small language model to answer a corpus from its weights with retrieval as fallback, and found that the controlling variable is the training signal, not model scale. On a 500-question held-out set with a single fixed judge, diverse chunk-rewrites add +0.030--0.042 while a 180× increase in question volume adds a non-significant +0.009, the effect transfers to a second architecture (a 3.2B Llama matches a 5.1B Gemma at matched recipe, on total-parameter counts), and capacity is a real but secondary, rank-confounded lever. Two pre-registered, blind-judged studies add that LoRA \textbf{placement} is the dominant training-configuration lever and that RAFT fine-tuning \textbf{complements} retrieval precisely where retrieval fails. These results are produced on \textbf{KVForge}, an open platform for the three-phase progression. The paper also reports a characterized negative result for mean-pooled KV injection and a corpus-dependent amortized-cost analysis showing parametric answering pays off only at high query volume on favorable corpora.
+
+A head-to-head comparison against an external system under matched conditions, growing the strong studies beyond one corpus, and correcting Phase 2 are the primary steps before these findings should be treated as validated rather than well-characterized. The paper's value is in what it pins down: \emph{for small-model corpus absorption, invest in training-signal diversity and adapter placement before model scale.}
+
+\textbf{Open-source availability.} KVForge is open-source (MIT) with four end-to-end example use-cases and a CPU-runnable test suite.
+
+\begin{quote}
+\textbf{GitHub:} \url{https://github.com/hemantcgi/kvforge} · \textbf{License:} MIT
+\end{quote}
+
+\hypertarget{acknowledgements}{%
+\section*{Acknowledgements}\label{acknowledgements}}
+
+The author thanks the Qdrant, HuggingFace, vLLM, and FastEmbed teams for their open-source infrastructure, Google, Anthropic and OpenAI for model-API access for sleep-time FAQ generation, and Fissionlabs Inc.~for GPU resources supporting this research.
+
+\hypertarget{appendix-b-metric-and-judge-provenance}{%
+\section*{Appendix B: Metric and Judge Provenance}\label{appendix-b-metric-and-judge-provenance}}
+
+\textbf{Note.} Cross-section absolute values are not comparable; only within-subsection, within-judge deltas carry weight. Publishing the exact judge prompt/rubric and a human-agreement spot-check (§6.5) is required before camera-ready.
+
+\hypertarget{references}{%
+\section*{References}
+\small\label{references}}
+
+{[}1{]} Lewis, P., et al.~(2020). \textbf{Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks.} \emph{NeurIPS 2020.} arXiv:2005.11401
+
+{[}2{]} Vaswani, A., et al.~(2017). \textbf{Attention Is All You Need.} \emph{NeurIPS 2017.} arXiv:1706.03762
+
+{[}3{]} Kwon, W., et al.~(2023). \textbf{Efficient Memory Management for LLM Serving with PagedAttention.} \emph{SOSP 2023.} arXiv:2309.06180
+
+{[}4{]} Hu, E. J., et al.~(2022). \textbf{LoRA: Low-Rank Adaptation of Large Language Models.} \emph{ICLR 2022.} arXiv:2106.09685
+
+{[}5{]} Karpukhin, V., et al.~(2020). \textbf{Dense Passage Retrieval for Open-Domain QA.} \emph{EMNLP 2020.} arXiv:2004.04906
+
+{[}6{]} Gim, I., et al.~(2024). \textbf{PromptCache: Modular Attention Reuse for Low-Latency Inference.} \emph{MLSys 2024.} arXiv:2311.04934
+
+{[}7{]} Zheng, L., et al.~(2024). \textbf{SGLang: Efficient Execution of Structured Language Model Programs.} arXiv:2312.07104
+
+{[}8{]} Borgeaud, S., et al.~(2022). \textbf{Improving Language Models by Retrieving from Trillions of Tokens.} \emph{ICML 2022.} arXiv:2112.04426
+
+{[}9{]} Dettmers, T., et al.~(2023). \textbf{QLoRA: Efficient Finetuning of Quantized LLMs.} \emph{NeurIPS 2023.} arXiv:2305.14314
+
+{[}10{]} Guo, C., et al.~(2017). \textbf{On Calibration of Modern Neural Networks.} \emph{ICML 2017.} arXiv:1706.04599
+
+{[}11{]} Wang, X., et al.~(2022). \textbf{Self-Consistency Improves Chain of Thought Reasoning.} \emph{ICLR 2023.} arXiv:2203.11171
+
+{[}12{]} Kuhn, L., et al.~(2023). \textbf{Semantic Uncertainty.} \emph{ICLR 2023.} arXiv:2302.09664
+
+{[}13{]} McCloskey, M., \& Cohen, N. J. (1989). \textbf{Catastrophic Interference in Connectionist Networks.} \emph{Psych. of Learning and Motivation, 24,} 109--165.
+
+{[}14{]} Snell, C., et al.~(2024). \textbf{Scaling LLM Test-Time Compute Optimally.} arXiv:2408.03314
+
+{[}15{]} Jin, Q., et al.~(2019). \textbf{PubMedQA.} \emph{EMNLP 2019.} arXiv:1909.06146
+
+{[}16{]} Rajpurkar, P., et al.~(2018). \textbf{Know What You Don't Know: Unanswerable Questions for SQuAD.} \emph{ACL 2018.} arXiv:1806.03822
+
+{[}17{]} Khattab, O., \& Zaharia, M. (2020). \textbf{ColBERT.} \emph{SIGIR 2020.} arXiv:2004.12832
+
+{[}18{]} Hooper, C., et al.~(2024). \textbf{KVQuant.} \emph{NeurIPS 2024.} arXiv:2401.18079
+
+{[}19{]} Liu, Z., et al.~(2024). \textbf{KIVI.} \emph{ICML 2024.} arXiv:2402.02750
+
+{[}20{]} Yao, Y., et al.~(2024). \textbf{CacheBlend: Fast LLM Serving for RAG with Cached Knowledge Fusion.} arXiv:2405.16444
+
+{[}21{]} Izacard, G., \& Grave, E. (2021). \textbf{Leveraging Passage Retrieval with Generative Models.} \emph{EACL 2021.} arXiv:2007.01282
+
+{[}22{]} Kirkpatrick, J., et al.~(2017). \textbf{Overcoming Catastrophic Forgetting in Neural Networks.} \emph{PNAS, 114}(13), 3521--3526.
+
+{[}23{]} Zandieh, A., et al.~(2024). \textbf{QJL.} arXiv:2406.03482
+
+{[}24{]} De Lange, M., et al.~(2022). \textbf{A Continual Learning Survey.} \emph{IEEE TPAMI, 44}(7), 3366--3385. arXiv:1909.08383
+
+{[}25{]} Chan, B. J., et al.~(2024/2025). \textbf{Don't Do RAG: When Cache-Augmented Generation is All You Need.} \emph{ACM WWW 2025 (Companion).} arXiv:2412.15605
+
+{[}26{]} Zhang, T., et al.~(2024). \textbf{RAFT: Adapting Language Model to Domain Specific RAG.} arXiv:2403.10131
+
+{[}27{]} Su, W., et al.~(2025). \textbf{Parametric Retrieval Augmented Generation.} arXiv:2501.15915
+
+{[}28{]} Meng, K., et al.~(2022). \textbf{Locating and Editing Factual Associations in GPT.} \emph{NeurIPS 2022.} arXiv:2202.05262
+
+{[}29{]} Meng, K., et al.~(2023). \textbf{Mass-Editing Memory in a Transformer.} \emph{ICLR 2023.} arXiv:2210.07229
+
+{[}30{]} Asai, A., et al.~(2024). \textbf{Self-RAG.} \emph{ICLR 2024.} arXiv:2310.11511
+
+{[}31{]} Wang, Y., et al.~(2023). \textbf{Self-Knowledge Guided Retrieval Augmentation.} \emph{EMNLP 2023 Findings.} arXiv:2310.05002
+
+{[}32{]} Jeong, S., et al.~(2024). \textbf{Adaptive-RAG.} \emph{NAACL 2024.} arXiv:2403.14403
+
+{[}33{]} LMCache Team. (2025). \textbf{LMCache: A KV Cache Management Layer for LLM Serving.} arXiv:2510.09665
+
+{[}34{]} Lu, S., et al.~(2024). \textbf{TurboRAG: Accelerating RAG with Precomputed KV Caches for Chunked Text.} arXiv:2410.07590
+
+{[}35{]} Hu, J., et al.~(2024). \textbf{EPIC: Efficient Position-Independent Context Caching for Serving LLMs.} arXiv:2410.15332
+
+{[}36{]} Gao, B., et al.~(2024). \textbf{Cost-Efficient LLM Serving for Multi-turn Conversations with CachedAttention (AttentionStore).} arXiv:2403.19708
+
+{[}37{]} Qin, R., et al.~(2024). \textbf{Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving.} \emph{FAST 2025.} arXiv:2407.00079
+
+{[}38{]} Yang, X., et al.~(2025). \textbf{APE: Faster and Longer Context-Augmented Generation via Adaptive Parallel Encoding.} arXiv:2502.05431
+
+{[}39{]} Jin, C., et al.~(2024). \textbf{RAGCache: Efficient Knowledge Caching for Retrieval-Augmented Generation.} arXiv:2404.12457
+
+{[}40{]} Zhang, Y., et al.~(2024). \textbf{CaM: Cache Merging for Memory-efficient LLMs Inference.} \emph{ICML 2024.}
+
+{[}41{]} Wang, Z., et al.~(2024). \textbf{KVMerger: Cross-layer KV Cache Merging for Memory-Efficient LLM Inference.} arXiv:2407.08454
+
+{[}42{]} Tao, Y., et al.~(2025). \textbf{KeepKV: Eliminating Output Perturbation in KV Cache Compression.} arXiv:2504.09936
+
+{[}43{]} Ainslie, J., et al.~(2023). \textbf{GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints.} arXiv:2305.13245
+
+{[}44{]} Tang, Y., et al.~(2025). \textbf{Understanding Parametric Knowledge Injection in RAG.} arXiv:2510.12668
+
+\textbf{GitHub:} \url{https://github.com/hemantcgi/kvforge} · \textbf{License:} MIT
+
+\end{document}

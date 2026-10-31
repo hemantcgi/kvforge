@@ -38,10 +38,10 @@ An automatic gating heuristic (the Parametric Readiness Score, PRS; §4.7) drive
 
 Ordered by the strength of the evidence behind them:
 
-1. **Training-signal diversity is the dominant lever for parametric absorption** (§5.3–§5.6). On a 500-question held-out set with a single fixed judge, diverse chunk-rewrites add +0.030–0.042, versus a non-significant +0.009 from a 180× increase in QA volume, and the effect transfers to a second architecture (Llama-3.2-3B reaches parity with the larger Gemma-4-E2B). Model capacity, rank-matched, is a real but secondary lever (+0.025 to +0.037).
+1. **Training-signal diversity is the dominant lever for parametric absorption** (§5.3, §5.6). On a 500-question held-out set with a single fixed judge, diverse chunk-rewrites add +0.030–0.042, versus a non-significant +0.009 from a 180× increase in QA volume, and the effect transfers to a second architecture (Llama-3.2-3B reaches parity with the larger Gemma-4-E2B). Model capacity, rank-matched, is a real but secondary lever (+0.025 to +0.037).
 2. **LoRA placement is the dominant training-configuration lever for parametric retention** (§5.7): a pre-registered, blind, same-session-judged study finds all-linear placement beats attention-only at matched parameter budget (+0.067 two-seed pilot, p=0.0001; +0.123 full-scale and +0.106 on leak-removed facts, single-seed), with exposure marginal and relational structure inert.
 3. **Fine-tuning complements retrieval where retrieval fails** (§5.8): a pre-registered RAFT study shows the fine-tuned-plus-retrieval gain concentrates on retrieval-misses (DiD interaction +0.135, 95% CI [+0.062, +0.206]).
-4. **KVForge, an open platform** for progressive parametric absorption (§4), including a characterized negative result for mean-pooled KV injection and a corpus-dependent amortized-cost analysis (§5.9) that tempers naive latency claims.
+4. **KVForge, an open platform** for progressive parametric absorption (§4), including a characterized negative result for mean-pooled KV injection (§5.9) and a corpus-dependent amortized-cost analysis (§5.13) that tempers naive latency claims.
 
 The evidence has three limits: there is no comparison against any external system under matched conditions; the retrieval baseline is of characterized but modest quality; and strong per-corpus generality is shown for only one corpus (§6.5).
 
@@ -202,7 +202,7 @@ Three lightweight signals (token entropy, hedging-phrase detection, and query si
 
 ## 5. Experimental Evaluation
 
-**Reading guide.** This section leads with the paper's strongest evidence, the training-signal and configuration studies on UC4 at n=500 with a single fixed judge (§5.3–§5.8), then reports the broader but weaker cross-corpus crossover (§5.10) and the Phase-2 negative result (§5.9). **Metrics are not interchangeable across subsections:** three metric families appear (cosine-PRS; `deepseek`-judged factual accuracy, FA; blind coverage@0.5) across the two evaluation regimes of §5.2, on different scales and judges, and only within-subsection, within-judge deltas are meaningful. Appendix B enumerates all five metric×judge pairings.
+**Reading guide.** This section leads with the paper's strongest evidence, the training-signal and configuration studies (§5.3–§5.8): the UC4 n=500 single-judge data-lever and architecture-transfer ablations (§5.3, §5.6; §5.4 characterizes the held-out set's residual leak, and the n=89 precursors of §5.5 are reported only for continuity), and the pre-registered, blind same-session-judged placement and RAFT studies (§5.7–§5.8). It then reports the Phase-2 negative result (§5.9) and the broader but weaker cross-corpus crossover (§5.10). **Metrics are not interchangeable across subsections:** three metric families appear (cosine-PRS; `deepseek`-judged factual accuracy, FA; blind coverage@0.5) across the two evaluation regimes of §5.2, on different scales and judges, and only within-subsection, within-judge deltas are meaningful. Appendix B enumerates all five metric×judge pairings.
 
 ### 5.1 Setup
 
@@ -435,7 +435,7 @@ The author thanks the Qdrant, HuggingFace, vLLM, and FastEmbed teams for their o
 
 | Metric | Scale | Where used | Judge | Comparable across sections? |
 |---|---|---|---|---|
-| PRS (cosine composite) | 0–1 readiness | §4.7, §5.1 PRS runs, §6.2 | cosine to ground truth (no LLM judge) | gate only; **not** an accuracy metric |
+| PRS (cosine composite) | 0–1 readiness | §4.1 example, §4.7 definition, §6.2 | cosine to ground truth (no LLM judge) | gate only; **not** an accuracy metric |
 | Factual accuracy (FA), n=89 | 0–1 | §5.5 (precursor) | `deepseek-v4-flash` (unreachable) | **no**, superseded by n=500 |
 | Factual accuracy (FA), n=500 | 0–1 | §5.3, §5.6 (UC4) | `deepseek-v4-lite` (CodeVector) | within-table only |
 | Factual accuracy (FA), small-N crossover | 0–1 | §5.10 (four corpora, n=76/50–297/200/89) | `deepseek-v4-flash` (unreachable) | **preliminary**, not comparable to the lite-judge rows |

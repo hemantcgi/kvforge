@@ -1,0 +1,254 @@
+%%%PART FIG:fig1_state_machine
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.92\textwidth]{fig1_state_machine.pdf}
+\caption{KVForge phase-transition state machine. A phase advances when PRS $\geq 0.75$ (two consecutive rounds for the Phase~2$\rightarrow$3 transition); a regression guard reverts the phase when PRS $< 0.60$. The Phase~2$\rightarrow$1 edge is the stale-KV fallback.}
+\label{fig:state-machine}
+\end{figure*}
+
+%%%PART FIG:fig2_phase_flow
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig2_phase_flow.pdf}
+\caption{KVForge phase progression: Standard RAG $\rightarrow$ per-chunk KV-cache injection $\rightarrow$ confidence-gated parametric answering. Corresponding pipeline steps are vertically aligned across the three panels; shaded boxes mark the step that distinguishes each phase.}
+\label{fig:phase-flow}
+\end{figure*}
+
+%%%PART FIG:fig3_tier_weights
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig3_tier_weights.pdf}
+\caption{Tier-weighted replay buffer. Left: per-tier sampling weights. Right: the expected mini-batch composition at a 20\% replay fraction, which reflects tier \emph{population} sizes as well as the weights (all factual experiments here use the uniform \texttt{frozen} setting; \S4.5).}
+\label{fig:tier-weights}
+\end{figure*}
+
+%%%PART FIG:fig4_prs_breakdown
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\columnwidth]{fig4_prs_breakdown.pdf}
+\caption{PRS component contribution breakdown for UC4, Round~3. Each bar is score~$\times$~weight (weights 0.50 / 0.30 / 0.20).}
+\label{fig:prs-breakdown}
+\end{figure}
+
+%%%PART FIG:fig5_prs_scores
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=\columnwidth]{fig5_prs_scores.pdf}
+\caption{PRS component scores (accuracy, calibration, consistency) across the four use cases.}
+\label{fig:prs-scores}
+\end{figure}
+
+%%%PART FIG:fig6_confidence_gate
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig6_confidence_gate.png}
+\caption{Phase-3 confidence gate. Left: the three signal weights for $P(\text{no\_retrieval})$. Right: the decision surface at fixed hedging $=0.10$; the contour marks the 0.75 gate threshold (green region routes to Phase~3, orange falls back to Phase~2).}
+\label{fig:confidence-gate}
+\end{figure*}
+
+%%%PART FIG:fig7_e2b_accuracy
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig7_e2b_accuracy.pdf}
+\caption{UC4 $n{=}500$ held-out factual accuracy per arm (FA $= 0.5\cdot$token-F1 $+\, 0.5\cdot$LLM-judge; judge: \texttt{deepseek-v4-lite}), sorted descending. Error bars are $\pm 1$ SEM.}
+\label{fig:e2b-accuracy}
+\end{figure*}
+
+%%%PART FIG:fig8_crossover
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig8_crossover.png}
+\caption{Gemma-4 crossover: parametric (solid) vs Standard RAG (dashed) factual accuracy versus per-corpus operating point $N$ (log scale), for UC1, UC2 and UC4. Preliminary: small-$N$, single-seed, earlier judge (\S5.10).}
+\label{fig:crossover}
+\end{figure*}
+
+%%%PART TABLE:01
+\begin{table}[!htbp]
+\centering
+\caption{Replay-buffer tiers and sampling weights (\S4.5).}
+\label{tab:tiers}
+\small
+\begin{tabularx}{\columnwidth}{@{}l L c@{}}
+\toprule
+Tier & Condition & Weight \\
+\midrule
+hot & Top 15\% by access count, accessed $<$ 7 days & 8 \\
+warm & Next 50\%, accessed $<$ 30 days & 4 \\
+cold & Remaining accessed chunks & 2 \\
+frozen & Never accessed & 1 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+%%%PART TABLE:02
+\begin{table}[!htbp]
+\centering
+\caption{UC4 $n{=}500$ held-out factual accuracy and p50 latency, by model and training signal.}
+\label{tab:uc4-fa}
+\small
+\begin{tabularx}{\columnwidth}{@{}l L r r@{}}
+\toprule
+Model & Training signal & FA & Lat.\,(s) \\
+\midrule
+E2B & RAG (untrained) & 0.175\,$\pm$\,0.011 & 3.19 \\
+E4B & RAG (untrained) & 0.161\,$\pm$\,0.010 & 3.48 \\
+E2B & r16, 337 QA & 0.147\,$\pm$\,0.007 & 3.92 \\
+E4B & r64, 337 QA & 0.235\,$\pm$\,0.009 & 2.99 \\
+E2B & r64, 60k QA & 0.219\,$\pm$\,0.011 & 1.23 \\
+E2B & r64, 60k QA + rewrites & 0.249\,$\pm$\,0.012 & 1.31 \\
+E4B & r64, 60k QA & 0.244\,$\pm$\,0.011 & 1.55 \\
+E4B & r64, 60k QA + rewrites & \textbf{0.286}\textsuperscript{a} & 1.64 \\
+\bottomrule
+\end{tabularx}\\[2pt]
+{\footnotesize \textsuperscript{a}\,mean; checkpoints 0.275--0.302.}
+\end{table}
+
+%%%PART TABLE:03
+\begin{table*}[!t]
+\centering
+\caption{Architecture transfer on the identical 60k-QA\,$+$\,rewrites recipe (UC4, $n{=}500$). A 3.2B Llama reaches parity with the larger Gemma models.}
+\label{tab:transfer}
+\small
+\begin{tabular}{@{}l r r r r r@{}}
+\toprule
+Model & Params & FA ($n{=}500$) & token-F1 & LLM-judge & Latency p50 (s) \\
+\midrule
+gemma-4-E4B-it & 7.49B & 0.286 (0.275--0.302) & 0.314 & 0.259 & 1.64 \\
+\textbf{Llama-3.2-3B-Instruct} & \textbf{3.2B} & \textbf{0.254\,$\pm$\,0.012} & \textbf{0.312} & \textbf{0.196} & \textbf{1.47} \\
+gemma-4-E2B-it & 5.1B & 0.249\,$\pm$\,0.012 & 0.290 & 0.208 & 1.31 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+%%%PART TABLE:04
+\begin{table*}[!t]
+\centering
+\caption{Adapter-placement contrast (all-linear layers vs attention-only, at matched parameter budget) on coverage@0.5.}
+\label{tab:placement}
+\small
+\begin{tabular}{@{}l r r r l@{}}
+\toprule
+Placement contrast & control & treatment & $\Delta$ & test \\
+\midrule
+Pilot (2-seed, blind) & 0.250 & 0.316 & \textbf{+0.067} & Wilcoxon $p{=}0.0001$ \\
+Full scale (60k from base, single-seed) & 0.339 & 0.462 & \textbf{+0.123} & McNemar $\chi^2{=}29.25$, $p{<}0.0001$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+%%%PART TABLE:05
+\begin{table}[!htbp]
+\centering
+\caption{RAFT complementarity: coverage@0.5 overall and split by retrieval hit/miss (UC4, 481 probes). bl.\ = borderline.}
+\label{tab:raft}
+\small
+\begin{tabularx}{\columnwidth}{@{}l L r r r@{}}
+\toprule
+Arm & Generator & all & hit & miss \\
+    &           &     & \scriptsize(290) & \scriptsize(191) \\
+\midrule
+R0 & base $+$ top-5 RAG & 0.728 & 0.934 & 0.414 \\
+R1 & plain-QA FT $+$ top-5 RAG & 0.730 & 0.834 & 0.571 \\
+\textbf{R2} & \textbf{RAFT FT $+$ top-5 RAG} & \textbf{0.809} & \textbf{0.962} & \textbf{0.576} \\
+R3 & RAFT, closed-book & 0.462 & 0.455 & 0.471 \\
+R1cb & plain-QA FT, closed-book & 0.528 & 0.521 & 0.539 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+%%%PART TABLE:06
+\begin{table}[!htbp]
+\centering
+\caption{Cross-corpus crossover (preliminary; small-$N$, single-seed, earlier judge). $^\ast$ marks the larger operating point per corpus; bl.\ = borderline.}
+\label{tab:crossover-tab}
+\small
+\begin{tabularx}{\columnwidth}{@{}L r c c c@{}}
+\toprule
+Corpus & $N$ & RAG FA & Par.\ FA & Cross. \\
+\midrule
+UC1 Customer Support & 200 & 0.215 & 0.360 & yes \\
+UC1 & 1000 & 0.192 & 0.356 & yes$^\ast$ \\
+UC2 PubMedQA & 50 & 0.229 & 0.201 & no \\
+UC2 & 100 & 0.191 & 0.207 & yes (bl.) \\
+UC2 & 297 & 0.195 & 0.190 & bl.$^\ast$ \\
+UC3 SQuAD 2.0 & 500 & 0.144 & 0.221 & yes \\
+UC3 & 2000 & 0.163 & 0.221 & yes$^\ast$ \\
+UC4 Bedrock & 500 & 0.219 & 0.234 & yes \\
+UC4 & 6000 & 0.109 & 0.234 & yes$^\ast$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+%%%PART TABLE:07
+\begin{table}[!htbp]
+\centering
+\caption{Pipeline timing for one consolidation round (UC4 reference run).}
+\label{tab:timing}
+\small
+\begin{tabularx}{\columnwidth}{@{}L c@{}}
+\toprule
+Step & Duration \\
+\midrule
+Chunk $+$ embed $+$ upsert (2,520 chunks) & $\sim$45 s \\
+KV tensor computation (0.20 s/chunk) & $\sim$498 s \\
+LoRA training (3 epochs, 474 steps) & (step-bound) \\
+KV recompute after adapter update & $\sim$510 s \\
+PRS evaluation (50 FAQs) & $\sim$90 s \\
+\textbf{Total (one round)} & \textbf{$\sim$20 min} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+%%%PART TABLE:08
+\begin{table*}[!t]
+\centering
+\caption{Amortized cost per query and break-even points. The prefix-cached break-even is repeat-rate dependent.}
+\label{tab:cost}
+\small
+\begin{tabularx}{\textwidth}{@{}l r r L L@{}}
+\toprule
+Corpus & Parametric \$/query & Plain-RAG \$/query & Break-even vs plain RAG & Break-even vs \emph{measured} prefix-cached RAG \\
+\midrule
+UC4 & $2.33\times10^{-5}$ & $6.31\times10^{-5}$ & \textbf{$\sim$35,149 queries} & \textbf{$\sim$36k--140k queries} (repeat-rate dependent) \\
+UC1 & $6.78\times10^{-5}$ & $4.67\times10^{-5}$ & \textbf{never} & \textbf{never} \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+%%%PART TABLE:09
+\begin{table}[!htbp]
+\centering
+\caption{Operational comparison of Standard RAG vs KVForge Phase~3 (characterization, not a benchmark).}
+\label{tab:ops}
+\small
+\begin{tabularx}{\columnwidth}{@{}L l L@{}}
+\toprule
+Dimension & Std.\ RAG & KVForge Phase~3 \\
+\midrule
+Re-encoding & Always & Never (parametric path) \\
+Updatable & Yes & Yes (recompute) \\
+OOD queries & Yes & Yes (gated fallback) \\
+GPU at inference & Yes & Potentially no \\
+Training & No & Yes ($\sim$20 min/round) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+%%%PART TABLE:10
+\begin{table*}[!t]
+\centering
+\caption{Metric and judge provenance (Appendix~B).}
+\label{tab:provenance}
+\small
+\begin{tabularx}{\textwidth}{@{}L l L L L@{}}
+\toprule
+Metric & Scale & Where used & Judge & Comparable across sections? \\
+\midrule
+PRS (cosine composite) & 0--1 readiness & \S4.7, \S5.1 PRS runs, \S6.2 & cosine to ground truth (no LLM judge) & gate only; \textbf{not} an accuracy metric \\
+FA, $n{=}89$ & 0--1 & \S5.5 (precursor) & \texttt{deepseek-v4-flash} (unreachable) & \textbf{no}, superseded by $n{=}500$ \\
+FA, $n{=}500$ & 0--1 & \S5.3, \S5.6 (UC4) & \texttt{deepseek-v4-lite} (CodeVector) & within-table only \\
+FA, small-$N$ crossover & 0--1 & \S5.10 (four corpora, $n{=}76/50$--$297/200/89$) & \texttt{deepseek-v4-flash} (unreachable) & \textbf{preliminary}, not comparable to lite-judge rows \\
+coverage@0.5 & 0--1 & \S5.7, \S5.8 & blind same-session reconstructed rubric & within-session deltas only (drift $\sim$0.03--0.067) \\
+\bottomrule
+\end{tabularx}
+\end{table*}
